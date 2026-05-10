@@ -83,7 +83,7 @@ export function TransformationGate() {
 
   useEffect(() => {
     if (!active || phase !== "main") return;
-    const t = window.setTimeout(() => primaryRef.current?.focus(), 200);
+    const t = window.setTimeout(() => primaryRef.current?.focus(), 320);
     return () => clearTimeout(t);
   }, [active, phase]);
 
@@ -267,9 +267,9 @@ export function TransformationGate() {
                 <motion.div
                   key="main"
                   className="mx-auto flex w-full max-w-2xl flex-col items-center rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] px-5 py-10 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-xl sm:px-10 sm:py-14"
-                  initial={{ opacity: 0, y: 28 }}
+                  initial={{ opacity: 0, y: 22 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
+                  exit={{ opacity: 0, y: -8 }}
                   transition={txReveal(DURATION_REVEAL)}
                 >
                   <motion.p
@@ -320,10 +320,10 @@ export function TransformationGate() {
                       className={cn(
                         "inline-flex min-h-[3.1rem] w-full items-center justify-center rounded-full bg-white px-6 text-sm font-medium tracking-tight text-zinc-950",
                         "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_60px_-20px_rgba(255,255,255,0.22)]",
-                        "transition-shadow duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_24px_72px_-18px_rgba(255,255,255,0.3)]",
+                        "transition-shadow duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_24px_72px_-18px_rgba(255,255,255,0.3)]",
                       )}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: 1.012 }}
+                      whileTap={{ scale: 0.988 }}
                       transition={TAP_SPRING}
                     >
                       Request Private Assessment
@@ -333,10 +333,10 @@ export function TransformationGate() {
                       onClick={() => startClose("#about")}
                       className={cn(
                         "inline-flex min-h-[3.1rem] w-full items-center justify-center rounded-full border border-white/[0.14] bg-white/[0.04] px-6 text-sm font-medium tracking-tight text-zinc-200 backdrop-blur-md",
-                        "transition-[border-color,background-color] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-white/[0.22] hover:bg-white/[0.07]",
+                        "transition-[border-color,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-white/[0.22] hover:bg-white/[0.07]",
                       )}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: 1.012 }}
+                      whileTap={{ scale: 0.988 }}
                       transition={TAP_SPRING}
                     >
                       Review Philosophy First

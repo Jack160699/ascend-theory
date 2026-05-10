@@ -18,7 +18,7 @@ export const shellNarrow =
 
 /** Hero / full-bleed narrative column */
 export const shellHero =
-  "relative z-10 mx-auto flex w-full max-w-[min(80rem,100%)] flex-1 flex-col justify-center px-6 pb-36 pt-[7.5rem] sm:px-10 sm:pb-40 sm:pt-[7.35rem] lg:pl-16 lg:pr-20 lg:pb-44 lg:pt-[8.25rem]";
+  "relative z-10 mx-auto flex w-full max-w-[min(80rem,100%)] flex-1 flex-col justify-center px-6 pb-28 pt-[6.25rem] sm:px-10 sm:pb-40 sm:pt-[7.35rem] lg:pl-16 lg:pr-20 lg:pb-44 lg:pt-[8.25rem]";
 
 /** Long-form reading width — assessment, calibration blocks */
 export const shellReading =

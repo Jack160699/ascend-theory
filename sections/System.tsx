@@ -1,9 +1,9 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useRevealViewport } from "@/contexts/mobile-conversion";
 import {
   SURFACE_SPRING,
-  VIEWPORT_CALM,
   cardReveal,
   fadeUp,
   gridStaggerParent,
@@ -15,8 +15,6 @@ import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { Mic2, Orbit, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 import { useRef } from "react";
-
-const viewport = VIEWPORT_CALM;
 
 const pillars: {
   title: string;
@@ -109,9 +107,9 @@ function SystemCard({
       className="group relative h-full [perspective:1500px]"
       style={{ transformStyle: "preserve-3d" }}
       whileHover={{
-        rotateX: 2.5,
-        rotateY: 3,
-        y: -3,
+        rotateX: 2,
+        rotateY: 2.4,
+        y: -2,
         transition: SURFACE_SPRING,
       }}
     >
@@ -119,7 +117,7 @@ function SystemCard({
         className={cn(
           "relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/[0.09]",
           "bg-white/[0.025] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl sm:p-9",
-          "transition-[border-color,box-shadow] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "transition-[border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           "group-hover:border-white/[0.16] group-hover:shadow-[0_32px_90px_-48px_rgba(0,0,0,0.9),0_0_72px_-24px_rgba(255,255,255,0.08)]",
         )}
         style={{ transformStyle: "preserve-3d" }}
@@ -143,7 +141,7 @@ function SystemCard({
 
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.88]"
           style={{
             background:
               "radial-gradient(560px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(255,255,255,0.11), transparent 60%)",
@@ -151,7 +149,7 @@ function SystemCard({
         />
         <div
           ref={sheenRef}
-          className="pointer-events-none absolute inset-0 opacity-0 mix-blend-overlay transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-70"
+          className="pointer-events-none absolute inset-0 opacity-0 mix-blend-overlay transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.58]"
           style={{
             background:
               "radial-gradient(380px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(255,255,255,0.15), transparent 55%)",
@@ -163,7 +161,7 @@ function SystemCard({
         />
         <div className="relative z-10 flex h-full flex-col gap-6">
           <motion.div
-            className="flex size-11 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 shadow-[0_0_24px_-8px_rgba(255,255,255,0.06)] transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:border-white/[0.14] group-hover:text-white"
+            className="flex size-11 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 shadow-[0_0_24px_-8px_rgba(255,255,255,0.06)] transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-white/[0.14] group-hover:text-white"
             animate={{ y: [0, -3, 0] }}
             transition={{
               duration: floatMs / 1000,
@@ -177,7 +175,7 @@ function SystemCard({
             <h3 className="text-[16px] font-semibold leading-snug tracking-[-0.012em] text-white">
               {title}
             </h3>
-            <p className="mt-3.5 text-[13px] leading-[1.72] text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
+            <p className="mt-3.5 text-[13px] leading-[1.72] text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:text-zinc-400">
               {description}
             </p>
           </div>
@@ -188,11 +186,12 @@ function SystemCard({
 }
 
 export function System() {
+  const viewport = useRevealViewport();
   return (
     <section
       id="programs"
       data-conversion-zone="programs"
-      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(5.75rem,11vw,8rem)] pb-[clamp(6.5rem,14vw,10rem)] sm:pt-28 sm:pb-36 lg:pb-[9.5rem]"
+      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(5rem,10vw,7.25rem)] pb-[clamp(5.5rem,12vw,9rem)] sm:pt-28 sm:pb-36 lg:pb-[9.5rem]"
       aria-labelledby="system-heading"
     >
       <SectionContinuity />

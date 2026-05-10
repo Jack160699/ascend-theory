@@ -1,10 +1,10 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useRevealViewport } from "@/contexts/mobile-conversion";
 import {
   DURATION_OPACITY,
   SURFACE_SPRING,
-  VIEWPORT_CALM,
   fadeUp,
   fadeUpChild,
   gridStaggerParent,
@@ -15,8 +15,6 @@ import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useRef } from "react";
-
-const viewport = VIEWPORT_CALM;
 
 const principles: {
   n: string;
@@ -60,9 +58,11 @@ const principles: {
 function PrincipleRow({
   item,
   reversed,
+  viewport,
 }: {
   item: (typeof principles)[number];
   reversed: boolean;
+  viewport: { once: boolean; margin?: string };
 }) {
   const rootRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
@@ -124,12 +124,12 @@ function PrincipleRow({
         onMouseMove={onMove}
         onMouseLeave={onLeave}
         className="group relative h-full min-h-[14rem] overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.025] p-9 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:min-h-[16rem] sm:p-11"
-        whileHover={{ y: -3 }}
+        whileHover={{ y: -2 }}
         transition={SURFACE_SPRING}
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.85]"
           style={{
             background:
               "radial-gradient(520px circle at var(--gx, 50%) var(--gy, 50%), rgba(255,255,255,0.08), transparent 58%)",
@@ -188,11 +188,12 @@ function PrincipleRow({
 }
 
 export function Philosophy() {
+  const viewport = useRevealViewport();
   return (
     <section
       id="philosophy"
       data-conversion-zone="philosophy"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(6.5rem,12vw,9rem)] pb-[clamp(7rem,15vw,10.5rem)] sm:pt-32 sm:pb-40 lg:pt-[9.5rem] lg:pb-[10.5rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(5.5rem,11vw,8rem)] pb-[clamp(6rem,13vw,9.5rem)] sm:pt-32 sm:pb-40 lg:pt-[9.5rem] lg:pb-[10.5rem]"
       aria-labelledby="philosophy-heading"
     >
       <SectionContinuity top={false} />
@@ -242,7 +243,7 @@ export function Philosophy() {
 
           <motion.div
             variants={fadeUp}
-            className="mt-14 max-w-[34rem] space-y-7 border-l border-white/[0.09] pl-6 sm:pl-8 lg:mt-16"
+            className="mt-11 max-w-[34rem] space-y-6 border-l border-white/[0.09] pl-6 sm:mt-14 sm:space-y-7 sm:pl-8 lg:mt-16"
           >
             <p className="ascend-prose-lede text-pretty text-zinc-400">
               Most people already know what they should do.
@@ -277,7 +278,7 @@ export function Philosophy() {
         </motion.div>
 
         <motion.p
-          className="mt-20 max-w-[34rem] font-mono text-[10px] font-medium uppercase leading-relaxed tracking-[0.28em] text-zinc-600 sm:mt-24"
+          className="mt-14 max-w-[34rem] font-mono text-[10px] font-medium uppercase leading-relaxed tracking-[0.28em] text-zinc-600 sm:mt-24"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={viewport}
@@ -286,9 +287,14 @@ export function Philosophy() {
           Identity architecture — not conventional coaching
         </motion.p>
 
-        <div className="mt-16 max-w-5xl space-y-24 sm:mt-20 lg:mt-24 lg:space-y-32">
+        <div className="mt-12 max-w-5xl space-y-16 sm:mt-20 sm:space-y-24 lg:mt-24 lg:space-y-32">
           {principles.map((p, i) => (
-            <PrincipleRow key={p.n} item={p} reversed={i % 2 === 1} />
+            <PrincipleRow
+              key={p.n}
+              item={p}
+              reversed={i % 2 === 1}
+              viewport={viewport}
+            />
           ))}
         </div>
       </div>

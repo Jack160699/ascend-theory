@@ -70,7 +70,7 @@ export function Navbar() {
     <>
       <motion.header
         className={cn(
-          "fixed top-0 z-50 w-full transition-[background-color,backdrop-filter,border-color,box-shadow] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "fixed top-0 z-50 w-full transition-[background-color,backdrop-filter,border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           scrolled
             ? "border-b border-white/[0.06] bg-zinc-950/45 shadow-[0_12px_48px_-12px_rgba(0,0,0,0.65)] backdrop-blur-xl backdrop-saturate-150"
             : "border-b border-transparent bg-transparent",
@@ -85,7 +85,7 @@ export function Navbar() {
         >
           <Link
             href="/"
-            className="relative z-10 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-400 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:text-zinc-200"
+            className="relative z-10 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-400 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:text-zinc-300"
           >
             Ascend Theory
           </Link>
@@ -114,15 +114,15 @@ export function Navbar() {
                 href={item.href}
                 aria-label={"ariaLabel" in item ? item.ariaLabel : undefined}
                 className={cn(
-                  "group relative text-[13px] font-medium tracking-tight text-zinc-400 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
-                  "hover:text-white",
+                  "group relative text-[13px] font-medium tracking-tight text-zinc-400 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+                  "hover:text-zinc-200",
                 )}
               >
                 <span className="relative z-10">{item.label}</span>
                 <span
                   className={cn(
-                    "pointer-events-none absolute -inset-x-3 -inset-y-2 rounded-lg opacity-0 shadow-[0_0_40px_-2px_rgba(255,255,255,0.14)] transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
-                    "group-hover:opacity-100",
+                    "pointer-events-none absolute -inset-x-3 -inset-y-2 rounded-lg opacity-0 shadow-[0_0_40px_-2px_rgba(255,255,255,0.14)] transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+                    "group-hover:opacity-[0.72]",
                   )}
                   aria-hidden
                 />
@@ -132,8 +132,8 @@ export function Navbar() {
 
           <div className="relative z-10 flex items-center gap-3 sm:gap-4">
             <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.012 }}
+              whileTap={{ scale: 0.988 }}
               transition={TAP_SPRING}
             >
               <Link
@@ -163,7 +163,7 @@ export function Navbar() {
             <button
               type="button"
               className={cn(
-                "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.04] text-white backdrop-blur-md transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+                "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.04] text-white backdrop-blur-md transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
                 "hover:border-white/[0.16] hover:bg-white/[0.07] lg:hidden",
               )}
               aria-expanded={open}

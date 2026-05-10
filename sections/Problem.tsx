@@ -1,9 +1,9 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useRevealViewport } from "@/contexts/mobile-conversion";
 import {
   SURFACE_SPRING,
-  VIEWPORT_CALM,
   cardReveal,
   fadeUp,
   gridStaggerParent,
@@ -22,8 +22,6 @@ import {
   UserRound,
 } from "lucide-react";
 import { useRef } from "react";
-
-const viewport = VIEWPORT_CALM;
 
 const pains: {
   title: string;
@@ -102,14 +100,14 @@ function PainCard({ title, line, icon: Icon }: (typeof pains)[number]) {
         className={cn(
           "relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/[0.08]",
           "bg-white/[0.03] p-7 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-8",
-          "transition-[border-color,box-shadow] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "transition-[border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           "group-hover:border-white/[0.14] group-hover:shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85),0_0_60px_-20px_rgba(255,255,255,0.06)]",
         )}
         style={{ transformStyle: "preserve-3d" }}
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.88]"
           style={{
             background:
               "radial-gradient(520px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(255,255,255,0.1), transparent 58%)",
@@ -120,14 +118,14 @@ function PainCard({ title, line, icon: Icon }: (typeof pains)[number]) {
           aria-hidden
         />
         <div className="relative z-10 flex flex-col gap-5">
-          <div className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-zinc-950/40 text-zinc-400 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:border-white/[0.12] group-hover:text-zinc-200">
+          <div className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-zinc-950/40 text-zinc-400 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-white/[0.12] group-hover:text-zinc-200">
             <Icon className="size-[18px]" strokeWidth={1.35} />
           </div>
           <div>
             <h3 className="text-[15px] font-semibold leading-snug tracking-[-0.012em] text-white">
               {title}
             </h3>
-            <p className="mt-3 text-[13px] leading-[1.72] text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
+            <p className="mt-3 text-[13px] leading-[1.72] text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:text-zinc-400">
               {line}
             </p>
           </div>
@@ -138,11 +136,12 @@ function PainCard({ title, line, icon: Icon }: (typeof pains)[number]) {
 }
 
 export function Problem() {
+  const viewport = useRevealViewport();
   return (
     <section
       id="about"
       data-conversion-zone="tension"
-      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-28 pb-[clamp(6.5rem,14vw,9.5rem)] sm:pt-32 sm:pb-36 lg:pt-[7.75rem] lg:pb-[9.5rem]"
+      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-20 pb-[clamp(5.5rem,12vw,8.5rem)] sm:pt-32 sm:pb-36 lg:pt-[7.75rem] lg:pb-[9.5rem]"
       aria-labelledby="problem-heading"
     >
       <SectionContinuity />
@@ -192,11 +191,15 @@ export function Problem() {
               you is engineered to hold a higher standard — until you choose a
               private architecture that does.
             </p>
+            <p className="text-[13px] font-medium leading-relaxed text-zinc-400/95 sm:text-[14px] sm:leading-relaxed">
+              Manual intake is sequenced — reserved for individuals ready for
+              structured change, not curiosity loops.
+            </p>
           </motion.div>
         </motion.div>
 
         <motion.div
-          className="mt-20 grid w-full max-w-5xl grid-cols-1 gap-6 sm:mt-24 sm:grid-cols-2 lg:mt-28 lg:grid-cols-3 lg:gap-7 [perspective:1600px]"
+          className="mt-14 grid w-full max-w-5xl grid-cols-1 gap-5 sm:mt-24 sm:grid-cols-2 sm:gap-6 lg:mt-28 lg:grid-cols-3 lg:gap-7 [perspective:1600px]"
           variants={gridStaggerParent}
           initial="hidden"
           whileInView="visible"

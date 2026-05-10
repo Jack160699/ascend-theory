@@ -64,7 +64,7 @@ export const fadeUpChild: Variants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: txReveal(DURATION_REVEAL * 0.98),
+    transition: txReveal(DURATION_REVEAL * 0.96),
   },
 };
 
@@ -84,7 +84,7 @@ export const nodeRevealSoft: Variants = {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: txReveal(0.82),
+    transition: txReveal(0.9),
   },
 };
 
@@ -116,3 +116,90 @@ export const heroStaggerContainer: Variants = {
     },
   },
 };
+
+/** Hero typography / CTAs — wider cadence for cinematic orchestration. */
+export const heroStaggerCinematic: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.205,
+      delayChildren: 0.38,
+    },
+  },
+};
+
+/** Hero headline — first line (orchestrated lead-in). */
+export const heroLine1: Variants = {
+  hidden: { opacity: 0, y: RISE_Y * 0.55 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: txReveal(DURATION_REVEAL * 1.02, 0.4),
+  },
+};
+
+/** Hero headline — second line (slightly delayed for cinematic read). */
+export const heroLine2: Variants = {
+  hidden: { opacity: 0, y: RISE_Y * 0.45 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: txReveal(DURATION_REVEAL * 1.02, 0.64),
+  },
+};
+
+const HERO_MOBILE_FACTOR = 0.82;
+
+/** Shorter hero orchestration on mobile — cold traffic hooks faster, desktop unchanged. */
+export function getHeroStaggerCinematic(isMobile: boolean): Variants {
+  const k = isMobile ? HERO_MOBILE_FACTOR : 1;
+  return {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.205 * k,
+        delayChildren: 0.38 * k,
+      },
+    },
+  };
+}
+
+export function getHeroLine1(isMobile: boolean): Variants {
+  const k = isMobile ? HERO_MOBILE_FACTOR : 1;
+  const rise = isMobile ? RISE_Y * 0.48 : RISE_Y * 0.55;
+  return {
+    hidden: { opacity: 0, y: rise },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: txReveal(DURATION_REVEAL * 1.02 * k, 0.4 * k),
+    },
+  };
+}
+
+export function getHeroLine2(isMobile: boolean): Variants {
+  const k = isMobile ? HERO_MOBILE_FACTOR : 1;
+  const rise = isMobile ? RISE_Y * 0.4 : RISE_Y * 0.45;
+  return {
+    hidden: { opacity: 0, y: rise },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: txReveal(DURATION_REVEAL * 1.02 * k, 0.64 * k),
+    },
+  };
+}
+
+export function getFadeUpReveal(isMobile: boolean): Variants {
+  const k = isMobile ? 0.86 : 1;
+  return {
+    hidden: { opacity: 0, y: RISE_Y * (isMobile ? 0.88 : 1) },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: txReveal(DURATION_REVEAL * k),
+    },
+  };
+}

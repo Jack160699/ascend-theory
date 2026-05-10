@@ -1,20 +1,20 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { DURATION_REVEAL, RISE_Y, VIEWPORT_CALM, txReveal } from "@/lib/motion";
+import { useRevealViewport } from "@/contexts/mobile-conversion";
+import { DURATION_REVEAL, RISE_Y, txReveal } from "@/lib/motion";
 import { shellReading } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-const viewport = VIEWPORT_CALM;
-
 export function AssessmentEntry() {
+  const viewport = useRevealViewport();
   return (
     <section
       id="assessment"
       data-conversion-zone="assessment"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-28 sm:py-32 lg:py-36"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-20 sm:py-32 lg:py-36"
       aria-labelledby="assessment-heading"
     >
       <SectionContinuity />
@@ -55,8 +55,11 @@ export function AssessmentEntry() {
           moves slowly on purpose — alignment before allocation, never
           pressure.
         </motion.p>
+        <p className="mt-5 max-w-[34rem] text-[12px] font-medium uppercase leading-relaxed tracking-[0.18em] text-zinc-600 sm:mt-6 sm:text-[11px] sm:tracking-[0.2em]">
+          Mentor bandwidth stays capped — applications read in order.
+        </p>
         <motion.div
-          className="mt-12 sm:mt-14"
+          className="mt-10 sm:mt-14"
           initial={{ opacity: 0, y: RISE_Y * 0.9 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
@@ -66,7 +69,7 @@ export function AssessmentEntry() {
             href="#pricing"
             className={cn(
               "ascend-button-primary inline-flex min-h-12 items-center justify-center rounded-full bg-white px-8 text-sm font-medium tracking-tight text-zinc-950",
-              "transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+              "transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
             )}
           >
             Review allocation & continue

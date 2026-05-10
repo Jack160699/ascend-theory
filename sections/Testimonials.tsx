@@ -1,12 +1,12 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useRevealViewport } from "@/contexts/mobile-conversion";
 import {
   DURATION_OPACITY,
   DURATION_REVEAL,
   SURFACE_SPRING,
   STAGGER_TABLE_ROW,
-  VIEWPORT_CALM,
   fadeUp,
   fadeUpChild,
   headerStaggerParent,
@@ -26,8 +26,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-const viewport = VIEWPORT_CALM;
 
 /** Reference photography (Unsplash) — replace with member media when available. */
 const img = {
@@ -181,11 +179,11 @@ function BeforeAfterCard({
   return (
     <motion.div
       variants={fadeUpChild}
-      whileHover={{ y: -3 }}
+      whileHover={{ y: -2 }}
       transition={SURFACE_SPRING}
       className="group relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-7"
     >
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent opacity-40 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-60" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent opacity-40 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-52" />
       <p className="relative z-10 text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
         {name}
       </p>
@@ -197,7 +195,7 @@ function BeforeAfterCard({
               src={beforeSrc}
               alt="Reference before state"
               fill
-              className="object-cover transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.02]"
+              className="object-cover transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.008]"
               sizes="(max-width: 768px) 45vw, 280px"
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
@@ -212,7 +210,7 @@ function BeforeAfterCard({
               src={afterSrc}
               alt="Reference after state"
               fill
-              className="object-cover transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.02]"
+              className="object-cover transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.008]"
               sizes="(max-width: 768px) 45vw, 280px"
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
@@ -238,7 +236,7 @@ function MosaicTile({
   return (
     <motion.figure
       variants={fadeUpChild}
-      whileHover={{ y: -3, scale: 1.01 }}
+      whileHover={{ y: -2, scale: 1.006 }}
       transition={SURFACE_SPRING}
       className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-950/40 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]"
     >
@@ -247,7 +245,7 @@ function MosaicTile({
           src={src}
           alt={`Reference: ${label}`}
           fill
-          className="object-cover transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.02]"
+          className="object-cover transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.008]"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
@@ -297,17 +295,17 @@ function VideoStoryCard({
       className="group relative overflow-hidden rounded-[1.25rem] border border-white/[0.1] bg-black/50 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_40px_100px_-48px_rgba(0,0,0,0.85)] backdrop-blur-xl"
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      whileHover={{ scale: 1.01 }}
+      whileHover={{ scale: 1.006 }}
       transition={SURFACE_SPRING}
     >
-      <div className="pointer-events-none absolute -inset-px rounded-[1.25rem] opacity-0 blur-2xl transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100">
+      <div className="pointer-events-none absolute -inset-px rounded-[1.25rem] opacity-0 blur-2xl transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.82]">
         <div className="h-full w-full bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.15),transparent_65%)]" />
       </div>
       <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[2/1]">
         <video
           ref={videoRef}
           className={cn(
-            "absolute inset-0 h-full w-full object-cover transition-[opacity,filter] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+            "absolute inset-0 h-full w-full object-cover transition-[opacity,filter] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
             ready ? "opacity-100" : "opacity-0",
             active ? "brightness-[1.05]" : "brightness-[0.88]",
           )}
@@ -325,7 +323,7 @@ function VideoStoryCard({
             alt={`Video poster: ${title}`}
             fill
             className={cn(
-              "object-cover transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+              "object-cover transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
               ready && active ? "opacity-0" : "opacity-100",
             )}
             sizes="(max-width: 768px) 100vw, 33vw"
@@ -381,11 +379,12 @@ function VideoStoryCard({
 }
 
 export function Testimonials() {
+  const viewport = useRevealViewport();
   return (
     <section
       id="testimonials"
       data-conversion-zone="proof"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-28 sm:py-32 lg:py-[8.5rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-20 sm:py-32 lg:py-[8.5rem]"
       aria-labelledby="proof-heading"
     >
       <SectionContinuity />
@@ -502,7 +501,7 @@ export function Testimonials() {
                     src={src}
                     alt={`Physique reference frame ${i + 1}`}
                     fill
-                    className="object-cover transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.02]"
+                    className="object-cover transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.008]"
                     sizes="(max-width: 768px) 33vw, 240px"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -547,7 +546,7 @@ export function Testimonials() {
             <motion.figure
               key={q.tag}
               variants={fadeUpChild}
-              whileHover={{ y: -3 }}
+              whileHover={{ y: -2 }}
               transition={SURFACE_SPRING}
               className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-8"
             >

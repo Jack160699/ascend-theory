@@ -22,8 +22,8 @@ export function SectionContinuity({
       {top ? (
         <div
           className={cn(
-            "pointer-events-none absolute inset-x-0 top-0 z-[2] h-[min(5.25rem,11dvh)] sm:h-[min(6rem,12dvh)]",
-            "bg-gradient-to-b from-black/48 via-black/14 to-transparent",
+            "pointer-events-none absolute inset-x-0 top-0 z-[2] h-[min(7rem,15dvh)] sm:h-[min(7.5rem,15dvh)]",
+            "bg-gradient-to-b from-black/48 via-black/12 to-transparent",
             className,
           )}
           aria-hidden
@@ -32,8 +32,8 @@ export function SectionContinuity({
       {bottom ? (
         <div
           className={cn(
-            "pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[min(6.25rem,14dvh)] sm:h-[min(7.25rem,15dvh)]",
-            "bg-gradient-to-t from-black/44 via-black/12 to-transparent",
+            "pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[min(8rem,16dvh)] sm:h-[min(8.5rem,17dvh)]",
+            "bg-gradient-to-t from-black/44 via-black/11 to-transparent",
             className,
           )}
           aria-hidden

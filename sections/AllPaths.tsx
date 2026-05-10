@@ -1,11 +1,11 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useRevealViewport } from "@/contexts/mobile-conversion";
 import {
   DURATION_REVEAL,
   RISE_Y,
   STAGGER_TABLE_ROW,
-  VIEWPORT_CALM,
   fadeUp,
   headerStaggerParent,
   txReveal,
@@ -13,8 +13,6 @@ import {
 import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-
-const viewport = VIEWPORT_CALM;
 
 const rows: { label: string; core: string; pro: string; black: string }[] = [
   {
@@ -64,11 +62,12 @@ const rows: { label: string; core: string; pro: string; black: string }[] = [
 ];
 
 export function AllPaths() {
+  const viewport = useRevealViewport();
   return (
     <section
       id="paths"
       data-conversion-zone="allocate"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#030303] py-24 sm:py-30 lg:py-[8.5rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#030303] py-16 sm:py-30 lg:py-[8.5rem]"
       aria-labelledby="all-paths-heading"
     >
       <SectionContinuity />
@@ -155,7 +154,7 @@ export function AllPaths() {
                     <motion.tr
                       key={row.label}
                       className={cn(
-                        "border-b border-white/[0.04] transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+                        "border-b border-white/[0.04] transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
                         i % 2 === 0 ? "bg-white/[0.015]" : "bg-transparent",
                       )}
                       initial={{ opacity: 0, y: 6 }}

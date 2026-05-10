@@ -29,6 +29,8 @@ export const URGENCY_MESSAGES = [
   "Standards-first environment · selective entry",
   "Accountability architecture holds density caps",
   "Manual calibration — never automated acceptance",
+  "Manual intake active — review moves in order, not in hype cycles",
+  "Most people remain observers — this environment rewards execution",
 ] as const;
 
 const MOBILE_PHILOSOPHY_LINES = [
@@ -222,7 +224,7 @@ function StickyConversionBar({
                 href="#pricing"
                 className={cn(
                   "inline-flex h-11 min-h-11 shrink-0 items-center justify-center rounded-full bg-white px-5 text-center text-[11px] font-medium leading-snug tracking-tight text-zinc-950 sm:px-6 sm:text-xs",
-                  "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_12px_40px_-12px_rgba(255,255,255,0.2)] transition-shadow duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_16px_48px_-10px_rgba(255,255,255,0.28)]",
+                  "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_12px_40px_-12px_rgba(255,255,255,0.2)] transition-shadow duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_16px_48px_-10px_rgba(255,255,255,0.28)]",
                 )}
               >
                 <span className="max-w-[11rem] sm:max-w-none">{ctaLabel}</span>
@@ -238,7 +240,7 @@ function StickyConversionBar({
 function FloatingUrgencyPill({ message }: { message: string }) {
   return (
     <motion.div
-      className="pointer-events-none fixed bottom-[5.75rem] right-4 z-[55] hidden max-w-[14rem] sm:block lg:bottom-10 lg:right-8"
+      className="pointer-events-none fixed bottom-6 right-4 z-[55] hidden max-w-[14rem] sm:block lg:bottom-10 lg:right-8"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={txReveal(DURATION_REVEAL, 1.2)}

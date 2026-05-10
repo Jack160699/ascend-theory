@@ -2,11 +2,11 @@
 
 import { SectionContinuity } from "@/components/SectionContinuity";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
+import { useRevealViewport } from "@/contexts/mobile-conversion";
 import {
   DURATION_OPACITY,
   DURATION_REVEAL,
   TAP_SPRING,
-  VIEWPORT_CALM,
   fadeUp,
   headerStaggerParent,
   txReveal,
@@ -15,8 +15,6 @@ import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-
-const viewport = VIEWPORT_CALM;
 
 const ROTATING_LINES = [
   "Potential without structure becomes drift — quietly.",
@@ -45,6 +43,7 @@ function scrollToPaths() {
 }
 
 export function FinalDecisionCTA() {
+  const viewport = useRevealViewport();
   const { openAssessment } = useAssessmentModal();
   const [lineIndex, setLineIndex] = useState(0);
 
@@ -59,7 +58,7 @@ export function FinalDecisionCTA() {
     <section
       id="final-decision-cta"
       data-conversion-zone="final"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-24 sm:py-32 lg:py-40"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-16 sm:py-32 lg:py-40"
       aria-labelledby="final-decision-cta-heading"
     >
       <SectionContinuity />
@@ -67,7 +66,7 @@ export function FinalDecisionCTA() {
         <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
         <motion.div
           className="absolute left-1/2 top-[8%] h-[min(70vh,36rem)] w-[min(100%,52rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.07),transparent_68%)] blur-3xl"
-          animate={{ opacity: [0.35, 0.55, 0.38], scale: [1, 1.02, 1] }}
+          animate={{ opacity: [0.35, 0.52, 0.38], scale: [1, 1.008, 1] }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
@@ -191,8 +190,8 @@ export function FinalDecisionCTA() {
             className={cn(
               "ascend-button-primary inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white px-8 text-sm font-medium tracking-tight text-zinc-950 sm:w-auto sm:min-w-[14rem]",
             )}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.012 }}
+            whileTap={{ scale: 0.988 }}
             transition={TAP_SPRING}
           >
             Request Private Assessment
@@ -201,11 +200,11 @@ export function FinalDecisionCTA() {
             type="button"
             onClick={scrollToPaths}
             className={cn(
-              "ascend-button-ghost inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.03] px-8 text-sm font-medium tracking-tight text-zinc-200 backdrop-blur-sm transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:w-auto sm:min-w-[14rem]",
+              "ascend-button-ghost inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.03] px-8 text-sm font-medium tracking-tight text-zinc-200 backdrop-blur-sm transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:w-auto sm:min-w-[14rem]",
               "hover:border-white/[0.18] hover:bg-white/[0.06] hover:text-white",
             )}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.012 }}
+            whileTap={{ scale: 0.988 }}
             transition={TAP_SPRING}
           >
             Review Allocation & Depth

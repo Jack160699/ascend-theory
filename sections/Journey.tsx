@@ -1,11 +1,11 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useRevealViewport } from "@/contexts/mobile-conversion";
 import {
   DURATION_LINE,
   EASE_CINEMATIC,
   SURFACE_SPRING,
-  VIEWPORT_CALM,
   fadeUp,
   headerStaggerParent,
   lineDrawHorizontal,
@@ -17,8 +17,6 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { ClipboardPenLine, Map, Phone, Sparkles, Users } from "lucide-react";
-
-const viewport = VIEWPORT_CALM;
 
 const stages: {
   step: string;
@@ -82,12 +80,12 @@ function StageNode({
       <div
         className={cn(
           "relative rounded-[1.35rem] border border-white/[0.09] bg-white/[0.03] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl",
-          "transition-[border-color,box-shadow] duration-500",
+          "transition-[border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           "group-hover:border-white/[0.16] group-hover:shadow-[0_28px_80px_-48px_rgba(0,0,0,0.88),0_0_48px_-16px_rgba(255,255,255,0.07)]",
         )}
       >
         <div
-          className="pointer-events-none absolute inset-0 rounded-[1.35rem] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 rounded-[1.35rem] opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.88]"
           style={{
             background:
               "radial-gradient(400px circle at 50% 0%, rgba(255,255,255,0.08), transparent 55%)",
@@ -107,12 +105,12 @@ function StageNode({
             ) : null}
             <motion.div
               className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:border-white/[0.14] group-hover:text-white",
+                "flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-white/[0.14] group-hover:text-white",
                 isHorizontal && "ml-auto",
               )}
               animate={{ y: [0, -2, 0] }}
               transition={{
-                duration: 4.2,
+                duration: 5.2,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
@@ -124,7 +122,7 @@ function StageNode({
             <h3 className="text-[15px] font-semibold leading-snug tracking-[-0.012em] text-white">
               {title}
             </h3>
-            <p className="mt-3 text-[13px] leading-[1.72] text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
+            <p className="mt-3 text-[13px] leading-[1.72] text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:text-zinc-400">
               {description}
             </p>
           </div>
@@ -138,7 +136,7 @@ function StageNode({
       <motion.div
         variants={nodeRevealSoft}
         className={cn("group relative", className)}
-        whileHover={{ y: -3 }}
+        whileHover={{ y: -2 }}
         transition={SURFACE_SPRING}
       >
         {body}
@@ -149,7 +147,7 @@ function StageNode({
   return (
     <motion.div
       className={cn("group relative", className)}
-      whileHover={{ y: -3 }}
+      whileHover={{ y: -2 }}
       transition={SURFACE_SPRING}
     >
       {body}
@@ -158,11 +156,12 @@ function StageNode({
 }
 
 export function Journey() {
+  const viewport = useRevealViewport();
   return (
     <section
       id="journey"
       data-conversion-zone="journey"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-28 pb-24 sm:pt-32 sm:pb-28 lg:py-36"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-20 pb-16 sm:pt-32 sm:pb-28 lg:py-36"
       aria-labelledby="journey-heading"
     >
       <SectionContinuity />
@@ -173,7 +172,7 @@ export function Journey() {
         <div className="absolute bottom-[15%] left-1/2 h-72 w-[min(90%,48rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05),transparent_70%)] blur-3xl" />
         <motion.div
           className="absolute left-[20%] top-[18%] h-64 w-64 rounded-full bg-zinc-400/[0.035] blur-[95px]"
-          animate={{ opacity: [0.4, 0.65, 0.4], scale: [1, 1.02, 1] }}
+          animate={{ opacity: [0.4, 0.58, 0.4], scale: [1, 1.008, 1] }}
           transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
         />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.52)_78%)]" />
@@ -210,7 +209,7 @@ export function Journey() {
         </motion.div>
 
         {/* Mobile: vertical timeline */}
-        <div className="relative mx-auto mt-20 max-w-lg lg:hidden">
+        <div className="relative mx-auto mt-14 max-w-lg lg:hidden">
           <div
             className="absolute bottom-6 left-[19px] top-6 w-px bg-gradient-to-b from-white/[0.12] via-zinc-500/25 to-white/[0.08]"
             aria-hidden
@@ -228,7 +227,7 @@ export function Journey() {
             aria-hidden
           />
           <motion.ul
-            className="relative flex list-none flex-col gap-12 p-0"
+            className="relative flex list-none flex-col gap-9 p-0 sm:gap-12"
             variants={listStaggerParent}
             initial="hidden"
             whileInView="visible"

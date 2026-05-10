@@ -3,12 +3,12 @@
 import { SectionContinuity } from "@/components/SectionContinuity";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
+import { useRevealViewport } from "@/contexts/mobile-conversion";
 import {
   DURATION_OPACITY,
   DURATION_REVEAL,
   SURFACE_SPRING,
   TAP_SPRING,
-  VIEWPORT_CALM,
   cardReveal,
   fadeUp,
   gridStaggerParent,
@@ -21,8 +21,6 @@ import type { TierKey } from "@/lib/lead-context";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useRef } from "react";
-
-const viewport = VIEWPORT_CALM;
 
 const tiers: {
   key: TierKey;
@@ -96,7 +94,11 @@ const tiers: {
   },
 ];
 
-function PricingCapacityRibbon() {
+function PricingCapacityRibbon({
+  viewport,
+}: {
+  viewport: { once: boolean; margin?: string };
+}) {
   const conv = useConversionExperienceOptional();
   const msg = conv?.urgencyMessage;
   if (!msg) return null;
@@ -183,12 +185,12 @@ function PricingCard({
         key === "black" &&
           "ring-1 ring-amber-950/25 lg:opacity-[0.99] lg:shadow-[0_0_100px_-48px_rgba(160,120,70,0.12)]",
       )}
-      whileHover={{ y: key === "pro" ? -5 : key === "black" ? -4 : -3 }}
+      whileHover={{ y: key === "pro" ? -3 : key === "black" ? -2.5 : -2 }}
       transition={SURFACE_SPRING}
     >
       <div
         className={cn(
-          "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100",
+          "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.82]",
           key === "pro" &&
             "bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.2),transparent_62%)]",
           key === "core" &&
@@ -199,7 +201,7 @@ function PricingCard({
       />
       <div
         className={cn(
-          "relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           key === "core" &&
             "border-white/[0.09] bg-white/[0.025] p-7 group-hover:border-white/[0.14] group-hover:shadow-[0_28px_90px_-48px_rgba(0,0,0,0.88)]",
           key === "pro" &&
@@ -210,7 +212,7 @@ function PricingCard({
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.9]"
           style={{ background: glowSpot }}
         />
         <motion.div
@@ -374,15 +376,15 @@ function PricingCard({
             type="button"
             onClick={() => onOpenAssessment(tier.key)}
             className={cn(
-              "mt-9 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium tracking-tight transition-[box-shadow,transform,color,border-color,background-color] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-10",
+              "mt-9 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium tracking-tight transition-[box-shadow,transform,color,border-color,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:mt-10",
               key === "pro" && "ascend-button-primary bg-white text-zinc-950",
               key === "core" &&
                 "ascend-button-ghost border border-white/[0.12] bg-white/[0.05] text-white hover:border-white/[0.2] hover:bg-white/[0.09]",
               key === "black" &&
                 "ascend-button-ghost border border-zinc-700/80 bg-zinc-950/80 text-zinc-200 hover:border-amber-950/40 hover:bg-zinc-900/90 hover:text-white",
             )}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.012 }}
+            whileTap={{ scale: 0.988 }}
             transition={TAP_SPRING}
           >
             {tier.cta}
@@ -394,13 +396,14 @@ function PricingCard({
 }
 
 export function Pricing() {
+  const viewport = useRevealViewport();
   const { openAssessment } = useAssessmentModal();
 
   return (
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-30 lg:py-[8.75rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-16 sm:py-30 lg:py-[8.75rem]"
       aria-labelledby="pricing-heading"
     >
       <SectionContinuity />
@@ -466,7 +469,7 @@ export function Pricing() {
           <p>Identity-grade seriousness — not mass-market coaching.</p>
         </motion.div>
 
-        <PricingCapacityRibbon />
+        <PricingCapacityRibbon viewport={viewport} />
 
         <motion.div
           className="relative mx-auto mt-14 max-w-6xl sm:mt-16 lg:mt-20"

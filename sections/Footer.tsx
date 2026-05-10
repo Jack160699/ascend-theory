@@ -14,7 +14,7 @@ export function Footer() {
   return (
     <footer
       id="site-footer"
-      className="ascend-section-world relative overflow-hidden border-t border-white/[0.045] bg-black px-6 py-20 sm:px-10 sm:py-[5.5rem] lg:pl-14 lg:pr-12 lg:py-24"
+      className="ascend-section-world relative overflow-hidden border-t border-white/[0.045] bg-black px-6 py-14 sm:px-10 sm:py-[5.5rem] lg:pl-14 lg:pr-12 lg:py-24"
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#050505]/45 via-transparent to-transparent"

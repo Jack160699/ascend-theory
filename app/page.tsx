@@ -1,9 +1,9 @@
 import { AscendFilmGrain } from "@/components/AscendFilmGrain";
 import { CursorAmbientLight } from "@/components/CursorAmbientLight";
-import { TransformationConcierge } from "@/components/TransformationConcierge";
 import { TransformationGate } from "@/components/TransformationGate";
 import { AssessmentModalProvider } from "@/contexts/assessment-modal";
 import { ConversionExperienceProvider } from "@/contexts/conversion-experience";
+import { MobileConversionProvider } from "@/contexts/mobile-conversion";
 import { AllPaths } from "@/sections/AllPaths";
 import { AssessmentEntry } from "@/sections/AssessmentEntry";
 import { FinalDecisionCTA } from "@/sections/FinalDecisionCTA";
@@ -21,24 +21,25 @@ export default function Home() {
   return (
     <ConversionExperienceProvider>
       <AssessmentModalProvider>
-        <TransformationGate />
-        <main className="ascend-main-depth min-h-screen overflow-x-clip bg-black pb-40 text-white antialiased sm:pb-36">
-          <AscendFilmGrain />
-          <CursorAmbientLight />
-          <Hero />
-          <Philosophy />
-          <Problem />
-          <System />
-          <Journey />
-          <MentorshipDepth />
-          <Pricing />
-          <Testimonials />
-          <AssessmentEntry />
-          <FinalDecisionCTA />
-          <AllPaths />
-        </main>
-        <Footer />
-        <TransformationConcierge />
+        <MobileConversionProvider>
+          <TransformationGate />
+          <main className="ascend-main-depth min-h-screen overflow-x-clip bg-black pb-28 text-white antialiased sm:pb-32">
+            <AscendFilmGrain />
+            <CursorAmbientLight />
+            <Hero />
+            <Philosophy />
+            <Problem />
+            <System />
+            <Journey />
+            <MentorshipDepth />
+            <Pricing />
+            <Testimonials />
+            <AssessmentEntry />
+            <FinalDecisionCTA />
+            <AllPaths />
+          </main>
+          <Footer />
+        </MobileConversionProvider>
       </AssessmentModalProvider>
     </ConversionExperienceProvider>
   );

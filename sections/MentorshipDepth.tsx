@@ -1,11 +1,11 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useRevealViewport } from "@/contexts/mobile-conversion";
 import {
   DURATION_REVEAL,
   RISE_Y_CARD,
   STAGGER_LIST,
-  VIEWPORT_CALM,
   fadeUp,
   headerStaggerParent,
   txReveal,
@@ -14,8 +14,6 @@ import { leadRight, shellNarrow } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useRef } from "react";
-
-const viewport = VIEWPORT_CALM;
 
 const depthLevels: {
   key: string;
@@ -68,9 +66,11 @@ const depthLevels: {
 function DepthCard({
   item,
   index,
+  viewport,
 }: {
   item: (typeof depthLevels)[number];
   index: number;
+  viewport: { once: boolean; margin?: string };
 }) {
   const rootRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
@@ -110,7 +110,7 @@ function DepthCard({
     >
       <div
         className={cn(
-          "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100",
+          "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.85]",
           item.key === "private" &&
             "bg-[radial-gradient(ellipse_at_50%_0%,rgba(180,150,110,0.12),transparent_65%)]",
           item.key === "high" &&
@@ -128,7 +128,7 @@ function DepthCard({
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.88]"
           style={{
             background:
               "radial-gradient(640px circle at var(--dx, 50%) var(--dy, 50%), rgba(255,255,255,0.08), transparent 58%)",
@@ -169,11 +169,12 @@ function DepthCard({
 }
 
 export function MentorshipDepth() {
+  const viewport = useRevealViewport();
   return (
     <section
       id="mentorship-depth"
       data-conversion-zone="mentorship"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-[clamp(6.25rem,14vw,9.5rem)] sm:py-32 lg:py-[9rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-[clamp(5.25rem,12vw,8.5rem)] sm:py-32 lg:py-[9rem]"
       aria-labelledby="mentorship-depth-heading"
     >
       <SectionContinuity />
@@ -239,7 +240,7 @@ export function MentorshipDepth() {
           />
           <div className="space-y-14 sm:space-y-16 lg:space-y-20 lg:pl-10">
             {depthLevels.map((item, i) => (
-              <DepthCard key={item.key} item={item} index={i} />
+              <DepthCard key={item.key} item={item} index={i} viewport={viewport} />
             ))}
           </div>
         </div>
