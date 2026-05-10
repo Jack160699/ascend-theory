@@ -101,7 +101,7 @@ function PricingCapacityRibbon({
   if (!msg) return null;
   return (
     <motion.div
-      className="ascend-surface-soft mt-10 max-w-2xl rounded-full px-5 py-2.5 text-left sm:mt-12"
+      className="ascend-surface-soft mt-7 max-w-2xl rounded-full px-5 py-2.5 text-left sm:mt-10"
       initial={{ opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewport}
@@ -202,11 +202,11 @@ function PricingCard({
         className={cn(
           "relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           key === "core" &&
-            "border-white/[0.09] bg-white/[0.025] p-7 group-hover:border-white/[0.14] group-hover:shadow-[0_28px_90px_-48px_rgba(0,0,0,0.88)]",
+            "border-white/[0.09] bg-white/[0.025] p-5 group-hover:border-white/[0.14] group-hover:shadow-[0_28px_90px_-48px_rgba(0,0,0,0.88)] sm:p-7",
           key === "pro" &&
-            "border-white/[0.2] bg-white/[0.06] p-7 shadow-[0_34px_95px_-52px_rgba(0,0,0,0.88),0_0_90px_-28px_rgba(255,255,255,0.12)] group-hover:border-white/[0.24] group-hover:shadow-[0_48px_120px_-56px_rgba(0,0,0,0.92),0_0_110px_-24px_rgba(255,255,255,0.14)] sm:p-8 lg:p-9",
+            "border-white/[0.2] bg-white/[0.06] p-5 shadow-[0_34px_95px_-52px_rgba(0,0,0,0.88),0_0_90px_-28px_rgba(255,255,255,0.12)] group-hover:border-white/[0.24] group-hover:shadow-[0_48px_120px_-56px_rgba(0,0,0,0.92),0_0_110px_-24px_rgba(255,255,255,0.14)] sm:p-7 lg:p-9",
           key === "black" &&
-            "border-amber-950/20 bg-gradient-to-b from-zinc-950/95 via-[#030303] to-black p-7 group-hover:border-amber-900/35 group-hover:shadow-[0_40px_120px_-52px_rgba(0,0,0,0.95),0_0_72px_-24px_rgba(180,150,100,0.08)] lg:p-8",
+            "border-amber-950/20 bg-gradient-to-b from-zinc-950/95 via-[#030303] to-black p-5 group-hover:border-amber-900/35 group-hover:shadow-[0_40px_120px_-52px_rgba(0,0,0,0.95),0_0_72px_-24px_rgba(180,150,100,0.08)] sm:p-7 lg:p-8",
         )}
       >
         <div
@@ -283,11 +283,11 @@ function PricingCard({
             ) : null}
           </div>
 
-          <p className="mt-4 text-[13px] leading-relaxed text-zinc-400">
+          <p className="mt-3 text-[13px] leading-relaxed text-zinc-400">
             {tier.purpose}
           </p>
 
-          <div className="mt-6 border-t border-white/[0.06] pt-6">
+          <div className="mt-5 border-t border-white/[0.06] pt-5">
             {tier.priceLead ? (
               <p className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.26em] text-zinc-600">
                 {tier.priceLead}
@@ -325,7 +325,7 @@ function PricingCard({
             )}
           </div>
 
-          <ul className="mt-7 flex flex-1 flex-col gap-3 sm:mt-8">
+          <ul className="mt-5 flex flex-1 flex-col gap-2 sm:mt-6 sm:gap-2.5">
             {tier.features.map((f) => (
               <li
                 key={f}
@@ -364,7 +364,7 @@ function PricingCard({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={txReveal(DURATION_OPACITY)}
-                className="mt-6 border-t border-white/[0.06] pt-4 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600"
+                className="mt-4 border-t border-white/[0.06] pt-3 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600"
               >
                 {slotLine}
               </motion.p>
@@ -375,7 +375,7 @@ function PricingCard({
             type="button"
             onClick={() => onOpenAssessment(tier.key)}
             className={cn(
-              "mt-9 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium tracking-tight transition-[box-shadow,transform,color,border-color,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:mt-10",
+              "mt-6 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium tracking-tight transition-[box-shadow,transform,color,border-color,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:mt-8",
               key === "pro" && "ascend-button-primary bg-white text-zinc-950",
               key === "core" &&
                 "ascend-button-ghost border border-white/[0.12] bg-white/[0.05] text-white hover:border-white/[0.2] hover:bg-white/[0.09]",
@@ -413,7 +413,7 @@ export function Pricing() {
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-16 sm:py-30 lg:py-[8.75rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-12 sm:py-24 lg:py-[8.75rem]"
       aria-labelledby="pricing-heading"
     >
       <SectionContinuity />
@@ -441,7 +441,7 @@ export function Pricing() {
         >
           <motion.p
             variants={fadeMain}
-            className="ascend-type-eyebrow mb-5 text-zinc-500 sm:mb-6"
+            className="ascend-type-eyebrow mb-4 text-zinc-500 sm:mb-5"
           >
             Pricing
           </motion.p>
@@ -454,7 +454,7 @@ export function Pricing() {
           </motion.h2>
           <motion.p
             variants={fadeMain}
-            className="ascend-prose-calm mt-8 max-w-[34rem] text-pretty text-zinc-500 sm:mt-9"
+            className="ascend-prose-calm mt-6 max-w-[34rem] text-pretty text-zinc-500 sm:mt-8"
           >
             Same philosophy on every tier. What changes is mentor proximity,
             how fast we respond, and how private the calibration can go.
@@ -462,7 +462,7 @@ export function Pricing() {
         </motion.div>
 
         <motion.div
-          className="mt-9 max-w-2xl space-y-2 text-left text-[12px] leading-[1.72] text-zinc-600 sm:mt-10 sm:text-[13px] sm:leading-[1.75]"
+          className="mt-6 max-w-2xl space-y-2 text-left text-[12px] leading-[1.72] text-zinc-600 sm:mt-8 sm:text-[13px] sm:leading-[1.75]"
           variants={fadeMain}
           initial="hidden"
           whileInView="visible"
@@ -475,7 +475,7 @@ export function Pricing() {
         <PricingCapacityRibbon viewport={viewport} />
 
         <motion.div
-          className="relative mx-auto mt-14 max-w-6xl sm:mt-16 lg:mt-20"
+          className="relative mx-auto mt-10 max-w-6xl sm:mt-12 lg:mt-16"
           variants={gridStagger}
           initial="hidden"
           whileInView="visible"
@@ -485,7 +485,7 @@ export function Pricing() {
             className="pointer-events-none absolute left-[10%] right-[10%] top-[42%] hidden h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent lg:block"
             aria-hidden
           />
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:items-end lg:gap-5 xl:gap-8">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:items-end lg:gap-4 xl:gap-6">
             <div className="relative order-2 lg:order-1 lg:pb-10">
               <p className="mb-3 hidden text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block lg:pl-1">
                 I — Foundation access
@@ -523,7 +523,7 @@ export function Pricing() {
         </motion.div>
 
         <motion.div
-          className="mt-12 max-w-2xl space-y-3 text-left text-[13px] leading-[1.72] text-zinc-500 sm:mt-16 sm:leading-[1.75] lg:pl-1"
+          className="mt-9 max-w-2xl space-y-2.5 text-left text-[13px] leading-[1.72] text-zinc-500 sm:mt-12 sm:leading-[1.75] lg:pl-1"
           variants={fadeMain}
           initial="hidden"
           whileInView="visible"

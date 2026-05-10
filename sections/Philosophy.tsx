@@ -1,5 +1,6 @@
 "use client";
 
+import { EditorialImageStrip } from "@/components/EditorialImageStrip";
 import { SectionContinuity } from "@/components/SectionContinuity";
 import {
   useIsMobileConversion,
@@ -14,6 +15,7 @@ import {
   getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { EDITORIAL_PLACEHOLDERS } from "@/lib/editorial-placeholders";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion, type Variants } from "framer-motion";
@@ -106,7 +108,7 @@ function PrincipleRow({
         reversed ? "lg:pl-4" : "lg:pr-4",
       )}
     >
-      <div className="mb-5 flex items-baseline gap-4">
+      <div className="mb-3 flex items-baseline gap-3 sm:mb-5 sm:gap-4">
         <span className="font-mono text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-600">
           {item.n}
         </span>
@@ -118,7 +120,7 @@ function PrincipleRow({
       <h3 className="text-balance font-sans text-2xl font-semibold tracking-[-0.032em] text-white sm:text-3xl lg:text-[2rem] lg:leading-[1.1]">
         {item.title}
       </h3>
-      <div className="mt-7 space-y-3.5 text-pretty text-[15px] leading-[1.78] text-zinc-500 sm:text-base sm:leading-[1.8]">
+      <div className="mt-5 space-y-2.5 text-pretty text-[15px] leading-[1.72] text-zinc-500 sm:mt-7 sm:space-y-3.5 sm:text-base sm:leading-[1.8]">
         {item.body.map((line) => (
           <p key={line}>{line}</p>
         ))}
@@ -129,13 +131,13 @@ function PrincipleRow({
   const visualBlock = (
     <motion.div
       variants={fadeUpChildVariants}
-      className="relative min-h-[14rem]"
+      className="relative min-h-[11.5rem] sm:min-h-[14rem]"
     >
       <motion.article
         ref={rootRef}
         onMouseMove={onMove}
         onMouseLeave={onLeave}
-        className="group relative h-full min-h-[14rem] overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.025] p-9 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:min-h-[16rem] sm:p-11"
+        className="group relative h-full min-h-[11.5rem] overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.025] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:min-h-[16rem] sm:p-9 lg:p-11"
         whileHover={{ y: -2 }}
         transition={SURFACE_SPRING}
       >
@@ -182,7 +184,7 @@ function PrincipleRow({
       initial="hidden"
       whileInView="visible"
       viewport={viewport}
-      className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-x-16 lg:gap-y-20 xl:gap-x-20"
+      className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-x-12 lg:gap-y-14 xl:gap-x-16"
     >
       {reversed ? (
         <>
@@ -213,7 +215,7 @@ export function Philosophy() {
     <section
       id="philosophy"
       data-conversion-zone="philosophy"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(5.5rem,11vw,8rem)] pb-[clamp(6rem,13vw,9.5rem)] sm:pt-32 sm:pb-40 lg:pt-[9.5rem] lg:pb-[10.5rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(4rem,9vw,6.5rem)] pb-[clamp(4.5rem,10vw,8rem)] sm:pt-24 sm:pb-32 lg:pt-[9.5rem] lg:pb-[10.5rem]"
       aria-labelledby="philosophy-heading"
     >
       <SectionContinuity top={false} />
@@ -249,7 +251,7 @@ export function Philosophy() {
         >
           <motion.p
             variants={fadeMain}
-            className="ascend-type-eyebrow mb-7 text-zinc-500 lg:mb-8"
+            className="ascend-type-eyebrow mb-5 text-zinc-500 sm:mb-7 lg:mb-8"
           >
             How we think
           </motion.p>
@@ -263,7 +265,7 @@ export function Philosophy() {
 
           <motion.div
             variants={fadeMain}
-            className="mt-11 max-w-[34rem] space-y-6 border-l border-white/[0.09] pl-6 sm:mt-14 sm:space-y-7 sm:pl-8 lg:mt-16"
+            className="mt-8 max-w-[34rem] space-y-4 border-l border-white/[0.09] pl-5 sm:mt-11 sm:space-y-6 sm:pl-7 lg:mt-14 lg:space-y-7 lg:pl-8"
           >
             <p className="ascend-prose-lede text-pretty text-zinc-400">
               You already know what to do. The gap is follow-through.
@@ -297,8 +299,22 @@ export function Philosophy() {
           </motion.div>
         </motion.div>
 
+        <motion.div
+          className="mt-8 w-full max-w-5xl sm:mt-12"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={viewport}
+          transition={txReveal(DURATION_OPACITY, 0.05)}
+        >
+          <EditorialImageStrip
+            src={EDITORIAL_PLACEHOLDERS.silhouette}
+            alt="Presence and identity — placeholder reference"
+            caption="Identity · presence — reference frame"
+          />
+        </motion.div>
+
         <motion.p
-          className="mt-14 max-w-[34rem] font-mono text-[10px] font-medium uppercase leading-relaxed tracking-[0.28em] text-zinc-600 sm:mt-24"
+          className="mt-8 max-w-[34rem] font-mono text-[10px] font-medium uppercase leading-relaxed tracking-[0.28em] text-zinc-600 sm:mt-14"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={viewport}
@@ -307,7 +323,7 @@ export function Philosophy() {
           One system — not a course catalog.
         </motion.p>
 
-        <div className="mt-12 max-w-5xl space-y-16 sm:mt-20 sm:space-y-24 lg:mt-24 lg:space-y-32">
+        <div className="mt-10 max-w-5xl space-y-10 sm:mt-14 sm:space-y-14 lg:mt-16 lg:space-y-20">
           {principles.map((p, i) => (
             <PrincipleRow
               key={p.n}

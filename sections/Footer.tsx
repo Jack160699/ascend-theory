@@ -14,13 +14,13 @@ export function Footer() {
   return (
     <footer
       id="site-footer"
-      className="ascend-section-world relative overflow-hidden border-t border-white/[0.045] bg-black px-6 py-14 sm:px-10 sm:py-[5.5rem] lg:pl-14 lg:pr-12 lg:py-24"
+      className="ascend-section-world relative overflow-hidden border-t border-white/[0.045] bg-black px-6 py-10 sm:px-10 sm:py-16 lg:pl-14 lg:pr-12 lg:py-22"
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#050505]/45 via-transparent to-transparent"
         aria-hidden
       />
-      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-12 sm:flex-row sm:items-end sm:justify-between lg:gap-14">
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between sm:gap-10 lg:gap-12">
         <div className="max-w-sm">
           <p className="ascend-type-eyebrow text-zinc-500">Ascend Theory</p>
           <p className="mt-4 text-sm leading-[1.72] text-zinc-600 sm:leading-[1.75]">

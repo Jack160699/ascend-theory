@@ -5,10 +5,6 @@ import {
   buildWhatsAppTierAssessmentUrl,
   formatLeadContextForBot,
   formatLeadSummary,
-  type AssessmentRecommendationBlock,
-  type BlackAssessmentAnswers,
-  type CoreAssessmentAnswers,
-  type ProAssessmentAnswers,
   type TierKey,
   type TierLeadAssessment,
   toTierLeadPayload,
@@ -22,10 +18,9 @@ import {
 import {
   interpretAssessment,
   recommendationForStorage,
-  type RecommendationOutput,
 } from "@/lib/recommendation-engine";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 const inputClass = cn(
@@ -42,19 +37,17 @@ type Props = {
   onClose: () => void;
 };
 
-type Phase = "form" | "processing" | "interpretation";
-
-const emptyCore: CoreAssessmentAnswers = {
+const emptyCore = {
   fullName: "",
   struggle: "",
   goal: "",
 };
-const emptyPro: ProAssessmentAnswers = {
+const emptyPro = {
   fullName: "",
   misaligned: "",
   transformation: "",
 };
-const emptyBlack: BlackAssessmentAnswers = {
+const emptyBlack = {
   fullName: "",
   transformationLevel: "",
   whyPrivate: "",
@@ -62,9 +55,9 @@ const emptyBlack: BlackAssessmentAnswers = {
 
 function validate(
   tier: TierKey,
-  core: CoreAssessmentAnswers,
-  pro: ProAssessmentAnswers,
-  black: BlackAssessmentAnswers,
+  core: typeof emptyCore,
+  pro: typeof emptyPro,
+  black: typeof emptyBlack,
 ): string | null {
   if (tier === "core") {
     if (!core.fullName.trim()) return "Add your full name.";
@@ -87,9 +80,7 @@ function validate(
   return null;
 }
 
-function toRecommendationBlock(
-  rec: RecommendationOutput,
-): AssessmentRecommendationBlock {
+function toRecommendationBlock(rec: ReturnType<typeof interpretAssessment>) {
   return {
     recommendedTier: rec.recommendedTier,
     headline: rec.headline,
@@ -100,16 +91,13 @@ function toRecommendationBlock(
 }
 
 export function AssessmentModal({ tier, open, onClose }: Props) {
-  const [phase, setPhase] = useState<Phase>("form");
   const [core, setCore] = useState(emptyCore);
   const [pro, setPro] = useState(emptyPro);
   const [black, setBlack] = useState(emptyBlack);
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [pendingLead, setPendingLead] = useState<TierLeadAssessment | null>(
-    null,
-  );
-  const [recommendation, setRecommendation] =
-    useState<RecommendationOutput | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -130,34 +118,29 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    // This effect intentionally resets form state when modal context changes.
     if (!open) {
-      setPhase("form");
-      setPendingLead(null);
-      setRecommendation(null);
+      setIsSubmitting(false);
       return;
     }
     setCore(emptyCore);
     setPro(emptyPro);
     setBlack(emptyBlack);
+    setPhone("");
+    setEmail("");
     setError(null);
-    setPhase("form");
-    setPendingLead(null);
-    setRecommendation(null);
+    setIsSubmitting(false);
   }, [open, tier]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  useEffect(() => {
-    if (phase !== "processing" || !pendingLead) return;
-    const id = window.setTimeout(() => {
-      setRecommendation(interpretAssessment(pendingLead));
-      setPhase("interpretation");
-    }, 2000);
-    return () => window.clearTimeout(id);
-  }, [phase, pendingLead]);
-
   const buildLead = useCallback((): TierLeadAssessment | null => {
     if (!tier) return null;
+    const contact =
+      phone.trim() || email.trim()
+        ? {
+            ...(phone.trim() ? { phone: phone.trim() } : {}),
+            ...(email.trim() ? { email: email.trim() } : {}),
+          }
+        : {};
     if (tier === "core") {
       return {
         tier: "core",
@@ -165,6 +148,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
           fullName: core.fullName.trim(),
           struggle: core.struggle.trim(),
           goal: core.goal.trim(),
+          ...contact,
         },
       };
     }
@@ -175,6 +159,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
           fullName: pro.fullName.trim(),
           misaligned: pro.misaligned.trim(),
           transformation: pro.transformation.trim(),
+          ...contact,
         },
       };
     }
@@ -184,12 +169,13 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
         fullName: black.fullName.trim(),
         transformationLevel: black.transformationLevel.trim(),
         whyPrivate: black.whyPrivate.trim(),
+        ...contact,
       },
     };
-  }, [tier, core, pro, black]);
+  }, [tier, core, pro, black, phone, email]);
 
   const submitForm = useCallback(() => {
-    if (!tier) return;
+    if (!tier || isSubmitting) return;
     const err = validate(tier, core, pro, black);
     if (err) {
       setError(err);
@@ -198,23 +184,18 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
     const lead = buildLead();
     if (!lead) return;
     setError(null);
-    setPendingLead(lead);
-    setPhase("processing");
-  }, [tier, core, pro, black, buildLead]);
+    setIsSubmitting(true);
 
-  const goWhatsApp = useCallback(() => {
-    if (!pendingLead || !recommendation) return;
+    const recommendation = interpretAssessment(lead);
     const block = toRecommendationBlock(recommendation);
-    const payload = toTierLeadPayload(pendingLead, block);
+    const payload = toTierLeadPayload(lead, block);
+
     try {
       sessionStorage.setItem(
         "ascend:leadContext:v3",
         formatLeadContextForBot(payload),
       );
-      sessionStorage.setItem(
-        "ascend:leadSummary:v3",
-        formatLeadSummary(pendingLead),
-      );
+      sessionStorage.setItem("ascend:leadSummary:v3", formatLeadSummary(lead));
       sessionStorage.setItem(
         "ascend:recommendation:v1",
         JSON.stringify(recommendationForStorage(recommendation)),
@@ -222,16 +203,19 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
     } catch {
       /* ignore */
     }
-    const url = buildWhatsAppTierAssessmentUrl(pendingLead, block);
+
+    const url = buildWhatsAppTierAssessmentUrl(lead, block);
     if (!url) {
+      setIsSubmitting(false);
       setError(
         "WhatsApp is not configured. Set NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER.",
       );
       return;
     }
+
     onClose();
     window.location.assign(url);
-  }, [pendingLead, recommendation, onClose]);
+  }, [tier, core, pro, black, buildLead, isSubmitting, onClose]);
 
   const title =
     tier === "core"
@@ -244,11 +228,11 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
 
   const tone =
     tier === "core"
-      ? "Foundational questions — we read for cadence, structure, and emotional truth before any invitation."
+      ? "Short context — we read every submission before any invitation."
       : tier === "pro"
-        ? "Intentional depth — we map stakes to mentorship density, never to packaging."
+        ? "Map stakes to mentorship depth — not packaging."
         : tier === "black"
-          ? "Private allocation — selective, discreet, reviewed manually before invitation."
+          ? "Selective, discreet — reviewed manually before invitation."
           : "";
 
   return (
@@ -275,7 +259,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
             onClick={onClose}
           />
           <motion.div
-            className="ascend-surface relative z-10 max-h-[min(88dvh,46rem)] w-full max-w-lg overflow-y-auto rounded-[1.25rem] p-5 sm:max-h-[min(92vh,46rem)] sm:p-8"
+            className="ascend-surface relative z-10 max-h-[min(88dvh,46rem)] w-full max-w-lg overflow-y-auto rounded-[1.25rem] p-4 sm:max-h-[min(92vh,46rem)] sm:p-7"
             initial={{ opacity: 0, y: 26, scale: 0.968 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 14, scale: 0.985 }}
@@ -287,7 +271,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
               aria-hidden
             />
 
-            <div className="relative z-10 flex items-start justify-between gap-4">
+            <div className="relative z-10 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-zinc-500">
                   {tier === "black"
@@ -298,26 +282,24 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                 </p>
                 <h2
                   id="assessment-modal-title"
-                  className="mt-2 text-xl font-semibold tracking-tight text-white sm:text-2xl"
+                  className="mt-1.5 text-lg font-semibold tracking-tight text-white sm:text-2xl"
                 >
-                  {phase === "interpretation" ? "Calibration read" : title}
+                  {title}
                 </h2>
-                <p className="mt-2 max-w-md text-[13px] leading-relaxed text-zinc-500">
-                  {phase === "interpretation"
-                    ? "A psychologically grounded read — calibrated to mentorship depth, not tiers as status."
-                    : tone}
+                <p className="mt-2 max-w-md text-[12px] leading-relaxed text-zinc-500 sm:text-[13px]">
+                  {tone}
                 </p>
-                {tier === "black" && phase === "form" ? (
-                  <p className="mt-3 text-[11px] leading-relaxed text-zinc-600">
+                {tier === "black" ? (
+                  <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
                     Private applications are reviewed manually — invitation
-                    follows fit, never urgency.
+                    follows fit, not urgency.
                   </p>
                 ) : null}
               </div>
               <motion.button
                 type="button"
                 onClick={onClose}
-                className="ascend-button-ghost flex size-11 shrink-0 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.05] text-zinc-400 transition-colors hover:border-white/[0.16] hover:text-white sm:size-10"
+                className="ascend-button-ghost flex size-10 shrink-0 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.05] text-zinc-400 transition-colors hover:border-white/[0.16] hover:text-white sm:size-10"
                 whileHover={{ scale: 1.012 }}
                 whileTap={{ scale: 0.988 }}
                 transition={TAP_SPRING}
@@ -327,348 +309,234 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
               </motion.button>
             </div>
 
-            <AnimatePresence mode="wait">
-              {phase === "form" ? (
-                <motion.div
-                  key="form"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={txReveal(DURATION_OPACITY)}
-                  className="relative z-10 mt-8 space-y-5"
-                >
-                  {tier === "core" ? (
-                    <>
-                      <div>
-                        <label className={labelClass} htmlFor="m-core-name">
-                          Full name
-                        </label>
-                        <input
-                          id="m-core-name"
-                          className={inputClass}
-                          value={core.fullName}
-                          onChange={(e) =>
-                            setCore((s) => ({ ...s, fullName: e.target.value }))
-                          }
-                          autoComplete="name"
-                        />
-                      </div>
-                      <div>
-                        <label className={labelClass} htmlFor="m-core-struggle">
-                          Primary tension (today)
-                        </label>
-                        <textarea
-                          id="m-core-struggle"
-                          rows={3}
-                          className={cn(inputClass, "resize-none")}
-                          value={core.struggle}
-                          onChange={(e) =>
-                            setCore((s) => ({ ...s, struggle: e.target.value }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className={labelClass} htmlFor="m-core-goal">
-                          Transformation you refuse to defer
-                        </label>
-                        <textarea
-                          id="m-core-goal"
-                          rows={3}
-                          className={cn(inputClass, "resize-none")}
-                          value={core.goal}
-                          onChange={(e) =>
-                            setCore((s) => ({ ...s, goal: e.target.value }))
-                          }
-                        />
-                      </div>
-                    </>
-                  ) : null}
-
-                  {tier === "pro" ? (
-                    <>
-                      <div>
-                        <label className={labelClass} htmlFor="m-pro-name">
-                          Full name
-                        </label>
-                        <input
-                          id="m-pro-name"
-                          className={inputClass}
-                          value={pro.fullName}
-                          onChange={(e) =>
-                            setPro((s) => ({ ...s, fullName: e.target.value }))
-                          }
-                          autoComplete="name"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          className={labelClass}
-                          htmlFor="m-pro-misaligned"
-                        >
-                          Where life feels structurally misaligned
-                        </label>
-                        <textarea
-                          id="m-pro-misaligned"
-                          rows={3}
-                          className={cn(inputClass, "resize-none")}
-                          value={pro.misaligned}
-                          onChange={(e) =>
-                            setPro((s) => ({
-                              ...s,
-                              misaligned: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className={labelClass} htmlFor="m-pro-transform">
-                          Transformation the next season must hold
-                        </label>
-                        <textarea
-                          id="m-pro-transform"
-                          rows={3}
-                          className={cn(inputClass, "resize-none")}
-                          value={pro.transformation}
-                          onChange={(e) =>
-                            setPro((s) => ({
-                              ...s,
-                              transformation: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                    </>
-                  ) : null}
-
-                  {tier === "black" ? (
-                    <>
-                      <div>
-                        <label className={labelClass} htmlFor="m-blk-name">
-                          Full name
-                        </label>
-                        <input
-                          id="m-blk-name"
-                          className={inputClass}
-                          value={black.fullName}
-                          onChange={(e) =>
-                            setBlack((s) => ({
-                              ...s,
-                              fullName: e.target.value,
-                            }))
-                          }
-                          autoComplete="name"
-                        />
-                      </div>
-                      <div>
-                        <label className={labelClass} htmlFor="m-blk-level">
-                          Depth of transformation your context demands
-                        </label>
-                        <textarea
-                          id="m-blk-level"
-                          rows={3}
-                          className={cn(inputClass, "resize-none")}
-                          value={black.transformationLevel}
-                          onChange={(e) =>
-                            setBlack((s) => ({
-                              ...s,
-                              transformationLevel: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className={labelClass} htmlFor="m-blk-why">
-                          Why private allocation matters now
-                        </label>
-                        <textarea
-                          id="m-blk-why"
-                          rows={3}
-                          className={cn(inputClass, "resize-none")}
-                          value={black.whyPrivate}
-                          onChange={(e) =>
-                            setBlack((s) => ({
-                              ...s,
-                              whyPrivate: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                    </>
-                  ) : null}
-
-                  {error ? (
-                    <p
-                      className="text-center text-[13px] text-red-400/90"
-                      role="alert"
-                    >
-                      {error}
-                    </p>
-                  ) : null}
-
-                  <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
-                    <motion.button
-                      type="button"
-                      onClick={onClose}
-                      className="h-12 rounded-full border border-white/[0.1] px-6 text-sm font-medium text-zinc-300 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-white/[0.16] hover:bg-white/[0.04] hover:text-white"
-                      whileHover={{ scale: 1.012 }}
-                      whileTap={{ scale: 0.988 }}
-                      transition={TAP_SPRING}
-                    >
-                      Cancel
-                    </motion.button>
-                    <motion.button
-                      type="button"
-                      onClick={submitForm}
-                      className="h-12 rounded-full bg-white px-8 text-sm font-medium text-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_16px_48px_-16px_rgba(255,255,255,0.22)]"
-                      whileHover={{ scale: 1.012 }}
-                      whileTap={{ scale: 0.988 }}
-                      transition={TAP_SPRING}
-                    >
-                      Submit for review
-                    </motion.button>
-                  </div>
-                </motion.div>
-              ) : null}
-
-              {phase === "processing" ? (
-                <motion.div
-                  key="proc"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  transition={txReveal(DURATION_OPACITY)}
-                  className="relative z-10 flex flex-col items-center py-14"
-                >
-                  <div className="relative flex gap-2">
-                    {[0, 1, 2].map((i) => (
-                      <motion.span
-                        key={i}
-                        className="size-2 rounded-full bg-zinc-500"
-                        animate={{
-                          opacity: [0.25, 1, 0.25],
-                          scale: [0.9, 1.15, 0.9],
-                        }}
-                        transition={{
-                          duration: 1.35,
-                          repeat: Infinity,
-                          delay: i * 0.22,
-                          ease: "easeInOut",
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <motion.div
-                    className="mx-auto mt-8 h-px w-44 overflow-hidden rounded-full bg-white/[0.07]"
-                    aria-hidden
-                  >
-                    <motion.div
-                      className="h-full w-1/2 bg-gradient-to-r from-transparent via-white/35 to-transparent"
-                      animate={{ x: ["-120%", "220%"] }}
-                      transition={{
-                        duration: 1.8,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={txReveal(DURATION_OPACITY)}
+              className="relative z-10 mt-6 space-y-4 sm:mt-7 sm:space-y-5"
+            >
+              {tier === "core" ? (
+                <>
+                  <div>
+                    <label className={labelClass} htmlFor="m-core-name">
+                      Full name
+                    </label>
+                    <input
+                      id="m-core-name"
+                      className={inputClass}
+                      value={core.fullName}
+                      onChange={(e) =>
+                        setCore((s) => ({ ...s, fullName: e.target.value }))
+                      }
+                      autoComplete="name"
                     />
-                  </motion.div>
-                  <p className="mt-8 text-center text-sm text-zinc-400">
-                    Calibrating tone, stakes, and structure…
-                  </p>
-                  <p className="mt-2 max-w-xs text-center text-[12px] leading-relaxed text-zinc-600">
-                    Structured read — alignment before allocation, never
-                    persuasion.
-                  </p>
-                </motion.div>
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="m-core-struggle">
+                      Primary tension (today)
+                    </label>
+                    <textarea
+                      id="m-core-struggle"
+                      rows={3}
+                      className={cn(inputClass, "resize-none")}
+                      value={core.struggle}
+                      onChange={(e) =>
+                        setCore((s) => ({ ...s, struggle: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="m-core-goal">
+                      Transformation you refuse to defer
+                    </label>
+                    <textarea
+                      id="m-core-goal"
+                      rows={3}
+                      className={cn(inputClass, "resize-none")}
+                      value={core.goal}
+                      onChange={(e) =>
+                        setCore((s) => ({ ...s, goal: e.target.value }))
+                      }
+                    />
+                  </div>
+                </>
               ) : null}
 
-              {phase === "interpretation" && recommendation ? (
-                <motion.div
-                  key="interp"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={txReveal(DURATION_OVERLAY_SLOW)}
-                  className="relative z-10 mt-8 space-y-6"
+              {tier === "pro" ? (
+                <>
+                  <div>
+                    <label className={labelClass} htmlFor="m-pro-name">
+                      Full name
+                    </label>
+                    <input
+                      id="m-pro-name"
+                      className={inputClass}
+                      value={pro.fullName}
+                      onChange={(e) =>
+                        setPro((s) => ({ ...s, fullName: e.target.value }))
+                      }
+                      autoComplete="name"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="m-pro-misaligned">
+                      Where life feels structurally misaligned
+                    </label>
+                    <textarea
+                      id="m-pro-misaligned"
+                      rows={3}
+                      className={cn(inputClass, "resize-none")}
+                      value={pro.misaligned}
+                      onChange={(e) =>
+                        setPro((s) => ({
+                          ...s,
+                          misaligned: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="m-pro-transform">
+                      Transformation the next season must hold
+                    </label>
+                    <textarea
+                      id="m-pro-transform"
+                      rows={3}
+                      className={cn(inputClass, "resize-none")}
+                      value={pro.transformation}
+                      onChange={(e) =>
+                        setPro((s) => ({
+                          ...s,
+                          transformation: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </>
+              ) : null}
+
+              {tier === "black" ? (
+                <>
+                  <div>
+                    <label className={labelClass} htmlFor="m-blk-name">
+                      Full name
+                    </label>
+                    <input
+                      id="m-blk-name"
+                      className={inputClass}
+                      value={black.fullName}
+                      onChange={(e) =>
+                        setBlack((s) => ({
+                          ...s,
+                          fullName: e.target.value,
+                        }))
+                      }
+                      autoComplete="name"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="m-blk-level">
+                      Depth of transformation your context demands
+                    </label>
+                    <textarea
+                      id="m-blk-level"
+                      rows={3}
+                      className={cn(inputClass, "resize-none")}
+                      value={black.transformationLevel}
+                      onChange={(e) =>
+                        setBlack((s) => ({
+                          ...s,
+                          transformationLevel: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="m-blk-why">
+                      Why private allocation matters now
+                    </label>
+                    <textarea
+                      id="m-blk-why"
+                      rows={3}
+                      className={cn(inputClass, "resize-none")}
+                      value={black.whyPrivate}
+                      onChange={(e) =>
+                        setBlack((s) => ({
+                          ...s,
+                          whyPrivate: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </>
+              ) : null}
+
+              <div className="grid grid-cols-1 gap-4 border-t border-white/[0.06] pt-4 sm:grid-cols-2 sm:gap-3">
+                <div>
+                  <label className={labelClass} htmlFor="m-contact-phone">
+                    Phone (optional)
+                  </label>
+                  <input
+                    id="m-contact-phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    className={inputClass}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="WhatsApp or mobile"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="m-contact-email">
+                    Email (optional)
+                  </label>
+                  <input
+                    id="m-contact-email"
+                    type="email"
+                    autoComplete="email"
+                    className={inputClass}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@domain.com"
+                  />
+                </div>
+              </div>
+
+              {error ? (
+                <p
+                  className="text-center text-[13px] text-red-400/90"
+                  role="alert"
                 >
-                  <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                    <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
-                      Execution summary
-                    </p>
-                    <p className="mt-3 text-[14px] leading-relaxed text-zinc-200">
-                      {recommendation.summary}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
-                      Mentorship depth alignment
-                    </p>
-                    <p className="mt-2 text-lg font-semibold tracking-tight text-white">
-                      {recommendation.headline}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
-                      Why this alignment
-                    </p>
-                    <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-zinc-400">
-                      {recommendation.whyBullets.map((b) => (
-                        <li key={b} className="flex gap-2">
-                          <Sparkles
-                            className="mt-0.5 size-3.5 shrink-0 text-zinc-600"
-                            strokeWidth={1.25}
-                          />
-                          <span>{b}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {recommendation.trustNote ? (
-                    <p className="rounded-lg border border-white/[0.06] bg-zinc-950/50 px-4 py-3 text-[12px] leading-relaxed text-zinc-500">
-                      {recommendation.trustNote}
-                    </p>
-                  ) : null}
-
-                  {error ? (
-                    <p
-                      className="text-center text-[13px] text-red-400/90"
-                      role="alert"
-                    >
-                      {error}
-                    </p>
-                  ) : null}
-
-                  <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
-                    <motion.button
-                      type="button"
-                      onClick={() => {
-                        setPhase("form");
-                        setRecommendation(null);
-                        setPendingLead(null);
-                      }}
-                      className="h-12 rounded-full border border-white/[0.1] px-6 text-sm font-medium text-zinc-300 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-white/[0.16] hover:bg-white/[0.04] hover:text-white"
-                      whileHover={{ scale: 1.012 }}
-                      whileTap={{ scale: 0.988 }}
-                      transition={TAP_SPRING}
-                    >
-                      Revise responses
-                    </motion.button>
-                    <motion.button
-                      type="button"
-                      onClick={goWhatsApp}
-                      className="h-12 rounded-full bg-white px-8 text-sm font-medium text-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_16px_48px_-16px_rgba(255,255,255,0.22)]"
-                      whileHover={{ scale: 1.012 }}
-                      whileTap={{ scale: 0.988 }}
-                      transition={TAP_SPRING}
-                    >
-                      Continue in private thread
-                    </motion.button>
-                  </div>
-                </motion.div>
+                  {error}
+                </p>
               ) : null}
-            </AnimatePresence>
+
+              <div className="flex flex-col gap-2.5 pt-1 sm:flex-row sm:justify-end sm:gap-3">
+                <motion.button
+                  type="button"
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                  className="h-11 rounded-full border border-white/[0.1] px-5 text-sm font-medium text-zinc-300 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-white/[0.16] hover:bg-white/[0.04] hover:text-white disabled:opacity-50"
+                  whileHover={{ scale: 1.012 }}
+                  whileTap={{ scale: 0.988 }}
+                  transition={TAP_SPRING}
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={submitForm}
+                  disabled={isSubmitting}
+                  className="h-11 rounded-full bg-white px-7 text-sm font-medium text-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_16px_48px_-16px_rgba(255,255,255,0.22)] disabled:opacity-60"
+                  whileHover={{ scale: isSubmitting ? 1 : 1.012 }}
+                  whileTap={{ scale: isSubmitting ? 1 : 0.988 }}
+                  transition={TAP_SPRING}
+                >
+                  {isSubmitting ? "Opening WhatsApp…" : "Open WhatsApp"}
+                </motion.button>
+              </div>
+            </motion.div>
           </motion.div>
         </motion.div>
       ) : null}

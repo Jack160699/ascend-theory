@@ -87,7 +87,7 @@ function StageNode({
     <>
       <div
         className={cn(
-          "relative rounded-[1.35rem] border border-white/[0.09] bg-white/[0.03] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl",
+          "relative rounded-[1.35rem] border border-white/[0.09] bg-white/[0.03] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-6",
           "transition-[border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           "group-hover:border-white/[0.16] group-hover:shadow-[0_28px_80px_-48px_rgba(0,0,0,0.88),0_0_48px_-16px_rgba(255,255,255,0.07)]",
         )}
@@ -182,7 +182,7 @@ export function Journey() {
     <section
       id="journey"
       data-conversion-zone="journey"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-20 pb-16 sm:pt-32 sm:pb-28 lg:py-36"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-14 pb-12 sm:pt-28 sm:pb-24 lg:py-32"
       aria-labelledby="journey-heading"
     >
       <SectionContinuity />
@@ -222,7 +222,7 @@ export function Journey() {
           </motion.h2>
           <motion.p
             variants={fadeMain}
-            className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
+            className="ascend-prose-calm mt-7 max-w-[34rem] text-pretty text-zinc-500 sm:mt-9"
           >
             Intake, conversation, plan, immersion — then standards become normal
             again.
@@ -230,7 +230,7 @@ export function Journey() {
         </motion.div>
 
         {/* Mobile: vertical timeline */}
-        <div className="relative mx-auto mt-14 max-w-lg lg:hidden">
+        <div className="relative mx-auto mt-9 max-w-lg lg:hidden">
           <div
             className="absolute bottom-6 left-[19px] top-6 w-px bg-gradient-to-b from-white/[0.12] via-zinc-500/25 to-white/[0.08]"
             aria-hidden
@@ -248,7 +248,7 @@ export function Journey() {
             aria-hidden
           />
           <motion.ul
-            className="relative flex list-none flex-col gap-7 p-0 sm:gap-12"
+            className="relative flex list-none flex-col gap-5 p-0 sm:gap-10"
             variants={listStagger}
             initial="hidden"
             whileInView="visible"
@@ -291,7 +291,7 @@ export function Journey() {
 
         {/* Desktop: horizontal timeline */}
         <motion.div
-          className="relative mx-auto mt-24 hidden max-w-[90rem] px-4 lg:mt-28 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-0"
+          className="relative mx-auto mt-16 hidden max-w-[90rem] px-4 lg:mt-20 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-0"
           variants={listStagger}
           initial="hidden"
           whileInView="visible"

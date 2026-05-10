@@ -77,7 +77,7 @@ export function AllPaths() {
     <section
       id="paths"
       data-conversion-zone="allocate"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#030303] py-16 sm:py-30 lg:py-[8.5rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#030303] py-12 sm:py-24 lg:py-[8.5rem]"
       aria-labelledby="all-paths-heading"
     >
       <SectionContinuity />

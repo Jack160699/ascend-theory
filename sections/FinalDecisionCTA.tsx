@@ -68,7 +68,7 @@ export function FinalDecisionCTA() {
     <section
       id="final-decision-cta"
       data-conversion-zone="final"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-16 sm:py-32 lg:py-40"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-12 sm:py-24 lg:py-36"
       aria-labelledby="final-decision-cta-heading"
     >
       <SectionContinuity />

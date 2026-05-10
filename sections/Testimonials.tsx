@@ -410,7 +410,7 @@ export function Testimonials() {
     <section
       id="testimonials"
       data-conversion-zone="proof"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-20 sm:py-32 lg:py-[8.5rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-14 sm:py-24 lg:py-[8.5rem]"
       aria-labelledby="proof-heading"
     >
       <SectionContinuity />

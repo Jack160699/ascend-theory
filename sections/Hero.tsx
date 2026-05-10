@@ -48,7 +48,7 @@ export function Hero() {
 
       <div className={cn(shellHero, "relative z-10 items-start")}>
         <motion.p
-          className="ascend-type-eyebrow mb-9 text-zinc-500/92 sm:mb-11"
+          className="ascend-type-eyebrow mb-6 text-zinc-500/92 sm:mb-10"
           initial={{ opacity: 0, y: RISE_Y * 0.45 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{

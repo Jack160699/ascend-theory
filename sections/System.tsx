@@ -1,17 +1,21 @@
 "use client";
 
+import { EditorialImageStrip } from "@/components/EditorialImageStrip";
 import { SectionContinuity } from "@/components/SectionContinuity";
 import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
 import {
+  DURATION_OPACITY,
   SURFACE_SPRING,
   getCardRevealMobile,
   getFadeUpReveal,
   getGridStaggerParent,
   getHeaderStaggerParent,
+  txReveal,
 } from "@/lib/motion";
+import { EDITORIAL_PLACEHOLDERS } from "@/lib/editorial-placeholders";
 import { leadRight, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion, type Variants } from "framer-motion";
@@ -124,7 +128,7 @@ function SystemCard({
       <motion.div
         className={cn(
           "relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/[0.09]",
-          "bg-white/[0.025] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl sm:p-9",
+          "bg-white/[0.025] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl sm:p-8 lg:p-9",
           "transition-[border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           "group-hover:border-white/[0.16] group-hover:shadow-[0_32px_90px_-48px_rgba(0,0,0,0.9),0_0_72px_-24px_rgba(255,255,255,0.08)]",
         )}
@@ -167,7 +171,7 @@ function SystemCard({
           className="pointer-events-none absolute inset-0 rounded-[1.35rem] ring-1 ring-inset ring-white/[0.04]"
           aria-hidden
         />
-        <div className="relative z-10 flex h-full flex-col gap-6">
+        <div className="relative z-10 flex h-full flex-col gap-4 sm:gap-6">
           <motion.div
             className="flex size-11 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 shadow-[0_0_24px_-8px_rgba(255,255,255,0.06)] transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-white/[0.14] group-hover:text-white"
             animate={{ y: [0, isMobile ? -2 : -3, 0] }}
@@ -210,7 +214,7 @@ export function System() {
     <section
       id="programs"
       data-conversion-zone="programs"
-      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(5rem,10vw,7.25rem)] pb-[clamp(5.5rem,12vw,9rem)] sm:pt-28 sm:pb-36 lg:pb-[9.5rem]"
+      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(3.75rem,8vw,6rem)] pb-[clamp(4.25rem,9vw,7.5rem)] sm:pt-24 sm:pb-32 lg:pb-[9.5rem]"
       aria-labelledby="system-heading"
     >
       <SectionContinuity />
@@ -237,7 +241,7 @@ export function System() {
         >
           <motion.p
             variants={fadeMain}
-            className="ascend-type-eyebrow mb-6 text-zinc-500 lg:mb-7"
+            className="ascend-type-eyebrow mb-4 text-zinc-500 sm:mb-6 lg:mb-7"
           >
             What you get
           </motion.p>
@@ -250,7 +254,7 @@ export function System() {
           </motion.h2>
           <motion.p
             variants={fadeMain}
-            className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
+            className="ascend-prose-calm mt-7 max-w-[34rem] text-pretty text-zinc-500 sm:mt-9"
           >
             Same philosophy across tiers. What changes is mentor proximity,
             accountability load, and how fast we can calibrate you privately.
@@ -258,7 +262,21 @@ export function System() {
         </motion.div>
 
         <motion.div
-          className="mt-16 grid w-full max-w-6xl grid-cols-1 gap-6 sm:mt-20 sm:grid-cols-2 sm:gap-6 lg:mt-24 lg:grid-cols-3 xl:grid-cols-5"
+          className="mt-8 w-full max-w-6xl sm:mt-12"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={viewport}
+          transition={txReveal(DURATION_OPACITY, 0.04)}
+        >
+          <EditorialImageStrip
+            src={EDITORIAL_PLACEHOLDERS.focus}
+            alt="Focus and discipline — placeholder reference"
+            caption="Discipline · execution — reference frame"
+          />
+        </motion.div>
+
+        <motion.div
+          className="mt-8 grid w-full max-w-6xl grid-cols-1 gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-5 lg:mt-16 lg:grid-cols-3 xl:grid-cols-5 xl:gap-6"
           variants={gridStagger}
           initial="hidden"
           whileInView="visible"

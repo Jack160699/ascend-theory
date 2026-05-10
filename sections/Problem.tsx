@@ -1,20 +1,22 @@
 "use client";
 
+import { EditorialImageStrip } from "@/components/EditorialImageStrip";
 import { SectionContinuity } from "@/components/SectionContinuity";
 import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
+import { EDITORIAL_PLACEHOLDERS } from "@/lib/editorial-placeholders";
 import {
   SURFACE_SPRING,
-  cardReveal,
+  getCardRevealMobile,
   getFadeUpReveal,
   getGridStaggerParent,
   getHeaderStaggerParent,
 } from "@/lib/motion";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
   CalendarClock,
@@ -63,7 +65,16 @@ const pains: {
   },
 ];
 
-function PainCard({ title, line, icon: Icon }: (typeof pains)[number]) {
+function PainCard({
+  title,
+  line,
+  icon: Icon,
+  cardVariants,
+  isMobile,
+}: (typeof pains)[number] & {
+  cardVariants: Variants;
+  isMobile: boolean;
+}) {
   const articleRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
 
@@ -88,21 +99,21 @@ function PainCard({ title, line, icon: Icon }: (typeof pains)[number]) {
   return (
     <motion.article
       ref={articleRef}
-      variants={cardReveal}
+      variants={cardVariants}
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
       className="group relative h-full [perspective:1400px]"
       style={{ transformStyle: "preserve-3d" }}
       whileHover={{
-        rotateX: 2.5,
-        rotateY: -2.5,
+        rotateX: isMobile ? 1.2 : 2.5,
+        rotateY: isMobile ? -1.2 : -2.5,
         transition: SURFACE_SPRING,
       }}
     >
       <motion.div
         className={cn(
           "relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/[0.08]",
-          "bg-white/[0.03] p-7 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-8",
+          "bg-white/[0.03] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-7 lg:p-8",
           "transition-[border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           "group-hover:border-white/[0.14] group-hover:shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85),0_0_60px_-20px_rgba(255,255,255,0.06)]",
         )}
@@ -128,7 +139,7 @@ function PainCard({ title, line, icon: Icon }: (typeof pains)[number]) {
             <h3 className="text-[15px] font-semibold leading-snug tracking-[-0.012em] text-white">
               {title}
             </h3>
-            <p className="mt-3 text-[13px] leading-[1.72] text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:text-zinc-400">
+            <p className="mt-2.5 text-[13px] leading-[1.68] text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:text-zinc-400 sm:mt-3 sm:leading-[1.72]">
               {line}
             </p>
           </div>
@@ -147,11 +158,15 @@ export function Problem() {
   );
   const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
   const gridStagger = useMemo(() => getGridStaggerParent(isMobile), [isMobile]);
+  const cardVariants = useMemo(
+    () => getCardRevealMobile(isMobile),
+    [isMobile],
+  );
   return (
     <section
       id="about"
       data-conversion-zone="tension"
-      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-20 pb-[clamp(5.5rem,12vw,8.5rem)] sm:pt-32 sm:pb-36 lg:pt-[7.75rem] lg:pb-[9.5rem]"
+      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-14 pb-[clamp(4.25rem,10vw,7rem)] sm:pt-28 sm:pb-32 lg:pt-[7.75rem] lg:pb-[9.5rem]"
       aria-labelledby="problem-heading"
     >
       <SectionContinuity />
@@ -189,7 +204,7 @@ export function Problem() {
           </motion.h2>
           <motion.div
             variants={fadeMain}
-            className="mt-10 max-w-[34rem] space-y-5 text-pretty sm:mt-11"
+            className="mt-7 max-w-[34rem] space-y-4 text-pretty sm:mt-9 sm:space-y-5"
           >
             <p className="ascend-prose-calm text-zinc-500">
               Without a private structure, discipline fragments — and your
@@ -203,14 +218,33 @@ export function Problem() {
         </motion.div>
 
         <motion.div
-          className="mt-14 grid w-full max-w-5xl grid-cols-1 gap-5 sm:mt-24 sm:grid-cols-2 sm:gap-6 lg:mt-28 lg:grid-cols-3 lg:gap-7 [perspective:1600px]"
+          className="mt-8 w-full max-w-5xl sm:mt-12"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={viewport}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <EditorialImageStrip
+            src={EDITORIAL_PLACEHOLDERS.training}
+            alt="Training atmosphere — placeholder reference"
+            caption="Physique · discipline — reference frame"
+          />
+        </motion.div>
+
+        <motion.div
+          className="mt-8 grid w-full max-w-5xl grid-cols-1 gap-3.5 sm:mt-14 sm:grid-cols-2 sm:gap-5 lg:mt-20 lg:grid-cols-3 lg:gap-6 [perspective:1600px]"
           variants={gridStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           {pains.map((p) => (
-            <PainCard key={p.title} {...p} />
+            <PainCard
+              key={p.title}
+              {...p}
+              cardVariants={cardVariants}
+              isMobile={isMobile}
+            />
           ))}
         </motion.div>
       </div>

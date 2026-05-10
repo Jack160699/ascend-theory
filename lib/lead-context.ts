@@ -12,23 +12,29 @@ export const TIER_LABELS: Record<TierKey, string> = {
   black: "Ascend Black",
 };
 
+export type AssessmentContactFields = {
+  /** Optional — included in WhatsApp + payload when provided */
+  phone?: string;
+  email?: string;
+};
+
 export type CoreAssessmentAnswers = {
   fullName: string;
   struggle: string;
   goal: string;
-};
+} & AssessmentContactFields;
 
 export type ProAssessmentAnswers = {
   fullName: string;
   misaligned: string;
   transformation: string;
-};
+} & AssessmentContactFields;
 
 export type BlackAssessmentAnswers = {
   fullName: string;
   transformationLevel: string;
   whyPrivate: string;
-};
+} & AssessmentContactFields;
 
 export type TierLeadAssessment =
   | { tier: "core"; answers: CoreAssessmentAnswers }
@@ -59,13 +65,24 @@ export function tierLabel(tier: TierKey): string {
 }
 
 /** Short summary for AI / sales context (plain text). */
+function contactSummaryLines(answers: AssessmentContactFields): string[] {
+  const lines: string[] = [];
+  const p = answers.phone?.trim();
+  const e = answers.email?.trim();
+  if (p) lines.push(`Phone: ${p}`);
+  if (e) lines.push(`Email: ${e}`);
+  return lines;
+}
+
 export function formatLeadSummary(lead: TierLeadAssessment): string {
   const name = lead.answers.fullName.trim();
+  const contact = contactSummaryLines(lead.answers);
   if (lead.tier === "core") {
     const a = lead.answers;
     return [
       `Tier: ${tierLabel("core")}`,
       `Name: ${name}`,
+      ...contact,
       `Struggle: ${a.struggle.trim()}`,
       `Goal: ${a.goal.trim()}`,
     ].join("\n");
@@ -75,6 +92,7 @@ export function formatLeadSummary(lead: TierLeadAssessment): string {
     return [
       `Tier: ${tierLabel("pro")}`,
       `Name: ${name}`,
+      ...contact,
       `Misaligned area: ${a.misaligned.trim()}`,
       `Transformation focus: ${a.transformation.trim()}`,
     ].join("\n");
@@ -83,6 +101,7 @@ export function formatLeadSummary(lead: TierLeadAssessment): string {
   return [
     `Tier: ${tierLabel("black")}`,
     `Name: ${name}`,
+    ...contact,
     `Transformation level: ${a.transformationLevel.trim()}`,
     `Why private mentorship: ${a.whyPrivate.trim()}`,
   ].join("\n");
@@ -91,6 +110,7 @@ export function formatLeadSummary(lead: TierLeadAssessment): string {
 function baseWhatsAppBody(lead: TierLeadAssessment): string[] {
   const tier = tierLabel(lead.tier);
   const name = lead.answers.fullName.trim();
+  const contact = contactSummaryLines(lead.answers);
 
   if (lead.tier === "core") {
     const a = lead.answers;
@@ -99,6 +119,7 @@ function baseWhatsAppBody(lead: TierLeadAssessment): string[] {
       "",
       `Path: ${tier}`,
       `Name: ${name}`,
+      ...contact,
       `Current tension: ${a.struggle.trim()}`,
       `Desired shift: ${a.goal.trim()}`,
       "",
@@ -112,6 +133,7 @@ function baseWhatsAppBody(lead: TierLeadAssessment): string[] {
       "",
       `Path: ${tier}`,
       `Name: ${name}`,
+      ...contact,
       `Misalignment: ${a.misaligned.trim()}`,
       `Priority transformation: ${a.transformation.trim()}`,
       "",
@@ -124,6 +146,7 @@ function baseWhatsAppBody(lead: TierLeadAssessment): string[] {
     "",
     `Path: ${tier}`,
     `Name: ${name}`,
+    ...contact,
     `Transformation depth sought: ${a.transformationLevel.trim()}`,
     `Why private mentorship: ${a.whyPrivate.trim()}`,
     "",

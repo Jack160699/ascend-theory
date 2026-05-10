@@ -21,7 +21,7 @@ export function AssessmentEntry() {
     <section
       id="assessment"
       data-conversion-zone="assessment"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-16 sm:py-28 lg:py-36"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-12 sm:py-20 lg:py-36"
       aria-labelledby="assessment-heading"
     >
       <SectionContinuity />

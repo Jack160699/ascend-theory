@@ -1,11 +1,13 @@
 "use client";
 
+import { EditorialImageStrip } from "@/components/EditorialImageStrip";
 import { SectionContinuity } from "@/components/SectionContinuity";
 import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
 import {
+  DURATION_OPACITY,
   DURATION_REVEAL,
   RISE_Y_CARD,
   STAGGER_LIST,
@@ -13,6 +15,7 @@ import {
   getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { EDITORIAL_PLACEHOLDERS } from "@/lib/editorial-placeholders";
 import { leadRight, shellNarrow } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -126,7 +129,7 @@ function DepthCard({
       />
       <div
         className={cn(
-          "relative overflow-hidden rounded-[1.35rem] border border-white/[0.09] bg-white/[0.025] p-9 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl sm:p-11",
+          "relative overflow-hidden rounded-[1.35rem] border border-white/[0.09] bg-white/[0.025] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl sm:p-9 lg:p-11",
           item.key === "private" &&
             "border-amber-950/20 bg-gradient-to-br from-zinc-950/90 to-black",
         )}
@@ -139,7 +142,7 @@ function DepthCard({
               "radial-gradient(640px circle at var(--dx, 50%) var(--dy, 50%), rgba(255,255,255,0.08), transparent 58%)",
           }}
         />
-        <div className="relative z-10 flex flex-col gap-7 lg:flex-row lg:items-start lg:gap-14">
+        <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-12">
           <div className="shrink-0 lg:w-[9rem]">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-600">
               {String(index + 1).padStart(2, "0")}
@@ -155,7 +158,7 @@ function DepthCard({
             <h3 className="text-balance font-sans text-xl font-semibold tracking-[-0.024em] text-white sm:text-2xl sm:leading-[1.12]">
               {item.title}
             </h3>
-            <ul className="mt-7 space-y-3.5 text-[14px] leading-[1.72] text-zinc-500 sm:text-[15px] sm:leading-[1.75]">
+            <ul className="mt-5 space-y-2.5 text-[14px] leading-[1.68] text-zinc-500 sm:mt-7 sm:space-y-3.5 sm:leading-[1.75]">
               {item.bullets.map((b) => (
                 <li key={b} className="flex gap-3">
                   <span
@@ -186,7 +189,7 @@ export function MentorshipDepth() {
     <section
       id="mentorship-depth"
       data-conversion-zone="mentorship"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-[clamp(5.25rem,12vw,8.5rem)] sm:py-32 lg:py-[9rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-[clamp(4rem,9vw,6.5rem)] sm:py-24 lg:py-[9rem]"
       aria-labelledby="mentorship-depth-heading"
     >
       <SectionContinuity />
@@ -215,7 +218,7 @@ export function MentorshipDepth() {
         >
           <motion.p
             variants={fadeMain}
-            className="ascend-type-eyebrow mb-7 text-zinc-500 lg:mb-8"
+            className="ascend-type-eyebrow mb-5 text-zinc-500 sm:mb-7 lg:mb-8"
           >
             Mentorship depth
           </motion.p>
@@ -231,7 +234,7 @@ export function MentorshipDepth() {
           </motion.h2>
           <motion.div
             variants={fadeMain}
-            className="mt-10 max-w-[34rem] space-y-5 text-pretty sm:mt-11"
+            className="mt-7 max-w-[34rem] space-y-4 text-pretty sm:mt-9 sm:space-y-5"
           >
             <p className="ascend-prose-calm text-zinc-500">
               Every path covers discipline, physique, communication, and
@@ -244,12 +247,26 @@ export function MentorshipDepth() {
           </motion.div>
         </motion.div>
 
-        <div className="relative mx-auto mt-16 max-w-3xl sm:mt-20 lg:mt-24 lg:max-w-3xl">
+        <motion.div
+          className="mx-auto mt-8 w-full max-w-3xl sm:mt-11"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={viewport}
+          transition={txReveal(DURATION_OPACITY, 0.04)}
+        >
+          <EditorialImageStrip
+            src={EDITORIAL_PLACEHOLDERS.presence}
+            alt="Mentorship and presence — placeholder reference"
+            caption="Mentorship · proximity — reference frame"
+          />
+        </motion.div>
+
+        <div className="relative mx-auto mt-10 max-w-3xl sm:mt-14 lg:mt-16 lg:max-w-3xl">
           <div
             className="pointer-events-none absolute left-[1.1rem] top-0 hidden h-[calc(100%-2rem)] w-px bg-gradient-to-b from-white/15 via-white/[0.06] to-transparent sm:left-[1.25rem] lg:block"
             aria-hidden
           />
-          <div className="space-y-12 sm:space-y-14 lg:space-y-16 lg:pl-10">
+          <div className="space-y-8 sm:space-y-10 lg:space-y-14 lg:pl-10">
             {depthLevels.map((item, i) => (
               <DepthCard
                 key={item.key}
