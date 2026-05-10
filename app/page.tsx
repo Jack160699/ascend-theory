@@ -19,11 +19,11 @@ import { Testimonials } from "@/sections/Testimonials";
 
 export default function Home() {
   return (
-    <ConversionExperienceProvider>
-      <AssessmentModalProvider>
+    <AssessmentModalProvider>
+      <ConversionExperienceProvider>
         <MobileConversionProvider>
           <TransformationGate />
-          <main className="ascend-main-depth min-h-screen overflow-x-clip bg-black pb-[max(6.75rem,env(safe-area-inset-bottom)+5.25rem)] text-white antialiased sm:pb-32">
+          <main className="ascend-main-depth min-h-screen overflow-x-clip bg-black pb-[max(5.25rem,env(safe-area-inset-bottom)+4rem)] text-white antialiased sm:pb-28 lg:pb-32">
             <AscendFilmGrain />
             <CursorAmbientLight />
             <Hero />
@@ -40,7 +40,7 @@ export default function Home() {
           </main>
           <Footer />
         </MobileConversionProvider>
-      </AssessmentModalProvider>
-    </ConversionExperienceProvider>
+      </ConversionExperienceProvider>
+    </AssessmentModalProvider>
   );
 }

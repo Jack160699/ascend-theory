@@ -1,14 +1,13 @@
 "use client";
 
+import { useAssessmentModal } from "@/contexts/assessment-modal";
 import {
+  DURATION_OPACITY,
   DURATION_OVERLAY_SLOW,
   TAP_SPRING,
   txReveal,
 } from "@/lib/motion";
-import {
-  ASCEND_WHATSAPP_ME_URL,
-  PRIMARY_CTA_LABEL,
-} from "@/lib/whatsapp";
+import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -58,14 +57,16 @@ const stickyCtaButtonDesktopClass = cn(
 );
 
 function StickyConversionBar({ ctaLabel }: { ctaLabel: string }) {
-  const [desktopOpen, setDesktopOpen] = useState(false);
+  const { openAssessment } = useAssessmentModal();
+  const [showMobile, setShowMobile] = useState(false);
+  const [showDesktop, setShowDesktop] = useState(false);
 
   useEffect(() => {
-    const threshold = () =>
-      Math.min(window.innerHeight * 1.08, Math.max(520, window.innerHeight));
-
     const onScroll = () => {
-      setDesktopOpen(window.scrollY > threshold());
+      const y = window.scrollY;
+      const h = window.innerHeight;
+      setShowMobile(y > Math.min(h * 0.72, 400));
+      setShowDesktop(y > Math.max(h * 2.15, 920));
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -78,30 +79,36 @@ function StickyConversionBar({ ctaLabel }: { ctaLabel: string }) {
 
   return (
     <>
-      {/* Mobile: single persistent glass bar — always visible */}
-      <div
-        className={cn(
-          "fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.07] sm:hidden",
-          "bg-zinc-950/78 shadow-[0_-12px_48px_-8px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150",
-          "supports-[padding:max(0px)]:pb-[max(0.35rem,env(safe-area-inset-bottom))]",
-        )}
-      >
-        <div className="mx-auto max-w-lg px-3 pt-2">
-          <motion.a
-            href={ASCEND_WHATSAPP_ME_URL}
-            rel="noopener noreferrer"
-            className={stickyCtaButtonClass}
-            whileTap={{ scale: 0.988 }}
-            transition={TAP_SPRING}
-          >
-            {ctaLabel}
-          </motion.a>
-        </div>
-      </div>
-
-      {/* Desktop: same CTA as navbar, after meaningful scroll */}
       <AnimatePresence>
-        {desktopOpen ? (
+        {showMobile ? (
+          <motion.div
+            className={cn(
+              "fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.07] sm:hidden",
+              "bg-zinc-950/78 shadow-[0_-12px_48px_-8px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150",
+              "supports-[padding:max(0px)]:pb-[max(0.35rem,env(safe-area-inset-bottom))]",
+            )}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={txReveal(DURATION_OPACITY)}
+          >
+            <div className="mx-auto max-w-lg px-3 pt-2">
+              <motion.button
+                type="button"
+                onClick={() => openAssessment()}
+                className={stickyCtaButtonClass}
+                whileTap={{ scale: 0.988 }}
+                transition={TAP_SPRING}
+              >
+                {ctaLabel}
+              </motion.button>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showDesktop ? (
           <motion.div
             className={cn(
               "fixed inset-x-0 bottom-0 z-[60] hidden border-t border-white/[0.07] sm:block",
@@ -114,15 +121,15 @@ function StickyConversionBar({ ctaLabel }: { ctaLabel: string }) {
             transition={txReveal(DURATION_OVERLAY_SLOW)}
           >
             <div className="mx-auto flex max-w-6xl items-center justify-end px-4 py-2.5 sm:px-8 lg:px-10">
-              <motion.a
-                href={ASCEND_WHATSAPP_ME_URL}
-                rel="noopener noreferrer"
+              <motion.button
+                type="button"
+                onClick={() => openAssessment()}
                 className={stickyCtaButtonDesktopClass}
                 whileTap={{ scale: 0.988 }}
                 transition={TAP_SPRING}
               >
                 {ctaLabel}
-              </motion.a>
+              </motion.button>
             </div>
           </motion.div>
         ) : null}

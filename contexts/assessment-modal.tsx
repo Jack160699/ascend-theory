@@ -12,7 +12,8 @@ import {
 } from "react";
 
 type AssessmentModalValue = {
-  openAssessment: (tier: TierKey) => void;
+  /** Opens the premium intake modal. Pass a tier when opened from pricing (optional context in WhatsApp). */
+  openAssessment: (tier?: TierKey) => void;
   closeAssessment: () => void;
 };
 
@@ -24,8 +25,8 @@ export function AssessmentModalProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [tier, setTier] = useState<TierKey | null>(null);
 
-  const openAssessment = useCallback((key: TierKey) => {
-    setTier(key);
+  const openAssessment = useCallback((key?: TierKey) => {
+    setTier(key ?? null);
     setOpen(true);
   }, []);
 

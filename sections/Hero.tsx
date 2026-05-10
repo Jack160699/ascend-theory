@@ -3,6 +3,7 @@
 import { BackgroundEffects } from "@/components/BackgroundEffects";
 import { HeroEnvironment } from "@/components/hero";
 import { Navbar } from "@/components/Navbar";
+import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useIsMobileConversion } from "@/contexts/mobile-conversion";
 import {
   DURATION_OPACITY,
@@ -16,16 +17,14 @@ import {
   getHeroStaggerCinematic,
 } from "@/lib/motion";
 import { shellHero } from "@/lib/editorial-layout";
-import {
-  ASCEND_WHATSAPP_ME_URL,
-  PRIMARY_CTA_LABEL,
-} from "@/lib/whatsapp";
+import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { useMemo, useRef } from "react";
 
 export function Hero() {
+  const { openAssessment } = useAssessmentModal();
   const heroRef = useRef<HTMLElement>(null);
   const isMobile = useIsMobileConversion();
   const heroStagger = useMemo(
@@ -101,10 +100,9 @@ export function Hero() {
             variants={fadeUpHero}
             className="mt-11 flex w-full max-w-[min(36rem,100%)] flex-col gap-3.5 sm:mt-[3.25rem] sm:flex-row sm:items-center sm:gap-6"
           >
-            <motion.a
-              href={ASCEND_WHATSAPP_ME_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            <motion.button
+              type="button"
+              onClick={() => openAssessment()}
               aria-label={PRIMARY_CTA_LABEL}
               className={cn(
                 "ascend-button-primary group relative inline-flex min-h-12 w-full max-w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 sm:w-auto sm:px-8",
@@ -119,7 +117,7 @@ export function Hero() {
                 {PRIMARY_CTA_LABEL}
               </span>
               <ArrowRight className="relative z-10 size-4 shrink-0 transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:translate-x-0.5" />
-            </motion.a>
+            </motion.button>
 
             <motion.a
               href="#pricing"
@@ -141,7 +139,7 @@ export function Hero() {
 
       <motion.a
         href="#about"
-        className="absolute bottom-[max(5.75rem,env(safe-area-inset-bottom)+4.75rem)] left-1/2 z-[15] flex -translate-x-1/2 flex-col items-center gap-2 text-zinc-500 sm:bottom-10"
+        className="absolute bottom-5 left-1/2 z-[15] flex -translate-x-1/2 flex-col items-center gap-2 text-zinc-500 sm:bottom-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{

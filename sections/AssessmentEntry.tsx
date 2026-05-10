@@ -1,18 +1,21 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useAssessmentModal } from "@/contexts/assessment-modal";
 import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
 import { DURATION_REVEAL, RISE_Y, txReveal } from "@/lib/motion";
 import { shellReading } from "@/lib/editorial-layout";
+import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useMemo } from "react";
 
 export function AssessmentEntry() {
+  const { openAssessment } = useAssessmentModal();
   const viewport = useRevealViewport();
   const isMobile = useIsMobileConversion();
   const yK = useMemo(() => (isMobile ? 0.62 : 1), [isMobile]);
@@ -65,17 +68,26 @@ export function AssessmentEntry() {
           Mentor bandwidth is capped — applications are read in order.
         </p>
         <motion.div
-          className="mt-9 sm:mt-12"
+          className="mt-9 flex w-full max-w-[min(34rem,100%)] flex-col gap-3 sm:mt-12 sm:flex-row sm:items-center"
           initial={{ opacity: 0, y: RISE_Y * 0.9 * yK }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
           transition={txReveal(DURATION_REVEAL * durK, 0.2 * durK)}
         >
+          <button
+            type="button"
+            onClick={() => openAssessment()}
+            className={cn(
+              "ascend-button-primary inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-white px-8 text-sm font-medium tracking-tight text-zinc-950 sm:flex-initial",
+              "transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+            )}
+          >
+            {PRIMARY_CTA_LABEL}
+          </button>
           <Link
             href="#pricing"
             className={cn(
-              "ascend-button-primary inline-flex min-h-12 items-center justify-center rounded-full bg-white px-8 text-sm font-medium tracking-tight text-zinc-950",
-              "transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+              "inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.03] px-8 text-sm font-medium tracking-tight text-zinc-200 backdrop-blur-sm transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-white/[0.18] hover:bg-white/[0.06] hover:text-white sm:flex-initial",
             )}
           >
             View pricing

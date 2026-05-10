@@ -10,7 +10,8 @@ import {
   TAP_SPRING,
   txReveal,
 } from "@/lib/motion";
-import { ASCEND_WHATSAPP_ME_URL, PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
+import { useAssessmentModal } from "@/contexts/assessment-modal";
+import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
@@ -55,11 +56,12 @@ function scrollToHash(hash: string) {
 }
 
 export function TransformationGate() {
+  const { openAssessment } = useAssessmentModal();
   const reduceMotion = useReducedMotion();
   const isMobile = useIsMobileConversion();
   const titleId = useId();
   const descId = useId();
-  const primaryRef = useRef<HTMLAnchorElement>(null);
+  const primaryRef = useRef<HTMLButtonElement>(null);
   const pendingHashRef = useRef<string>("");
   const quoteTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -310,12 +312,17 @@ export function TransformationGate() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={txReveal(DURATION_REVEAL, isMobile ? 0.12 : 0.18)}
                   >
-                    <motion.a
+                    <motion.button
                       ref={primaryRef}
-                      href={ASCEND_WHATSAPP_ME_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => writeDismissed()}
+                      type="button"
+                      onClick={() => {
+                        writeDismissed();
+                        clearQuoteTimer();
+                        setPhase("main");
+                        setActive(false);
+                        document.body.style.overflow = "";
+                        openAssessment();
+                      }}
                       className={cn(
                         "inline-flex min-h-[3.1rem] w-full items-center justify-center rounded-full bg-white px-6 text-sm font-medium tracking-tight text-zinc-950",
                         "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_60px_-20px_rgba(255,255,255,0.22)]",
@@ -326,7 +333,7 @@ export function TransformationGate() {
                       transition={TAP_SPRING}
                     >
                       {PRIMARY_CTA_LABEL}
-                    </motion.a>
+                    </motion.button>
                     <motion.button
                       type="button"
                       onClick={() => startClose("#about")}

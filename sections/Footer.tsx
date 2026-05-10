@@ -1,5 +1,7 @@
 "use client";
 
+import { useAssessmentModal } from "@/contexts/assessment-modal";
+import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
 import Link from "next/link";
 
 const quick = [
@@ -11,6 +13,7 @@ const quick = [
 ] as const;
 
 export function Footer() {
+  const { openAssessment } = useAssessmentModal();
   return (
     <footer
       id="site-footer"
@@ -30,7 +33,7 @@ export function Footer() {
         </div>
         <nav
           aria-label="Footer"
-          className="flex flex-wrap gap-x-7 gap-y-3.5 sm:justify-end"
+          className="flex flex-wrap items-center gap-x-7 gap-y-3.5 sm:justify-end"
         >
           {quick.map((l) => (
             <Link
@@ -41,6 +44,13 @@ export function Footer() {
               {l.label}
             </Link>
           ))}
+          <button
+            type="button"
+            onClick={() => openAssessment()}
+            className="rounded-full border border-white/[0.12] bg-white/[0.04] px-4 py-2 text-[13px] font-medium tracking-tight text-zinc-300 transition-colors hover:border-white/[0.18] hover:bg-white/[0.07] hover:text-white"
+          >
+            {PRIMARY_CTA_LABEL}
+          </button>
         </nav>
       </div>
       <div className="relative z-10 mx-auto mt-14 max-w-6xl border-t border-white/[0.05] pt-8 sm:mt-16">

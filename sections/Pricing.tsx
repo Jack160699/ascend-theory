@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
 import {
   useIsMobileConversion,
@@ -19,7 +20,6 @@ import {
 import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import type { TierKey } from "@/lib/lead-context";
-import { ascendWhatsAppUrl } from "@/lib/whatsapp";
 import { motion, type Variants } from "framer-motion";
 import { Check } from "lucide-react";
 import { useMemo, useRef } from "react";
@@ -116,16 +116,17 @@ function PricingCapacityRibbon({
 function PricingCard({
   tier,
   cardVariants,
+  onStartApplication,
 }: {
   tier: (typeof tiers)[number];
   cardVariants: Variants;
+  onStartApplication: () => void;
 }) {
   const rootRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const conv = useConversionExperienceOptional();
   const slotLine = conv?.urgencyForTier(0) ?? "";
   const { key } = tier;
-  const applyHref = ascendWhatsAppUrl(`Ascend Theory — applying for ${tier.name}.`);
 
   const onMove = (e: React.MouseEvent<HTMLElement>) => {
     const root = rootRef.current;
@@ -165,9 +166,9 @@ function PricingCard({
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       className={cn(
-        "group relative h-full [perspective:1600px]",
+        "group relative flex h-full min-h-0 flex-col [perspective:1600px]",
         key === "pro" &&
-          "z-10 scale-[1.01] shadow-[0_30px_80px_-48px_rgba(255,255,255,0.2)] lg:z-20 lg:-my-5 lg:scale-[1.06] lg:shadow-[0_60px_120px_-60px_rgba(0,0,0,0.85)]",
+          "z-10 shadow-[0_30px_80px_-48px_rgba(255,255,255,0.2)] lg:z-20 lg:shadow-[0_48px_100px_-52px_rgba(0,0,0,0.82)]",
         key === "black" &&
           "ring-1 ring-amber-950/25 lg:opacity-[0.99] lg:shadow-[0_0_100px_-48px_rgba(160,120,70,0.12)]",
       )}
@@ -187,7 +188,7 @@ function PricingCard({
       />
       <div
         className={cn(
-          "relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+          "relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-[1.25rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           key === "core" &&
             "border-white/[0.09] bg-white/[0.025] p-5 group-hover:border-white/[0.14] group-hover:shadow-[0_28px_90px_-48px_rgba(0,0,0,0.88)] sm:p-7",
           key === "pro" &&
@@ -232,7 +233,7 @@ function PricingCard({
           />
         ) : null}
 
-        <div className="relative z-10 flex flex-1 flex-col">
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3
@@ -312,7 +313,7 @@ function PricingCard({
             )}
           </div>
 
-          <ul className="mt-5 flex flex-1 flex-col gap-2 sm:mt-6 sm:gap-2.5">
+          <ul className="mt-5 flex min-h-0 flex-1 flex-col gap-2 sm:mt-6 sm:gap-2.5">
             {tier.features.map((f) => (
               <li
                 key={f}
@@ -343,30 +344,31 @@ function PricingCard({
             ))}
           </ul>
 
-          {slotLine ? (
-            <p className="mt-4 border-t border-white/[0.06] pt-3 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600">
-              {slotLine}
-            </p>
-          ) : null}
+          <div className="mt-auto flex flex-shrink-0 flex-col pt-1">
+            {slotLine ? (
+              <p className="mt-4 border-t border-white/[0.06] pt-3 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600">
+                {slotLine}
+              </p>
+            ) : null}
 
-          <motion.a
-            href={applyHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              "mt-6 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium tracking-tight transition-[box-shadow,transform,color,border-color,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:mt-8",
-              key === "pro" && "ascend-button-primary bg-white text-zinc-950",
-              key === "core" &&
-                "ascend-button-ghost border border-white/[0.12] bg-white/[0.05] text-white hover:border-white/[0.2] hover:bg-white/[0.09]",
-              key === "black" &&
-                "ascend-button-ghost border border-zinc-700/80 bg-zinc-950/80 text-zinc-200 hover:border-amber-950/40 hover:bg-zinc-900/90 hover:text-white",
-            )}
-            whileHover={{ scale: 1.012 }}
-            whileTap={{ scale: 0.988 }}
-            transition={TAP_SPRING}
-          >
-            {tier.cta}
-          </motion.a>
+            <motion.button
+              type="button"
+              onClick={onStartApplication}
+              className={cn(
+                "mt-6 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium tracking-tight transition-[box-shadow,transform,color,border-color,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:mt-8",
+                key === "pro" && "ascend-button-primary bg-white text-zinc-950",
+                key === "core" &&
+                  "ascend-button-ghost border border-white/[0.12] bg-white/[0.05] text-white hover:border-white/[0.2] hover:bg-white/[0.09]",
+                key === "black" &&
+                  "ascend-button-ghost border border-zinc-700/80 bg-zinc-950/80 text-zinc-200 hover:border-amber-950/40 hover:bg-zinc-900/90 hover:text-white",
+              )}
+              whileHover={{ scale: 1.012 }}
+              whileTap={{ scale: 0.988 }}
+              transition={TAP_SPRING}
+            >
+              {tier.cta}
+            </motion.button>
+          </div>
         </div>
       </div>
     </motion.article>
@@ -374,6 +376,7 @@ function PricingCard({
 }
 
 export function Pricing() {
+  const { openAssessment } = useAssessmentModal();
   const viewport = useRevealViewport();
   const isMobile = useIsMobileConversion();
   const headerStagger = useMemo(
@@ -391,7 +394,7 @@ export function Pricing() {
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-12 sm:py-24 lg:py-[8.75rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-x-clip overflow-y-visible border-t border-white/[0.028] bg-[#050505] py-12 sm:py-24 lg:py-[8.75rem]"
       aria-labelledby="pricing-heading"
     >
       <SectionContinuity />
@@ -453,7 +456,7 @@ export function Pricing() {
         <PricingCapacityRibbon viewport={viewport} />
 
         <motion.div
-          className="relative mx-auto mt-10 max-w-6xl sm:mt-12 lg:mt-16"
+          className="relative mx-auto mt-10 max-w-6xl overflow-x-clip sm:mt-12 lg:mt-16"
           variants={gridStagger}
           initial="hidden"
           whileInView="visible"
@@ -463,24 +466,42 @@ export function Pricing() {
             className="pointer-events-none absolute left-[10%] right-[10%] top-[42%] hidden h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent lg:block"
             aria-hidden
           />
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:items-end lg:gap-4 xl:gap-6">
-            <div className="relative order-2 lg:order-1 lg:pb-10">
-              <p className="mb-3 hidden text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block lg:pl-1">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:items-stretch lg:gap-4 xl:gap-6">
+            <div className="relative order-2 flex min-h-0 flex-col lg:order-1">
+              <p className="mb-3 hidden shrink-0 text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block lg:pl-1">
                 I — Foundation access
               </p>
-              <PricingCard tier={tiers[0]} cardVariants={cardVariants} />
+              <div className="min-h-0 flex-1">
+                <PricingCard
+                  tier={tiers[0]}
+                  cardVariants={cardVariants}
+                  onStartApplication={() => openAssessment("core")}
+                />
+              </div>
             </div>
-            <div className="relative order-1 lg:order-2 lg:z-20 lg:px-1">
-              <p className="mb-3 hidden text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-400 lg:block lg:pl-1">
+            <div className="relative order-1 flex min-h-0 flex-col lg:order-2 lg:z-20 lg:px-1">
+              <p className="mb-3 hidden shrink-0 text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-400 lg:block lg:pl-1">
                 II — High accountability
               </p>
-              <PricingCard tier={tiers[1]} cardVariants={cardVariants} />
+              <div className="min-h-0 flex-1">
+                <PricingCard
+                  tier={tiers[1]}
+                  cardVariants={cardVariants}
+                  onStartApplication={() => openAssessment("pro")}
+                />
+              </div>
             </div>
-            <div className="relative order-3 lg:order-3 lg:pb-10">
-              <p className="mb-3 hidden text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block lg:pl-1">
+            <div className="relative order-3 flex min-h-0 flex-col lg:order-3">
+              <p className="mb-3 hidden shrink-0 text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block lg:pl-1">
                 III — Private architecture
               </p>
-              <PricingCard tier={tiers[2]} cardVariants={cardVariants} />
+              <div className="min-h-0 flex-1">
+                <PricingCard
+                  tier={tiers[2]}
+                  cardVariants={cardVariants}
+                  onStartApplication={() => openAssessment("black")}
+                />
+              </div>
             </div>
           </div>
         </motion.div>

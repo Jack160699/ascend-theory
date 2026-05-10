@@ -1,10 +1,8 @@
 "use client";
 
+import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
-import {
-  ASCEND_WHATSAPP_ME_URL,
-  PRIMARY_CTA_LABEL,
-} from "@/lib/whatsapp";
+import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
 import {
   DURATION_OPACITY,
   DURATION_OVERLAY,
@@ -36,6 +34,7 @@ const links = [
 ] as const;
 
 export function Navbar() {
+  const { openAssessment } = useAssessmentModal();
   const conversion = useConversionExperienceOptional();
   const ctaLabel = conversion?.primaryCtaLabel ?? PRIMARY_CTA_LABEL;
   const notice = conversion?.urgencyMessage ?? "";
@@ -131,10 +130,9 @@ export function Navbar() {
               whileTap={{ scale: 0.988 }}
               transition={TAP_SPRING}
             >
-              <Link
-                href={ASCEND_WHATSAPP_ME_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => openAssessment()}
                 aria-label={ctaLabel}
                 className={cn(
                   "ascend-button-primary relative inline-flex max-w-[9rem] overflow-hidden rounded-full px-3.5 py-2.5 text-center text-[10px] font-medium leading-tight tracking-tight text-zinc-950 sm:max-w-[16rem] sm:px-5 sm:text-[12px] sm:leading-snug lg:max-w-[18rem] lg:text-[12px]",
@@ -142,7 +140,7 @@ export function Navbar() {
                 )}
               >
                 <span className="max-w-full truncate">{ctaLabel}</span>
-              </Link>
+              </button>
             </motion.div>
 
             <button
@@ -213,16 +211,17 @@ export function Navbar() {
                 exit={{ opacity: 0, y: 8 }}
                 transition={txReveal(DURATION_OPACITY, 0.22)}
               >
-                <Link
-                  href={ASCEND_WHATSAPP_ME_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={close}
+                <button
+                  type="button"
+                  onClick={() => {
+                    close();
+                    openAssessment();
+                  }}
                   aria-label={ctaLabel}
                   className="ascend-button-primary flex min-h-12 w-full max-w-full items-center justify-center rounded-full bg-white px-4 py-3 text-center text-[12px] font-medium leading-snug tracking-tight text-zinc-950"
                 >
                   <span className="line-clamp-2">{ctaLabel}</span>
-                </Link>
+                </button>
               </motion.div>
             </motion.div>
           </motion.div>

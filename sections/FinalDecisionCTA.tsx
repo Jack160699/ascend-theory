@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useAssessmentModal } from "@/contexts/assessment-modal";
 import {
   useIsMobileConversion,
   useRevealViewport,
@@ -14,10 +15,7 @@ import {
   txReveal,
 } from "@/lib/motion";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
-import {
-  ASCEND_WHATSAPP_ME_URL,
-  PRIMARY_CTA_LABEL,
-} from "@/lib/whatsapp";
+import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useMemo } from "react";
@@ -39,6 +37,7 @@ const FLOAT_FRAGMENTS: readonly {
 ];
 
 export function FinalDecisionCTA() {
+  const { openAssessment } = useAssessmentModal();
   const viewport = useRevealViewport();
   const isMobile = useIsMobileConversion();
   const headerStagger = useMemo(
@@ -168,10 +167,9 @@ export function FinalDecisionCTA() {
           viewport={viewport}
           transition={txReveal(DURATION_REVEAL, isMobile ? 0.28 : 0.48)}
         >
-          <motion.a
-            href={ASCEND_WHATSAPP_ME_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          <motion.button
+            type="button"
+            onClick={() => openAssessment()}
             className={cn(
               "ascend-button-primary inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white px-8 text-sm font-medium tracking-tight text-zinc-950 sm:w-auto sm:min-w-[14rem]",
             )}
@@ -180,7 +178,7 @@ export function FinalDecisionCTA() {
             transition={TAP_SPRING}
           >
             {PRIMARY_CTA_LABEL}
-          </motion.a>
+          </motion.button>
           <motion.a
             href="#pricing"
             className={cn(
