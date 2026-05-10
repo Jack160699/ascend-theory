@@ -2,6 +2,7 @@ import { TransformationConcierge } from "@/components/TransformationConcierge";
 import { TransformationGate } from "@/components/TransformationGate";
 import { AssessmentModalProvider } from "@/contexts/assessment-modal";
 import { ConversionExperienceProvider } from "@/contexts/conversion-experience";
+import { AllPaths } from "@/sections/AllPaths";
 import { AssessmentEntry } from "@/sections/AssessmentEntry";
 import { FinalDecisionCTA } from "@/sections/FinalDecisionCTA";
 import { Footer } from "@/sections/Footer";
@@ -25,11 +26,12 @@ export default function Home() {
           <Problem />
           <System />
           <Journey />
-          <Pricing />
           <MentorshipDepth />
+          <Pricing />
+          <Testimonials />
           <AssessmentEntry />
           <FinalDecisionCTA />
-          <Testimonials />
+          <AllPaths />
         </main>
         <Footer />
         <TransformationConcierge />
