@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  DURATION_OPACITY,
+  DURATION_OVERLAY,
+  DURATION_OVERLAY_SLOW,
+  TAP_SPRING,
+  txReveal,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -132,7 +139,7 @@ function TypingIndicator() {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
-      transition={{ duration: 0.35 }}
+      transition={txReveal(DURATION_OVERLAY)}
       aria-hidden
     >
       {[0, 1, 2].map((i) => (
@@ -294,10 +301,10 @@ export function TransformationConcierge() {
             initial={{ opacity: 0, y: 20, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+            transition={txReveal(DURATION_OVERLAY_SLOW)}
             className={cn(
-              "mb-3 flex w-[min(100vw-1.5rem,22rem)] flex-col overflow-hidden rounded-2xl border border-white/[0.1]",
-              "bg-zinc-950/[0.82] shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_28px_80px_-24px_rgba(0,0,0,0.85)] backdrop-blur-2xl",
+              "ascend-surface mb-3 flex w-[min(100vw-1.5rem,22rem)] flex-col overflow-hidden rounded-2xl",
+              "bg-zinc-950/[0.82]",
               "sm:w-[min(100vw-2rem,24rem)]",
             )}
           >
@@ -318,8 +325,9 @@ export function TransformationConcierge() {
                 type="button"
                 onClick={() => setOpen(false)}
                 className="flex size-9 shrink-0 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.04] text-zinc-400 transition-colors hover:border-white/[0.16] hover:text-white"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={TAP_SPRING}
                 aria-label="Close concierge"
               >
                 <span className="text-lg leading-none">×</span>
@@ -335,11 +343,10 @@ export function TransformationConcierge() {
                   key={msg.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.45,
-                    delay: idx === messages.length - 1 ? 0.04 : 0,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
+                  transition={txReveal(
+                    DURATION_OPACITY,
+                    idx === messages.length - 1 ? 0.04 : 0,
+                  )}
                   className={cn(
                     "rounded-xl px-3.5 py-2.5 text-[13px] leading-relaxed",
                     msg.role === "user"
@@ -384,12 +391,13 @@ export function TransformationConcierge() {
                     disabled={typing}
                     onClick={() => onQuickAction(a.id)}
                     className={cn(
-                      "rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-left text-[11px] font-medium leading-snug text-zinc-400 transition-colors",
+                      "ascend-button-ghost rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-left text-[11px] font-medium leading-snug text-zinc-400 transition-colors",
                       "hover:border-white/[0.14] hover:bg-white/[0.07] hover:text-zinc-200",
                       "disabled:pointer-events-none disabled:opacity-40",
                     )}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    transition={TAP_SPRING}
                   >
                     {a.label}
                   </motion.button>
@@ -406,8 +414,9 @@ export function TransformationConcierge() {
                 <motion.button
                   type="submit"
                   disabled={typing || !input.trim()}
-                  className="shrink-0 rounded-xl border border-white/[0.12] bg-white/[0.08] px-3 py-2 text-[12px] font-medium text-zinc-200 transition-colors hover:bg-white/[0.12] disabled:opacity-40"
-                  whileTap={{ scale: 0.97 }}
+                  className="ascend-button-ghost shrink-0 rounded-xl border border-white/[0.12] bg-white/[0.08] px-3 py-2 text-[12px] font-medium text-zinc-200 transition-colors hover:bg-white/[0.12] disabled:opacity-40"
+                  whileTap={{ scale: 0.98 }}
+                  transition={TAP_SPRING}
                 >
                   Send
                 </motion.button>
@@ -424,9 +433,9 @@ export function TransformationConcierge() {
         aria-controls={open ? "concierge-panel" : undefined}
         id="concierge-launcher"
         className="group relative flex flex-col items-center gap-2 outline-none"
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
-        transition={{ type: "spring", stiffness: 420, damping: 28 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={TAP_SPRING}
       >
         <span className="sr-only">
           {open
@@ -436,13 +445,13 @@ export function TransformationConcierge() {
         <div className="relative">
           <motion.div
             className="absolute inset-[-10px] rounded-full bg-white/[0.12] blur-xl"
-            animate={{ opacity: [0.25, 0.45, 0.28], scale: [1, 1.08, 1] }}
+            animate={{ opacity: [0.25, 0.45, 0.28], scale: [1, 1.04, 1] }}
             transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
             aria-hidden
           />
           <motion.div
             className="relative flex size-[3.25rem] items-center justify-center rounded-full border border-white/[0.14] bg-gradient-to-br from-zinc-800/90 via-zinc-950 to-black shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset,0_12px_40px_-12px_rgba(0,0,0,0.8)] sm:size-14"
-            animate={{ y: [0, -4, 0] }}
+            animate={{ y: [0, -3, 0] }}
             transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
           >
             <motion.div
@@ -468,7 +477,7 @@ export function TransformationConcierge() {
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
+                transition={txReveal(DURATION_OPACITY)}
                 className="mt-1 line-clamp-2 font-serif text-[10px] font-light italic leading-snug text-zinc-600"
               >
                 {IDLE_FRAGMENTS[fragmentIndex]}

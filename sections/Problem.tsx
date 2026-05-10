@@ -1,5 +1,14 @@
 "use client";
 
+import { SectionContinuity } from "@/components/SectionContinuity";
+import {
+  SURFACE_SPRING,
+  VIEWPORT_CALM,
+  cardReveal,
+  fadeUp,
+  gridStaggerParent,
+  headerStaggerParent,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
@@ -13,41 +22,7 @@ import {
 } from "lucide-react";
 import { useRef } from "react";
 
-const viewport = { once: true, margin: "-100px" } as const;
-
-const headerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.16, delayChildren: 0.05 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 32 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
-
-const cardsContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.12 },
-  },
-};
-
-const cardVariant = {
-  hidden: { opacity: 0, y: 36 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.72, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
+const viewport = VIEWPORT_CALM;
 
 const pains: {
   title: string;
@@ -115,29 +90,29 @@ function PainCard({
   return (
     <motion.article
       ref={articleRef}
-      variants={cardVariant}
+      variants={cardReveal}
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
       className="group relative h-full [perspective:1400px]"
       style={{ transformStyle: "preserve-3d" }}
       whileHover={{
-        rotateX: 3.5,
-        rotateY: -3.5,
-        transition: { type: "spring", stiffness: 260, damping: 22 },
+        rotateX: 2.5,
+        rotateY: -2.5,
+        transition: SURFACE_SPRING,
       }}
     >
       <motion.div
         className={cn(
           "relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.08]",
           "bg-white/[0.03] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl",
-          "transition-[border-color,box-shadow] duration-500",
+          "transition-[border-color,box-shadow] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
           "group-hover:border-white/[0.14] group-hover:shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85),0_0_60px_-20px_rgba(255,255,255,0.06)]",
         )}
         style={{ transformStyle: "preserve-3d" }}
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
           style={{
             background:
               "radial-gradient(520px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(255,255,255,0.1), transparent 58%)",
@@ -148,14 +123,14 @@ function PainCard({
           aria-hidden
         />
         <div className="relative z-10 flex flex-col gap-4">
-          <div className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-zinc-950/40 text-zinc-400 transition-colors duration-300 group-hover:border-white/[0.12] group-hover:text-zinc-200">
+          <div className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-zinc-950/40 text-zinc-400 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:border-white/[0.12] group-hover:text-zinc-200">
             <Icon className="size-[18px]" strokeWidth={1.35} />
           </div>
           <div>
             <h3 className="text-[15px] font-semibold tracking-tight text-white">
               {title}
             </h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-500 transition-colors duration-300 group-hover:text-zinc-400">
+            <p className="mt-2 text-[13px] leading-relaxed text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
               {line}
             </p>
           </div>
@@ -170,9 +145,10 @@ export function Problem() {
     <section
       id="about"
       data-conversion-zone="tension"
-      className="relative overflow-hidden border-t border-white/[0.04] bg-[#050505] py-20 sm:py-28 lg:py-32"
+      className="relative overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-32"
       aria-labelledby="problem-heading"
     >
+      <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute inset-0 bg-gradient-to-b from-black via-[#060606] to-black" />
         <div className="absolute -left-[30%] top-1/4 h-[28rem] w-[28rem] rounded-full bg-zinc-600/[0.06] blur-[120px]" />
@@ -189,7 +165,7 @@ export function Problem() {
       <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
         <motion.div
           className="mx-auto max-w-3xl text-center"
-          variants={headerContainer}
+          variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -222,7 +198,7 @@ export function Problem() {
 
         <motion.div
           className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-5 sm:mt-20 sm:grid-cols-2 lg:mt-24 lg:grid-cols-3 lg:gap-6 [perspective:1600px]"
-          variants={cardsContainer}
+          variants={gridStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -234,7 +210,7 @@ export function Problem() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 to-transparent"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/45 via-black/12 to-transparent sm:h-32"
         aria-hidden
       />
     </section>

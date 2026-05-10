@@ -14,6 +14,12 @@ import {
   toTierLeadPayload,
 } from "@/lib/lead-context";
 import {
+  DURATION_OVERLAY,
+  DURATION_OVERLAY_SLOW,
+  TAP_SPRING,
+  txReveal,
+} from "@/lib/motion";
+import {
   interpretAssessment,
   recommendationForStorage,
   type RecommendationOutput,
@@ -278,7 +284,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          transition={txReveal(DURATION_OVERLAY)}
         >
           <motion.button
             type="button"
@@ -290,11 +296,11 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
             onClick={onClose}
           />
           <motion.div
-            className="relative z-10 max-h-[min(88dvh,46rem)] w-full max-w-lg overflow-y-auto rounded-[1.25rem] border border-white/[0.12] bg-zinc-950/85 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.05)_inset,0_40px_120px_-40px_rgba(0,0,0,0.85)] backdrop-blur-2xl sm:max-h-[min(92vh,46rem)] sm:p-8"
+            className="ascend-surface relative z-10 max-h-[min(88dvh,46rem)] w-full max-w-lg overflow-y-auto rounded-[1.25rem] p-5 sm:max-h-[min(92vh,46rem)] sm:p-8"
             initial={{ opacity: 0, y: 32, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            transition={txReveal(DURATION_OVERLAY_SLOW)}
             onClick={(e) => e.stopPropagation()}
           >
             <div
@@ -333,9 +339,10 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
               <motion.button
                 type="button"
                 onClick={onClose}
-                className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.05] text-zinc-400 transition-colors hover:border-white/[0.16] hover:text-white sm:size-10"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="ascend-button-ghost flex size-11 shrink-0 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.05] text-zinc-400 transition-colors hover:border-white/[0.16] hover:text-white sm:size-10"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={TAP_SPRING}
                 aria-label="Close"
               >
                 <X className="size-[18px]" />
@@ -349,7 +356,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.35 }}
+                  transition={txReveal(DURATION_OVERLAY)}
                   className="relative z-10 mt-8 space-y-5"
                 >
                   {tier === "core" ? (
@@ -598,7 +605,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  transition={txReveal(DURATION_OVERLAY_SLOW)}
                   className="relative z-10 mt-8 space-y-6"
                 >
                   <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">

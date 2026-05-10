@@ -1,46 +1,21 @@
 "use client";
 
+import { SectionContinuity } from "@/components/SectionContinuity";
+import {
+  SURFACE_SPRING,
+  VIEWPORT_CALM,
+  cardReveal,
+  fadeUp,
+  gridStaggerParent,
+  headerStaggerParent,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { Mic2, Orbit, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 import { useRef } from "react";
 
-const viewport = { once: true, margin: "-100px" } as const;
-
-const headerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.16, delayChildren: 0.06 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 32 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
-
-const cardsContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.11, delayChildren: 0.14 },
-  },
-};
-
-const cardVariant = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
+const viewport = VIEWPORT_CALM;
 
 const pillars: {
   title: string;
@@ -127,23 +102,23 @@ function SystemCard({
   return (
     <motion.article
       ref={articleRef}
-      variants={cardVariant}
+      variants={cardReveal}
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
       className="group relative h-full [perspective:1500px]"
       style={{ transformStyle: "preserve-3d" }}
       whileHover={{
-        rotateX: 3,
-        rotateY: 4,
-        y: -4,
-        transition: { type: "spring", stiffness: 280, damping: 24 },
+        rotateX: 2.5,
+        rotateY: 3,
+        y: -3,
+        transition: SURFACE_SPRING,
       }}
     >
       <motion.div
         className={cn(
           "relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.09]",
           "bg-white/[0.025] p-7 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl",
-          "transition-[border-color,box-shadow] duration-500",
+          "transition-[border-color,box-shadow] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
           "group-hover:border-white/[0.16] group-hover:shadow-[0_32px_90px_-48px_rgba(0,0,0,0.9),0_0_72px_-24px_rgba(255,255,255,0.08)]",
         )}
         style={{ transformStyle: "preserve-3d" }}
@@ -167,7 +142,7 @@ function SystemCard({
 
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
           style={{
             background:
               "radial-gradient(560px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(255,255,255,0.11), transparent 60%)",
@@ -175,7 +150,7 @@ function SystemCard({
         />
         <div
           ref={sheenRef}
-          className="pointer-events-none absolute inset-0 opacity-0 mix-blend-overlay transition-opacity duration-500 group-hover:opacity-70"
+          className="pointer-events-none absolute inset-0 opacity-0 mix-blend-overlay transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-70"
           style={{
             background:
               "radial-gradient(380px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(255,255,255,0.15), transparent 55%)",
@@ -187,7 +162,7 @@ function SystemCard({
         />
         <div className="relative z-10 flex h-full flex-col gap-5">
           <motion.div
-            className="flex size-11 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 shadow-[0_0_24px_-8px_rgba(255,255,255,0.06)] transition-colors duration-300 group-hover:border-white/[0.14] group-hover:text-white"
+            className="flex size-11 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 shadow-[0_0_24px_-8px_rgba(255,255,255,0.06)] transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:border-white/[0.14] group-hover:text-white"
             animate={{ y: [0, -3, 0] }}
             transition={{
               duration: floatMs / 1000,
@@ -201,7 +176,7 @@ function SystemCard({
             <h3 className="text-[16px] font-semibold leading-snug tracking-tight text-white">
               {title}
             </h3>
-            <p className="mt-3 text-[13px] leading-relaxed text-zinc-500 transition-colors duration-300 group-hover:text-zinc-400">
+            <p className="mt-3 text-[13px] leading-relaxed text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
               {description}
             </p>
           </div>
@@ -216,9 +191,10 @@ export function System() {
     <section
       id="programs"
       data-conversion-zone="programs"
-      className="relative overflow-hidden border-t border-white/[0.04] bg-[#050505] py-20 sm:py-28 lg:py-32"
+      className="relative overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-32"
       aria-labelledby="system-heading"
     >
+      <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-[#030303]" />
         <div className="absolute right-[-20%] top-[8%] h-[32rem] w-[32rem] rounded-full bg-zinc-500/[0.055] blur-[130px]" />
@@ -235,7 +211,7 @@ export function System() {
       <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
         <motion.div
           className="mx-auto max-w-3xl text-center"
-          variants={headerContainer}
+          variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -265,7 +241,7 @@ export function System() {
 
         <motion.div
           className="mx-auto mt-16 grid max-w-6xl grid-cols-1 gap-5 sm:mt-20 sm:grid-cols-2 sm:gap-6 lg:mt-24 lg:grid-cols-3 xl:grid-cols-5"
-          variants={cardsContainer}
+          variants={gridStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -277,7 +253,7 @@ export function System() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/85 to-transparent"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/48 via-black/14 to-transparent sm:h-32"
         aria-hidden
       />
     </section>

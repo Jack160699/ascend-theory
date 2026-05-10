@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  DURATION_OPACITY,
+  DURATION_OVERLAY,
+  DURATION_OVERLAY_SLOW,
+  DURATION_REVEAL,
+  txReveal,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -162,7 +169,7 @@ function StickyConversionBar({
             initial={{ y: 44, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 30, opacity: 0 }}
-            transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+            transition={txReveal(DURATION_OVERLAY)}
           >
             <div className="mx-auto flex max-w-md items-center gap-2.5 rounded-2xl border border-white/[0.08] bg-white/[0.02] px-2.5 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
               <div className="min-w-0 flex-1 pl-1">
@@ -173,7 +180,7 @@ function StickyConversionBar({
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.45, ease: "easeOut" }}
+                    transition={txReveal(DURATION_OPACITY)}
                   >
                     {MOBILE_PHILOSOPHY_LINES[lineIndex]}
                   </motion.p>
@@ -196,7 +203,7 @@ function StickyConversionBar({
             initial={{ y: 48, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 36, opacity: 0 }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            transition={txReveal(DURATION_OVERLAY_SLOW)}
           >
             <div className="mx-auto flex max-w-6xl flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
               <AnimatePresence mode="wait">
@@ -206,7 +213,7 @@ function StickyConversionBar({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.45, ease: "easeOut" }}
+                  transition={txReveal(DURATION_OPACITY)}
                 >
                   {urgencyMessage}
                 </motion.p>
@@ -215,7 +222,7 @@ function StickyConversionBar({
                 href="#pricing"
                 className={cn(
                   "inline-flex h-11 min-h-11 shrink-0 items-center justify-center rounded-full bg-white px-5 text-center text-[11px] font-medium leading-snug tracking-tight text-zinc-950 sm:px-6 sm:text-xs",
-                  "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_12px_40px_-12px_rgba(255,255,255,0.2)] transition-shadow duration-300 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_16px_48px_-10px_rgba(255,255,255,0.28)]",
+                  "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_12px_40px_-12px_rgba(255,255,255,0.2)] transition-shadow duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_16px_48px_-10px_rgba(255,255,255,0.28)]",
                 )}
               >
                 <span className="max-w-[11rem] sm:max-w-none">{ctaLabel}</span>
@@ -234,7 +241,7 @@ function FloatingUrgencyPill({ message }: { message: string }) {
       className="pointer-events-none fixed bottom-[5.75rem] right-4 z-[55] hidden max-w-[14rem] sm:block lg:bottom-10 lg:right-8"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 1.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      transition={txReveal(DURATION_REVEAL, 1.2)}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -242,7 +249,7 @@ function FloatingUrgencyPill({ message }: { message: string }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.55, ease: "easeOut" }}
+          transition={txReveal(DURATION_OPACITY)}
           className={cn(
             "rounded-full border border-white/[0.1] bg-zinc-950/55 px-4 py-2.5 text-[10px] font-medium uppercase leading-snug tracking-[0.2em] text-zinc-500",
             "shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_12px_48px_-16px_rgba(0,0,0,0.65)] backdrop-blur-xl",

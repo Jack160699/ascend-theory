@@ -1,48 +1,27 @@
 "use client";
 
+import { SectionContinuity } from "@/components/SectionContinuity";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
+import {
+  DURATION_OPACITY,
+  DURATION_REVEAL,
+  SURFACE_SPRING,
+  TAP_SPRING,
+  VIEWPORT_CALM,
+  cardReveal,
+  fadeUp,
+  gridStaggerParent,
+  headerStaggerParent,
+  txReveal,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { TierKey } from "@/lib/lead-context";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useRef } from "react";
 
-const viewport = { once: true, margin: "-100px" } as const;
-
-const headerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.14, delayChildren: 0.05 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.78, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
-
-const cardsStagger = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.12, delayChildren: 0.14 },
-  },
-};
-
-const cardReveal = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.78, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
+const viewport = VIEWPORT_CALM;
 
 const tiers: {
   key: TierKey;
@@ -122,11 +101,11 @@ function PricingCapacityRibbon() {
   if (!msg) return null;
   return (
     <motion.div
-      className="mx-auto mt-10 max-w-2xl rounded-full border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-md sm:mt-12"
+      className="ascend-surface-soft mx-auto mt-10 max-w-2xl rounded-full px-5 py-2.5 text-center sm:mt-12"
       initial={{ opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewport}
-      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }}
+      transition={txReveal(DURATION_REVEAL)}
     >
       <AnimatePresence mode="wait">
         <motion.p
@@ -134,7 +113,7 @@ function PricingCapacityRibbon() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={txReveal(DURATION_OPACITY)}
           className="text-[10px] font-medium uppercase leading-relaxed tracking-[0.22em] text-zinc-500"
         >
           {msg}
@@ -203,12 +182,12 @@ function PricingCard({
         key === "black" &&
           "ring-1 ring-amber-950/25 lg:opacity-[0.99] lg:shadow-[0_0_100px_-48px_rgba(160,120,70,0.12)]",
       )}
-      whileHover={{ y: key === "pro" ? -8 : key === "black" ? -5 : -4 }}
-      transition={{ type: "spring", stiffness: 280, damping: 24 }}
+      whileHover={{ y: key === "pro" ? -5 : key === "black" ? -4 : -3 }}
+      transition={SURFACE_SPRING}
     >
       <div
         className={cn(
-          "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100",
+          "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100",
           key === "pro" &&
             "bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.2),transparent_62%)]",
           key === "core" &&
@@ -219,7 +198,7 @@ function PricingCard({
       />
       <div
         className={cn(
-          "relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl transition-[border-color,box-shadow] duration-500",
+          "relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
           key === "core" &&
             "border-white/[0.09] bg-white/[0.025] p-7 group-hover:border-white/[0.14] group-hover:shadow-[0_28px_90px_-48px_rgba(0,0,0,0.88)]",
           key === "pro" &&
@@ -230,7 +209,7 @@ function PricingCard({
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
           style={{ background: glowSpot }}
         />
         <motion.div
@@ -317,7 +296,8 @@ function PricingCard({
                 "font-mono font-semibold tracking-tight text-white",
                 key === "pro" && "text-3xl lg:text-4xl",
                 key === "core" && "text-2xl lg:text-3xl",
-                key === "black" && "text-2xl tracking-tight text-stone-100 sm:text-3xl lg:text-[2rem]",
+                key === "black" &&
+                  "text-2xl tracking-tight text-stone-100 sm:text-3xl lg:text-[2rem]",
               )}
             >
               {tier.price}
@@ -382,7 +362,7 @@ function PricingCard({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.45, ease: "easeOut" }}
+                transition={txReveal(DURATION_OPACITY)}
                 className="mt-6 border-t border-white/[0.06] pt-4 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600"
               >
                 {slotLine}
@@ -394,16 +374,16 @@ function PricingCard({
             type="button"
             onClick={() => onOpenAssessment(tier.key)}
             className={cn(
-              "mt-9 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium tracking-tight transition-[box-shadow,transform,color] duration-300 sm:mt-10",
-              key === "pro" &&
-                "bg-white text-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_22px_64px_-22px_rgba(255,255,255,0.28)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_26px_76px_-18px_rgba(255,255,255,0.34)]",
+              "mt-9 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium tracking-tight transition-[box-shadow,transform,color,border-color,background-color] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-10",
+              key === "pro" && "ascend-button-primary bg-white text-zinc-950",
               key === "core" &&
-                "border border-white/[0.12] bg-white/[0.05] text-white hover:border-white/[0.2] hover:bg-white/[0.09]",
+                "ascend-button-ghost border border-white/[0.12] bg-white/[0.05] text-white hover:border-white/[0.2] hover:bg-white/[0.09]",
               key === "black" &&
-                "border border-zinc-700/80 bg-zinc-950/80 text-zinc-200 hover:border-amber-950/40 hover:bg-zinc-900/90 hover:text-white",
+                "ascend-button-ghost border border-zinc-700/80 bg-zinc-950/80 text-zinc-200 hover:border-amber-950/40 hover:bg-zinc-900/90 hover:text-white",
             )}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            transition={TAP_SPRING}
           >
             {tier.cta}
           </motion.button>
@@ -420,9 +400,10 @@ export function Pricing() {
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#050505] py-20 sm:py-28 lg:py-32"
+      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-32"
       aria-labelledby="pricing-heading"
     >
+      <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
         <div className="absolute left-1/2 top-0 h-[26rem] w-[min(100%,56rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.065),transparent_72%)] blur-3xl" />
@@ -440,14 +421,14 @@ export function Pricing() {
       <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
         <motion.div
           className="mx-auto max-w-3xl text-center"
-          variants={headerContainer}
+          variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <motion.p
             variants={fadeUp}
-          className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 sm:mb-5 sm:tracking-[0.32em]"
+            className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 sm:mb-5 sm:tracking-[0.32em]"
           >
             Entry & allocation
           </motion.p>
@@ -475,8 +456,13 @@ export function Pricing() {
           whileInView="visible"
           viewport={viewport}
         >
-          <p>Reserved mentor capacity · selective allocation · structured methodology.</p>
-          <p>Limited onboarding windows · private accountability architecture.</p>
+          <p>
+            Reserved mentor capacity · selective allocation · structured
+            methodology.
+          </p>
+          <p>
+            Limited onboarding windows · private accountability architecture.
+          </p>
           <p>Identity-grade seriousness — not mass-market coaching.</p>
         </motion.div>
 
@@ -484,7 +470,7 @@ export function Pricing() {
 
         <motion.div
           className="relative mx-auto mt-14 max-w-6xl sm:mt-16 lg:mt-20"
-          variants={cardsStagger}
+          variants={gridStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -546,7 +532,7 @@ export function Pricing() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/85 to-transparent"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/48 via-black/14 to-transparent sm:h-32"
         aria-hidden
       />
     </section>

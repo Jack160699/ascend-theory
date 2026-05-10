@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  DURATION_OPACITY,
+  DURATION_OVERLAY,
+  DURATION_OVERLAY_SLOW,
+  DURATION_REVEAL,
+  EASE_CINEMATIC,
+  TAP_SPRING,
+  txReveal,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
@@ -137,8 +146,8 @@ export function TransformationGate() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{
-            duration: reduceMotion ? 0.28 : 0.55,
-            ease: [0.16, 1, 0.3, 1],
+            duration: reduceMotion ? 0.22 : DURATION_OVERLAY_SLOW,
+            ease: EASE_CINEMATIC,
           }}
         >
           <div
@@ -218,7 +227,7 @@ export function TransformationGate() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  transition={txReveal(DURATION_OPACITY)}
                 >
                   <motion.div
                     className="mb-10 h-px w-24 overflow-hidden rounded-full bg-white/[0.12]"
@@ -240,7 +249,7 @@ export function TransformationGate() {
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+                      transition={txReveal(DURATION_OVERLAY)}
                       className="text-balance font-sans text-lg font-medium leading-snug tracking-tight text-zinc-300 sm:text-xl"
                     >
                       {PHILOSOPHY_LINES[quoteIndex]}
@@ -254,13 +263,13 @@ export function TransformationGate() {
                   initial={{ opacity: 0, y: 28 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+                  transition={txReveal(DURATION_REVEAL)}
                 >
                   <motion.p
                     className="mb-8 text-[10px] font-medium uppercase tracking-[0.32em] text-zinc-600 sm:text-[11px]"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1, duration: 0.55 }}
+                    transition={txReveal(DURATION_OPACITY, 0.1)}
                   >
                     Ascend Theory
                   </motion.p>
@@ -294,11 +303,7 @@ export function TransformationGate() {
                     className="mt-11 flex w-full max-w-md flex-col gap-3.5 sm:mt-16 sm:flex-row sm:justify-center"
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      delay: 0.18,
-                      duration: 0.65,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
+                    transition={txReveal(DURATION_REVEAL, 0.18)}
                   >
                     <motion.button
                       ref={primaryRef}
@@ -307,10 +312,11 @@ export function TransformationGate() {
                       className={cn(
                         "inline-flex min-h-[3.1rem] w-full items-center justify-center rounded-full bg-white px-6 text-sm font-medium tracking-tight text-zinc-950",
                         "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_60px_-20px_rgba(255,255,255,0.22)]",
-                        "transition-shadow duration-300 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_24px_72px_-18px_rgba(255,255,255,0.3)]",
+                        "transition-shadow duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_24px_72px_-18px_rgba(255,255,255,0.3)]",
                       )}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
+                      transition={TAP_SPRING}
                     >
                       Begin Private Assessment
                     </motion.button>
@@ -319,10 +325,11 @@ export function TransformationGate() {
                       onClick={() => startClose("#about")}
                       className={cn(
                         "inline-flex min-h-[3.1rem] w-full items-center justify-center rounded-full border border-white/[0.14] bg-white/[0.04] px-6 text-sm font-medium tracking-tight text-zinc-200 backdrop-blur-md",
-                        "transition-[border-color,background-color] duration-300 hover:border-white/[0.22] hover:bg-white/[0.07]",
+                        "transition-[border-color,background-color] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-white/[0.22] hover:bg-white/[0.07]",
                       )}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
+                      transition={TAP_SPRING}
                     >
                       Explore The Philosophy
                     </motion.button>
@@ -336,7 +343,7 @@ export function TransformationGate() {
             className="pointer-events-none relative z-10 border-t border-white/[0.06] bg-black/40 px-6 py-[max(0.9rem,env(safe-area-inset-bottom))] text-center text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-600 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.55 }}
+            transition={txReveal(DURATION_OPACITY, 0.3)}
           >
             Intentional entry · no countdown · leave anytime
           </motion.div>

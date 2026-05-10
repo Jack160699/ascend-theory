@@ -1,5 +1,17 @@
 "use client";
 
+import { SectionContinuity } from "@/components/SectionContinuity";
+import {
+  DURATION_LINE,
+  EASE_CINEMATIC,
+  SURFACE_SPRING,
+  VIEWPORT_CALM,
+  fadeUp,
+  headerStaggerParent,
+  lineDrawHorizontal,
+  listStaggerParent,
+  nodeRevealSoft,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
@@ -11,50 +23,7 @@ import {
   Users,
 } from "lucide-react";
 
-const viewport = { once: true, margin: "-100px" } as const;
-
-const headerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.05 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.78, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
-
-const lineDraw = {
-  hidden: { scaleX: 0, opacity: 0 },
-  visible: {
-    scaleX: 1,
-    opacity: 1,
-    transition: { duration: 1.15, ease: [0.16, 1, 0.3, 1] as const, delay: 0.2 },
-  },
-};
-
-const staggerParent = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.12, delayChildren: 0.2 },
-  },
-};
-
-const nodeReveal = {
-  hidden: { opacity: 0, scale: 0.6, y: 12 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
+const viewport = VIEWPORT_CALM;
 
 const stages: {
   step: string;
@@ -143,7 +112,7 @@ function StageNode({
             ) : null}
             <motion.div
               className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 transition-colors duration-300 group-hover:border-white/[0.14] group-hover:text-white",
+                "flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:border-white/[0.14] group-hover:text-white",
                 isHorizontal && "ml-auto",
               )}
               animate={{ y: [0, -2, 0] }}
@@ -160,7 +129,7 @@ function StageNode({
             <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-white">
               {title}
             </h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-500 transition-colors duration-300 group-hover:text-zinc-400">
+            <p className="mt-2 text-[13px] leading-relaxed text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
               {description}
             </p>
           </div>
@@ -172,10 +141,10 @@ function StageNode({
   if (withReveal) {
     return (
       <motion.div
-        variants={nodeReveal}
+        variants={nodeRevealSoft}
         className={cn("group relative", className)}
-        whileHover={{ y: -4 }}
-        transition={{ type: "spring", stiffness: 320, damping: 22 }}
+        whileHover={{ y: -3 }}
+        transition={SURFACE_SPRING}
       >
         {body}
       </motion.div>
@@ -185,8 +154,8 @@ function StageNode({
   return (
     <motion.div
       className={cn("group relative", className)}
-      whileHover={{ y: -4 }}
-      transition={{ type: "spring", stiffness: 320, damping: 22 }}
+      whileHover={{ y: -3 }}
+      transition={SURFACE_SPRING}
     >
       {body}
     </motion.div>
@@ -198,9 +167,10 @@ export function Journey() {
     <section
       id="journey"
       data-conversion-zone="journey"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#050505] py-20 sm:py-28 lg:py-32"
+      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-32"
       aria-labelledby="journey-heading"
     >
+      <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
         <div className="absolute -left-[18%] top-[30%] h-[26rem] w-[26rem] rounded-full bg-zinc-600/[0.05] blur-[120px]" />
@@ -208,7 +178,7 @@ export function Journey() {
         <div className="absolute bottom-[15%] left-1/2 h-72 w-[min(90%,48rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05),transparent_70%)] blur-3xl" />
         <motion.div
           className="absolute left-[20%] top-[18%] h-64 w-64 rounded-full bg-zinc-400/[0.035] blur-[95px]"
-          animate={{ opacity: [0.4, 0.65, 0.4], scale: [1, 1.05, 1] }}
+          animate={{ opacity: [0.4, 0.65, 0.4], scale: [1, 1.02, 1] }}
           transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
         />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.52)_78%)]" />
@@ -217,7 +187,7 @@ export function Journey() {
       <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
         <motion.div
           className="mx-auto max-w-3xl text-center"
-          variants={headerContainer}
+          variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -255,12 +225,16 @@ export function Journey() {
             initial={{ scaleY: 0, opacity: 0 }}
             whileInView={{ scaleY: 1, opacity: 1 }}
             viewport={viewport}
-            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] as const, delay: 0.15 }}
+            transition={{
+              duration: DURATION_LINE,
+              ease: EASE_CINEMATIC,
+              delay: 0.15,
+            }}
             aria-hidden
           />
           <motion.ul
             className="relative flex list-none flex-col gap-10 p-0"
-            variants={staggerParent}
+            variants={listStaggerParent}
             initial="hidden"
             whileInView="visible"
             viewport={viewport}
@@ -268,7 +242,7 @@ export function Journey() {
             {stages.map((s, i) => (
               <motion.li
                 key={s.step}
-                variants={nodeReveal}
+                variants={nodeRevealSoft}
                 className="relative flex gap-6 pl-1"
               >
                 <div className="relative z-10 flex w-10 shrink-0 flex-col items-center pt-1">
@@ -302,13 +276,13 @@ export function Journey() {
         {/* Desktop: horizontal timeline */}
         <motion.div
           className="relative mx-auto mt-20 hidden max-w-[90rem] px-4 lg:mt-24 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-0"
-          variants={staggerParent}
+          variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <motion.div
-            variants={lineDraw}
+            variants={lineDrawHorizontal}
             className="relative col-span-5 mb-2 h-14"
             style={{ transformOrigin: "0% 50%" }}
           >
@@ -321,7 +295,7 @@ export function Journey() {
           {stages.map((s, i) => (
             <motion.div
               key={s.step}
-              variants={nodeReveal}
+              variants={nodeRevealSoft}
               className="relative flex flex-col items-center"
             >
               <motion.div
@@ -357,7 +331,7 @@ export function Journey() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 to-transparent"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/45 via-black/12 to-transparent sm:h-32"
         aria-hidden
       />
     </section>

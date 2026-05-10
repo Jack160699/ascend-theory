@@ -1,44 +1,21 @@
 "use client";
 
+import { SectionContinuity } from "@/components/SectionContinuity";
+import {
+  DURATION_OPACITY,
+  SURFACE_SPRING,
+  VIEWPORT_CALM,
+  fadeUp,
+  fadeUpChild,
+  gridStaggerParent,
+  headerStaggerParent,
+  txReveal,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useRef } from "react";
 
-const viewport = { once: true, margin: "-80px" } as const;
-
-const headerBlock = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.14, delayChildren: 0.06 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 36 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
-
-const rowParent = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.12, delayChildren: 0.08 },
-  },
-};
-
-const rowChild = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.78, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
+const viewport = VIEWPORT_CALM;
 
 const principles: {
   n: string;
@@ -116,7 +93,7 @@ function PrincipleRow({
 
   const textBlock = (
     <motion.div
-      variants={rowChild}
+      variants={fadeUpChild}
       className={cn(
         "flex flex-col justify-center",
         reversed ? "lg:pl-4" : "lg:pr-4",
@@ -143,18 +120,18 @@ function PrincipleRow({
   );
 
   const visualBlock = (
-    <motion.div variants={rowChild} className="relative min-h-[14rem]">
+    <motion.div variants={fadeUpChild} className="relative min-h-[14rem]">
       <motion.article
         ref={rootRef}
         onMouseMove={onMove}
         onMouseLeave={onLeave}
         className="group relative h-full min-h-[14rem] overflow-hidden rounded-[1.25rem] border border-white/[0.08] bg-white/[0.025] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:min-h-[16rem] sm:p-10"
-        whileHover={{ y: -4 }}
-        transition={{ type: "spring", stiffness: 280, damping: 26 }}
+        whileHover={{ y: -3 }}
+        transition={SURFACE_SPRING}
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
           style={{
             background:
               "radial-gradient(520px circle at var(--gx, 50%) var(--gy, 50%), rgba(255,255,255,0.08), transparent 58%)",
@@ -191,7 +168,7 @@ function PrincipleRow({
 
   return (
     <motion.div
-      variants={rowParent}
+      variants={gridStaggerParent}
       initial="hidden"
       whileInView="visible"
       viewport={viewport}
@@ -217,9 +194,10 @@ export function Philosophy() {
     <section
       id="philosophy"
       data-conversion-zone="philosophy"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#050505] py-20 sm:py-28 lg:py-36"
+      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-36"
       aria-labelledby="philosophy-heading"
     >
+      <SectionContinuity top={false} />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
         <motion.div
@@ -245,7 +223,7 @@ export function Philosophy() {
       <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
         <motion.div
           className="mx-auto max-w-4xl"
-          variants={headerBlock}
+          variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -305,7 +283,7 @@ export function Philosophy() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={viewport}
-          transition={{ duration: 0.7, delay: 0.1 }}
+          transition={txReveal(DURATION_OPACITY, 0.1)}
         >
           Identity reconstruction — not conventional coaching
         </motion.p>
@@ -318,7 +296,7 @@ export function Philosophy() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 to-transparent"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/45 via-black/12 to-transparent sm:h-32"
         aria-hidden
       />
     </section>

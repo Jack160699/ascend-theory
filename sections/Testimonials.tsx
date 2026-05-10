@@ -1,5 +1,18 @@
 "use client";
 
+import { SectionContinuity } from "@/components/SectionContinuity";
+import {
+  DURATION_OPACITY,
+  DURATION_REVEAL,
+  SURFACE_SPRING,
+  STAGGER_TABLE_ROW,
+  VIEWPORT_CALM,
+  fadeUp,
+  fadeUpChild,
+  headerStaggerParent,
+  listStaggerParent,
+  txReveal,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
@@ -13,40 +26,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const viewport = { once: true, margin: "-100px" } as const;
-
-const headerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.14, delayChildren: 0.05 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.78, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
-
-const stagger = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.1, delayChildren: 0.12 },
-  },
-};
-
-const rise = {
-  hidden: { opacity: 0, y: 24 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
+const viewport = VIEWPORT_CALM;
 
 /** Reference photography (Unsplash) — replace with member media when available. */
 const img = {
@@ -183,12 +163,12 @@ function BeforeAfterCard({
 }) {
   return (
     <motion.div
-      variants={rise}
-      whileHover={{ y: -6 }}
-      transition={{ type: "spring", stiffness: 300, damping: 26 }}
+      variants={fadeUpChild}
+      whileHover={{ y: -3 }}
+      transition={SURFACE_SPRING}
       className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl"
     >
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent opacity-40 transition-opacity duration-500 group-hover:opacity-60" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent opacity-40 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-60" />
       <p className="relative z-10 text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
         {name}
       </p>
@@ -200,7 +180,7 @@ function BeforeAfterCard({
               src={beforeSrc}
               alt="Reference before state"
               fill
-              className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+              className="object-cover transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.02]"
               sizes="(max-width: 768px) 45vw, 280px"
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
@@ -215,7 +195,7 @@ function BeforeAfterCard({
               src={afterSrc}
               alt="Reference after state"
               fill
-              className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+              className="object-cover transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.02]"
               sizes="(max-width: 768px) 45vw, 280px"
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
@@ -240,9 +220,9 @@ function MosaicTile({
 }) {
   return (
     <motion.figure
-      variants={rise}
-      whileHover={{ y: -5, scale: 1.01 }}
-      transition={{ type: "spring", stiffness: 280, damping: 24 }}
+      variants={fadeUpChild}
+      whileHover={{ y: -3, scale: 1.01 }}
+      transition={SURFACE_SPRING}
       className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-950/40 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]"
     >
       <div className="relative aspect-[4/5] sm:aspect-[3/4]">
@@ -250,7 +230,7 @@ function MosaicTile({
           src={src}
           alt={`Reference: ${label}`}
           fill
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          className="object-cover transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.02]"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
@@ -294,21 +274,21 @@ function VideoStoryCard({
 
   return (
     <motion.div
-      variants={rise}
+      variants={fadeUpChild}
       className="group relative overflow-hidden rounded-[1.25rem] border border-white/[0.1] bg-black/50 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_40px_100px_-48px_rgba(0,0,0,0.85)] backdrop-blur-xl"
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 260, damping: 22 }}
+      whileHover={{ scale: 1.01 }}
+      transition={SURFACE_SPRING}
     >
-      <div className="pointer-events-none absolute -inset-px rounded-[1.25rem] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100">
+      <div className="pointer-events-none absolute -inset-px rounded-[1.25rem] opacity-0 blur-2xl transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100">
         <div className="h-full w-full bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.15),transparent_65%)]" />
       </div>
       <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[2/1]">
         <video
           ref={videoRef}
           className={cn(
-            "absolute inset-0 h-full w-full object-cover transition-[opacity,filter] duration-500",
+            "absolute inset-0 h-full w-full object-cover transition-[opacity,filter] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
             ready ? "opacity-100" : "opacity-0",
             active ? "brightness-[1.05]" : "brightness-[0.88]",
           )}
@@ -326,7 +306,7 @@ function VideoStoryCard({
             alt={`Video poster: ${title}`}
             fill
             className={cn(
-              "object-cover transition-opacity duration-500",
+              "object-cover transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
               ready && active ? "opacity-0" : "opacity-100",
             )}
             sizes="(max-width: 768px) 100vw, 33vw"
@@ -386,9 +366,10 @@ export function Testimonials() {
     <section
       id="testimonials"
       data-conversion-zone="proof"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#050505] py-20 sm:py-28 lg:py-32"
+      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-32"
       aria-labelledby="proof-heading"
     >
+      <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
         <div className="absolute left-1/2 top-[5%] h-[22rem] w-[min(100%,56rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.055),transparent_72%)] blur-3xl" />
@@ -405,7 +386,7 @@ export function Testimonials() {
       <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
         <motion.div
           className="mx-auto max-w-3xl text-center"
-          variants={headerContainer}
+          variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -435,7 +416,7 @@ export function Testimonials() {
 
         <motion.div
           className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-3 sm:mt-16 sm:grid-cols-4 sm:gap-4"
-          variants={stagger}
+          variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -443,7 +424,7 @@ export function Testimonials() {
           {metrics.map((m) => (
             <motion.div
               key={m.label}
-              variants={rise}
+              variants={fadeUpChild}
               className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-4 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset] backdrop-blur-md sm:px-4"
             >
               <p className="font-mono text-lg font-semibold tracking-tight text-white sm:text-xl">
@@ -458,7 +439,7 @@ export function Testimonials() {
 
         <motion.div
           className="mx-auto mt-14 grid max-w-5xl gap-6 lg:mt-16 lg:grid-cols-2"
-          variants={stagger}
+          variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -491,10 +472,10 @@ export function Testimonials() {
             {[img.prog1, img.prog2, img.prog3].map((src, i) => (
               <motion.div
                 key={src}
-                initial={{ opacity: 0, y: 16 }}
+                initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.55 }}
+                viewport={viewport}
+                transition={txReveal(DURATION_REVEAL, i * STAGGER_TABLE_ROW)}
                 className="group relative overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-950/60"
               >
                 <div className="relative aspect-[3/4]">
@@ -502,7 +483,7 @@ export function Testimonials() {
                     src={src}
                     alt={`Physique reference frame ${i + 1}`}
                     fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    className="object-cover transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.02]"
                     sizes="(max-width: 768px) 33vw, 240px"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -517,7 +498,7 @@ export function Testimonials() {
 
         <motion.div
           className="mx-auto mt-16 max-w-5xl lg:mt-20"
-          variants={stagger}
+          variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -535,7 +516,7 @@ export function Testimonials() {
 
         <motion.div
           className="mx-auto mt-14 grid max-w-5xl gap-6 lg:mt-16 lg:grid-cols-2"
-          variants={stagger}
+          variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -543,9 +524,9 @@ export function Testimonials() {
           {quotes.map((q) => (
             <motion.figure
               key={q.tag}
-              variants={rise}
-              whileHover={{ y: -4 }}
-              transition={{ type: "spring", stiffness: 300, damping: 24 }}
+              variants={fadeUpChild}
+              whileHover={{ y: -3 }}
+              transition={SURFACE_SPRING}
               className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-7 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl"
             >
               <Quote className="absolute right-6 top-6 size-8 text-white/[0.06]" strokeWidth={1} />
@@ -561,7 +542,7 @@ export function Testimonials() {
 
         <motion.div
           className="mx-auto mt-16 max-w-5xl lg:mt-20"
-          variants={stagger}
+          variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -600,10 +581,10 @@ export function Testimonials() {
               {chats.map((c, i) => (
                 <motion.div
                   key={c.time + String(i)}
-                  initial={{ opacity: 0, x: 12 }}
+                  initial={{ opacity: 0, x: 8 }}
                   whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.06, duration: 0.45 }}
+                  viewport={viewport}
+                  transition={txReveal(DURATION_OPACITY, i * STAGGER_TABLE_ROW)}
                   className={cn(
                     "ml-auto max-w-[94%] rounded-2xl rounded-tr-sm border px-4 py-3",
                     "border-emerald-500/12 bg-emerald-950/[0.2] shadow-[0_12px_40px_-16px_rgba(0,0,0,0.55)]",
@@ -654,7 +635,7 @@ export function Testimonials() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/85 to-transparent"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/48 via-black/14 to-transparent sm:h-32"
         aria-hidden
       />
     </section>

@@ -1,27 +1,20 @@
 "use client";
 
+import { SectionContinuity } from "@/components/SectionContinuity";
+import {
+  DURATION_REVEAL,
+  RISE_Y_CARD,
+  STAGGER_LIST,
+  VIEWPORT_CALM,
+  fadeUp,
+  headerStaggerParent,
+  txReveal,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useRef } from "react";
 
-const viewport = { once: true, margin: "-90px" } as const;
-
-const header = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.14, delayChildren: 0.06 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 32 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.82, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
+const viewport = VIEWPORT_CALM;
 
 const depthLevels: {
   key: string;
@@ -106,21 +99,17 @@ function DepthCard({
   return (
     <motion.article
       ref={rootRef}
-      initial={{ opacity: 0, y: 44 }}
+      initial={{ opacity: 0, y: RISE_Y_CARD }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewport}
-      transition={{
-        duration: 0.85,
-        delay: index * 0.12,
-        ease: [0.16, 1, 0.3, 1],
-      }}
+      transition={txReveal(DURATION_REVEAL, index * STAGGER_LIST)}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       className="group relative"
     >
       <div
         className={cn(
-          "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100",
+            "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100",
           item.key === "private" &&
             "bg-[radial-gradient(ellipse_at_50%_0%,rgba(180,150,110,0.12),transparent_65%)]",
           item.key === "high" &&
@@ -137,7 +126,7 @@ function DepthCard({
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
           style={{
             background:
               "radial-gradient(640px circle at var(--dx, 50%) var(--dy, 50%), rgba(255,255,255,0.08), transparent 58%)",
@@ -180,9 +169,10 @@ export function MentorshipDepth() {
     <section
       id="mentorship-depth"
       data-conversion-zone="mentorship"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#050505] py-20 sm:py-28 lg:py-36"
+      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-36"
       aria-labelledby="mentorship-depth-heading"
     >
+      <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
         <motion.div
@@ -200,7 +190,7 @@ export function MentorshipDepth() {
 
       <div className="relative z-10 mx-auto max-w-3xl px-6 sm:px-10 lg:mx-auto lg:max-w-4xl lg:px-12">
         <motion.div
-          variants={header}
+          variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -249,10 +239,10 @@ export function MentorshipDepth() {
 
         <motion.div
           className="mx-auto mt-16 max-w-2xl space-y-4 border-t border-white/[0.06] pt-12 text-center sm:mt-20"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: RISE_Y_CARD * 0.85 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+          transition={txReveal(DURATION_REVEAL)}
         >
           <p className="text-[13px] leading-relaxed text-zinc-600 sm:text-sm">
             Transformation outcomes are shaped by execution consistency.
@@ -270,7 +260,7 @@ export function MentorshipDepth() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/85 to-transparent"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/48 via-black/14 to-transparent sm:h-32"
         aria-hidden
       />
     </section>

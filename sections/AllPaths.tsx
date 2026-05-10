@@ -1,26 +1,18 @@
 "use client";
 
+import {
+  DURATION_REVEAL,
+  RISE_Y,
+  STAGGER_TABLE_ROW,
+  VIEWPORT_CALM,
+  fadeUp,
+  headerStaggerParent,
+  txReveal,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
-const viewport = { once: true, margin: "-80px" } as const;
-
-const headerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.14, delayChildren: 0.06 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.78, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
+const viewport = VIEWPORT_CALM;
 
 const rows: { label: string; core: string; pro: string; black: string }[] = [
   {
@@ -85,7 +77,7 @@ export function AllPaths() {
       <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
         <motion.div
           className="mx-auto max-w-3xl text-center"
-          variants={headerContainer}
+          variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -115,10 +107,10 @@ export function AllPaths() {
 
         <motion.div
           className="mx-auto mt-14 max-w-6xl sm:mt-16 lg:mt-20"
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: RISE_Y }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+          transition={txReveal(DURATION_REVEAL)}
         >
           <div className="relative rounded-[1.25rem] border border-white/[0.08] bg-white/[0.02] shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-2xl">
             <div
@@ -158,17 +150,13 @@ export function AllPaths() {
                     <motion.tr
                       key={row.label}
                       className={cn(
-                        "border-b border-white/[0.04] transition-colors duration-300",
+                        "border-b border-white/[0.04] transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
                         i % 2 === 0 ? "bg-white/[0.015]" : "bg-transparent",
                       )}
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 6 }}
                       whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: "-40px" }}
-                      transition={{
-                        delay: i * 0.04,
-                        duration: 0.5,
-                        ease: [0.16, 1, 0.3, 1],
-                      }}
+                      viewport={viewport}
+                      transition={txReveal(DURATION_REVEAL * 0.92, i * STAGGER_TABLE_ROW)}
                     >
                       <th
                         scope="row"

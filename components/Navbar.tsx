@@ -1,6 +1,15 @@
 "use client";
 
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
+import {
+  DURATION_OPACITY,
+  DURATION_OVERLAY,
+  DURATION_OVERLAY_SLOW,
+  DURATION_REVEAL,
+  EASE_CINEMATIC,
+  TAP_SPRING,
+  txReveal,
+} from "@/lib/motion";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -61,14 +70,14 @@ export function Navbar() {
     <>
       <motion.header
         className={cn(
-          "fixed top-0 z-50 w-full transition-[background-color,backdrop-filter,border-color,box-shadow] duration-500 ease-out",
+          "fixed top-0 z-50 w-full transition-[background-color,backdrop-filter,border-color,box-shadow] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
           scrolled
             ? "border-b border-white/[0.06] bg-zinc-950/45 shadow-[0_12px_48px_-12px_rgba(0,0,0,0.65)] backdrop-blur-xl backdrop-saturate-150"
             : "border-b border-transparent bg-transparent",
         )}
         initial={{ opacity: 0, y: -18 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] as const }}
+        transition={{ duration: DURATION_REVEAL, ease: EASE_CINEMATIC }}
       >
         <nav
           className="relative mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between gap-3 px-4 sm:h-[4.25rem] sm:gap-4 sm:px-8 lg:px-10"
@@ -76,7 +85,7 @@ export function Navbar() {
         >
           <Link
             href="/"
-            className="relative z-10 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-400 transition-colors duration-300 hover:text-zinc-200"
+            className="relative z-10 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-400 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:text-zinc-200"
           >
             Ascend Theory
           </Link>
@@ -89,7 +98,7 @@ export function Navbar() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.45, ease: "easeOut" }}
+                  transition={txReveal(DURATION_OPACITY)}
                   className="truncate text-center text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-600"
                 >
                   {notice}
@@ -105,14 +114,14 @@ export function Navbar() {
                 href={item.href}
                 aria-label={"ariaLabel" in item ? item.ariaLabel : undefined}
                 className={cn(
-                  "group relative text-[13px] font-medium tracking-tight text-zinc-400 transition-colors duration-300",
+                  "group relative text-[13px] font-medium tracking-tight text-zinc-400 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
                   "hover:text-white",
                 )}
               >
                 <span className="relative z-10">{item.label}</span>
                 <span
                   className={cn(
-                    "pointer-events-none absolute -inset-x-3 -inset-y-2 rounded-lg opacity-0 shadow-[0_0_40px_-2px_rgba(255,255,255,0.14)] transition-opacity duration-300",
+                    "pointer-events-none absolute -inset-x-3 -inset-y-2 rounded-lg opacity-0 shadow-[0_0_40px_-2px_rgba(255,255,255,0.14)] transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
                     "group-hover:opacity-100",
                   )}
                   aria-hidden
@@ -125,15 +134,14 @@ export function Navbar() {
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 450, damping: 28 }}
+              transition={TAP_SPRING}
             >
               <Link
                 href="#pricing"
                 aria-label={ctaLabel}
                 className={cn(
-                  "relative inline-flex max-w-[9rem] overflow-hidden rounded-full px-3.5 py-2.5 text-center text-[10px] font-medium leading-tight tracking-tight text-zinc-950 sm:max-w-[16rem] sm:px-5 sm:text-[12px] sm:leading-snug lg:max-w-[18rem] lg:text-[12px]",
-                  "bg-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_12px_48px_-16px_rgba(255,255,255,0.22)]",
-                  "transition-[box-shadow] duration-300 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_16px_56px_-12px_rgba(255,255,255,0.32)]",
+                  "ascend-button-primary relative inline-flex max-w-[9rem] overflow-hidden rounded-full px-3.5 py-2.5 text-center text-[10px] font-medium leading-tight tracking-tight text-zinc-950 sm:max-w-[16rem] sm:px-5 sm:text-[12px] sm:leading-snug lg:max-w-[18rem] lg:text-[12px]",
+                  "bg-white",
                 )}
               >
                 <span className="sm:hidden">Assessment</span>
@@ -143,7 +151,7 @@ export function Navbar() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.35 }}
+                    transition={txReveal(DURATION_OVERLAY)}
                     className="hidden max-w-full truncate sm:inline"
                   >
                     {ctaLabel}
@@ -155,14 +163,18 @@ export function Navbar() {
             <button
               type="button"
               className={cn(
-                "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.04] text-white backdrop-blur-md transition-colors duration-300",
+                "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.04] text-white backdrop-blur-md transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
                 "hover:border-white/[0.16] hover:bg-white/[0.07] lg:hidden",
               )}
               aria-expanded={open}
               aria-controls="mobile-nav"
               onClick={() => setOpen((v) => !v)}
             >
-              {open ? <X className="size-[18px]" /> : <Menu className="size-[18px]" />}
+              {open ? (
+                <X className="size-[18px]" />
+              ) : (
+                <Menu className="size-[18px]" />
+              )}
             </button>
           </div>
         </nav>
@@ -176,7 +188,7 @@ export function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] as const }}
+            transition={txReveal(DURATION_OVERLAY)}
           >
             <button
               type="button"
@@ -189,7 +201,7 @@ export function Navbar() {
               initial={{ y: -8, opacity: 0.6 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -8, opacity: 0 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] as const }}
+              transition={txReveal(DURATION_OVERLAY_SLOW)}
             >
               <div className="flex flex-1 flex-col justify-center gap-2.5">
                 {links.map((item, i) => (
@@ -198,16 +210,12 @@ export function Navbar() {
                     initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -12 }}
-                    transition={{
-                      delay: 0.06 + i * 0.05,
-                      duration: 0.45,
-                      ease: [0.16, 1, 0.3, 1] as const,
-                    }}
+                    transition={txReveal(DURATION_OPACITY, 0.08 + i * 0.06)}
                   >
                     <Link
                       href={item.href}
                       onClick={close}
-                      className="block rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-4 text-[1.06rem] font-medium tracking-tight text-zinc-200 transition-colors hover:border-white/[0.12] hover:text-white"
+                      className="ascend-surface-soft block rounded-xl px-4 py-4 text-[1.06rem] font-medium tracking-tight text-zinc-200 transition-colors hover:border-white/[0.12] hover:text-white"
                     >
                       {item.label}
                     </Link>
@@ -218,17 +226,13 @@ export function Navbar() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
-                transition={{
-                  delay: 0.2,
-                  duration: 0.45,
-                  ease: [0.16, 1, 0.3, 1] as const,
-                }}
+                transition={txReveal(DURATION_OPACITY, 0.22)}
               >
                 <Link
                   href="#pricing"
                   onClick={close}
                   aria-label={ctaLabel}
-                  className="flex min-h-12 w-full max-w-full items-center justify-center rounded-full bg-white px-4 py-3 text-center text-[12px] font-medium leading-snug tracking-tight text-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_60px_-20px_rgba(255,255,255,0.25)]"
+                  className="ascend-button-primary flex min-h-12 w-full max-w-full items-center justify-center rounded-full bg-white px-4 py-3 text-center text-[12px] font-medium leading-snug tracking-tight text-zinc-950"
                 >
                   <span className="line-clamp-2">{ctaLabel}</span>
                 </Link>
