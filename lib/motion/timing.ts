@@ -8,8 +8,12 @@ export const EASE_CINEMATIC = [0.14, 0.88, 0.32, 1] as const;
 /** Scroll reveals: later trigger — calmer descent, more silence before motion. */
 export const VIEWPORT_CALM = { once: true, margin: "-152px" } as const;
 
-/** Narrow viewports: earlier in-view trigger — faster engagement, less scroll fatigue. */
-export const VIEWPORT_CALM_MOBILE = { once: true, margin: "-64px" } as const;
+/**
+ * Narrow viewports: slightly stricter in-view box than the old `-64px` shorthand
+ * so reveals commit when blocks are a bit further into the viewport — calmer
+ * compositing during fast thumb scrolls (same easing/durations elsewhere).
+ */
+export const VIEWPORT_CALM_MOBILE = { once: true, margin: "-80px" } as const;
 
 export const DURATION_REVEAL = 1.02;
 export const DURATION_OPACITY = 0.9;

@@ -72,7 +72,7 @@ export function Navbar() {
         className={cn(
           "fixed top-0 z-50 w-full transition-[background-color,backdrop-filter,border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           scrolled
-            ? "border-b border-white/[0.06] bg-zinc-950/45 shadow-[0_12px_48px_-12px_rgba(0,0,0,0.65)] backdrop-blur-xl backdrop-saturate-150"
+            ? "border-b border-white/[0.06] bg-zinc-950/45 shadow-[0_12px_48px_-12px_rgba(0,0,0,0.65)] backdrop-blur-md backdrop-saturate-100 sm:backdrop-blur-xl sm:backdrop-saturate-150"
             : "border-b border-transparent bg-transparent",
         )}
         initial={{ opacity: 0, y: -18 }}
@@ -192,7 +192,7 @@ export function Navbar() {
           >
             <button
               type="button"
-              className="absolute inset-0 bg-black/80 backdrop-blur-2xl"
+              className="absolute inset-0 bg-black/82 backdrop-blur-lg sm:bg-black/80 sm:backdrop-blur-2xl"
               aria-label="Close menu"
               onClick={close}
             />

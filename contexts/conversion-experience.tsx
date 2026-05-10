@@ -166,7 +166,7 @@ function StickyConversionBar({
       {open ? (
         <>
           <motion.div
-            className="fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.08] bg-zinc-950/82 px-3 py-2.5 shadow-[0_-24px_80px_-20px_rgba(0,0,0,0.78)] backdrop-blur-xl supports-[padding:max(0px)]:pb-[max(0.65rem,env(safe-area-inset-bottom))] sm:hidden"
+            className="fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.08] bg-zinc-950/86 px-3 py-2.5 shadow-[0_-24px_80px_-20px_rgba(0,0,0,0.78)] backdrop-blur-md supports-[padding:max(0px)]:pb-[max(0.65rem,env(safe-area-inset-bottom))] sm:hidden"
             initial={{ y: 44, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 30, opacity: 0 }}
@@ -200,7 +200,7 @@ function StickyConversionBar({
           </motion.div>
 
           <motion.div
-            className="fixed inset-x-0 bottom-0 z-[60] hidden border-t border-white/[0.08] bg-zinc-950/80 px-4 py-3 shadow-[0_-24px_80px_-20px_rgba(0,0,0,0.75)] backdrop-blur-xl supports-[padding:max(0px)]:pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:block"
+            className="fixed inset-x-0 bottom-0 z-[60] hidden border-t border-white/[0.08] bg-zinc-950/82 px-4 py-3 shadow-[0_-24px_80px_-20px_rgba(0,0,0,0.75)] backdrop-blur-lg supports-[padding:max(0px)]:pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:block md:backdrop-blur-xl"
             initial={{ y: 48, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 36, opacity: 0 }}
@@ -253,7 +253,7 @@ function FloatingUrgencyPill({ message }: { message: string }) {
           transition={txReveal(DURATION_OPACITY)}
           className={cn(
             "rounded-full border border-white/[0.1] bg-zinc-950/55 px-4 py-2.5 text-[10px] font-medium uppercase leading-snug tracking-[0.2em] text-zinc-500",
-            "shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_12px_48px_-16px_rgba(0,0,0,0.65)] backdrop-blur-xl",
+            "shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_12px_48px_-16px_rgba(0,0,0,0.65)] backdrop-blur-lg md:backdrop-blur-xl",
           )}
         >
           {message}

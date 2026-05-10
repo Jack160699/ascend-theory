@@ -250,7 +250,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
         >
           <motion.button
             type="button"
-            className="absolute inset-0 bg-black/[0.68] backdrop-blur-md"
+            className="absolute inset-0 bg-black/[0.72] backdrop-blur-sm sm:bg-black/[0.68] sm:backdrop-blur-md"
             aria-label="Close"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

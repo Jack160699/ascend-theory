@@ -214,7 +214,7 @@ export function BackgroundEffects({ className }: { className?: string }) {
 
       <motion.div
         className={cn(
-          "absolute -left-[20%] top-[12%] rounded-full bg-zinc-500/[0.07]",
+          "absolute -left-[20%] top-[12%] transform-gpu rounded-full bg-zinc-500/[0.07]",
           isMobile
             ? "h-[22rem] w-[22rem] blur-[56px]"
             : "h-[38rem] w-[38rem] blur-[100px]",
@@ -228,7 +228,7 @@ export function BackgroundEffects({ className }: { className?: string }) {
       />
       <motion.div
         className={cn(
-          "absolute -right-[18%] bottom-[5%] rounded-full bg-white/[0.035]",
+          "absolute -right-[18%] bottom-[5%] transform-gpu rounded-full bg-white/[0.035]",
           isMobile
             ? "h-[20rem] w-[20rem] blur-[58px]"
             : "h-[32rem] w-[32rem] blur-[110px]",
@@ -246,12 +246,16 @@ export function BackgroundEffects({ className }: { className?: string }) {
       />
       <motion.div
         className={cn(
-          "absolute left-[25%] top-[40%] rounded-full bg-zinc-400/[0.05]",
+          "absolute left-[25%] top-[40%] transform-gpu rounded-full bg-zinc-400/[0.05]",
           isMobile
             ? "h-[12rem] w-[12rem] blur-[50px]"
             : "h-[20rem] w-[20rem] blur-[90px]",
         )}
-        animate={{ scale: [1, 1.08, 1], opacity: [0.4, 0.65, 0.4] }}
+        animate={
+          isMobile
+            ? { scale: [1, 1.04, 1], opacity: [0.48, 0.58, 0.48] }
+            : { scale: [1, 1.08, 1], opacity: [0.4, 0.65, 0.4] }
+        }
         transition={{
           duration: isMobile ? 34 : 24,
           repeat: Infinity,
@@ -259,28 +263,48 @@ export function BackgroundEffects({ className }: { className?: string }) {
         }}
       />
 
-      <motion.div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_85%_55%_at_50%_-15%,rgba(255,255,255,0.07),transparent_55%)]"
-        animate={{ opacity: [0.85, 1, 0.85] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      />
+      {isMobile ? (
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_85%_55%_at_50%_-15%,rgba(255,255,255,0.07),transparent_55%)] opacity-90"
+          aria-hidden
+        />
+      ) : (
+        <motion.div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_85%_55%_at_50%_-15%,rgba(255,255,255,0.07),transparent_55%)]"
+          animate={{ opacity: [0.85, 1, 0.85] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.55)_72%)]" />
 
-      <motion.div
-        className="absolute inset-0 opacity-[0.12]"
-        style={{
-          background:
-            "linear-gradient(125deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%)",
-          backgroundSize: "200% 200%",
-        }}
-        animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
-        transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-      />
+      {isMobile ? (
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.09]"
+          style={{
+            background:
+              "linear-gradient(125deg, transparent 42%, rgba(255,255,255,0.035) 50%, transparent 58%)",
+            backgroundSize: "200% 200%",
+            backgroundPosition: "48% 48%",
+          }}
+          aria-hidden
+        />
+      ) : (
+        <motion.div
+          className="absolute inset-0 opacity-[0.12]"
+          style={{
+            background:
+              "linear-gradient(125deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%)",
+            backgroundSize: "200% 200%",
+          }}
+          animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
+          transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+        />
+      )}
 
       {particles.map((p) => (
         <motion.span
           key={p.id}
-          className="absolute rounded-full bg-white/[0.12]"
+          className="absolute transform-gpu rounded-full bg-white/[0.12]"
           style={{
             left: `${p.left}%`,
             top: `${p.top}%`,

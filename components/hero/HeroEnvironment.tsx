@@ -35,7 +35,8 @@ export function HeroEnvironment({ sectionRef, className }: HeroEnvironmentProps)
     offset: ["start start", "end start"],
   });
 
-  const amp = reduceMotion ? 0 : liteMotion ? 0.36 : 1;
+  /** Tighter scroll-linked travel on mobile — same parallax read, less layer drift. */
+  const amp = reduceMotion ? 0 : liteMotion ? 0.14 : 1;
 
   const yFar = useTransform(scrollYProgress, [0, 1], [0, 30 * amp]);
   const yMid = useTransform(scrollYProgress, [0, 1], [0, 16 * amp]);
@@ -53,14 +54,19 @@ export function HeroEnvironment({ sectionRef, className }: HeroEnvironmentProps)
         <motion.div
           className={cn(
             "h-40 w-[min(19rem,64vw)] will-change-transform sm:h-56 sm:w-80",
-            "rounded-[1.5rem] border border-white/[0.07] bg-white/[0.022] shadow-[0_0_80px_-30px_rgba(255,255,255,0.05)] backdrop-blur-md",
+            "rounded-[1.5rem] border border-white/[0.07] bg-white/[0.022] shadow-[0_0_80px_-30px_rgba(255,255,255,0.05)]",
+            liteMotion ? "backdrop-blur-sm" : "backdrop-blur-md",
             "-rotate-6",
           )}
           animate={
-            reduceMotion ? undefined : { rotate: [-6.5, -5.5, -6.5], opacity: [0.88, 1, 0.88] }
+            reduceMotion
+              ? undefined
+              : liteMotion
+                ? { rotate: [-6.15, -5.85, -6.15], opacity: [0.9, 0.97, 0.9] }
+                : { rotate: [-6.5, -5.5, -6.5], opacity: [0.88, 1, 0.88] }
           }
           transition={{
-            duration: 26,
+            duration: liteMotion ? 36 : 26,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -70,14 +76,19 @@ export function HeroEnvironment({ sectionRef, className }: HeroEnvironmentProps)
         <motion.div
           className={cn(
             "h-32 w-[min(14rem,44vw)] will-change-transform sm:h-48 sm:w-72",
-            "rounded-3xl border border-white/[0.06] bg-zinc-500/[0.035] shadow-[0_0_70px_-28px_rgba(255,255,255,0.04)] backdrop-blur-lg",
+            "rounded-3xl border border-white/[0.06] bg-zinc-500/[0.035] shadow-[0_0_70px_-28px_rgba(255,255,255,0.04)]",
+            liteMotion ? "backdrop-blur-sm" : "backdrop-blur-lg",
             "rotate-[8deg]",
           )}
           animate={
-            reduceMotion ? undefined : { rotate: [7.2, 8.8, 7.2], opacity: [0.9, 1, 0.9] }
+            reduceMotion
+              ? undefined
+              : liteMotion
+                ? { rotate: [7.65, 8.35, 7.65], opacity: [0.92, 0.99, 0.92] }
+                : { rotate: [7.2, 8.8, 7.2], opacity: [0.9, 1, 0.9] }
           }
           transition={{
-            duration: 28,
+            duration: liteMotion ? 38 : 28,
             repeat: Infinity,
             ease: "easeInOut",
           }}
