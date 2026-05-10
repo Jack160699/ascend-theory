@@ -103,7 +103,9 @@ function computeActiveZone(): ConversionZone {
 export function useConversionExperience(): ConversionValue {
   const ctx = useContext(ConversionContext);
   if (!ctx) {
-    throw new Error("useConversionExperience requires ConversionExperienceProvider");
+    throw new Error(
+      "useConversionExperience requires ConversionExperienceProvider",
+    );
   }
   return ctx;
 }
@@ -124,7 +126,9 @@ function StickyConversionBar({
 
   useEffect(() => {
     const onScroll = () => {
-      const hero = document.querySelector<HTMLElement>('[data-conversion-zone="hero"]');
+      const hero = document.querySelector<HTMLElement>(
+        '[data-conversion-zone="hero"]',
+      );
       if (!hero) {
         setOpen(window.scrollY > 280);
         return;
@@ -185,7 +189,7 @@ function StickyConversionBar({
                 Begin Assessment
               </Link>
             </div>
-          </div>
+          </motion.div>
 
           <motion.div
             className="fixed inset-x-0 bottom-0 z-[60] hidden border-t border-white/[0.08] bg-zinc-950/80 px-4 py-3 shadow-[0_-24px_80px_-20px_rgba(0,0,0,0.75)] backdrop-blur-xl supports-[padding:max(0px)]:pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:block"
@@ -299,14 +303,14 @@ export function ConversionExperienceProvider({
     };
   }, [tickZone]);
 
-  const urgencyMessage = URGENCY_MESSAGES[urgencyIndex % URGENCY_MESSAGES.length];
+  const urgencyMessage =
+    URGENCY_MESSAGES[urgencyIndex % URGENCY_MESSAGES.length];
   const primaryCtaLabel = CTA_BY_ZONE[activeZone];
 
   const urgencyForTier = useCallback(
     (offset: number) =>
-      URGENCY_MESSAGES[
-        (urgencyIndex + offset) % URGENCY_MESSAGES.length
-      ] ?? URGENCY_MESSAGES[0],
+      URGENCY_MESSAGES[(urgencyIndex + offset) % URGENCY_MESSAGES.length] ??
+      URGENCY_MESSAGES[0],
     [urgencyIndex],
   );
 

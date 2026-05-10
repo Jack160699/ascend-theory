@@ -28,10 +28,9 @@ const QUICK_ACTIONS = [
   { id: "depth", label: "Explore transformation depth" },
 ] as const;
 
-function responseForAction(actionId: (typeof QUICK_ACTIONS)[number]["id"]): Omit<
-  Msg,
-  "id" | "role"
-> {
+function responseForAction(
+  actionId: (typeof QUICK_ACTIONS)[number]["id"],
+): Omit<Msg, "id" | "role"> {
   switch (actionId) {
     case "path":
       return {
@@ -43,8 +42,7 @@ function responseForAction(actionId: (typeof QUICK_ACTIONS)[number]["id"]): Omit
           "Current execution consistency — honesty about drift vs. discipline",
           "Desired transformation intensity — pace without theatrics",
         ],
-        coda:
-          "Three architectural depths map to this: Foundation Access, High-Accountability Mentorship, and Private Transformation Architecture. Same philosophy — different integration density.",
+        coda: "Three architectural depths map to this: Foundation Access, High-Accountability Mentorship, and Private Transformation Architecture. Same philosophy — different integration density.",
       };
     case "mentorship":
       return {
@@ -56,8 +54,7 @@ function responseForAction(actionId: (typeof QUICK_ACTIONS)[number]["id"]): Omit
           "Calibration — adjustments when reality shifts",
           "Accountability — intensity matched to stakes, not ego",
         ],
-        coda:
-          "Depth scales with integration — not with packaging. When you are ready, the entry section walks allocation with context preserved.",
+        coda: "Depth scales with integration — not with packaging. When you are ready, the entry section walks allocation with context preserved.",
       };
     case "different":
       return {
@@ -69,8 +66,7 @@ function responseForAction(actionId: (typeof QUICK_ACTIONS)[number]["id"]): Omit
           "Selective allocation — human review, not volume funnels",
           "Quiet standards — compounding without performance theater",
         ],
-        coda:
-          "If something here feels unusually still, that is intentional. Calm is part of the design.",
+        coda: "If something here feels unusually still, that is intentional. Calm is part of the design.",
       };
     case "depth":
       return {
@@ -81,8 +77,7 @@ function responseForAction(actionId: (typeof QUICK_ACTIONS)[number]["id"]): Omit
           "High-Accountability Mentorship — closer loops and faster refinement",
           "Private Transformation Architecture — highest proximity and discretion",
         ],
-        coda:
-          "I can take you to the depth narrative on this page when you use the control below.",
+        coda: "I can take you to the depth narrative on this page when you use the control below.",
       };
     default:
       return {
@@ -159,7 +154,6 @@ function TypingIndicator() {
 
 export function TransformationConcierge() {
   const baseId = useId();
-  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [fragmentIndex, setFragmentIndex] = useState(0);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -168,10 +162,6 @@ export function TransformationConcierge() {
   const greetingDoneRef = useRef(false);
   const typingTimerRef = useRef<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -190,12 +180,12 @@ export function TransformationConcierge() {
   }, [open]);
 
   useEffect(() => {
-    if (!mounted || open) return;
+    if (open) return;
     const id = window.setInterval(() => {
       setFragmentIndex((i) => (i + 1) % IDLE_FRAGMENTS.length);
     }, 4500);
     return () => window.clearInterval(id);
-  }, [mounted, open]);
+  }, [open]);
 
   useEffect(() => {
     if (!open || !listRef.current) return;
@@ -205,10 +195,13 @@ export function TransformationConcierge() {
     });
   }, [open, messages, typing]);
 
-  const pushAssistant = useCallback((body: Omit<Msg, "id" | "role">) => {
-    const id = `${baseId}-a-${Date.now()}`;
-    setMessages((m) => [...m, { id, role: "assistant", ...body }]);
-  }, [baseId]);
+  const pushAssistant = useCallback(
+    (body: Omit<Msg, "id" | "role">) => {
+      const id = `${baseId}-a-${Date.now()}`;
+      setMessages((m) => [...m, { id, role: "assistant", ...body }]);
+    },
+    [baseId],
+  );
 
   const pushUser = useCallback(
     (content: string) => {
@@ -224,11 +217,14 @@ export function TransformationConcierge() {
         window.clearTimeout(typingTimerRef.current);
       }
       setTyping(true);
-      typingTimerRef.current = window.setTimeout(() => {
-        typingTimerRef.current = null;
-        setTyping(false);
-        pushAssistant(body);
-      }, 900 + Math.random() * 400);
+      typingTimerRef.current = window.setTimeout(
+        () => {
+          typingTimerRef.current = null;
+          setTyping(false);
+          pushAssistant(body);
+        },
+        900 + Math.random() * 400,
+      );
     },
     [pushAssistant],
   );
@@ -351,7 +347,9 @@ export function TransformationConcierge() {
                       : "mr-4 border border-white/[0.05] bg-black/40 text-zinc-400",
                   )}
                 >
-                  <p className="whitespace-pre-wrap text-pretty">{msg.content}</p>
+                  <p className="whitespace-pre-wrap text-pretty">
+                    {msg.content}
+                  </p>
                   {msg.bullets?.length ? (
                     <ul className="mt-3 space-y-2 border-t border-white/[0.06] pt-3 text-[12px] text-zinc-500">
                       {msg.bullets.map((b, bi) => (
@@ -369,7 +367,9 @@ export function TransformationConcierge() {
                   ) : null}
                 </motion.div>
               ))}
-              <AnimatePresence>{typing ? <TypingIndicator /> : null}</AnimatePresence>
+              <AnimatePresence>
+                {typing ? <TypingIndicator /> : null}
+              </AnimatePresence>
             </div>
 
             <div className="relative border-t border-white/[0.06] bg-black/30 px-3 py-3">
@@ -429,7 +429,9 @@ export function TransformationConcierge() {
         transition={{ type: "spring", stiffness: 420, damping: 28 }}
       >
         <span className="sr-only">
-          {open ? "Close Ascend Concierge" : "Open Ascend Concierge — Need guidance?"}
+          {open
+            ? "Close Ascend Concierge"
+            : "Open Ascend Concierge — Need guidance?"}
         </span>
         <div className="relative">
           <motion.div
@@ -457,23 +459,21 @@ export function TransformationConcierge() {
         </div>
         {!open ? (
           <div className="max-w-[11rem] text-center">
-            <p className="text-[11px] font-medium text-zinc-400">Need guidance?</p>
-            {mounted ? (
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={fragmentIndex}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                  className="mt-1 line-clamp-2 font-serif text-[10px] font-light italic leading-snug text-zinc-600"
-                >
-                  {IDLE_FRAGMENTS[fragmentIndex]}
-                </motion.p>
-              </AnimatePresence>
-            ) : (
-              <p className="mt-1 h-8" />
-            )}
+            <p className="text-[11px] font-medium text-zinc-400">
+              Need guidance?
+            </p>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={fragmentIndex}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="mt-1 line-clamp-2 font-serif text-[10px] font-light italic leading-snug text-zinc-600"
+              >
+                {IDLE_FRAGMENTS[fragmentIndex]}
+              </motion.p>
+            </AnimatePresence>
           </div>
         ) : null}
       </motion.button>

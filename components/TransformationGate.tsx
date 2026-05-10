@@ -3,14 +3,7 @@
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 const STORAGE_KEY = "ascend:transformation-gate:v1";
 
@@ -58,15 +51,11 @@ export function TransformationGate() {
   const pendingHashRef = useRef<string>("");
   const quoteTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [active, setActive] = useState(false);
+  const [active, setActive] = useState(
+    () => typeof window !== "undefined" && !readDismissed(),
+  );
   const [phase, setPhase] = useState<"main" | "transit">("main");
   const [quoteIndex, setQuoteIndex] = useState(0);
-
-  useLayoutEffect(() => {
-    if (typeof window === "undefined") return;
-    if (readDismissed()) return;
-    setActive(true);
-  }, []);
 
   useEffect(() => {
     if (!active) return;
@@ -147,14 +136,17 @@ export function TransformationGate() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: reduceMotion ? 0.28 : 0.55, ease: [0.16, 1, 0.3, 1] }}
+          transition={{
+            duration: reduceMotion ? 0.28 : 0.55,
+            ease: [0.16, 1, 0.3, 1],
+          }}
         >
           <div
             className="pointer-events-none absolute inset-0 overflow-hidden"
             aria-hidden
           >
             <motion.div
-            className="absolute -left-[26%] top-[12%] h-[min(22rem,52vh)] w-[min(22rem,80vw)] rounded-full bg-white/[0.04] blur-[90px] sm:-left-[20%] sm:h-[min(28rem,70vh)] sm:w-[min(28rem,85vw)] sm:blur-[120px]"
+              className="absolute -left-[26%] top-[12%] h-[min(22rem,52vh)] w-[min(22rem,80vw)] rounded-full bg-white/[0.04] blur-[90px] sm:-left-[20%] sm:h-[min(28rem,70vh)] sm:w-[min(28rem,85vw)] sm:blur-[120px]"
               animate={
                 reduceMotion
                   ? undefined
@@ -167,11 +159,15 @@ export function TransformationGate() {
               }}
             />
             <motion.div
-            className="absolute -right-[24%] bottom-[6%] h-[min(20rem,50vh)] w-[min(20rem,72vw)] rounded-full bg-zinc-500/[0.055] blur-[88px] sm:-right-[15%] sm:h-[min(26rem,65vh)] sm:w-[min(26rem,80vw)] sm:blur-[110px]"
+              className="absolute -right-[24%] bottom-[6%] h-[min(20rem,50vh)] w-[min(20rem,72vw)] rounded-full bg-zinc-500/[0.055] blur-[88px] sm:-right-[15%] sm:h-[min(26rem,65vh)] sm:w-[min(26rem,80vw)] sm:blur-[110px]"
               animate={
                 reduceMotion
                   ? undefined
-                  : { x: [0, -14, 0], y: [0, -10, 0], opacity: [0.45, 0.7, 0.45] }
+                  : {
+                      x: [0, -14, 0],
+                      y: [0, -10, 0],
+                      opacity: [0.45, 0.7, 0.45],
+                    }
               }
               transition={{
                 duration: 26,
@@ -208,10 +204,9 @@ export function TransformationGate() {
             <X className="size-[18px]" strokeWidth={1.25} />
           </button>
 
-          <p
-            className="pointer-events-none absolute bottom-[max(6rem,calc(env(safe-area-inset-bottom)+5.2rem))] left-4 z-20 max-w-[min(17rem,calc(100vw-2rem))] text-pretty text-[10px] leading-relaxed text-zinc-500/40 sm:bottom-[5.5rem] sm:left-6 sm:text-[11px] sm:leading-relaxed"
-          >
-            Designed for ambitious individuals seeking structured transformation.
+          <p className="pointer-events-none absolute bottom-[max(6rem,calc(env(safe-area-inset-bottom)+5.2rem))] left-4 z-20 max-w-[min(17rem,calc(100vw-2rem))] text-pretty text-[10px] leading-relaxed text-zinc-500/40 sm:bottom-[5.5rem] sm:left-6 sm:text-[11px] sm:leading-relaxed">
+            Designed for ambitious individuals seeking structured
+            transformation.
           </p>
 
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))] sm:px-10 sm:py-20">
@@ -299,7 +294,11 @@ export function TransformationGate() {
                     className="mt-11 flex w-full max-w-md flex-col gap-3.5 sm:mt-16 sm:flex-row sm:justify-center"
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.18, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{
+                      delay: 0.18,
+                      duration: 0.65,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
                   >
                     <motion.button
                       ref={primaryRef}

@@ -68,13 +68,15 @@ function validate(
   if (tier === "pro") {
     if (!pro.fullName.trim()) return "Please add your name.";
     if (!pro.misaligned.trim()) return "Describe what feels most misaligned.";
-    if (!pro.transformation.trim()) return "Share what transformation matters most.";
+    if (!pro.transformation.trim())
+      return "Share what transformation matters most.";
   }
   if (tier === "black") {
     if (!black.fullName.trim()) return "Please add your name.";
     if (!black.transformationLevel.trim())
       return "Describe the level of transformation you’re seeking.";
-    if (!black.whyPrivate.trim()) return "Share why private mentorship matters to you.";
+    if (!black.whyPrivate.trim())
+      return "Share why private mentorship matters to you.";
   }
   return null;
 }
@@ -115,7 +117,9 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
     };
   }, [open]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    // This effect intentionally resets form state when modal context changes.
     if (!open) {
       setPhase("form");
       setPendingLead(null);
@@ -130,6 +134,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
     setPendingLead(null);
     setRecommendation(null);
   }, [open, tier]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!open) return;
@@ -411,7 +416,10 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                         />
                       </div>
                       <div>
-                        <label className={labelClass} htmlFor="m-pro-misaligned">
+                        <label
+                          className={labelClass}
+                          htmlFor="m-pro-misaligned"
+                        >
                           What area of life feels most misaligned?
                         </label>
                         <textarea
@@ -420,7 +428,10 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                           className={cn(inputClass, "resize-none")}
                           value={pro.misaligned}
                           onChange={(e) =>
-                            setPro((s) => ({ ...s, misaligned: e.target.value }))
+                            setPro((s) => ({
+                              ...s,
+                              misaligned: e.target.value,
+                            }))
                           }
                         />
                       </div>
@@ -455,7 +466,10 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                           className={inputClass}
                           value={black.fullName}
                           onChange={(e) =>
-                            setBlack((s) => ({ ...s, fullName: e.target.value }))
+                            setBlack((s) => ({
+                              ...s,
+                              fullName: e.target.value,
+                            }))
                           }
                           autoComplete="name"
                         />
@@ -487,7 +501,10 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                           className={cn(inputClass, "resize-none")}
                           value={black.whyPrivate}
                           onChange={(e) =>
-                            setBlack((s) => ({ ...s, whyPrivate: e.target.value }))
+                            setBlack((s) => ({
+                              ...s,
+                              whyPrivate: e.target.value,
+                            }))
                           }
                         />
                       </div>
@@ -626,7 +643,10 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                   ) : null}
 
                   {error ? (
-                    <p className="text-center text-[13px] text-red-400/90" role="alert">
+                    <p
+                      className="text-center text-[13px] text-red-400/90"
+                      role="alert"
+                    >
                       {error}
                     </p>
                   ) : null}
