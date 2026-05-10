@@ -1,0 +1,662 @@
+"use client";
+
+import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
+import {
+  CheckCheck,
+  Play,
+  Quote,
+  Sparkles,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+const viewport = { once: true, margin: "-100px" } as const;
+
+const headerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.14, delayChildren: 0.05 },
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.78, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
+const stagger = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.1, delayChildren: 0.12 },
+  },
+};
+
+const rise = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
+/** Reference photography (Unsplash) — replace with member media when available. */
+const img = {
+  ba1Before:
+    "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=85",
+  ba1After:
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=900&q=85",
+  ba2Before:
+    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=900&q=85",
+  ba2After:
+    "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=900&q=85",
+  mosaicA:
+    "https://images.unsplash.com/photo-1483664852095-d6cc4f4d336f?auto=format&fit=crop&w=900&q=85",
+  mosaicB:
+    "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=900&q=85",
+  mosaicC:
+    "https://images.unsplash.com/photo-1495616811223-94d306c67de2?auto=format&fit=crop&w=900&q=85",
+  mosaicD:
+    "https://images.unsplash.com/photo-1518611012118-696072aa360a?auto=format&fit=crop&w=900&q=85",
+  mosaicE:
+    "https://images.unsplash.com/photo-1436491865332-7a61a109bf05?auto=format&fit=crop&w=900&q=85",
+  prog1:
+    "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=85",
+  prog2:
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=85",
+  prog3:
+    "https://images.unsplash.com/photo-1549576490-b0b4831ef60a?auto=format&fit=crop&w=800&q=85",
+  vidPoster1:
+    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=85",
+  vidPoster2:
+    "https://images.unsplash.com/photo-1517963879466-cd9acbf3173e?auto=format&fit=crop&w=1200&q=85",
+  vidPoster3:
+    "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1200&q=85",
+} as const;
+
+/** Demo MP4 architecture (replace with hosted member films). */
+const demoVideos = [
+  "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+  "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+] as const;
+
+const metrics = [
+  { label: "Consistency uplift (structured cohort)", value: "87%" },
+  { label: "Avg. accountability streak window", value: "12 wk" },
+  { label: "Private mentorship capacity", value: "Capped" },
+  { label: "Completion under methodology", value: "High" },
+] as const;
+
+const marqueeProof = [
+  { title: "Physique", line: "Composition shift across structured blocks" },
+  { title: "Discipline", line: "Non-negotiable morning architecture" },
+  { title: "Presence", line: "Leadership voice under load" },
+  { title: "Social", line: "Initiated conversations weekly" },
+  { title: "Energy", line: "Sleep and training aligned" },
+  { title: "Identity", line: "Standards stop being optional" },
+  { title: "Confidence", line: "Calm under scrutiny" },
+  { title: "Execution", line: "Systems over motivation" },
+] as const;
+
+const quotes = [
+  {
+    text: "I wasn’t looking for hype. I needed structure. Six months in, my training, sleep, and how I show up in rooms are not the same person.",
+    tag: "Physique · discipline",
+  },
+  {
+    text: "The shift wasn’t ‘more confidence’ quotes — it was reps, feedback, and accountability until my default became steadier.",
+    tag: "Communication · confidence",
+  },
+] as const;
+
+const chats = [
+  {
+    time: "09:14",
+    body: "First week done. Hit every session. Feels foreign to not negotiate with myself.",
+  },
+  {
+    time: "Mon",
+    body: "Had the hard conversation at work. Didn’t rush it. That’s new for me.",
+  },
+  {
+    time: "Tue",
+    body: "Confidence note: led the client call without over-preparing for once.",
+  },
+  {
+    time: "Yesterday",
+    body: "Weighed in, but more importantly — slept 7.5h four nights straight. Small but real.",
+  },
+  {
+    time: "Today",
+    body: "Discipline streak: 21 check-ins without missing. Environment finally matches intent.",
+  },
+] as const;
+
+const mosaic = [
+  { src: img.mosaicA, label: "Routine atmosphere", sub: "Reference · discipline" },
+  { src: img.mosaicB, label: "Portrait · presence", sub: "Reference · professional" },
+  { src: img.mosaicC, label: "Morning architecture", sub: "Reference · lifestyle" },
+  { src: img.mosaicD, label: "Training intelligence", sub: "Reference · physique" },
+  { src: img.mosaicE, label: "Outdoor cadence", sub: "Reference · identity" },
+] as const;
+
+const videoStories = [
+  {
+    title: "Confidence transformation",
+    subtitle: "Voice, presence, and pressure — documentary cut.",
+    poster: img.vidPoster1,
+    src: demoVideos[0],
+  },
+  {
+    title: "Discipline and physique",
+    subtitle: "Training, sleep, execution — cinematic reference.",
+    poster: img.vidPoster2,
+    src: demoVideos[1],
+  },
+  {
+    title: "Lifestyle and identity",
+    subtitle: "Standards across domains — premium reference.",
+    poster: img.vidPoster3,
+    src: demoVideos[2],
+  },
+] as const;
+
+function BeforeAfterCard({
+  name,
+  timeframe,
+  beforeSrc,
+  afterSrc,
+}: {
+  name: string;
+  timeframe: string;
+  beforeSrc: string;
+  afterSrc: string;
+}) {
+  return (
+    <motion.div
+      variants={rise}
+      whileHover={{ y: -6 }}
+      transition={{ type: "spring", stiffness: 300, damping: 26 }}
+      className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl"
+    >
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent opacity-40 transition-opacity duration-500 group-hover:opacity-60" />
+      <p className="relative z-10 text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
+        {name}
+      </p>
+      <p className="relative z-10 mt-1 text-xs text-zinc-600">{timeframe}</p>
+      <div className="relative z-10 mt-5 grid grid-cols-2 gap-3">
+        <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-950/80">
+          <div className="relative aspect-[4/5]">
+            <Image
+              src={beforeSrc}
+              alt="Reference before state"
+              fill
+              className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+              sizes="(max-width: 768px) 45vw, 280px"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          </div>
+          <p className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+            Before
+          </p>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-white/[0.1] bg-zinc-950/80 shadow-[0_0_48px_-12px_rgba(255,255,255,0.08)]">
+          <div className="relative aspect-[4/5]">
+            <Image
+              src={afterSrc}
+              alt="Reference after state"
+              fill
+              className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+              sizes="(max-width: 768px) 45vw, 280px"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          </div>
+          <p className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+            After
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function MosaicTile({
+  src,
+  label,
+  sub,
+}: {
+  src: string;
+  label: string;
+  sub: string;
+}) {
+  return (
+    <motion.figure
+      variants={rise}
+      whileHover={{ y: -5, scale: 1.01 }}
+      transition={{ type: "spring", stiffness: 280, damping: 24 }}
+      className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-950/40 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]"
+    >
+      <div className="relative aspect-[4/5] sm:aspect-[3/4]">
+        <Image
+          src={src}
+          alt={`Reference: ${label}`}
+          fill
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
+        <figcaption className="absolute inset-x-0 bottom-0 z-10 p-4">
+          <p className="text-sm font-medium tracking-tight text-white">{label}</p>
+          <p className="mt-1 text-[11px] text-zinc-500">{sub}</p>
+        </figcaption>
+      </div>
+    </motion.figure>
+  );
+}
+
+function VideoStoryCard({
+  title,
+  subtitle,
+  poster,
+  src,
+  index,
+}: (typeof videoStories)[number] & { index: number }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hover, setHover] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [tapPlay, setTapPlay] = useState(false);
+
+  const active = hover || tapPlay;
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (active) {
+      const p = v.play();
+      if (p) void p.catch(() => {});
+    } else {
+      v.pause();
+    }
+  }, [active]);
+
+  const toggleTap = useCallback(() => {
+    setTapPlay((t) => !t);
+  }, []);
+
+  return (
+    <motion.div
+      variants={rise}
+      className="group relative overflow-hidden rounded-[1.25rem] border border-white/[0.1] bg-black/50 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_40px_100px_-48px_rgba(0,0,0,0.85)] backdrop-blur-xl"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      whileHover={{ scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 260, damping: 22 }}
+    >
+      <div className="pointer-events-none absolute -inset-px rounded-[1.25rem] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100">
+        <div className="h-full w-full bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.15),transparent_65%)]" />
+      </div>
+      <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[2/1]">
+        <video
+          ref={videoRef}
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover transition-[opacity,filter] duration-500",
+            ready ? "opacity-100" : "opacity-0",
+            active ? "brightness-[1.05]" : "brightness-[0.88]",
+          )}
+          src={src}
+          poster={poster}
+          muted
+          playsInline
+          loop
+          preload="metadata"
+          onLoadedData={() => setReady(true)}
+        />
+        <div className="absolute inset-0">
+          <Image
+            src={poster}
+            alt={`Video poster: ${title}`}
+            fill
+            className={cn(
+              "object-cover transition-opacity duration-500",
+              ready && active ? "opacity-0" : "opacity-100",
+            )}
+            sizes="(max-width: 768px) 100vw, 33vw"
+            priority={index === 0}
+          />
+        </div>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
+        <AnimatePresence>
+          {!active ? (
+            <motion.div
+              key="play"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="pointer-events-none absolute inset-0 flex items-center justify-center"
+            >
+              <motion.div
+                className="flex size-16 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white shadow-[0_0_48px_-8px_rgba(255,255,255,0.25)] backdrop-blur-md"
+                animate={{
+                  boxShadow: [
+                    "0 0 40px -10px rgba(255,255,255,0.12)",
+                    "0 0 56px -6px rgba(255,255,255,0.2)",
+                    "0 0 40px -10px rgba(255,255,255,0.12)",
+                  ],
+                }}
+                transition={{
+                  duration: 3.4 + index * 0.15,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                <Play className="ml-1 size-7 fill-white/90 text-white/90" />
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+        <button
+          type="button"
+          onClick={toggleTap}
+          className="absolute inset-0 z-10 sm:hidden"
+          aria-label={tapPlay ? "Pause preview" : "Play preview"}
+        />
+      </div>
+      <div className="relative z-10 border-t border-white/[0.06] bg-white/[0.02] px-5 py-4">
+        <p className="text-sm font-medium tracking-tight text-white">{title}</p>
+        <p className="mt-1 text-xs leading-relaxed text-zinc-500">{subtitle}</p>
+        <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+          Demo reel · replace with member story
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+export function Testimonials() {
+  return (
+    <section
+      id="testimonials"
+      data-conversion-zone="proof"
+      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#050505] py-20 sm:py-28 lg:py-32"
+      aria-labelledby="proof-heading"
+    >
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
+        <div className="absolute left-1/2 top-[5%] h-[22rem] w-[min(100%,56rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.055),transparent_72%)] blur-3xl" />
+        <div className="absolute -right-[20%] bottom-[20%] h-[28rem] w-[28rem] rounded-full bg-emerald-950/[0.06] blur-[120px]" />
+        <div className="absolute -left-[18%] top-[35%] h-[24rem] w-[24rem] rounded-full bg-zinc-600/[0.05] blur-[110px]" />
+        <motion.div
+          className="absolute right-[10%] top-[40%] h-72 w-72 rounded-full bg-white/[0.03] blur-[90px]"
+          animate={{ opacity: [0.35, 0.55, 0.35] }}
+          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.55)_78%)]" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
+        <motion.div
+          className="mx-auto max-w-3xl text-center"
+          variants={headerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          <motion.p
+            variants={fadeUp}
+            className="mb-5 text-[11px] font-medium uppercase tracking-[0.32em] text-zinc-500"
+          >
+            Transformation proof
+          </motion.p>
+          <motion.h2
+            id="proof-heading"
+            variants={fadeUp}
+            className="text-balance text-[clamp(1.9rem,9vw,2.4rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-white sm:text-4xl sm:leading-[1.08] lg:text-[2.4rem]"
+          >
+            Evidence lives in behavior — not captions.
+          </motion.h2>
+          <motion.p
+            variants={fadeUp}
+            className="mx-auto mt-8 max-w-2xl text-pretty text-[15px] leading-[1.75] text-zinc-500 sm:text-base sm:leading-relaxed"
+          >
+            A documentary-style field of reference media, member texture, and
+            private accountability signals — placeholders architected for real
+            transformation assets.
+          </motion.p>
+        </motion.div>
+
+        <motion.div
+          className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-3 sm:mt-16 sm:grid-cols-4 sm:gap-4"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          {metrics.map((m) => (
+            <motion.div
+              key={m.label}
+              variants={rise}
+              className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-4 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset] backdrop-blur-md sm:px-4"
+            >
+              <p className="font-mono text-lg font-semibold tracking-tight text-white sm:text-xl">
+                {m.value}
+              </p>
+              <p className="mt-1.5 text-[10px] leading-snug text-zinc-500 sm:text-[11px]">
+                {m.label}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        <motion.div
+          className="mx-auto mt-14 grid max-w-5xl gap-6 lg:mt-16 lg:grid-cols-2"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          <BeforeAfterCard
+            name="Reference pair · M"
+            timeframe="Physique and presence block (demo photography)"
+            beforeSrc={img.ba1Before}
+            afterSrc={img.ba1After}
+          />
+          <BeforeAfterCard
+            name="Reference pair · A"
+            timeframe="Communication and discipline (demo photography)"
+            beforeSrc={img.ba2Before}
+            afterSrc={img.ba2After}
+          />
+        </motion.div>
+
+        <motion.div
+          className="mx-auto mt-16 max-w-5xl lg:mt-20"
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          <p className="mb-6 text-center text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500">
+            Physique progression · reference frames
+          </p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            {[img.prog1, img.prog2, img.prog3].map((src, i) => (
+              <motion.div
+                key={src}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08, duration: 0.55 }}
+                className="group relative overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-950/60"
+              >
+                <div className="relative aspect-[3/4]">
+                  <Image
+                    src={src}
+                    alt={`Physique reference frame ${i + 1}`}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    sizes="(max-width: 768px) 33vw, 240px"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <span className="absolute bottom-2 left-2 font-mono text-[10px] font-medium text-zinc-400">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="mx-auto mt-16 max-w-5xl lg:mt-20"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          <p className="mb-6 flex items-center justify-center gap-2 text-center text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500">
+            <Sparkles className="size-3.5 text-zinc-600" strokeWidth={1.25} />
+            Field stills · cinematic reference
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
+            {mosaic.map((m) => (
+              <MosaicTile key={m.src} {...m} />
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="mx-auto mt-14 grid max-w-5xl gap-6 lg:mt-16 lg:grid-cols-2"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          {quotes.map((q) => (
+            <motion.figure
+              key={q.tag}
+              variants={rise}
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24 }}
+              className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-7 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl"
+            >
+              <Quote className="absolute right-6 top-6 size-8 text-white/[0.06]" strokeWidth={1} />
+              <blockquote className="relative z-10 text-[15px] leading-relaxed text-zinc-300">
+                “{q.text}”
+              </blockquote>
+              <figcaption className="relative z-10 mt-5 text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-500">
+                {q.tag}
+              </figcaption>
+            </motion.figure>
+          ))}
+        </motion.div>
+
+        <motion.div
+          className="mx-auto mt-16 max-w-5xl lg:mt-20"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          <p className="mb-6 text-center text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500">
+            Member films · demo architecture
+          </p>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {videoStories.map((v, i) => (
+              <VideoStoryCard key={v.title} {...v} index={i} />
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="mx-auto mt-16 max-w-2xl lg:mt-20"
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          <p className="mb-4 text-center text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500">
+            Accountability thread · reference UI
+          </p>
+          <div className="relative overflow-hidden rounded-2xl border border-white/[0.1] bg-gradient-to-b from-zinc-950/80 to-black/80 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_32px_80px_-40px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
+            <div className="mb-4 flex items-center gap-3 border-b border-white/[0.07] pb-4">
+              <div className="flex size-10 items-center justify-center rounded-full bg-emerald-950/40 text-emerald-400/90 ring-1 ring-emerald-500/15">
+                <Zap className="size-[18px]" strokeWidth={1.35} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-zinc-200">Ascend · Mentor</p>
+                <p className="text-[11px] text-zinc-500">Private thread · demo copy</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              {chats.map((c, i) => (
+                <motion.div
+                  key={c.time + String(i)}
+                  initial={{ opacity: 0, x: 12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.06, duration: 0.45 }}
+                  className={cn(
+                    "ml-auto max-w-[94%] rounded-2xl rounded-tr-sm border px-4 py-3",
+                    "border-emerald-500/12 bg-emerald-950/[0.2] shadow-[0_12px_40px_-16px_rgba(0,0,0,0.55)]",
+                  )}
+                >
+                  <p className="text-[13px] leading-relaxed text-zinc-200">{c.body}</p>
+                  <div className="mt-2 flex items-center justify-end gap-1.5 text-[10px] text-emerald-500/65">
+                    <span>{c.time}</span>
+                    <CheckCheck className="size-3.5" strokeWidth={1.5} />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="relative mx-auto mt-16 max-w-[100vw] lg:mt-20">
+          <p className="mb-6 text-center text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500">
+            Proof in motion
+          </p>
+          <div className="relative overflow-hidden py-2">
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#050505] to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#050505] to-transparent" />
+            <div className="flex w-max ascend-testimonial-marquee gap-5 pr-5">
+              {[0, 1].map((dup) => (
+                <div key={dup} className="flex shrink-0 gap-5">
+                  {marqueeProof.map((item) => (
+                    <div
+                      key={`${dup}-${item.title}`}
+                      className="w-[min(18rem,calc(100vw-3rem))] shrink-0 rounded-2xl border border-white/[0.09] bg-white/[0.035] p-5 shadow-[0_0_40px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:w-72"
+                    >
+                      <div className="flex items-center gap-2 text-zinc-400">
+                        <TrendingUp className="size-4" strokeWidth={1.25} />
+                        <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+                          {item.title}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+                        {item.line}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/85 to-transparent"
+        aria-hidden
+      />
+    </section>
+  );
+}

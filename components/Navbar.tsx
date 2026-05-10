@@ -1,0 +1,242 @@
+"use client";
+
+import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
+import { AnimatePresence, motion } from "framer-motion";
+import { Menu, X } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+
+const links = [
+  { href: "#about", label: "About" },
+  { href: "#philosophy", label: "Philosophy" },
+  { href: "#journey", label: "Journey" },
+  { href: "#programs", label: "Method" },
+  { href: "#mentorship-depth", label: "Depth" },
+  { href: "#assessment", label: "Assessment" },
+  { href: "#testimonials", label: "Proof" },
+  {
+    href: "#pricing",
+    label: "Entry",
+    ariaLabel: "Transformation assessment entry",
+  },
+] as const;
+
+export function Navbar() {
+  const conversion = useConversionExperienceOptional();
+  const ctaLabel = conversion?.primaryCtaLabel ?? "Begin Your Transformation";
+  const notice = conversion?.urgencyMessage ?? "";
+
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, close]);
+
+  return (
+    <>
+      <motion.header
+        className={cn(
+          "fixed top-0 z-50 w-full transition-[background-color,backdrop-filter,border-color,box-shadow] duration-500 ease-out",
+          scrolled
+            ? "border-b border-white/[0.06] bg-zinc-950/45 shadow-[0_12px_48px_-12px_rgba(0,0,0,0.65)] backdrop-blur-xl backdrop-saturate-150"
+            : "border-b border-transparent bg-transparent",
+        )}
+        initial={{ opacity: 0, y: -18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] as const }}
+      >
+        <nav
+          className="relative mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between gap-3 px-4 sm:h-[4.25rem] sm:gap-4 sm:px-8 lg:px-10"
+          aria-label="Primary"
+        >
+          <Link
+            href="/"
+            className="relative z-10 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-400 transition-colors duration-300 hover:text-zinc-200"
+          >
+            Ascend Theory
+          </Link>
+
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 hidden w-[min(20rem,calc(100vw-14rem))] -translate-x-1/2 -translate-y-1/2 lg:block">
+            <AnimatePresence mode="wait">
+              {notice ? (
+                <motion.p
+                  key={notice}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.45, ease: "easeOut" }}
+                  className="truncate text-center text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-600"
+                >
+                  {notice}
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
+          </div>
+
+          <div className="relative z-10 hidden items-center gap-10 lg:flex">
+            {links.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={"ariaLabel" in item ? item.ariaLabel : undefined}
+                className={cn(
+                  "group relative text-[13px] font-medium tracking-tight text-zinc-400 transition-colors duration-300",
+                  "hover:text-white",
+                )}
+              >
+                <span className="relative z-10">{item.label}</span>
+                <span
+                  className={cn(
+                    "pointer-events-none absolute -inset-x-3 -inset-y-2 rounded-lg opacity-0 shadow-[0_0_40px_-2px_rgba(255,255,255,0.14)] transition-opacity duration-300",
+                    "group-hover:opacity-100",
+                  )}
+                  aria-hidden
+                />
+              </Link>
+            ))}
+          </div>
+
+          <div className="relative z-10 flex items-center gap-3 sm:gap-4">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 450, damping: 28 }}
+            >
+              <Link
+                href="#pricing"
+                aria-label={ctaLabel}
+                className={cn(
+                  "relative inline-flex max-w-[9rem] overflow-hidden rounded-full px-3.5 py-2.5 text-center text-[10px] font-medium leading-tight tracking-tight text-zinc-950 sm:max-w-[16rem] sm:px-5 sm:text-[12px] sm:leading-snug lg:max-w-[18rem] lg:text-[12px]",
+                  "bg-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_12px_48px_-16px_rgba(255,255,255,0.22)]",
+                  "transition-[box-shadow] duration-300 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_16px_56px_-12px_rgba(255,255,255,0.32)]",
+                )}
+              >
+                <span className="sm:hidden">Assessment</span>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={ctaLabel}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.35 }}
+                    className="hidden max-w-full truncate sm:inline"
+                  >
+                    {ctaLabel}
+                  </motion.span>
+                </AnimatePresence>
+              </Link>
+            </motion.div>
+
+            <button
+              type="button"
+              className={cn(
+                "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.04] text-white backdrop-blur-md transition-colors duration-300",
+                "hover:border-white/[0.16] hover:bg-white/[0.07] lg:hidden",
+              )}
+              aria-expanded={open}
+              aria-controls="mobile-nav"
+              onClick={() => setOpen((v) => !v)}
+            >
+              {open ? <X className="size-[18px]" /> : <Menu className="size-[18px]" />}
+            </button>
+          </div>
+        </nav>
+      </motion.header>
+
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            id="mobile-nav"
+            className="fixed inset-0 z-40 lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] as const }}
+          >
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/80 backdrop-blur-2xl"
+              aria-label="Close menu"
+              onClick={close}
+            />
+            <motion.div
+              className="absolute inset-x-0 bottom-0 top-0 flex flex-col bg-zinc-950/94 px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[5.75rem]"
+              initial={{ y: -8, opacity: 0.6 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -8, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] as const }}
+            >
+              <div className="flex flex-1 flex-col justify-center gap-2.5">
+                {links.map((item, i) => (
+                  <motion.div
+                    key={item.href}
+                    initial={{ opacity: 0, x: -16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -12 }}
+                    transition={{
+                      delay: 0.06 + i * 0.05,
+                      duration: 0.45,
+                      ease: [0.16, 1, 0.3, 1] as const,
+                    }}
+                  >
+                    <Link
+                      href={item.href}
+                      onClick={close}
+                      className="block rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-4 text-[1.06rem] font-medium tracking-tight text-zinc-200 transition-colors hover:border-white/[0.12] hover:text-white"
+                    >
+                      {item.label}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{
+                  delay: 0.2,
+                  duration: 0.45,
+                  ease: [0.16, 1, 0.3, 1] as const,
+                }}
+              >
+                <Link
+                  href="#pricing"
+                  onClick={close}
+                  aria-label={ctaLabel}
+                  className="flex min-h-12 w-full max-w-full items-center justify-center rounded-full bg-white px-4 py-3 text-center text-[12px] font-medium leading-snug tracking-tight text-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_60px_-20px_rgba(255,255,255,0.25)]"
+                >
+                  <span className="line-clamp-2">{ctaLabel}</span>
+                </Link>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </>
+  );
+}

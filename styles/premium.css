@@ -1,0 +1,26 @@
+:root {
+  --ascend-glow: rgba(255, 255, 255, 0.06);
+  --ascend-glow-strong: rgba(161, 161, 170, 0.12);
+  --ascend-vignette: rgba(0, 0, 0, 0.65);
+}
+
+@keyframes ascend-testimonial-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.ascend-testimonial-marquee {
+  animation: ascend-testimonial-marquee 52s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ascend-testimonial-marquee {
+    animation: none;
+    transform: none;
+  }
+}
