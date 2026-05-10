@@ -30,38 +30,38 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-/** Reference photography (Unsplash) — replace with member media when available. */
+/** Reference photography (Unsplash) — dark editorial, masculine tone; replace with member media when available. */
 const img = {
   ba1Before:
-    "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=85",
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=82",
   ba1After:
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=900&q=85",
+    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=900&q=82",
   ba2Before:
-    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=900&q=85",
+    "https://images.unsplash.com/photo-1534438327276-14e5300d3ad4?auto=format&fit=crop&w=900&q=82",
   ba2After:
-    "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=900&q=85",
+    "https://images.unsplash.com/photo-1576678927484-cc907957088f?auto=format&fit=crop&w=900&q=82",
   mosaicA:
-    "https://images.unsplash.com/photo-1483664852095-d6cc4f4d336f?auto=format&fit=crop&w=900&q=85",
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=82",
   mosaicB:
-    "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=900&q=85",
+    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=900&q=82",
   mosaicC:
-    "https://images.unsplash.com/photo-1495616811223-94d306c67de2?auto=format&fit=crop&w=900&q=85",
+    "https://images.unsplash.com/photo-1534438327276-14e5300d3ad4?auto=format&fit=crop&w=900&q=82",
   mosaicD:
-    "https://images.unsplash.com/photo-1518611012118-696072aa360a?auto=format&fit=crop&w=900&q=85",
+    "https://images.unsplash.com/photo-1576678927484-cc907957088f?auto=format&fit=crop&w=900&q=82",
   mosaicE:
-    "https://images.unsplash.com/photo-1436491865332-7a61a109bf05?auto=format&fit=crop&w=900&q=85",
+    "https://images.unsplash.com/photo-1534361960057-19889db9621e?auto=format&fit=crop&w=900&q=82",
   prog1:
-    "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=85",
+    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=800&q=82",
   prog2:
-    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=85",
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=82",
   prog3:
-    "https://images.unsplash.com/photo-1549576490-b0b4831ef60a?auto=format&fit=crop&w=800&q=85",
+    "https://images.unsplash.com/photo-1534438327276-14e5300d3ad4?auto=format&fit=crop&w=800&q=82",
   vidPoster1:
-    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=82",
   vidPoster2:
-    "https://images.unsplash.com/photo-1517963879466-cd9acbf3173e?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=1200&q=82",
   vidPoster3:
-    "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1534438327276-14e5300d3ad4?auto=format&fit=crop&w=1200&q=82",
 } as const;
 
 /** Demo MP4 architecture (replace with hosted member films). */
@@ -188,7 +188,7 @@ function BeforeAfterCard({
       variants={fadeChildVariants}
       whileHover={{ y: isMobile ? -1 : -2 }}
       transition={SURFACE_SPRING}
-      className="group relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-7"
+      className="group relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-md sm:p-7 sm:backdrop-blur-xl"
     >
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent opacity-40 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-52" />
       <p className="relative z-10 text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
@@ -200,7 +200,7 @@ function BeforeAfterCard({
           <div className="relative aspect-[4/5]">
             <Image
               src={beforeSrc}
-              alt="Reference before state"
+              alt="Editorial reference frame one"
               fill
               className="object-cover transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.008]"
               sizes="(max-width: 768px) 45vw, 280px"
@@ -208,14 +208,14 @@ function BeforeAfterCard({
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           </div>
           <p className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-            Before
+            Reference I
           </p>
         </div>
         <div className="overflow-hidden rounded-xl border border-white/[0.1] bg-zinc-950/80 shadow-[0_0_48px_-12px_rgba(255,255,255,0.08)]">
           <div className="relative aspect-[4/5]">
             <Image
               src={afterSrc}
-              alt="Reference after state"
+              alt="Editorial reference frame two"
               fill
               className="object-cover transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.008]"
               sizes="(max-width: 768px) 45vw, 280px"
@@ -223,7 +223,7 @@ function BeforeAfterCard({
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           </div>
           <p className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-            After
+            Reference II
           </p>
         </div>
       </div>

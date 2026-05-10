@@ -17,7 +17,7 @@ import {
   getHeroStaggerCinematic,
 } from "@/lib/motion";
 import { shellHero } from "@/lib/editorial-layout";
-import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
+import { HERO_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
@@ -92,8 +92,8 @@ export function Hero() {
             className="ascend-prose-calm mt-8 max-w-[min(34rem,100%)] text-pretty text-zinc-400/92 sm:mt-12"
           >
             Private mentorship for serious professionals — training, presence,
-            discipline, and accountability in one system. You apply; we review.
-            No open enrollment.
+            discipline, and accountability in one rhythm. You apply; we review.
+            Invitation-only enrollment.
           </motion.p>
 
           <motion.div
@@ -103,7 +103,7 @@ export function Hero() {
             <motion.button
               type="button"
               onClick={() => openAssessment()}
-              aria-label={PRIMARY_CTA_LABEL}
+              aria-label={HERO_CTA_LABEL}
               className={cn(
                 "ascend-button-primary group relative inline-flex min-h-12 w-full max-w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 sm:w-auto sm:px-8",
                 "bg-white text-center text-zinc-950 text-xs font-medium leading-snug tracking-tight sm:text-sm",
@@ -114,7 +114,7 @@ export function Hero() {
               transition={TAP_SPRING}
             >
               <span className="relative z-10 max-w-[16rem] sm:max-w-none">
-                {PRIMARY_CTA_LABEL}
+                {HERO_CTA_LABEL}
               </span>
               <ArrowRight className="relative z-10 size-4 shrink-0 transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:translate-x-0.5" />
             </motion.button>

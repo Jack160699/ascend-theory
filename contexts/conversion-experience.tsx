@@ -3,11 +3,10 @@
 import { useAssessmentModal } from "@/contexts/assessment-modal";
 import {
   DURATION_OPACITY,
-  DURATION_OVERLAY_SLOW,
   TAP_SPRING,
   txReveal,
 } from "@/lib/motion";
-import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
+import { STICKY_MOBILE_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -23,7 +22,6 @@ const STATIC_NOTICE = "We read applications in order.";
 
 type ConversionValue = {
   urgencyMessage: string;
-  primaryCtaLabel: string;
   urgencyForTier: (_offset: number) => string;
 };
 
@@ -51,22 +49,15 @@ const stickyCtaButtonClass = cn(
   "active:scale-[0.987]",
 );
 
-const stickyCtaButtonDesktopClass = cn(
-  stickyCtaButtonClass,
-  "w-auto min-h-11 shrink-0 px-6 text-[11px] sm:min-h-11 sm:text-xs",
-);
-
-function StickyConversionBar({ ctaLabel }: { ctaLabel: string }) {
+function StickyConversionBar() {
   const { openAssessment } = useAssessmentModal();
   const [showMobile, setShowMobile] = useState(false);
-  const [showDesktop, setShowDesktop] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
       const h = window.innerHeight;
       setShowMobile(y > Math.min(h * 0.72, 400));
-      setShowDesktop(y > Math.max(h * 2.15, 920));
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -78,69 +69,38 @@ function StickyConversionBar({ ctaLabel }: { ctaLabel: string }) {
   }, []);
 
   return (
-    <>
-      <AnimatePresence>
-        {showMobile ? (
-          <motion.div
-            className={cn(
-              "fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.07] sm:hidden",
-              "bg-zinc-950/78 shadow-[0_-12px_48px_-8px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150",
-              "supports-[padding:max(0px)]:pb-[max(0.35rem,env(safe-area-inset-bottom))]",
-            )}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={txReveal(DURATION_OPACITY)}
-          >
-            <div className="mx-auto max-w-lg px-3 pt-2">
-              <motion.button
-                type="button"
-                onClick={() => openAssessment()}
-                className={stickyCtaButtonClass}
-                whileTap={{ scale: 0.988 }}
-                transition={TAP_SPRING}
-              >
-                {ctaLabel}
-              </motion.button>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showDesktop ? (
-          <motion.div
-            className={cn(
-              "fixed inset-x-0 bottom-0 z-[60] hidden border-t border-white/[0.07] sm:block",
-              "bg-zinc-950/78 shadow-[0_-16px_56px_-10px_rgba(0,0,0,0.58)] backdrop-blur-xl backdrop-saturate-150",
-              "supports-[padding:max(0px)]:pb-[max(0.5rem,env(safe-area-inset-bottom))]",
-            )}
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 28, opacity: 0 }}
-            transition={txReveal(DURATION_OVERLAY_SLOW)}
-          >
-            <div className="mx-auto flex max-w-6xl items-center justify-end px-4 py-2.5 sm:px-8 lg:px-10">
-              <motion.button
-                type="button"
-                onClick={() => openAssessment()}
-                className={stickyCtaButtonDesktopClass}
-                whileTap={{ scale: 0.988 }}
-                transition={TAP_SPRING}
-              >
-                {ctaLabel}
-              </motion.button>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </>
+    <AnimatePresence>
+      {showMobile ? (
+        <motion.div
+          className={cn(
+            "fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.07] sm:hidden",
+            "bg-zinc-950/82 shadow-[0_-8px_40px_-6px_rgba(0,0,0,0.5)] backdrop-blur-md backdrop-saturate-100",
+            "supports-[padding:max(0px)]:pb-[max(0.35rem,env(safe-area-inset-bottom))]",
+          )}
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={txReveal(DURATION_OPACITY)}
+        >
+          <div className="mx-auto max-w-lg px-3 pt-2">
+            <motion.button
+              type="button"
+              onClick={() => openAssessment()}
+              className={stickyCtaButtonClass}
+              whileTap={{ scale: 0.988 }}
+              transition={TAP_SPRING}
+            >
+              {STICKY_MOBILE_CTA_LABEL}
+            </motion.button>
+          </div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }
 
 function ConversionChrome() {
-  const { primaryCtaLabel } = useConversionExperience();
-  return <StickyConversionBar ctaLabel={primaryCtaLabel} />;
+  return <StickyConversionBar />;
 }
 
 export function ConversionExperienceProvider({
@@ -153,7 +113,6 @@ export function ConversionExperienceProvider({
   const value = useMemo<ConversionValue>(
     () => ({
       urgencyMessage: STATIC_NOTICE,
-      primaryCtaLabel: PRIMARY_CTA_LABEL,
       urgencyForTier,
     }),
     [urgencyForTier],

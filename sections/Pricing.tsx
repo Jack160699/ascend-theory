@@ -1,7 +1,6 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
 import {
   useIsMobileConversion,
@@ -10,7 +9,6 @@ import {
 import {
   DURATION_REVEAL,
   SURFACE_SPRING,
-  TAP_SPRING,
   getCardRevealMobile,
   getFadeUpReveal,
   getGridStaggerParent,
@@ -33,7 +31,6 @@ const tiers: {
   price: string;
   priceNote?: string;
   features: string[];
-  cta: string;
   badge?: string;
 }[] = [
   {
@@ -50,7 +47,6 @@ const tiers: {
       "Peer field with a serious bar",
       "Intake read manually before invite",
     ],
-    cta: "Start application",
   },
   {
     key: "pro",
@@ -66,7 +62,6 @@ const tiers: {
       "Private calibration when stakes demand it",
       "Reserved onboarding pacing",
     ],
-    cta: "Start application",
     badge: "Primary allocation",
   },
   {
@@ -85,7 +80,6 @@ const tiers: {
       "Executive-tempo support across domains",
       "Same philosophy — maximum private attention",
     ],
-    cta: "Start application",
     badge: "Invitation only",
   },
 ];
@@ -116,14 +110,13 @@ function PricingCapacityRibbon({
 function PricingCard({
   tier,
   cardVariants,
-  onStartApplication,
 }: {
   tier: (typeof tiers)[number];
   cardVariants: Variants;
-  onStartApplication: () => void;
 }) {
   const rootRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobileConversion();
   const conv = useConversionExperienceOptional();
   const slotLine = conv?.urgencyForTier(0) ?? "";
   const { key } = tier;
@@ -190,11 +183,11 @@ function PricingCard({
         className={cn(
           "relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-[1.25rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           key === "core" &&
-            "border-white/[0.09] bg-white/[0.025] p-5 group-hover:border-white/[0.14] group-hover:shadow-[0_28px_90px_-48px_rgba(0,0,0,0.88)] sm:p-7",
+            "border-white/[0.09] bg-white/[0.025] p-4 group-hover:border-white/[0.14] group-hover:shadow-[0_28px_90px_-48px_rgba(0,0,0,0.88)] sm:p-7",
           key === "pro" &&
-            "border-white/[0.2] bg-white/[0.06] p-5 shadow-[0_34px_95px_-52px_rgba(0,0,0,0.88),0_0_90px_-28px_rgba(255,255,255,0.12)] group-hover:border-white/[0.24] group-hover:shadow-[0_48px_120px_-56px_rgba(0,0,0,0.92),0_0_110px_-24px_rgba(255,255,255,0.14)] sm:p-7 lg:p-9",
+            "border-white/[0.2] bg-white/[0.06] p-4 shadow-[0_34px_95px_-52px_rgba(0,0,0,0.88),0_0_90px_-28px_rgba(255,255,255,0.12)] group-hover:border-white/[0.24] group-hover:shadow-[0_48px_120px_-56px_rgba(0,0,0,0.92),0_0_110px_-24px_rgba(255,255,255,0.14)] sm:p-7 lg:p-9",
           key === "black" &&
-            "border-amber-950/20 bg-gradient-to-b from-zinc-950/95 via-[#030303] to-black p-5 group-hover:border-amber-900/35 group-hover:shadow-[0_40px_120px_-52px_rgba(0,0,0,0.95),0_0_72px_-24px_rgba(180,150,100,0.08)] sm:p-7 lg:p-8",
+            "border-amber-950/20 bg-gradient-to-b from-zinc-950/95 via-[#030303] to-black p-4 group-hover:border-amber-900/35 group-hover:shadow-[0_40px_120px_-52px_rgba(0,0,0,0.95),0_0_72px_-24px_rgba(180,150,100,0.08)] sm:p-7 lg:p-8",
         )}
       >
         <div
@@ -202,27 +195,43 @@ function PricingCard({
           className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.9]"
           style={{ background: glowSpot }}
         />
-        <motion.div
-          className={cn(
-            "pointer-events-none absolute inset-0",
-            key === "black" ? "opacity-[0.2]" : "opacity-[0.14]",
-          )}
-          animate={{
-            backgroundPosition: ["0% 45%", "100% 55%", "0% 45%"],
-          }}
-          transition={{
-            duration: sheenSpeed,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-          style={{
-            background:
-              key === "black"
-                ? "linear-gradient(118deg, transparent 38%, rgba(180,160,120,0.05) 50%, transparent 62%)"
-                : "linear-gradient(125deg, transparent 35%, rgba(255,255,255,0.07) 50%, transparent 65%)",
-            backgroundSize: "200% 200%",
-          }}
-        />
+        {!isMobile ? (
+          <motion.div
+            className={cn(
+              "pointer-events-none absolute inset-0",
+              key === "black" ? "opacity-[0.2]" : "opacity-[0.14]",
+            )}
+            animate={{
+              backgroundPosition: ["0% 45%", "100% 55%", "0% 45%"],
+            }}
+            transition={{
+              duration: sheenSpeed,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            style={{
+              background:
+                key === "black"
+                  ? "linear-gradient(118deg, transparent 38%, rgba(180,160,120,0.05) 50%, transparent 62%)"
+                  : "linear-gradient(125deg, transparent 35%, rgba(255,255,255,0.07) 50%, transparent 65%)",
+              backgroundSize: "200% 200%",
+            }}
+          />
+        ) : (
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 opacity-[0.08]",
+              key === "black" ? "opacity-[0.1]" : "",
+            )}
+            style={{
+              background:
+                key === "black"
+                  ? "linear-gradient(118deg, transparent 40%, rgba(180,160,120,0.04) 50%, transparent 60%)"
+                  : "linear-gradient(125deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%)",
+            }}
+            aria-hidden
+          />
+        )}
         {key === "black" ? (
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.35]"
@@ -344,31 +353,11 @@ function PricingCard({
             ))}
           </ul>
 
-          <div className="mt-auto flex flex-shrink-0 flex-col pt-1">
-            {slotLine ? (
-              <p className="mt-4 border-t border-white/[0.06] pt-3 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600">
-                {slotLine}
-              </p>
-            ) : null}
-
-            <motion.button
-              type="button"
-              onClick={onStartApplication}
-              className={cn(
-                "mt-6 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium tracking-tight transition-[box-shadow,transform,color,border-color,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:mt-8",
-                key === "pro" && "ascend-button-primary bg-white text-zinc-950",
-                key === "core" &&
-                  "ascend-button-ghost border border-white/[0.12] bg-white/[0.05] text-white hover:border-white/[0.2] hover:bg-white/[0.09]",
-                key === "black" &&
-                  "ascend-button-ghost border border-zinc-700/80 bg-zinc-950/80 text-zinc-200 hover:border-amber-950/40 hover:bg-zinc-900/90 hover:text-white",
-              )}
-              whileHover={{ scale: 1.012 }}
-              whileTap={{ scale: 0.988 }}
-              transition={TAP_SPRING}
-            >
-              {tier.cta}
-            </motion.button>
-          </div>
+          {slotLine ? (
+            <p className="mt-4 border-t border-white/[0.06] pt-3 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600">
+              {slotLine}
+            </p>
+          ) : null}
         </div>
       </div>
     </motion.article>
@@ -376,7 +365,6 @@ function PricingCard({
 }
 
 export function Pricing() {
-  const { openAssessment } = useAssessmentModal();
   const viewport = useRevealViewport();
   const isMobile = useIsMobileConversion();
   const headerStagger = useMemo(
@@ -394,7 +382,7 @@ export function Pricing() {
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="ascend-section-world relative scroll-mt-28 overflow-x-clip overflow-y-visible border-t border-white/[0.028] bg-[#050505] py-12 sm:py-24 lg:py-[8.75rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-x-clip overflow-y-visible border-t border-white/[0.028] bg-[#050505] py-8 sm:py-20 lg:py-[8.75rem]"
       aria-labelledby="pricing-heading"
     >
       <SectionContinuity />
@@ -472,11 +460,7 @@ export function Pricing() {
                 I — Foundation access
               </p>
               <div className="min-h-0 flex-1">
-                <PricingCard
-                  tier={tiers[0]}
-                  cardVariants={cardVariants}
-                  onStartApplication={() => openAssessment("core")}
-                />
+                <PricingCard tier={tiers[0]} cardVariants={cardVariants} />
               </div>
             </div>
             <div className="relative order-1 flex min-h-0 flex-col lg:order-2 lg:z-20 lg:px-1">
@@ -484,11 +468,7 @@ export function Pricing() {
                 II — High accountability
               </p>
               <div className="min-h-0 flex-1">
-                <PricingCard
-                  tier={tiers[1]}
-                  cardVariants={cardVariants}
-                  onStartApplication={() => openAssessment("pro")}
-                />
+                <PricingCard tier={tiers[1]} cardVariants={cardVariants} />
               </div>
             </div>
             <div className="relative order-3 flex min-h-0 flex-col lg:order-3">
@@ -496,11 +476,7 @@ export function Pricing() {
                 III — Private architecture
               </p>
               <div className="min-h-0 flex-1">
-                <PricingCard
-                  tier={tiers[2]}
-                  cardVariants={cardVariants}
-                  onStartApplication={() => openAssessment("black")}
-                />
+                <PricingCard tier={tiers[2]} cardVariants={cardVariants} />
               </div>
             </div>
           </div>

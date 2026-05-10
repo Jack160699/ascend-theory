@@ -15,7 +15,7 @@ import {
   txReveal,
 } from "@/lib/motion";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
-import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
+import { FINAL_SECTION_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useMemo } from "react";
@@ -50,7 +50,7 @@ export function FinalDecisionCTA() {
     <section
       id="final-decision-cta"
       data-conversion-zone="final"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-12 sm:py-24 lg:py-36"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-8 sm:py-24 lg:py-36"
       aria-labelledby="final-decision-cta-heading"
     >
       <SectionContinuity />
@@ -177,7 +177,7 @@ export function FinalDecisionCTA() {
             whileTap={{ scale: 0.988 }}
             transition={TAP_SPRING}
           >
-            {PRIMARY_CTA_LABEL}
+            {FINAL_SECTION_CTA_LABEL}
           </motion.button>
           <motion.a
             href="#pricing"

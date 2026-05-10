@@ -1,15 +1,12 @@
 "use client";
 
-import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
-import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
 import {
   DURATION_OPACITY,
   DURATION_OVERLAY,
   DURATION_OVERLAY_SLOW,
   DURATION_REVEAL,
   EASE_CINEMATIC,
-  TAP_SPRING,
   txReveal,
 } from "@/lib/motion";
 import { AnimatePresence, motion } from "framer-motion";
@@ -34,9 +31,7 @@ const links = [
 ] as const;
 
 export function Navbar() {
-  const { openAssessment } = useAssessmentModal();
   const conversion = useConversionExperienceOptional();
-  const ctaLabel = conversion?.primaryCtaLabel ?? PRIMARY_CTA_LABEL;
   const notice = conversion?.urgencyMessage ?? "";
 
   const [scrolled, setScrolled] = useState(false);
@@ -101,7 +96,7 @@ export function Navbar() {
             ) : null}
           </div>
 
-          <div className="relative z-10 hidden items-center gap-10 lg:flex">
+          <div className="relative z-10 hidden items-center gap-8 lg:ml-auto lg:flex xl:gap-10">
             {links.map((item) => (
               <Link
                 key={item.href}
@@ -124,30 +119,12 @@ export function Navbar() {
             ))}
           </div>
 
-          <div className="relative z-10 flex items-center gap-3 sm:gap-4">
-            <motion.div
-              whileHover={{ scale: 1.012 }}
-              whileTap={{ scale: 0.988 }}
-              transition={TAP_SPRING}
-            >
-              <button
-                type="button"
-                onClick={() => openAssessment()}
-                aria-label={ctaLabel}
-                className={cn(
-                  "ascend-button-primary relative inline-flex max-w-[9rem] overflow-hidden rounded-full px-3.5 py-2.5 text-center text-[10px] font-medium leading-tight tracking-tight text-zinc-950 sm:max-w-[16rem] sm:px-5 sm:text-[12px] sm:leading-snug lg:max-w-[18rem] lg:text-[12px]",
-                  "bg-white",
-                )}
-              >
-                <span className="max-w-full truncate">{ctaLabel}</span>
-              </button>
-            </motion.div>
-
+          <div className="relative z-10 flex items-center lg:hidden">
             <button
               type="button"
               className={cn(
-                "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.04] text-white backdrop-blur-md transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
-                "hover:border-white/[0.16] hover:bg-white/[0.07] lg:hidden",
+                "inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.04] text-white backdrop-blur-md transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+                "hover:border-white/[0.16] hover:bg-white/[0.07]",
               )}
               aria-expanded={open}
               aria-controls="mobile-nav"
@@ -175,54 +152,36 @@ export function Navbar() {
           >
             <button
               type="button"
-              className="absolute inset-0 bg-black/82 backdrop-blur-lg sm:bg-black/80 sm:backdrop-blur-2xl"
+              className="absolute inset-0 bg-black/82 backdrop-blur-md sm:bg-black/78"
               aria-label="Close menu"
               onClick={close}
             />
             <motion.div
-              className="absolute inset-x-0 bottom-0 top-0 flex flex-col bg-zinc-950/94 px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[5.75rem]"
+              className="absolute inset-x-0 bottom-0 top-0 flex flex-col bg-zinc-950/94 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[5rem]"
               initial={{ y: -8, opacity: 0.6 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -8, opacity: 0 }}
               transition={txReveal(DURATION_OVERLAY_SLOW)}
             >
-              <div className="flex flex-1 flex-col justify-center gap-2.5">
+              <div className="flex flex-1 flex-col justify-center gap-1.5">
                 {links.map((item, i) => (
                   <motion.div
                     key={item.href}
                     initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -12 }}
-                    transition={txReveal(DURATION_OPACITY, 0.08 + i * 0.06)}
+                    transition={txReveal(DURATION_OPACITY, 0.06 + i * 0.04)}
                   >
                     <Link
                       href={item.href}
                       onClick={close}
-                      className="ascend-surface-soft block rounded-xl px-4 py-4 text-[1.06rem] font-medium tracking-tight text-zinc-200 transition-colors hover:border-white/[0.12] hover:text-white"
+                      className="ascend-surface-soft block rounded-xl px-3.5 py-3 text-[1rem] font-medium tracking-tight text-zinc-200 transition-colors hover:border-white/[0.12] hover:text-white"
                     >
                       {item.label}
                     </Link>
                   </motion.div>
                 ))}
               </div>
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                transition={txReveal(DURATION_OPACITY, 0.22)}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    close();
-                    openAssessment();
-                  }}
-                  aria-label={ctaLabel}
-                  className="ascend-button-primary flex min-h-12 w-full max-w-full items-center justify-center rounded-full bg-white px-4 py-3 text-center text-[12px] font-medium leading-snug tracking-tight text-zinc-950"
-                >
-                  <span className="line-clamp-2">{ctaLabel}</span>
-                </button>
-              </motion.div>
             </motion.div>
           </motion.div>
         ) : null}

@@ -29,7 +29,7 @@ const principles: {
 }[] = [
   {
     n: "01",
-    title: "Identity Before Motivation",
+    title: "Identity before motivation",
     body: [
       "Motivation spikes and fades.",
       "Identity is what you repeat when no one is watching.",
@@ -38,7 +38,7 @@ const principles: {
   },
   {
     n: "02",
-    title: "Structure Creates Discipline",
+    title: "Structure creates discipline",
     body: [
       "Discipline is not a mood — it is what your week is built to protect.",
     ],
@@ -46,7 +46,7 @@ const principles: {
   },
   {
     n: "03",
-    title: "Accountability Accelerates Growth",
+    title: "Accountability accelerates growth",
     body: [
       "You move faster when someone sees the gap between your claim and your calendar.",
     ],
@@ -54,7 +54,7 @@ const principles: {
   },
   {
     n: "04",
-    title: "Transformation Is Environmental",
+    title: "Transformation is environmental",
     body: [
       "Your default rises when the room stops tolerating small compromises.",
     ],
@@ -131,13 +131,13 @@ function PrincipleRow({
   const visualBlock = (
     <motion.div
       variants={fadeUpChildVariants}
-      className="relative min-h-[11.5rem] sm:min-h-[14rem]"
+      className="relative min-h-[9.5rem] sm:min-h-[14rem]"
     >
       <motion.article
         ref={rootRef}
         onMouseMove={onMove}
         onMouseLeave={onLeave}
-        className="group relative h-full min-h-[11.5rem] overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.025] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:min-h-[16rem] sm:p-9 lg:p-11"
+        className="group relative h-full min-h-[9.5rem] overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.025] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-md sm:min-h-[16rem] sm:p-9 sm:backdrop-blur-xl lg:p-11"
         whileHover={{ y: -2 }}
         transition={SURFACE_SPRING}
       >
@@ -215,7 +215,7 @@ export function Philosophy() {
     <section
       id="philosophy"
       data-conversion-zone="philosophy"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(4rem,9vw,6.5rem)] pb-[clamp(4.5rem,10vw,8rem)] sm:pt-24 sm:pb-32 lg:pt-[9.5rem] lg:pb-[10.5rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(3rem,8vw,5.5rem)] pb-[clamp(3.25rem,8vw,6.5rem)] sm:pt-24 sm:pb-32 lg:pt-[9.5rem] lg:pb-[10.5rem]"
       aria-labelledby="philosophy-heading"
     >
       <SectionContinuity top={false} />

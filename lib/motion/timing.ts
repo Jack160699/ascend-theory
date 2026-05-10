@@ -15,11 +15,11 @@ export const VIEWPORT_CALM = { once: true, margin: "-152px" } as const;
  */
 export const VIEWPORT_CALM_MOBILE = { once: true, margin: "-80px" } as const;
 
-export const DURATION_REVEAL = 1.02;
-export const DURATION_OPACITY = 0.9;
-export const DURATION_LINE = 1.06;
-export const DURATION_OVERLAY = 0.52;
-export const DURATION_OVERLAY_SLOW = 0.62;
+export const DURATION_REVEAL = 0.88;
+export const DURATION_OPACITY = 0.72;
+export const DURATION_LINE = 0.92;
+export const DURATION_OVERLAY = 0.44;
+export const DURATION_OVERLAY_SLOW = 0.52;
 
 export const STAGGER_CHILD = 0.165;
 export const STAGGER_LIST = 0.145;

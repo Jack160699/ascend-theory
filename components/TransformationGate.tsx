@@ -10,8 +10,6 @@ import {
   TAP_SPRING,
   txReveal,
 } from "@/lib/motion";
-import { useAssessmentModal } from "@/contexts/assessment-modal";
-import { PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
@@ -56,7 +54,6 @@ function scrollToHash(hash: string) {
 }
 
 export function TransformationGate() {
-  const { openAssessment } = useAssessmentModal();
   const reduceMotion = useReducedMotion();
   const isMobile = useIsMobileConversion();
   const titleId = useId();
@@ -315,14 +312,7 @@ export function TransformationGate() {
                     <motion.button
                       ref={primaryRef}
                       type="button"
-                      onClick={() => {
-                        writeDismissed();
-                        clearQuoteTimer();
-                        setPhase("main");
-                        setActive(false);
-                        document.body.style.overflow = "";
-                        openAssessment();
-                      }}
+                      onClick={() => startClose("#about")}
                       className={cn(
                         "inline-flex min-h-[3.1rem] w-full items-center justify-center rounded-full bg-white px-6 text-sm font-medium tracking-tight text-zinc-950",
                         "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_60px_-20px_rgba(255,255,255,0.22)]",
@@ -332,7 +322,7 @@ export function TransformationGate() {
                       whileTap={{ scale: 0.988 }}
                       transition={TAP_SPRING}
                     >
-                      {PRIMARY_CTA_LABEL}
+                      Explore first
                     </motion.button>
                     <motion.button
                       type="button"

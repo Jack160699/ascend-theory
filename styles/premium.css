@@ -108,11 +108,11 @@
 
 @media (max-width: 640px) {
   .ascend-surface {
-    backdrop-filter: blur(14px) saturate(112%);
+    backdrop-filter: blur(10px) saturate(108%);
   }
 
   .ascend-surface-soft {
-    backdrop-filter: blur(10px) saturate(108%);
+    backdrop-filter: blur(8px) saturate(104%);
   }
 }
 

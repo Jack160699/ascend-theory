@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { tierLabel, type TierKey } from "@/lib/lead-context";
+import type { TierKey } from "@/lib/lead-context";
 import {
   DURATION_OPACITY,
   DURATION_OVERLAY_SLOW,
@@ -9,8 +9,8 @@ import {
   txReveal,
 } from "@/lib/motion";
 import {
-  buildPremiumIntakeWhatsAppUrl,
-  type PremiumIntakePayload,
+  buildWebsiteApplicationWhatsAppUrl,
+  type WebsiteApplicationFields,
 } from "@/lib/whatsapp";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
@@ -32,23 +32,20 @@ type Props = {
 
 const emptyFields = {
   fullName: "",
-  age: "",
-  whatsapp: "",
+  email: "",
   goal: "",
-  frustration: "",
-  instagram: "",
+  challenge: "",
 };
 
 function validate(fields: typeof emptyFields): string | null {
   if (!fields.fullName.trim()) return "Add your name.";
-  if (!fields.age.trim()) return "Add your age.";
-  if (!fields.whatsapp.trim()) return "Add your WhatsApp number.";
-  if (!fields.goal.trim()) return "State your main goal.";
-  if (!fields.frustration.trim()) return "Name your biggest current frustration.";
+  if (!fields.email.trim()) return "Add your email.";
+  if (!fields.goal.trim()) return "Share your current focus.";
+  if (!fields.challenge.trim()) return "Name your main challenge.";
   return null;
 }
 
-export function AssessmentModal({ tier, open, onClose }: Props) {
+export function AssessmentModal({ tier: _tier, open, onClose }: Props) {
   const [fields, setFields] = useState(emptyFields);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,7 +71,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
     if (!open) return;
     setFields(emptyFields);
     setError(null);
-  }, [open, tier]);
+  }, [open, _tier]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const submitForm = useCallback(() => {
@@ -85,29 +82,17 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
     }
     setError(null);
 
-    const payload: PremiumIntakePayload = {
+    const payload: WebsiteApplicationFields = {
       name: fields.fullName.trim(),
-      age: fields.age.trim(),
-      phone: fields.whatsapp.trim(),
+      email: fields.email.trim(),
       goal: fields.goal.trim(),
-      frustration: fields.frustration.trim(),
-      instagram: fields.instagram.trim() || undefined,
-      tierInterest: tier ? tierLabel(tier) : undefined,
+      challenge: fields.challenge.trim(),
     };
 
-    const url = buildPremiumIntakeWhatsAppUrl(payload);
+    const url = buildWebsiteApplicationWhatsAppUrl(payload);
     onClose();
     window.open(url, "_blank", "noopener,noreferrer");
-  }, [fields, tier, onClose]);
-
-  const eyebrow =
-    tier === "core"
-      ? "Ascend Core"
-      : tier === "pro"
-        ? "Ascend Pro"
-        : tier === "black"
-          ? "Ascend Black"
-          : "Ascend Theory";
+  }, [fields, onClose]);
 
   return (
     <AnimatePresence>
@@ -124,7 +109,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
         >
           <motion.button
             type="button"
-            className="absolute inset-0 bg-black/[0.72] backdrop-blur-sm sm:bg-black/[0.68] sm:backdrop-blur-md"
+            className="absolute inset-0 bg-black/[0.72] backdrop-blur-sm sm:bg-black/[0.65] sm:backdrop-blur-md"
             aria-label="Close"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -134,9 +119,9 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
           />
           <motion.div
             className="ascend-surface relative z-10 max-h-[min(88dvh,46rem)] w-full max-w-lg overflow-y-auto rounded-[1.25rem] p-4 sm:max-h-[min(92vh,46rem)] sm:p-7"
-            initial={{ opacity: 0, y: 26, scale: 0.968 }}
+            initial={{ opacity: 0, y: 22, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 14, scale: 0.985 }}
+            exit={{ opacity: 0, y: 12, scale: 0.985 }}
             transition={txReveal(DURATION_OVERLAY_SLOW)}
             onClick={(e) => e.stopPropagation()}
           >
@@ -148,7 +133,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
             <div className="relative z-10 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-zinc-500">
-                  {eyebrow}
+                  Ascend Theory
                 </p>
                 <h2
                   id="assessment-modal-title"
@@ -157,7 +142,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                   Private application
                 </h2>
                 <p className="mt-2 max-w-md text-[12px] leading-relaxed text-zinc-500 sm:text-[13px]">
-                  Short context — we read every submission before any reply.
+                  A few lines — we read everything before we reply.
                 </p>
               </div>
               <motion.button
@@ -177,7 +162,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={txReveal(DURATION_OPACITY)}
-              className="relative z-10 mt-6 space-y-4 sm:mt-7 sm:space-y-5"
+              className="relative z-10 mt-5 space-y-3.5 sm:mt-6 sm:space-y-4"
             >
               <div>
                 <label className={labelClass} htmlFor="app-name">
@@ -194,39 +179,23 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                 />
               </div>
               <div>
-                <label className={labelClass} htmlFor="app-age">
-                  Age
+                <label className={labelClass} htmlFor="app-email">
+                  Email
                 </label>
                 <input
-                  id="app-age"
-                  inputMode="numeric"
+                  id="app-email"
+                  type="email"
+                  autoComplete="email"
                   className={inputClass}
-                  value={fields.age}
+                  value={fields.email}
                   onChange={(e) =>
-                    setFields((s) => ({ ...s, age: e.target.value }))
+                    setFields((s) => ({ ...s, email: e.target.value }))
                   }
-                />
-              </div>
-              <div>
-                <label className={labelClass} htmlFor="app-wa">
-                  WhatsApp number
-                </label>
-                <input
-                  id="app-wa"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  className={inputClass}
-                  value={fields.whatsapp}
-                  onChange={(e) =>
-                    setFields((s) => ({ ...s, whatsapp: e.target.value }))
-                  }
-                  placeholder="Include country code if outside India"
                 />
               </div>
               <div>
                 <label className={labelClass} htmlFor="app-goal">
-                  Main goal
+                  Goal
                 </label>
                 <textarea
                   id="app-goal"
@@ -239,34 +208,17 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                 />
               </div>
               <div>
-                <label className={labelClass} htmlFor="app-friction">
-                  Biggest current frustration
+                <label className={labelClass} htmlFor="app-challenge">
+                  Biggest challenge
                 </label>
                 <textarea
-                  id="app-friction"
+                  id="app-challenge"
                   rows={3}
                   className={cn(inputClass, "resize-none")}
-                  value={fields.frustration}
+                  value={fields.challenge}
                   onChange={(e) =>
-                    setFields((s) => ({ ...s, frustration: e.target.value }))
+                    setFields((s) => ({ ...s, challenge: e.target.value }))
                   }
-                />
-              </div>
-              <div>
-                <label className={labelClass} htmlFor="app-ig">
-                  Instagram handle{" "}
-                  <span className="normal-case tracking-normal text-zinc-600">
-                    (optional)
-                  </span>
-                </label>
-                <input
-                  id="app-ig"
-                  className={inputClass}
-                  value={fields.instagram}
-                  onChange={(e) =>
-                    setFields((s) => ({ ...s, instagram: e.target.value }))
-                  }
-                  placeholder="@handle"
                 />
               </div>
 

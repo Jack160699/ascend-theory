@@ -38,11 +38,11 @@ export function EditorialImageStrip({
           decoding="async"
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/25"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/22 max-sm:from-black/70 max-sm:via-black/25"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-zinc-950/25 mix-blend-soft-light"
+          className="pointer-events-none absolute inset-0 mix-blend-soft-light max-sm:bg-zinc-950/15 sm:bg-zinc-950/25"
           aria-hidden
         />
         <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-3 py-2.5 sm:px-5 sm:py-3.5">

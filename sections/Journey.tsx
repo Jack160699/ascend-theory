@@ -87,7 +87,7 @@ function StageNode({
     <>
       <div
         className={cn(
-          "relative rounded-[1.35rem] border border-white/[0.09] bg-white/[0.03] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-6",
+          "relative rounded-[1.35rem] border border-white/[0.09] bg-white/[0.03] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-md sm:p-6 sm:backdrop-blur-xl",
           "transition-[border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           "group-hover:border-white/[0.16] group-hover:shadow-[0_28px_80px_-48px_rgba(0,0,0,0.88),0_0_48px_-16px_rgba(255,255,255,0.07)]",
         )}
@@ -116,12 +116,20 @@ function StageNode({
                 "flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-white/[0.14] group-hover:text-white",
                 isHorizontal && "ml-auto",
               )}
-              animate={{ y: [0, isMobile ? -1.5 : -2, 0] }}
-              transition={{
-                duration: isMobile ? 4.4 : 5.2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
+              animate={
+                isMobile
+                  ? undefined
+                  : { y: [0, -2, 0] }
+              }
+              transition={
+                isMobile
+                  ? undefined
+                  : {
+                      duration: 5.2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }
+              }
             >
               <Icon className="size-[18px]" strokeWidth={1.25} />
             </motion.div>
@@ -182,7 +190,7 @@ export function Journey() {
     <section
       id="journey"
       data-conversion-zone="journey"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-14 pb-12 sm:pt-28 sm:pb-24 lg:py-32"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-10 pb-9 sm:pt-28 sm:pb-24 lg:py-32"
       aria-labelledby="journey-heading"
     >
       <SectionContinuity />
@@ -191,11 +199,15 @@ export function Journey() {
         <div className="absolute -left-[18%] top-[30%] h-[26rem] w-[26rem] rounded-full bg-zinc-600/[0.05] blur-[120px]" />
         <div className="absolute -right-[15%] top-[10%] h-[30rem] w-[30rem] rounded-full bg-white/[0.035] blur-[125px]" />
         <div className="absolute bottom-[15%] left-1/2 h-72 w-[min(90%,48rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05),transparent_70%)] blur-3xl" />
-        <motion.div
-          className="absolute left-[20%] top-[18%] h-64 w-64 rounded-full bg-zinc-400/[0.035] blur-[95px]"
-          animate={{ opacity: [0.4, 0.58, 0.4], scale: [1, 1.008, 1] }}
-          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-        />
+        {!isMobile ? (
+          <motion.div
+            className="absolute left-[20%] top-[18%] h-64 w-64 rounded-full bg-zinc-400/[0.035] blur-[95px]"
+            animate={{ opacity: [0.4, 0.58, 0.4], scale: [1, 1.008, 1] }}
+            transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+          />
+        ) : (
+          <div className="absolute left-[20%] top-[18%] h-48 w-48 rounded-full bg-zinc-400/[0.03] blur-[72px]" />
+        )}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.52)_78%)]" />
       </div>
 
@@ -248,34 +260,22 @@ export function Journey() {
             aria-hidden
           />
           <motion.ul
-            className="relative flex list-none flex-col gap-5 p-0 sm:gap-10"
+            className="relative flex list-none flex-col gap-4 p-0 sm:gap-10"
             variants={listStagger}
             initial="hidden"
             whileInView="visible"
             viewport={viewport}
           >
-            {stages.map((s, i) => (
+            {stages.map((s) => (
               <motion.li
                 key={s.step}
                 variants={nodeVariants}
                 className="relative flex gap-6 pl-1"
               >
                 <div className="relative z-10 flex w-10 shrink-0 flex-col items-center pt-1">
-                  <motion.div
-                    className="size-3.5 rounded-full border border-white/25 bg-zinc-950 shadow-[0_0_16px_2px_rgba(255,255,255,0.12)] ring-2 ring-white/10"
-                    animate={{
-                      boxShadow: [
-                        "0 0 12px 2px rgba(255,255,255,0.1)",
-                        "0 0 22px 4px rgba(255,255,255,0.14)",
-                        "0 0 12px 2px rgba(255,255,255,0.1)",
-                      ],
-                    }}
-                    transition={{
-                      duration: isMobile ? 2.6 : 3.2,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: i * (isMobile ? 0.09 : 0.15),
-                    }}
+                  <div
+                    className="size-3.5 rounded-full border border-white/25 bg-zinc-950 shadow-[0_0_14px_2px_rgba(255,255,255,0.11)] ring-2 ring-white/10"
+                    aria-hidden
                   />
                 </div>
                 <StageNode
@@ -340,7 +340,7 @@ export function Journey() {
                 className="w-full text-left"
                 timeline="horizontal"
                 withReveal={false}
-                isMobile={isMobile}
+                isMobile={false}
               />
             </motion.div>
           ))}

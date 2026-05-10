@@ -63,6 +63,12 @@ const rows: { label: string; core: string; pro: string; black: string }[] = [
   },
 ];
 
+const tierCards = [
+  { key: "core" as const, title: "Ascend Core", accent: "text-zinc-400" },
+  { key: "pro" as const, title: "Ascend Pro", accent: "text-zinc-200" },
+  { key: "black" as const, title: "Ascend Black", accent: "text-amber-200/80" },
+];
+
 export function AllPaths() {
   const viewport = useRevealViewport();
   const isMobile = useIsMobileConversion();
@@ -77,14 +83,14 @@ export function AllPaths() {
     <section
       id="paths"
       data-conversion-zone="allocate"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.04] bg-[#030303] py-12 sm:py-24 lg:py-[8.5rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-x-clip border-t border-white/[0.04] bg-[#030303] py-8 sm:py-20 lg:py-[8.5rem]"
       aria-labelledby="all-paths-heading"
     >
       <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
-        <div className="absolute left-1/2 top-[15%] h-[24rem] w-[min(100%,52rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.045),transparent_72%)] blur-3xl" />
-        <div className="absolute -right-[18%] bottom-[10%] h-[26rem] w-[26rem] rounded-full bg-zinc-600/[0.04] blur-[110px]" />
+        <div className="absolute left-1/2 top-[12%] h-[20rem] w-[min(100%,48rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.04),transparent_72%)] blur-3xl sm:top-[15%] sm:h-[24rem]" />
+        <div className="absolute -right-[18%] bottom-[10%] h-[22rem] w-[22rem] rounded-full bg-zinc-600/[0.035] blur-[100px] sm:h-[26rem] sm:w-[26rem] sm:blur-[110px]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.55)_78%)]" />
       </div>
 
@@ -98,7 +104,7 @@ export function AllPaths() {
         >
           <motion.p
             variants={fadeMain}
-            className="ascend-type-eyebrow mb-6 text-zinc-500 lg:mb-7"
+            className="ascend-type-eyebrow mb-4 text-zinc-500 sm:mb-6 lg:mb-7"
           >
             Compare tiers
           </motion.p>
@@ -111,7 +117,7 @@ export function AllPaths() {
           </motion.h2>
           <motion.p
             variants={fadeMain}
-            className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
+            className="ascend-prose-calm mt-6 max-w-[34rem] text-pretty text-zinc-500 sm:mt-8"
           >
             Philosophy is fixed. Tiers change mentor proximity, response speed,
             and how private calibration can go — not your worth.
@@ -119,13 +125,49 @@ export function AllPaths() {
         </motion.div>
 
         <motion.div
-          className="mt-12 w-full max-w-6xl sm:mt-14 lg:mt-20"
+          className="mt-8 w-full max-w-6xl sm:mt-12 lg:mt-16"
           initial={{ opacity: 0, y: tableRise }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
           transition={txReveal(DURATION_REVEAL * (isMobile ? 0.88 : 1))}
         >
-          <div className="relative rounded-[1.25rem] border border-white/[0.08] bg-white/[0.02] shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-2xl">
+          {/* Mobile: stacked tier cards — no horizontal scroll */}
+          <div className="space-y-4 lg:hidden">
+            {tierCards.map((tier) => (
+              <div
+                key={tier.key}
+                className="rounded-[1.1rem] border border-white/[0.08] bg-white/[0.025] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]"
+              >
+                <p
+                  className={cn(
+                    "text-[11px] font-medium uppercase tracking-[0.26em]",
+                    tier.accent,
+                  )}
+                >
+                  {tier.title}
+                </p>
+                <div className="mt-4 space-y-3.5">
+                  {rows.map((row) => (
+                    <div key={row.label} className="border-t border-white/[0.06] pt-3 first:border-t-0 first:pt-0">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+                        {row.label}
+                      </p>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
+                        {tier.key === "core"
+                          ? row.core
+                          : tier.key === "pro"
+                            ? row.pro
+                            : row.black}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: wide comparison table */}
+          <div className="relative hidden rounded-[1.25rem] border border-white/[0.08] bg-white/[0.02] shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl lg:block">
             <div
               className="pointer-events-none absolute inset-0 rounded-[1.25rem] opacity-50"
               style={{
@@ -135,7 +177,7 @@ export function AllPaths() {
               aria-hidden
             />
 
-            <div className="relative overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+            <div className="relative overflow-x-auto">
               <table className="w-full min-w-[52rem] border-collapse text-left">
                 <thead>
                   <tr className="border-b border-white/[0.06]">
@@ -196,7 +238,7 @@ export function AllPaths() {
             </div>
           </div>
 
-          <p className="mt-6 max-w-2xl text-left text-[12px] leading-[1.72] text-zinc-600 sm:leading-[1.75] lg:pl-1">
+          <p className="mt-5 max-w-2xl text-left text-[12px] leading-[1.72] text-zinc-600 sm:mt-6 sm:leading-[1.75] lg:pl-1">
             Core is already rigorous. Pro and Black add proximity, speed, and
             private room — not a higher “class” of person.
           </p>
@@ -204,7 +246,7 @@ export function AllPaths() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/90 to-transparent"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/90 to-transparent sm:h-24"
         aria-hidden
       />
     </section>
