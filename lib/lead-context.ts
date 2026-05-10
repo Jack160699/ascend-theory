@@ -2,6 +2,8 @@
  * Tier assessment lead context for WhatsApp handoff, session replay, and future AI / CRM.
  */
 
+import { ASCEND_WHATSAPP_DIGITS } from "@/lib/whatsapp";
+
 export const ASSESSMENT_SCHEMA_VERSION = 3 as const;
 
 export type TierKey = "core" | "pro" | "black";
@@ -200,9 +202,10 @@ export function toTierLeadPayload(
  * Set `NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER` in `.env.local` (e.g. 919876543210).
  */
 export function getWhatsAppBusinessDigits(): string {
-  return normalizeWhatsAppDigits(
+  const fromEnv = normalizeWhatsAppDigits(
     process.env.NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER ?? "",
   );
+  return fromEnv || ASCEND_WHATSAPP_DIGITS;
 }
 
 export function buildWhatsAppTierAssessmentUrl(

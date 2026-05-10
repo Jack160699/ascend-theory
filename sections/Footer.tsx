@@ -5,7 +5,7 @@ import Link from "next/link";
 const quick = [
   { href: "#philosophy", label: "Philosophy" },
   { href: "#programs", label: "Method" },
-  { href: "#pricing", label: "Entry" },
+  { href: "#pricing", label: "View pricing" },
   { href: "#mentorship-depth", label: "Depth" },
   { href: "#testimonials", label: "Proof" },
 ] as const;

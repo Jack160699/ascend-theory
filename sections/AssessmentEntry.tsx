@@ -78,7 +78,7 @@ export function AssessmentEntry() {
               "transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
             )}
           >
-            See pricing & continue
+            View pricing
           </Link>
         </motion.div>
       </div>

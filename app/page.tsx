@@ -23,7 +23,7 @@ export default function Home() {
       <AssessmentModalProvider>
         <MobileConversionProvider>
           <TransformationGate />
-          <main className="ascend-main-depth min-h-screen overflow-x-clip bg-black pb-20 text-white antialiased sm:pb-28">
+          <main className="ascend-main-depth min-h-screen overflow-x-clip bg-black pb-[max(6.75rem,env(safe-area-inset-bottom)+5.25rem)] text-white antialiased sm:pb-32">
             <AscendFilmGrain />
             <CursorAmbientLight />
             <Hero />

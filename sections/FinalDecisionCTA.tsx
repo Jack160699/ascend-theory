@@ -1,7 +1,6 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useAssessmentModal } from "@/contexts/assessment-modal";
 import {
   useIsMobileConversion,
   useRevealViewport,
@@ -15,16 +14,16 @@ import {
   txReveal,
 } from "@/lib/motion";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
+import {
+  ASCEND_WHATSAPP_ME_URL,
+  PRIMARY_CTA_LABEL,
+} from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { useMemo } from "react";
 
-const ROTATING_LINES = [
-  "Talent without structure becomes drift.",
-  "Identity hardens where you stop negotiating small exits.",
-  "Discipline becomes self-respect when the standard is quiet — and fixed.",
-  "The life you want is funded by today’s non-negotiables.",
-] as const;
+const DECISION_LINE =
+  "Talent without structure becomes drift — identity hardens where you stop negotiating small exits.";
 
 const FLOAT_FRAGMENTS: readonly {
   text: string;
@@ -39,30 +38,14 @@ const FLOAT_FRAGMENTS: readonly {
   { text: "Identity-grade cadence", top: "72%", left: "12%", delay: 0.8 },
 ];
 
-function scrollToPaths() {
-  document
-    .getElementById("pricing")
-    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
 export function FinalDecisionCTA() {
   const viewport = useRevealViewport();
   const isMobile = useIsMobileConversion();
-  const { openAssessment } = useAssessmentModal();
-  const [lineIndex, setLineIndex] = useState(0);
   const headerStagger = useMemo(
     () => getHeaderStaggerParent(isMobile),
     [isMobile],
   );
   const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
-  const lineIntervalMs = isMobile ? 4800 : 6200;
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setLineIndex((i) => (i + 1) % ROTATING_LINES.length);
-    }, lineIntervalMs);
-    return () => window.clearInterval(id);
-  }, [lineIntervalMs]);
 
   return (
     <section
@@ -172,18 +155,9 @@ export function FinalDecisionCTA() {
           transition={txReveal(DURATION_OPACITY, isMobile ? 0.22 : 0.38)}
         >
           <div className="ascend-surface-soft relative min-h-[3.25rem] rounded-[1.25rem] px-6 py-5 sm:min-h-[3.5rem] sm:px-8">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={ROTATING_LINES[lineIndex]}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={txReveal(DURATION_OPACITY)}
-                className="text-left font-serif text-sm font-light italic leading-[1.72] text-zinc-500 sm:text-[15px] sm:leading-[1.75]"
-              >
-                {ROTATING_LINES[lineIndex]}
-              </motion.p>
-            </AnimatePresence>
+            <p className="text-left font-serif text-sm font-light italic leading-[1.72] text-zinc-500 sm:text-[15px] sm:leading-[1.75]">
+              {DECISION_LINE}
+            </p>
           </div>
         </motion.div>
 
@@ -194,9 +168,10 @@ export function FinalDecisionCTA() {
           viewport={viewport}
           transition={txReveal(DURATION_REVEAL, isMobile ? 0.28 : 0.48)}
         >
-          <motion.button
-            type="button"
-            onClick={() => openAssessment("pro")}
+          <motion.a
+            href={ASCEND_WHATSAPP_ME_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className={cn(
               "ascend-button-primary inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white px-8 text-sm font-medium tracking-tight text-zinc-950 sm:w-auto sm:min-w-[14rem]",
             )}
@@ -204,11 +179,10 @@ export function FinalDecisionCTA() {
             whileTap={{ scale: 0.988 }}
             transition={TAP_SPRING}
           >
-            Start intake
-          </motion.button>
-          <motion.button
-            type="button"
-            onClick={scrollToPaths}
+            {PRIMARY_CTA_LABEL}
+          </motion.a>
+          <motion.a
+            href="#pricing"
             className={cn(
               "ascend-button-ghost inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.03] px-8 text-sm font-medium tracking-tight text-zinc-200 backdrop-blur-sm transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:w-auto sm:min-w-[14rem]",
               "hover:border-white/[0.18] hover:bg-white/[0.06] hover:text-white",
@@ -217,8 +191,8 @@ export function FinalDecisionCTA() {
             whileTap={{ scale: 0.988 }}
             transition={TAP_SPRING}
           >
-            See pricing
-          </motion.button>
+            View pricing
+          </motion.a>
         </motion.div>
 
         <motion.p

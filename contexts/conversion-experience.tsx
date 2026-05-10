@@ -1,112 +1,34 @@
 "use client";
 
 import {
-  DURATION_OPACITY,
-  DURATION_OVERLAY,
   DURATION_OVERLAY_SLOW,
-  DURATION_REVEAL,
+  TAP_SPRING,
   txReveal,
 } from "@/lib/motion";
+import {
+  ASCEND_WHATSAPP_ME_URL,
+  PRIMARY_CTA_LABEL,
+} from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import Link from "next/link";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 
-export const URGENCY_MESSAGES = [
-  "We read applications in order — not in bulk",
-  "Mentor capacity stays capped on purpose",
-  "Selective entry — fit over volume",
-  "Onboarding opens in windows — not always on",
-  "Invitation follows a human review",
-  "Built for people who execute — not spectators",
-  "Manual calibration — no auto-accept",
-  "Intake is active — your place in line matters",
-  "Observers stay outside — this is for execution",
-] as const;
-
-const MOBILE_PHILOSOPHY_LINES = [
-  "Standards beat motivation.",
-  "Identity is what you repeat.",
-  "Discipline is respect for your future self.",
-] as const;
-
-export type ConversionZone =
-  | "hero"
-  | "philosophy"
-  | "tension"
-  | "programs"
-  | "journey"
-  | "pricing"
-  | "mentorship"
-  | "assessment"
-  | "final"
-  | "proof";
-
-const ZONE_ORDER: ConversionZone[] = [
-  "hero",
-  "philosophy",
-  "tension",
-  "programs",
-  "journey",
-  "pricing",
-  "mentorship",
-  "assessment",
-  "final",
-  "proof",
-];
-
-const CTA_BY_ZONE: Record<ConversionZone, string> = {
-  hero: "Apply for entry",
-  philosophy: "See how it works",
-  tension: "Name the gap",
-  programs: "What you get",
-  journey: "The five steps",
-  pricing: "Pricing & tiers",
-  mentorship: "Compare depth",
-  assessment: "Start intake",
-  final: "Start intake",
-  proof: "See proof",
-};
+const STATIC_NOTICE = "We read applications in order.";
 
 type ConversionValue = {
   urgencyMessage: string;
-  urgencyIndex: number;
-  activeZone: ConversionZone;
   primaryCtaLabel: string;
-  urgencyForTier: (offset: number) => string;
+  urgencyForTier: (_offset: number) => string;
 };
 
 const ConversionContext = createContext<ConversionValue | null>(null);
-
-function computeActiveZone(): ConversionZone {
-  if (typeof window === "undefined") return "hero";
-  const focalY = window.innerHeight * 0.34;
-  let best: ConversionZone = "hero";
-  let bestDist = Number.POSITIVE_INFINITY;
-  for (const id of ZONE_ORDER) {
-    const el = document.querySelector<HTMLElement>(
-      `[data-conversion-zone="${id}"]`,
-    );
-    if (!el) continue;
-    const r = el.getBoundingClientRect();
-    if (r.bottom < 48 || r.top > window.innerHeight - 48) continue;
-    const mid = (r.top + r.bottom) / 2;
-    const dist = Math.abs(mid - focalY);
-    if (dist < bestDist) {
-      bestDist = dist;
-      best = id;
-    }
-  }
-  return best;
-}
 
 export function useConversionExperience(): ConversionValue {
   const ctx = useContext(ConversionContext);
@@ -122,27 +44,28 @@ export function useConversionExperienceOptional(): ConversionValue | null {
   return useContext(ConversionContext);
 }
 
-function StickyConversionBar({
-  urgencyMessage,
-  ctaLabel,
-}: {
-  urgencyMessage: string;
-  ctaLabel: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [lineIndex, setLineIndex] = useState(0);
+const stickyCtaButtonClass = cn(
+  "ascend-button-primary relative inline-flex min-h-10 w-full items-center justify-center rounded-full bg-white px-5 text-center text-[12px] font-medium leading-snug tracking-tight text-zinc-950",
+  "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_34px_-10px_rgba(255,255,255,0.18)]",
+  "transition-[transform,box-shadow,opacity] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+  "hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_14px_40px_-10px_rgba(255,255,255,0.24)]",
+  "active:scale-[0.987]",
+);
+
+const stickyCtaButtonDesktopClass = cn(
+  stickyCtaButtonClass,
+  "w-auto min-h-11 shrink-0 px-6 text-[11px] sm:min-h-11 sm:text-xs",
+);
+
+function StickyConversionBar({ ctaLabel }: { ctaLabel: string }) {
+  const [desktopOpen, setDesktopOpen] = useState(false);
 
   useEffect(() => {
+    const threshold = () =>
+      Math.min(window.innerHeight * 1.08, Math.max(520, window.innerHeight));
+
     const onScroll = () => {
-      const hero = document.querySelector<HTMLElement>(
-        '[data-conversion-zone="hero"]',
-      );
-      if (!hero) {
-        setOpen(window.scrollY > 280);
-        return;
-      }
-      const heroBottom = hero.getBoundingClientRect().bottom;
-      setOpen(heroBottom < window.innerHeight * 0.5);
+      setDesktopOpen(window.scrollY > threshold());
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -153,127 +76,64 @@ function StickyConversionBar({
     };
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    const id = window.setInterval(() => {
-      setLineIndex((i) => (i + 1) % MOBILE_PHILOSOPHY_LINES.length);
-    }, 5200);
-    return () => window.clearInterval(id);
-  }, [open]);
-
   return (
-    <AnimatePresence>
-      {open ? (
-        <>
-          <motion.div
-            className="fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.08] bg-zinc-950/86 px-3 py-2.5 shadow-[0_-24px_80px_-20px_rgba(0,0,0,0.78)] backdrop-blur-md supports-[padding:max(0px)]:pb-[max(0.65rem,env(safe-area-inset-bottom))] sm:hidden"
-            initial={{ y: 44, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 30, opacity: 0 }}
-            transition={txReveal(DURATION_OVERLAY)}
+    <>
+      {/* Mobile: single persistent glass bar — always visible */}
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.07] sm:hidden",
+          "bg-zinc-950/78 shadow-[0_-12px_48px_-8px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150",
+          "supports-[padding:max(0px)]:pb-[max(0.35rem,env(safe-area-inset-bottom))]",
+        )}
+      >
+        <div className="mx-auto max-w-lg px-3 pt-2">
+          <motion.a
+            href={ASCEND_WHATSAPP_ME_URL}
+            rel="noopener noreferrer"
+            className={stickyCtaButtonClass}
+            whileTap={{ scale: 0.988 }}
+            transition={TAP_SPRING}
           >
-            <div className="mx-auto flex max-w-md items-center gap-2.5 rounded-2xl border border-white/[0.08] bg-white/[0.02] px-2.5 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
-              <div className="min-w-0 flex-1 pl-1">
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={MOBILE_PHILOSOPHY_LINES[lineIndex]}
-                    className="truncate font-serif text-[11px] font-light italic leading-snug text-zinc-500"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={txReveal(DURATION_OPACITY)}
-                  >
-                    {MOBILE_PHILOSOPHY_LINES[lineIndex]}
-                  </motion.p>
-                </AnimatePresence>
-              </div>
-              <Link
-                href="#pricing"
-                className={cn(
-                  "inline-flex h-10 min-h-10 shrink-0 items-center justify-center rounded-full bg-white px-4 text-center text-[11px] font-medium tracking-tight text-zinc-950",
-                  "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_34px_-10px_rgba(255,255,255,0.2)]",
-                )}
-              >
-                Pricing
-              </Link>
-            </div>
-          </motion.div>
+            {ctaLabel}
+          </motion.a>
+        </div>
+      </div>
 
+      {/* Desktop: same CTA as navbar, after meaningful scroll */}
+      <AnimatePresence>
+        {desktopOpen ? (
           <motion.div
-            className="fixed inset-x-0 bottom-0 z-[60] hidden border-t border-white/[0.08] bg-zinc-950/82 px-4 py-3 shadow-[0_-24px_80px_-20px_rgba(0,0,0,0.75)] backdrop-blur-lg supports-[padding:max(0px)]:pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:block md:backdrop-blur-xl"
-            initial={{ y: 48, opacity: 0 }}
+            className={cn(
+              "fixed inset-x-0 bottom-0 z-[60] hidden border-t border-white/[0.07] sm:block",
+              "bg-zinc-950/78 shadow-[0_-16px_56px_-10px_rgba(0,0,0,0.58)] backdrop-blur-xl backdrop-saturate-150",
+              "supports-[padding:max(0px)]:pb-[max(0.5rem,env(safe-area-inset-bottom))]",
+            )}
+            initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 36, opacity: 0 }}
+            exit={{ y: 28, opacity: 0 }}
             transition={txReveal(DURATION_OVERLAY_SLOW)}
           >
-            <div className="mx-auto flex max-w-6xl flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={urgencyMessage}
-                  className="text-center text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-500 sm:max-w-[min(28rem,52vw)] sm:text-left sm:tracking-[0.24em]"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={txReveal(DURATION_OPACITY)}
-                >
-                  {urgencyMessage}
-                </motion.p>
-              </AnimatePresence>
-              <Link
-                href="#pricing"
-                className={cn(
-                  "inline-flex h-11 min-h-11 shrink-0 items-center justify-center rounded-full bg-white px-5 text-center text-[11px] font-medium leading-snug tracking-tight text-zinc-950 sm:px-6 sm:text-xs",
-                  "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_12px_40px_-12px_rgba(255,255,255,0.2)] transition-shadow duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_16px_48px_-10px_rgba(255,255,255,0.28)]",
-                )}
+            <div className="mx-auto flex max-w-6xl items-center justify-end px-4 py-2.5 sm:px-8 lg:px-10">
+              <motion.a
+                href={ASCEND_WHATSAPP_ME_URL}
+                rel="noopener noreferrer"
+                className={stickyCtaButtonDesktopClass}
+                whileTap={{ scale: 0.988 }}
+                transition={TAP_SPRING}
               >
-                <span className="max-w-[11rem] sm:max-w-none">{ctaLabel}</span>
-              </Link>
+                {ctaLabel}
+              </motion.a>
             </div>
           </motion.div>
-        </>
-      ) : null}
-    </AnimatePresence>
-  );
-}
-
-function FloatingUrgencyPill({ message }: { message: string }) {
-  return (
-    <motion.div
-      className="pointer-events-none fixed bottom-6 right-4 z-[55] hidden max-w-[14rem] sm:block lg:bottom-10 lg:right-8"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={txReveal(DURATION_REVEAL, 1.2)}
-    >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={message}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={txReveal(DURATION_OPACITY)}
-          className={cn(
-            "rounded-full border border-white/[0.1] bg-zinc-950/55 px-4 py-2.5 text-[10px] font-medium uppercase leading-snug tracking-[0.2em] text-zinc-500",
-            "shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_12px_48px_-16px_rgba(0,0,0,0.65)] backdrop-blur-lg md:backdrop-blur-xl",
-          )}
-        >
-          {message}
-        </motion.div>
+        ) : null}
       </AnimatePresence>
-    </motion.div>
+    </>
   );
 }
 
 function ConversionChrome() {
-  const { urgencyMessage, primaryCtaLabel } = useConversionExperience();
-  return (
-    <>
-      <FloatingUrgencyPill message={urgencyMessage} />
-      <StickyConversionBar
-        urgencyMessage={urgencyMessage}
-        ctaLabel={primaryCtaLabel}
-      />
-    </>
-  );
+  const { primaryCtaLabel } = useConversionExperience();
+  return <StickyConversionBar ctaLabel={primaryCtaLabel} />;
 }
 
 export function ConversionExperienceProvider({
@@ -281,56 +141,15 @@ export function ConversionExperienceProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [urgencyIndex, setUrgencyIndex] = useState(0);
-  const [activeZone, setActiveZone] = useState<ConversionZone>("hero");
-  const raf = useRef<number | null>(null);
-
-  const tickZone = useCallback(() => {
-    if (raf.current != null) cancelAnimationFrame(raf.current);
-    raf.current = requestAnimationFrame(() => {
-      setActiveZone(computeActiveZone());
-      raf.current = null;
-    });
-  }, []);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setUrgencyIndex((i) => (i + 1) % URGENCY_MESSAGES.length);
-    }, 8800);
-    return () => window.clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    tickZone();
-    window.addEventListener("scroll", tickZone, { passive: true });
-    window.addEventListener("resize", tickZone);
-    return () => {
-      window.removeEventListener("scroll", tickZone);
-      window.removeEventListener("resize", tickZone);
-      if (raf.current != null) cancelAnimationFrame(raf.current);
-    };
-  }, [tickZone]);
-
-  const urgencyMessage =
-    URGENCY_MESSAGES[urgencyIndex % URGENCY_MESSAGES.length];
-  const primaryCtaLabel = CTA_BY_ZONE[activeZone];
-
-  const urgencyForTier = useCallback(
-    (offset: number) =>
-      URGENCY_MESSAGES[(urgencyIndex + offset) % URGENCY_MESSAGES.length] ??
-      URGENCY_MESSAGES[0],
-    [urgencyIndex],
-  );
+  const urgencyForTier = useCallback(() => STATIC_NOTICE, []);
 
   const value = useMemo<ConversionValue>(
     () => ({
-      urgencyMessage,
-      urgencyIndex,
-      activeZone,
-      primaryCtaLabel,
+      urgencyMessage: STATIC_NOTICE,
+      primaryCtaLabel: PRIMARY_CTA_LABEL,
       urgencyForTier,
     }),
-    [urgencyMessage, urgencyIndex, activeZone, primaryCtaLabel, urgencyForTier],
+    [urgencyForTier],
   );
 
   return (

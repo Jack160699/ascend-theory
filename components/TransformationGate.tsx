@@ -10,6 +10,7 @@ import {
   TAP_SPRING,
   txReveal,
 } from "@/lib/motion";
+import { ASCEND_WHATSAPP_ME_URL, PRIMARY_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
@@ -58,7 +59,7 @@ export function TransformationGate() {
   const isMobile = useIsMobileConversion();
   const titleId = useId();
   const descId = useId();
-  const primaryRef = useRef<HTMLButtonElement>(null);
+  const primaryRef = useRef<HTMLAnchorElement>(null);
   const pendingHashRef = useRef<string>("");
   const quoteTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -309,10 +310,12 @@ export function TransformationGate() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={txReveal(DURATION_REVEAL, isMobile ? 0.12 : 0.18)}
                   >
-                    <motion.button
+                    <motion.a
                       ref={primaryRef}
-                      type="button"
-                      onClick={() => startClose("#pricing")}
+                      href={ASCEND_WHATSAPP_ME_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => writeDismissed()}
                       className={cn(
                         "inline-flex min-h-[3.1rem] w-full items-center justify-center rounded-full bg-white px-6 text-sm font-medium tracking-tight text-zinc-950",
                         "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_60px_-20px_rgba(255,255,255,0.22)]",
@@ -322,8 +325,8 @@ export function TransformationGate() {
                       whileTap={{ scale: 0.988 }}
                       transition={TAP_SPRING}
                     >
-                      Pricing & apply
-                    </motion.button>
+                      {PRIMARY_CTA_LABEL}
+                    </motion.a>
                     <motion.button
                       type="button"
                       onClick={() => startClose("#about")}

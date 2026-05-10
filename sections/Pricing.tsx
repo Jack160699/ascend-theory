@@ -1,14 +1,12 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
 import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
 import {
-  DURATION_OPACITY,
   DURATION_REVEAL,
   SURFACE_SPRING,
   TAP_SPRING,
@@ -21,7 +19,8 @@ import {
 import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import type { TierKey } from "@/lib/lead-context";
-import { AnimatePresence, motion, type Variants } from "framer-motion";
+import { ascendWhatsAppUrl } from "@/lib/whatsapp";
+import { motion, type Variants } from "framer-motion";
 import { Check } from "lucide-react";
 import { useMemo, useRef } from "react";
 
@@ -51,7 +50,7 @@ const tiers: {
       "Peer field with a serious bar",
       "Intake read manually before invite",
     ],
-    cta: "Apply — Core",
+    cta: "Start application",
   },
   {
     key: "pro",
@@ -67,7 +66,7 @@ const tiers: {
       "Private calibration when stakes demand it",
       "Reserved onboarding pacing",
     ],
-    cta: "Apply — Pro",
+    cta: "Start application",
     badge: "Primary allocation",
   },
   {
@@ -86,7 +85,7 @@ const tiers: {
       "Executive-tempo support across domains",
       "Same philosophy — maximum private attention",
     ],
-    cta: "Request Black review",
+    cta: "Start application",
     badge: "Invitation only",
   },
 ];
@@ -107,38 +106,26 @@ function PricingCapacityRibbon({
       viewport={viewport}
       transition={txReveal(DURATION_REVEAL)}
     >
-      <AnimatePresence mode="wait">
-        <motion.p
-          key={msg}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={txReveal(DURATION_OPACITY)}
-          className="text-[10px] font-medium uppercase leading-relaxed tracking-[0.22em] text-zinc-500"
-        >
-          {msg}
-        </motion.p>
-      </AnimatePresence>
+      <p className="text-[10px] font-medium uppercase leading-relaxed tracking-[0.22em] text-zinc-500">
+        {msg}
+      </p>
     </motion.div>
   );
 }
 
 function PricingCard({
   tier,
-  onOpenAssessment,
-  urgencySlot,
   cardVariants,
 }: {
   tier: (typeof tiers)[number];
-  onOpenAssessment: (key: TierKey) => void;
-  urgencySlot: number;
   cardVariants: Variants;
 }) {
   const rootRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const conv = useConversionExperienceOptional();
-  const slotLine = conv?.urgencyForTier(urgencySlot) ?? "";
+  const slotLine = conv?.urgencyForTier(0) ?? "";
   const { key } = tier;
+  const applyHref = ascendWhatsAppUrl(`Ascend Theory — applying for ${tier.name}.`);
 
   const onMove = (e: React.MouseEvent<HTMLElement>) => {
     const root = rootRef.current;
@@ -357,23 +344,15 @@ function PricingCard({
           </ul>
 
           {slotLine ? (
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={slotLine}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={txReveal(DURATION_OPACITY)}
-                className="mt-4 border-t border-white/[0.06] pt-3 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600"
-              >
-                {slotLine}
-              </motion.p>
-            </AnimatePresence>
+            <p className="mt-4 border-t border-white/[0.06] pt-3 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600">
+              {slotLine}
+            </p>
           ) : null}
 
-          <motion.button
-            type="button"
-            onClick={() => onOpenAssessment(tier.key)}
+          <motion.a
+            href={applyHref}
+            target="_blank"
+            rel="noopener noreferrer"
             className={cn(
               "mt-6 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium tracking-tight transition-[box-shadow,transform,color,border-color,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:mt-8",
               key === "pro" && "ascend-button-primary bg-white text-zinc-950",
@@ -387,7 +366,7 @@ function PricingCard({
             transition={TAP_SPRING}
           >
             {tier.cta}
-          </motion.button>
+          </motion.a>
         </div>
       </div>
     </motion.article>
@@ -397,7 +376,6 @@ function PricingCard({
 export function Pricing() {
   const viewport = useRevealViewport();
   const isMobile = useIsMobileConversion();
-  const { openAssessment } = useAssessmentModal();
   const headerStagger = useMemo(
     () => getHeaderStaggerParent(isMobile),
     [isMobile],
@@ -490,34 +468,19 @@ export function Pricing() {
               <p className="mb-3 hidden text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block lg:pl-1">
                 I — Foundation access
               </p>
-              <PricingCard
-                tier={tiers[0]}
-                urgencySlot={0}
-                onOpenAssessment={openAssessment}
-                cardVariants={cardVariants}
-              />
+              <PricingCard tier={tiers[0]} cardVariants={cardVariants} />
             </div>
             <div className="relative order-1 lg:order-2 lg:z-20 lg:px-1">
               <p className="mb-3 hidden text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-400 lg:block lg:pl-1">
                 II — High accountability
               </p>
-              <PricingCard
-                tier={tiers[1]}
-                urgencySlot={1}
-                onOpenAssessment={openAssessment}
-                cardVariants={cardVariants}
-              />
+              <PricingCard tier={tiers[1]} cardVariants={cardVariants} />
             </div>
             <div className="relative order-3 lg:order-3 lg:pb-10">
               <p className="mb-3 hidden text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block lg:pl-1">
                 III — Private architecture
               </p>
-              <PricingCard
-                tier={tiers[2]}
-                urgencySlot={2}
-                onOpenAssessment={openAssessment}
-                cardVariants={cardVariants}
-              />
+              <PricingCard tier={tiers[2]} cardVariants={cardVariants} />
             </div>
           </div>
         </motion.div>

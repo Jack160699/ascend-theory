@@ -16,9 +16,13 @@ import {
   getHeroStaggerCinematic,
 } from "@/lib/motion";
 import { shellHero } from "@/lib/editorial-layout";
+import {
+  ASCEND_WHATSAPP_ME_URL,
+  PRIMARY_CTA_LABEL,
+} from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { ArrowRight, ChevronDown, Play } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { useMemo, useRef } from "react";
 
 export function Hero() {
@@ -98,8 +102,10 @@ export function Hero() {
             className="mt-11 flex w-full max-w-[min(36rem,100%)] flex-col gap-3.5 sm:mt-[3.25rem] sm:flex-row sm:items-center sm:gap-6"
           >
             <motion.a
-              href="#pricing"
-              aria-label="Apply and review pricing"
+              href={ASCEND_WHATSAPP_ME_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={PRIMARY_CTA_LABEL}
               className={cn(
                 "ascend-button-primary group relative inline-flex min-h-12 w-full max-w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 sm:w-auto sm:px-8",
                 "bg-white text-center text-zinc-950 text-xs font-medium leading-snug tracking-tight sm:text-sm",
@@ -110,13 +116,13 @@ export function Hero() {
               transition={TAP_SPRING}
             >
               <span className="relative z-10 max-w-[16rem] sm:max-w-none">
-                Review pricing & apply
+                {PRIMARY_CTA_LABEL}
               </span>
               <ArrowRight className="relative z-10 size-4 shrink-0 transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:translate-x-0.5" />
             </motion.a>
 
             <motion.a
-              href="#journey"
+              href="#pricing"
               className={cn(
                 "ascend-button-ghost inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-8 text-sm font-medium tracking-tight text-white sm:w-auto",
                 "border border-white/[0.12] bg-white/[0.04] backdrop-blur-xl",
@@ -127,8 +133,7 @@ export function Hero() {
               whileTap={{ scale: 0.988 }}
               transition={TAP_SPRING}
             >
-              <Play className="size-4 fill-white/90 text-white/90" />
-              See the five steps
+              View pricing
             </motion.a>
           </motion.div>
         </motion.div>
@@ -136,7 +141,7 @@ export function Hero() {
 
       <motion.a
         href="#about"
-        className="absolute bottom-5 left-1/2 z-[15] flex -translate-x-1/2 flex-col items-center gap-2 text-zinc-500 sm:bottom-10"
+        className="absolute bottom-[max(5.75rem,env(safe-area-inset-bottom)+4.75rem)] left-1/2 z-[15] flex -translate-x-1/2 flex-col items-center gap-2 text-zinc-500 sm:bottom-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{

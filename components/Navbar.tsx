@@ -2,6 +2,10 @@
 
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
 import {
+  ASCEND_WHATSAPP_ME_URL,
+  PRIMARY_CTA_LABEL,
+} from "@/lib/whatsapp";
+import {
   DURATION_OPACITY,
   DURATION_OVERLAY,
   DURATION_OVERLAY_SLOW,
@@ -26,14 +30,14 @@ const links = [
   { href: "#testimonials", label: "Proof" },
   {
     href: "#pricing",
-    label: "Entry",
+    label: "View pricing",
     ariaLabel: "Allocation and structured entry",
   },
 ] as const;
 
 export function Navbar() {
   const conversion = useConversionExperienceOptional();
-  const ctaLabel = conversion?.primaryCtaLabel ?? "Pricing & apply";
+  const ctaLabel = conversion?.primaryCtaLabel ?? PRIMARY_CTA_LABEL;
   const notice = conversion?.urgencyMessage ?? "";
 
   const [scrolled, setScrolled] = useState(false);
@@ -91,20 +95,11 @@ export function Navbar() {
           </Link>
 
           <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 hidden w-[min(20rem,calc(100vw-14rem))] -translate-x-1/2 -translate-y-1/2 lg:block">
-            <AnimatePresence mode="wait">
-              {notice ? (
-                <motion.p
-                  key={notice}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={txReveal(DURATION_OPACITY)}
-                  className="truncate text-center text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-600"
-                >
-                  {notice}
-                </motion.p>
-              ) : null}
-            </AnimatePresence>
+            {notice ? (
+              <p className="truncate text-center text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-600">
+                {notice}
+              </p>
+            ) : null}
           </div>
 
           <div className="relative z-10 hidden items-center gap-10 lg:flex">
@@ -137,26 +132,16 @@ export function Navbar() {
               transition={TAP_SPRING}
             >
               <Link
-                href="#pricing"
+                href={ASCEND_WHATSAPP_ME_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label={ctaLabel}
                 className={cn(
                   "ascend-button-primary relative inline-flex max-w-[9rem] overflow-hidden rounded-full px-3.5 py-2.5 text-center text-[10px] font-medium leading-tight tracking-tight text-zinc-950 sm:max-w-[16rem] sm:px-5 sm:text-[12px] sm:leading-snug lg:max-w-[18rem] lg:text-[12px]",
                   "bg-white",
                 )}
               >
-                <span className="sm:hidden">Request</span>
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={ctaLabel}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={txReveal(DURATION_OVERLAY)}
-                    className="hidden max-w-full truncate sm:inline"
-                  >
-                    {ctaLabel}
-                  </motion.span>
-                </AnimatePresence>
+                <span className="max-w-full truncate">{ctaLabel}</span>
               </Link>
             </motion.div>
 
@@ -229,7 +214,9 @@ export function Navbar() {
                 transition={txReveal(DURATION_OPACITY, 0.22)}
               >
                 <Link
-                  href="#pricing"
+                  href={ASCEND_WHATSAPP_ME_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={close}
                   aria-label={ctaLabel}
                   className="ascend-button-primary flex min-h-12 w-full max-w-full items-center justify-center rounded-full bg-white px-4 py-3 text-center text-[12px] font-medium leading-snug tracking-tight text-zinc-950"
