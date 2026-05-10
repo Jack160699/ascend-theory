@@ -33,7 +33,7 @@ const links = [
 
 export function Navbar() {
   const conversion = useConversionExperienceOptional();
-  const ctaLabel = conversion?.primaryCtaLabel ?? "Request Allocation Review";
+  const ctaLabel = conversion?.primaryCtaLabel ?? "Pricing & apply";
   const notice = conversion?.urgencyMessage ?? "";
 
   const [scrolled, setScrolled] = useState(false);

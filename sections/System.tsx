@@ -1,20 +1,23 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useRevealViewport } from "@/contexts/mobile-conversion";
+import {
+  useIsMobileConversion,
+  useRevealViewport,
+} from "@/contexts/mobile-conversion";
 import {
   SURFACE_SPRING,
-  cardReveal,
-  fadeUp,
-  gridStaggerParent,
-  headerStaggerParent,
+  getCardRevealMobile,
+  getFadeUpReveal,
+  getGridStaggerParent,
+  getHeaderStaggerParent,
 } from "@/lib/motion";
 import { leadRight, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { Mic2, Orbit, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 const pillars: {
   title: string;
@@ -23,37 +26,37 @@ const pillars: {
   floatMs: number;
 }[] = [
   {
-    title: "Physique Architecture",
+    title: "Physique",
     description:
-      "Body composition, training intelligence, and physical presence — held inside non‑negotiable execution systems.",
+      "Training, composition, and presence — built into systems you cannot negotiate away on a bad week.",
     icon: Sparkles,
     floatMs: 5200,
   },
   {
-    title: "Communication & Presence",
+    title: "Voice & presence",
     description:
-      "Voice, clarity, and social calibration under pressure — so presence reads as authority, not performance.",
+      "Clear communication under pressure — so you sound certain, not rehearsed.",
     icon: Mic2,
     floatMs: 5800,
   },
   {
-    title: "Discipline Operating System",
+    title: "Daily operating system",
     description:
-      "Routines, rituals, and decision hygiene engineered for long‑horizon identity — not motivation spikes.",
+      "Routines and decisions that hold on ordinary days — not only when motivation spikes.",
     icon: Orbit,
     floatMs: 6400,
   },
   {
-    title: "Luxury Accountability",
+    title: "Accountability",
     description:
-      "Private mentorship density, response priority, and proximity — scaled to the tier you select, never to “more transformation for everyone.”",
+      "Mentor access and response depth scale with your tier — the standard does not.",
     icon: ShieldCheck,
     floatMs: 5400,
   },
   {
-    title: "Peer Environment",
+    title: "Peer field",
     description:
-      "A premium field of people building the same class of standards — community as reinforcement, not noise.",
+      "Others working to the same bar — reinforcement without noise.",
     icon: UsersRound,
     floatMs: 6000,
   },
@@ -64,7 +67,12 @@ function SystemCard({
   description,
   icon: Icon,
   floatMs,
-}: (typeof pillars)[number]) {
+  cardVariants,
+  isMobile,
+}: (typeof pillars)[number] & {
+  cardVariants: Variants;
+  isMobile: boolean;
+}) {
   const articleRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const sheenRef = useRef<HTMLDivElement>(null);
@@ -101,7 +109,7 @@ function SystemCard({
   return (
     <motion.article
       ref={articleRef}
-      variants={cardReveal}
+      variants={cardVariants}
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
       className="group relative h-full [perspective:1500px]"
@@ -162,9 +170,9 @@ function SystemCard({
         <div className="relative z-10 flex h-full flex-col gap-6">
           <motion.div
             className="flex size-11 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 shadow-[0_0_24px_-8px_rgba(255,255,255,0.06)] transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-white/[0.14] group-hover:text-white"
-            animate={{ y: [0, -3, 0] }}
+            animate={{ y: [0, isMobile ? -2 : -3, 0] }}
             transition={{
-              duration: floatMs / 1000,
+              duration: (floatMs / 1000) * (isMobile ? 0.88 : 1),
               repeat: Infinity,
               ease: "easeInOut",
             }}
@@ -187,6 +195,17 @@ function SystemCard({
 
 export function System() {
   const viewport = useRevealViewport();
+  const isMobile = useIsMobileConversion();
+  const headerStagger = useMemo(
+    () => getHeaderStaggerParent(isMobile),
+    [isMobile],
+  );
+  const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
+  const gridStagger = useMemo(() => getGridStaggerParent(isMobile), [isMobile]);
+  const cardVariants = useMemo(
+    () => getCardRevealMobile(isMobile),
+    [isMobile],
+  );
   return (
     <section
       id="programs"
@@ -211,43 +230,47 @@ export function System() {
       <div className={shellStandard}>
         <motion.div
           className={leadRight}
-          variants={headerStaggerParent}
+          variants={headerStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-eyebrow mb-6 text-zinc-500 lg:mb-7"
           >
-            The Ascend architecture
+            What you get
           </motion.p>
           <motion.h2
             id="system-heading"
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-section-sm text-white"
           >
-            One Philosophy. Layered Mentorship Depth.
+            One lane. Deeper access when you choose it.
           </motion.h2>
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
           >
-            One philosophy. Tiers scale mentor proximity, accountability
-            intensity, response priority, personalization depth, and private
-            calibration — never the standard of transformation itself.
+            Same philosophy across tiers. What changes is mentor proximity,
+            accountability load, and how fast we can calibrate you privately.
           </motion.p>
         </motion.div>
 
         <motion.div
           className="mt-16 grid w-full max-w-6xl grid-cols-1 gap-6 sm:mt-20 sm:grid-cols-2 sm:gap-6 lg:mt-24 lg:grid-cols-3 xl:grid-cols-5"
-          variants={gridStaggerParent}
+          variants={gridStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           {pillars.map((p) => (
-            <SystemCard key={p.title} {...p} />
+            <SystemCard
+              key={p.title}
+              {...p}
+              cardVariants={cardVariants}
+              isMobile={isMobile}
+            />
           ))}
         </motion.div>
       </div>

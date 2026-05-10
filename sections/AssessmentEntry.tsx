@@ -1,20 +1,27 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useRevealViewport } from "@/contexts/mobile-conversion";
+import {
+  useIsMobileConversion,
+  useRevealViewport,
+} from "@/contexts/mobile-conversion";
 import { DURATION_REVEAL, RISE_Y, txReveal } from "@/lib/motion";
 import { shellReading } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useMemo } from "react";
 
 export function AssessmentEntry() {
   const viewport = useRevealViewport();
+  const isMobile = useIsMobileConversion();
+  const yK = useMemo(() => (isMobile ? 0.62 : 1), [isMobile]);
+  const durK = useMemo(() => (isMobile ? 0.88 : 1), [isMobile]);
   return (
     <section
       id="assessment"
       data-conversion-zone="assessment"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-20 sm:py-32 lg:py-36"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-16 sm:py-28 lg:py-36"
       aria-labelledby="assessment-heading"
     >
       <SectionContinuity />
@@ -27,43 +34,42 @@ export function AssessmentEntry() {
       <div className={cn(shellReading, "text-left")}>
         <motion.p
           className="ascend-type-eyebrow mb-7 text-zinc-500 lg:mb-8"
-          initial={{ opacity: 0, y: RISE_Y * 0.65 }}
+          initial={{ opacity: 0, y: RISE_Y * 0.65 * yK }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL)}
+          transition={txReveal(DURATION_REVEAL * durK)}
         >
           Manual intake
         </motion.p>
         <motion.h2
           id="assessment-heading"
           className="ascend-type-section-sm text-white"
-          initial={{ opacity: 0, y: RISE_Y }}
+          initial={{ opacity: 0, y: RISE_Y * yK }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL, 0.08)}
+          transition={txReveal(DURATION_REVEAL * durK, 0.08 * durK)}
         >
-          Calibrate your entry with context — not impulse.
+          Tell us the truth — then we match depth.
         </motion.h2>
         <motion.p
           className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
-          initial={{ opacity: 0, y: RISE_Y * 0.9 }}
+          initial={{ opacity: 0, y: RISE_Y * 0.9 * yK }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL, 0.14)}
+          transition={txReveal(DURATION_REVEAL * durK, 0.14 * durK)}
         >
-          The intake maps tone, stakes, and structure to mentorship depth. It
-          moves slowly on purpose — alignment before allocation, never
-          pressure.
+          The intake maps stakes and pace to the right tier. Slow on purpose —
+          fit first, never pressure.
         </motion.p>
         <p className="mt-5 max-w-[34rem] text-[12px] font-medium uppercase leading-relaxed tracking-[0.18em] text-zinc-600 sm:mt-6 sm:text-[11px] sm:tracking-[0.2em]">
-          Mentor bandwidth stays capped — applications read in order.
+          Mentor bandwidth is capped — applications are read in order.
         </p>
         <motion.div
-          className="mt-10 sm:mt-14"
-          initial={{ opacity: 0, y: RISE_Y * 0.9 }}
+          className="mt-9 sm:mt-12"
+          initial={{ opacity: 0, y: RISE_Y * 0.9 * yK }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL, 0.2)}
+          transition={txReveal(DURATION_REVEAL * durK, 0.2 * durK)}
         >
           <Link
             href="#pricing"
@@ -72,7 +78,7 @@ export function AssessmentEntry() {
               "transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
             )}
           >
-            Review allocation & continue
+            See pricing & continue
           </Link>
         </motion.div>
       </div>

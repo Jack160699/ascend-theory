@@ -80,7 +80,7 @@ export function Hero() {
               animate="visible"
               className="mt-[0.12em] block text-white/[0.94]"
             >
-              is not your ceiling.
+              is not your limit.
             </motion.span>
           </h1>
 
@@ -88,10 +88,9 @@ export function Hero() {
             variants={fadeUpHero}
             className="ascend-prose-calm mt-8 max-w-[min(34rem,100%)] text-pretty text-zinc-400/92 sm:mt-12"
           >
-            Private mentorship architecture for ambitious professionals —
-            identity-grade accountability across physique, communication,
-            discipline, and execution. Entry is structured and reviewed — not
-            open-ended enrollment.
+            Private mentorship for serious professionals — training, presence,
+            discipline, and accountability in one system. You apply; we review.
+            No open enrollment.
           </motion.p>
 
           <motion.div
@@ -100,7 +99,7 @@ export function Hero() {
           >
             <motion.a
               href="#pricing"
-              aria-label="Request structured transformation entry"
+              aria-label="Apply and review pricing"
               className={cn(
                 "ascend-button-primary group relative inline-flex min-h-12 w-full max-w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 sm:w-auto sm:px-8",
                 "bg-white text-center text-zinc-950 text-xs font-medium leading-snug tracking-tight sm:text-sm",
@@ -111,7 +110,7 @@ export function Hero() {
               transition={TAP_SPRING}
             >
               <span className="relative z-10 max-w-[16rem] sm:max-w-none">
-                Request Structured Entry
+                Review pricing & apply
               </span>
               <ArrowRight className="relative z-10 size-4 shrink-0 transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:translate-x-0.5" />
             </motion.a>
@@ -129,7 +128,7 @@ export function Hero() {
               transition={TAP_SPRING}
             >
               <Play className="size-4 fill-white/90 text-white/90" />
-              Study The Ascent Sequence
+              See the five steps
             </motion.a>
           </motion.div>
         </motion.div>

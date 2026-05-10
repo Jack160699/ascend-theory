@@ -1,5 +1,6 @@
 "use client";
 
+import { useIsMobileConversion } from "@/contexts/mobile-conversion";
 import {
   DURATION_OPACITY,
   DURATION_OVERLAY,
@@ -17,10 +18,10 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 const STORAGE_KEY = "ascend:transformation-gate:v1";
 
 const PHILOSOPHY_LINES = [
-  "Structure determines trajectory.",
+  "Structure decides speed.",
   "Identity follows repetition.",
   "Discipline compounds quietly.",
-  "Transformation begins with standards.",
+  "Change starts with standards.",
 ] as const;
 
 function readDismissed(): boolean {
@@ -54,6 +55,7 @@ function scrollToHash(hash: string) {
 
 export function TransformationGate() {
   const reduceMotion = useReducedMotion();
+  const isMobile = useIsMobileConversion();
   const titleId = useId();
   const descId = useId();
   const primaryRef = useRef<HTMLButtonElement>(null);
@@ -108,17 +110,17 @@ export function TransformationGate() {
       setPhase("transit");
       setQuoteIndex(0);
       clearQuoteTimer();
-      const step = reduceMotion ? 700 : 450;
+      const step = reduceMotion ? 700 : isMobile ? 320 : 450;
       quoteTimer.current = setInterval(() => {
         setQuoteIndex((i) => (i + 1) % PHILOSOPHY_LINES.length);
       }, step);
-      const dwell = reduceMotion ? 500 : 1530;
+      const dwell = reduceMotion ? 500 : isMobile ? 1100 : 1530;
       window.setTimeout(() => {
         clearQuoteTimer();
         setActive(false);
       }, dwell);
     },
-    [active, phase, reduceMotion, clearQuoteTimer],
+    [active, phase, reduceMotion, clearQuoteTimer, isMobile],
   );
 
   useEffect(() => {
@@ -221,8 +223,7 @@ export function TransformationGate() {
           </button>
 
           <p className="pointer-events-none absolute bottom-[max(6rem,calc(env(safe-area-inset-bottom)+5.2rem))] left-4 z-20 max-w-[min(17rem,calc(100vw-2rem))] text-pretty text-[10px] leading-relaxed text-zinc-500/40 sm:bottom-[5.5rem] sm:left-6 sm:text-[11px] sm:leading-relaxed">
-            Reserved for individuals committed to identity-grade transformation
-            — not casual curiosity.
+            For people ready to work — not for idle browsing.
           </p>
 
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))] sm:px-10 sm:py-20">
@@ -231,10 +232,10 @@ export function TransformationGate() {
                 <motion.div
                   key="transit"
                   className="flex max-w-md flex-col items-center text-center"
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: isMobile ? 6 : 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={txReveal(DURATION_OPACITY)}
+                  exit={{ opacity: 0, y: isMobile ? -5 : -8 }}
+                  transition={txReveal(DURATION_OPACITY * (isMobile ? 0.88 : 1))}
                 >
                   <motion.div
                     className="mb-10 h-px w-24 overflow-hidden rounded-full bg-white/[0.12]"
@@ -253,10 +254,10 @@ export function TransformationGate() {
                   <AnimatePresence mode="wait">
                     <motion.p
                       key={PHILOSOPHY_LINES[quoteIndex]}
-                      initial={{ opacity: 0, y: 6 }}
+                      initial={{ opacity: 0, y: isMobile ? 4 : 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={txReveal(DURATION_OVERLAY)}
+                      exit={{ opacity: 0, y: isMobile ? -3 : -4 }}
+                      transition={txReveal(DURATION_OVERLAY * (isMobile ? 0.9 : 1))}
                       className="text-balance font-sans text-lg font-medium leading-snug tracking-tight text-zinc-300 sm:text-xl"
                     >
                       {PHILOSOPHY_LINES[quoteIndex]}
@@ -267,10 +268,10 @@ export function TransformationGate() {
                 <motion.div
                   key="main"
                   className="mx-auto flex w-full max-w-2xl flex-col items-center rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] px-5 py-10 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-xl sm:px-10 sm:py-14"
-                  initial={{ opacity: 0, y: 22 }}
+                  initial={{ opacity: 0, y: isMobile ? 14 : 22 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  transition={txReveal(DURATION_REVEAL)}
+                  transition={txReveal(DURATION_REVEAL * (isMobile ? 0.88 : 1))}
                 >
                   <motion.p
                     className="mb-8 text-[10px] font-medium uppercase tracking-[0.32em] text-zinc-600 sm:text-[11px]"
@@ -285,33 +286,28 @@ export function TransformationGate() {
                     id={titleId}
                     className="text-balance font-sans text-[clamp(1.7rem,8.5vw,2.15rem)] font-semibold leading-[1.14] tracking-[-0.03em] text-white sm:text-3xl sm:leading-[1.15] lg:text-[2.15rem] lg:leading-[1.12]"
                   >
-                    Most people already know what they need to do.
+                    You already know what to do.
                     <span className="mt-4 block text-zinc-300">
-                      They rarely build the private structure required to become
-                      it.
+                      Ascend is the private structure that makes it stick.
                     </span>
                   </h1>
 
                   <div
                     id={descId}
-                    className="mt-8 max-w-xl space-y-4 text-pretty text-[14px] leading-[1.78] text-zinc-500 sm:mt-10 sm:text-[15px] sm:leading-relaxed"
+                    className="mt-8 max-w-xl space-y-3 text-pretty text-[14px] leading-[1.78] text-zinc-500 sm:mt-10 sm:text-[15px] sm:leading-relaxed"
                   >
                     <p>
-                      Ascend Theory is private transformation architecture —
-                      discipline, physique, communication, accountability, and
-                      identity as one operating system.
+                      Discipline, physique, voice, accountability — one system,
+                      not a course stack.
                     </p>
-                    <p>
-                      Built for people unwilling to carry their potential as a
-                      negotiation.
-                    </p>
+                    <p>For people who are done negotiating with their own bar.</p>
                   </div>
 
                   <motion.div
-                    className="mt-11 flex w-full max-w-md flex-col gap-3.5 sm:mt-16 sm:flex-row sm:justify-center"
-                    initial={{ opacity: 0, y: 16 }}
+                    className="mt-9 flex w-full max-w-md flex-col gap-3 sm:mt-12 sm:flex-row sm:justify-center"
+                    initial={{ opacity: 0, y: isMobile ? 10 : 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={txReveal(DURATION_REVEAL, 0.18)}
+                    transition={txReveal(DURATION_REVEAL, isMobile ? 0.12 : 0.18)}
                   >
                     <motion.button
                       ref={primaryRef}
@@ -326,7 +322,7 @@ export function TransformationGate() {
                       whileTap={{ scale: 0.988 }}
                       transition={TAP_SPRING}
                     >
-                      Request Private Assessment
+                      Pricing & apply
                     </motion.button>
                     <motion.button
                       type="button"
@@ -339,7 +335,7 @@ export function TransformationGate() {
                       whileTap={{ scale: 0.988 }}
                       transition={TAP_SPRING}
                     >
-                      Review Philosophy First
+                      How we think
                     </motion.button>
                   </motion.div>
                 </motion.div>

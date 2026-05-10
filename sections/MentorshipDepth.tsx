@@ -1,19 +1,22 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useRevealViewport } from "@/contexts/mobile-conversion";
+import {
+  useIsMobileConversion,
+  useRevealViewport,
+} from "@/contexts/mobile-conversion";
 import {
   DURATION_REVEAL,
   RISE_Y_CARD,
   STAGGER_LIST,
-  fadeUp,
-  headerStaggerParent,
+  getFadeUpReveal,
+  getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
 import { leadRight, shellNarrow } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 const depthLevels: {
   key: string;
@@ -25,40 +28,37 @@ const depthLevels: {
   {
     key: "foundation",
     label: "Foundation access",
-    title: "Structured accountability and transformation systems",
-    tone: "Disciplined · ambitious · structured",
+    title: "Structured accountability",
+    tone: "Disciplined · ambitious",
     bullets: [
-      "Weekly structure that holds execution to a calendar",
-      "Accountability guidance mapped to your season",
-      "Group calibration without diluting standards",
-      "Transformation systems you can run under pressure",
-      "Execution support that keeps promises visible",
+      "Weekly structure you can run under pressure",
+      "Accountability matched to your season",
+      "Group calibration — standards stay high",
+      "Systems for physique, voice, discipline, lifestyle",
     ],
   },
   {
     key: "high",
     label: "High-accountability mentorship",
-    title: "Closer mentorship integration and accelerated accountability",
-    tone: "Serious transformation · accelerated growth",
+    title: "Closer integration",
+    tone: "Serious pace",
     bullets: [
-      "Deeper calibration across life domains",
-      "Stronger accountability loops with faster feedback",
-      "Personalized guidance as stakes rise",
-      "Higher response cadence when decisions cannot wait",
-      "Execution refinement under mentor proximity",
+      "Faster feedback loops",
+      "More personalization as stakes rise",
+      "Priority when decisions cannot wait",
+      "Deeper mentor proximity than Core",
     ],
   },
   {
     key: "private",
     label: "Private transformation architecture",
-    title: "Private high-access transformation environment",
-    tone: "Discreet · elite · selective",
+    title: "Private access",
+    tone: "Discreet · selective",
     bullets: [
-      "Highest mentor proximity with reserved attention",
-      "Private calibration for confidential contexts",
-      "Elite-level accountability without surface noise",
-      "Private execution structure aligned to tempo",
-      "Maximum personalization depth — still the same philosophy",
+      "Highest mentor proximity",
+      "Confidential calibration when required",
+      "Cadence built around your tempo",
+      "Same philosophy — maximum private attention",
     ],
   },
 ];
@@ -67,10 +67,12 @@ function DepthCard({
   item,
   index,
   viewport,
+  staggerScale,
 }: {
   item: (typeof depthLevels)[number];
   index: number;
   viewport: { once: boolean; margin?: string };
+  staggerScale: number;
 }) {
   const rootRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
@@ -103,7 +105,10 @@ function DepthCard({
       initial={{ opacity: 0, y: RISE_Y_CARD }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewport}
-      transition={txReveal(DURATION_REVEAL, index * STAGGER_LIST)}
+      transition={txReveal(
+        DURATION_REVEAL,
+        index * STAGGER_LIST * staggerScale,
+      )}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       className="group relative"
@@ -170,6 +175,13 @@ function DepthCard({
 
 export function MentorshipDepth() {
   const viewport = useRevealViewport();
+  const isMobile = useIsMobileConversion();
+  const headerStagger = useMemo(
+    () => getHeaderStaggerParent(isMobile),
+    [isMobile],
+  );
+  const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
+  const staggerScale = isMobile ? 0.72 : 1;
   return (
     <section
       id="mentorship-depth"
@@ -195,75 +207,77 @@ export function MentorshipDepth() {
 
       <div className={shellNarrow}>
         <motion.div
-          variants={headerStaggerParent}
+          variants={headerStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
           className={leadRight}
         >
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-eyebrow mb-7 text-zinc-500 lg:mb-8"
           >
             Mentorship depth
           </motion.p>
           <motion.h2
             id="mentorship-depth-heading"
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-section text-white"
           >
-            Transformation Does Not Change.
+            Same philosophy.
             <span className="mt-3 block text-zinc-300">
-              Mentorship Depth Does.
+              Different proximity.
             </span>
           </motion.h2>
           <motion.div
-            variants={fadeUp}
-            className="mt-10 max-w-[34rem] space-y-6 text-pretty sm:mt-11"
+            variants={fadeMain}
+            className="mt-10 max-w-[34rem] space-y-5 text-pretty sm:mt-11"
           >
             <p className="ascend-prose-calm text-zinc-500">
-              Every Ascend path follows the same philosophy: discipline,
-              physique, communication, accountability, and identity-level
-              growth.
+              Every path covers discipline, physique, communication, and
+              identity-level growth.
             </p>
             <p className="ascend-prose-calm text-zinc-500">
-              The difference is how deeply mentorship integrates into your
-              execution environment.
+              Tiers change how close mentorship sits to your real week — not
+              the standard we hold you to.
             </p>
           </motion.div>
         </motion.div>
 
-        <div className="relative mx-auto mt-20 max-w-3xl sm:mt-24 lg:mt-28 lg:max-w-3xl">
+        <div className="relative mx-auto mt-16 max-w-3xl sm:mt-20 lg:mt-24 lg:max-w-3xl">
           <div
             className="pointer-events-none absolute left-[1.1rem] top-0 hidden h-[calc(100%-2rem)] w-px bg-gradient-to-b from-white/15 via-white/[0.06] to-transparent sm:left-[1.25rem] lg:block"
             aria-hidden
           />
-          <div className="space-y-14 sm:space-y-16 lg:space-y-20 lg:pl-10">
+          <div className="space-y-12 sm:space-y-14 lg:space-y-16 lg:pl-10">
             {depthLevels.map((item, i) => (
-              <DepthCard key={item.key} item={item} index={i} viewport={viewport} />
+              <DepthCard
+                key={item.key}
+                item={item}
+                index={i}
+                viewport={viewport}
+                staggerScale={staggerScale}
+              />
             ))}
           </div>
         </div>
 
         <motion.div
-          className="mt-16 max-w-xl space-y-4 border-t border-white/[0.06] pt-12 text-left sm:mt-20 lg:pl-1"
-          initial={{ opacity: 0, y: RISE_Y_CARD * 0.85 }}
+          className="mt-12 max-w-xl space-y-3 border-t border-white/[0.06] pt-10 text-left sm:mt-16 lg:pl-1"
+          initial={{ opacity: 0, y: RISE_Y_CARD * (isMobile ? 0.65 : 0.85) }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL)}
+          transition={txReveal(DURATION_REVEAL * (isMobile ? 0.85 : 1))}
         >
           <p className="text-[13px] leading-[1.72] text-zinc-600 sm:text-sm sm:leading-[1.75]">
-            Transformation outcomes track execution consistency — not rhetoric.
+            Results follow consistency — not clever language.
           </p>
           <p className="text-[13px] leading-relaxed text-zinc-600 sm:text-sm">
-            Mentorship depth changes calibration speed, accountability density,
-            and how closely standards sit to your decisions.
+            Depth changes how fast we can calibrate you and how hard
+            accountability can press when it matters.
           </p>
-          <p className="text-[13px] leading-relaxed text-zinc-600 sm:text-sm">
-            Structure scales with proximity — never with entitlement.
-          </p>
-          <p className="pt-4 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-700">
-            All paths demand transformation · depth is mentor integration
+          <p className="pt-2 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-700">
+            All paths demand work · depth is access
           </p>
         </motion.div>
       </div>

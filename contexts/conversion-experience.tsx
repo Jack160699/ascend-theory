@@ -21,22 +21,21 @@ import {
 } from "react";
 
 export const URGENCY_MESSAGES = [
-  "Applications read manually — in sequence",
-  "Mentor capacity remains intentionally limited",
-  "Reserved allocation — alignment over volume",
-  "Structured onboarding cadence · not always open",
-  "Private review precedes every invitation",
-  "Standards-first environment · selective entry",
-  "Accountability architecture holds density caps",
-  "Manual calibration — never automated acceptance",
-  "Manual intake active — review moves in order, not in hype cycles",
-  "Most people remain observers — this environment rewards execution",
+  "We read applications in order — not in bulk",
+  "Mentor capacity stays capped on purpose",
+  "Selective entry — fit over volume",
+  "Onboarding opens in windows — not always on",
+  "Invitation follows a human review",
+  "Built for people who execute — not spectators",
+  "Manual calibration — no auto-accept",
+  "Intake is active — your place in line matters",
+  "Observers stay outside — this is for execution",
 ] as const;
 
 const MOBILE_PHILOSOPHY_LINES = [
-  "Standards compound without announcement.",
-  "Identity follows what you refuse to negotiate.",
-  "Discipline becomes quiet self-respect.",
+  "Standards beat motivation.",
+  "Identity is what you repeat.",
+  "Discipline is respect for your future self.",
 ] as const;
 
 export type ConversionZone =
@@ -65,16 +64,16 @@ const ZONE_ORDER: ConversionZone[] = [
 ];
 
 const CTA_BY_ZONE: Record<ConversionZone, string> = {
-  hero: "Request Structured Entry",
-  philosophy: "Read The Ascend Philosophy",
-  tension: "Face The Architectural Gap",
-  programs: "Review Mentorship Architecture",
-  journey: "Study The Ascent Sequence",
-  pricing: "Request Allocation Review",
-  mentorship: "Understand Depth & Proximity",
-  assessment: "Begin Identity Calibration",
-  final: "Begin Identity Calibration",
-  proof: "See Discipline In Behavior",
+  hero: "Apply for entry",
+  philosophy: "See how it works",
+  tension: "Name the gap",
+  programs: "What you get",
+  journey: "The five steps",
+  pricing: "Pricing & tiers",
+  mentorship: "Compare depth",
+  assessment: "Start intake",
+  final: "Start intake",
+  proof: "See proof",
 };
 
 type ConversionValue = {
@@ -195,7 +194,7 @@ function StickyConversionBar({
                   "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_34px_-10px_rgba(255,255,255,0.2)]",
                 )}
               >
-                Request Entry
+                Pricing
               </Link>
             </div>
           </motion.div>

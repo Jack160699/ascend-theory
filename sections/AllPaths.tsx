@@ -1,68 +1,78 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useRevealViewport } from "@/contexts/mobile-conversion";
+import {
+  useIsMobileConversion,
+  useRevealViewport,
+} from "@/contexts/mobile-conversion";
 import {
   DURATION_REVEAL,
   RISE_Y,
   STAGGER_TABLE_ROW,
-  fadeUp,
-  headerStaggerParent,
+  getFadeUpReveal,
+  getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
 import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 
 const rows: { label: string; core: string; pro: string; black: string }[] = [
   {
-    label: "Accountability depth",
-    core: "Foundation rhythm — structured check-ins and non‑negotiable systems.",
-    pro: "High‑touch accountability with closer mentor proximity.",
-    black: "Reserved cadence — private, highest‑frequency accountability.",
+    label: "Accountability",
+    core: "Structured check-ins and clear systems.",
+    pro: "Tighter loops — mentors closer to your week.",
+    black: "Highest frequency — private cadence.",
   },
   {
     label: "Mentor access",
-    core: "Architected mentor touchpoints within the collective container.",
-    pro: "Direct mentor alignment for faster calibration and feedback loops.",
-    black: "Private mentor proximity — discretion‑first access architecture.",
+    core: "Touchpoints inside the shared container.",
+    pro: "Direct alignment — faster calibration.",
+    black: "Maximum proximity — discretion first.",
   },
   {
     label: "Personalization",
-    core: "Calibrated systems mapped to your stage — same philosophy, foundation density.",
-    pro: "Personalized mentorship architecture layered across life domains.",
-    black:
-      "Full private calibration — bespoke transformation operating system.",
+    core: "Systems mapped to your stage.",
+    pro: "Deeper tailoring across domains.",
+    black: "Fully bespoke cadence and calibration.",
   },
   {
-    label: "Response priority",
-    core: "Structured response windows inside the program cadence.",
-    pro: "Elevated priority windows for time‑sensitive decisions.",
-    black: "Highest response priority — reserved for private allocation.",
+    label: "Response speed",
+    core: "Defined windows inside the program.",
+    pro: "Priority when decisions cannot wait.",
+    black: "Top priority — reserved allocation.",
   },
   {
-    label: "Transformation structure",
-    core: "Same methodology: physique, communication, discipline, lifestyle — foundation pacing.",
-    pro: "Same methodology — accelerated depth and identity‑grade stakes.",
-    black: "Same methodology — private orchestration at executive tempo.",
+    label: "What you work on",
+    core: "Physique, voice, discipline, lifestyle — foundation pace.",
+    pro: "Same scope — accelerated depth.",
+    black: "Same scope — private orchestration.",
   },
   {
-    label: "Community access",
-    core: "Premium community inclusion — peer standards without noise.",
-    pro: "Premium community plus a tighter accountability loop.",
-    black: "Curated access — discretion, selectivity, minimal surface area.",
+    label: "Community",
+    core: "Peer field — standards without noise.",
+    pro: "Same field — stronger accountability thread.",
+    black: "Curated surface — minimal noise.",
   },
   {
     label: "Private calibration",
-    core: "Optional pathways as you earn density and consistency.",
-    pro: "Integrated calibration where your life architecture demands it.",
-    black:
-      "Dedicated private calibration sessions and offline‑grade attention.",
+    core: "Earned as consistency holds.",
+    pro: "Integrated when stakes demand it.",
+    black: "Dedicated private sessions.",
   },
 ];
 
 export function AllPaths() {
   const viewport = useRevealViewport();
+  const isMobile = useIsMobileConversion();
+  const headerStagger = useMemo(
+    () => getHeaderStaggerParent(isMobile),
+    [isMobile],
+  );
+  const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
+  const rowStagger = STAGGER_TABLE_ROW * (isMobile ? 0.65 : 1);
+  const tableRise = RISE_Y * (isMobile ? 0.72 : 1);
   return (
     <section
       id="paths"
@@ -81,40 +91,39 @@ export function AllPaths() {
       <div className={shellWide}>
         <motion.div
           className={leadLeft}
-          variants={headerStaggerParent}
+          variants={headerStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-eyebrow mb-6 text-zinc-500 lg:mb-7"
           >
-            Mentorship depth
+            Compare tiers
           </motion.p>
           <motion.h2
             id="all-paths-heading"
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-section-sm text-white"
           >
-            All Paths Lead To Transformation.
+            Same lane. Different access.
           </motion.h2>
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
           >
-            Same discipline, physique, communication, structure, and
-            accountability philosophy. Depth shifts with mentor allocation — not
-            with hierarchy of worth.
+            Philosophy is fixed. Tiers change mentor proximity, response speed,
+            and how private calibration can go — not your worth.
           </motion.p>
         </motion.div>
 
         <motion.div
-          className="mt-14 w-full max-w-6xl sm:mt-16 lg:mt-20"
-          initial={{ opacity: 0, y: RISE_Y }}
+          className="mt-12 w-full max-w-6xl sm:mt-14 lg:mt-20"
+          initial={{ opacity: 0, y: tableRise }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL)}
+          transition={txReveal(DURATION_REVEAL * (isMobile ? 0.88 : 1))}
         >
           <div className="relative rounded-[1.25rem] border border-white/[0.08] bg-white/[0.02] shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-2xl">
             <div
@@ -161,8 +170,8 @@ export function AllPaths() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={viewport}
                       transition={txReveal(
-                        DURATION_REVEAL * 0.92,
-                        i * STAGGER_TABLE_ROW,
+                        DURATION_REVEAL * (isMobile ? 0.82 : 0.92),
+                        i * rowStagger,
                       )}
                     >
                       <th
@@ -187,10 +196,9 @@ export function AllPaths() {
             </div>
           </div>
 
-          <p className="mt-7 max-w-2xl text-left text-[12px] leading-[1.72] text-zinc-600 sm:leading-[1.75] lg:pl-1">
-            Same philosophy — different integration depth. Core remains
-            intentionally rigorous. Tiers scale proximity, cadence, and private
-            attention — never a hierarchy of worth.
+          <p className="mt-6 max-w-2xl text-left text-[12px] leading-[1.72] text-zinc-600 sm:leading-[1.75] lg:pl-1">
+            Core is already rigorous. Pro and Black add proximity, speed, and
+            private room — not a higher “class” of person.
           </p>
         </motion.div>
       </div>

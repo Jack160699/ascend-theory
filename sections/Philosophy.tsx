@@ -1,20 +1,23 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useRevealViewport } from "@/contexts/mobile-conversion";
+import {
+  useIsMobileConversion,
+  useRevealViewport,
+} from "@/contexts/mobile-conversion";
 import {
   DURATION_OPACITY,
   SURFACE_SPRING,
-  fadeUp,
-  fadeUpChild,
-  gridStaggerParent,
-  headerStaggerParent,
+  getFadeUpChild,
+  getFadeUpReveal,
+  getGridStaggerParent,
+  getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
-import { useRef } from "react";
+import { motion, type Variants } from "framer-motion";
+import { useMemo, useRef } from "react";
 
 const principles: {
   n: string;
@@ -26,22 +29,24 @@ const principles: {
     n: "01",
     title: "Identity Before Motivation",
     body: [
-      "Motivation fades quickly.",
-      "Identity-driven systems create permanent standards.",
+      "Motivation spikes and fades.",
+      "Identity is what you repeat when no one is watching.",
     ],
     fragment: "Standards over spikes.",
   },
   {
     n: "02",
     title: "Structure Creates Discipline",
-    body: ["Consistency is rarely emotional.", "It is architectural."],
+    body: [
+      "Discipline is not a mood — it is what your week is built to protect.",
+    ],
     fragment: "Architecture over mood.",
   },
   {
     n: "03",
     title: "Accountability Accelerates Growth",
     body: [
-      "People evolve faster when execution becomes visible and measurable.",
+      "You move faster when someone sees the gap between your claim and your calendar.",
     ],
     fragment: "Visibility compounds.",
   },
@@ -49,7 +54,7 @@ const principles: {
     n: "04",
     title: "Transformation Is Environmental",
     body: [
-      "Your standards rise when your environment no longer tolerates mediocrity.",
+      "Your default rises when the room stops tolerating small compromises.",
     ],
     fragment: "Environment shapes default.",
   },
@@ -59,10 +64,14 @@ function PrincipleRow({
   item,
   reversed,
   viewport,
+  gridStaggerVariants,
+  fadeUpChildVariants,
 }: {
   item: (typeof principles)[number];
   reversed: boolean;
   viewport: { once: boolean; margin?: string };
+  gridStaggerVariants: Variants;
+  fadeUpChildVariants: Variants;
 }) {
   const rootRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
@@ -91,7 +100,7 @@ function PrincipleRow({
 
   const textBlock = (
     <motion.div
-      variants={fadeUpChild}
+      variants={fadeUpChildVariants}
       className={cn(
         "flex flex-col justify-center",
         reversed ? "lg:pl-4" : "lg:pr-4",
@@ -118,7 +127,10 @@ function PrincipleRow({
   );
 
   const visualBlock = (
-    <motion.div variants={fadeUpChild} className="relative min-h-[14rem]">
+    <motion.div
+      variants={fadeUpChildVariants}
+      className="relative min-h-[14rem]"
+    >
       <motion.article
         ref={rootRef}
         onMouseMove={onMove}
@@ -166,7 +178,7 @@ function PrincipleRow({
 
   return (
     <motion.div
-      variants={gridStaggerParent}
+      variants={gridStaggerVariants}
       initial="hidden"
       whileInView="visible"
       viewport={viewport}
@@ -189,6 +201,14 @@ function PrincipleRow({
 
 export function Philosophy() {
   const viewport = useRevealViewport();
+  const isMobile = useIsMobileConversion();
+  const headerStagger = useMemo(
+    () => getHeaderStaggerParent(isMobile),
+    [isMobile],
+  );
+  const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
+  const fadeChild = useMemo(() => getFadeUpChild(isMobile), [isMobile]);
+  const gridStagger = useMemo(() => getGridStaggerParent(isMobile), [isMobile]);
   return (
     <section
       id="philosophy"
@@ -222,37 +242,37 @@ export function Philosophy() {
       <div className={shellStandard}>
         <motion.div
           className={leadLeft}
-          variants={headerStaggerParent}
+          variants={headerStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-eyebrow mb-7 text-zinc-500 lg:mb-8"
           >
-            The Ascend Philosophy
+            How we think
           </motion.p>
           <motion.h2
             id="philosophy-heading"
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-section text-white"
           >
-            Transformation Is Not Built Through Motivation.
+            Motivation is not enough.
           </motion.h2>
 
           <motion.div
-            variants={fadeUp}
+            variants={fadeMain}
             className="mt-11 max-w-[34rem] space-y-6 border-l border-white/[0.09] pl-6 sm:mt-14 sm:space-y-7 sm:pl-8 lg:mt-16"
           >
             <p className="ascend-prose-lede text-pretty text-zinc-400">
-              Most people already know what they should do.
+              You already know what to do. The gap is follow-through.
             </p>
             <p className="ascend-prose-calm text-pretty text-zinc-500">
-              The problem is rarely information — it is buffered standards.
+              When standards flex under pressure, results stall — quietly.
             </p>
             <div className="space-y-2.5 text-[15px] leading-[1.78] text-zinc-500 sm:text-base sm:leading-[1.8]">
-              <p className="font-medium text-zinc-400">The problem is:</p>
+              <p className="font-medium text-zinc-400">What usually breaks:</p>
               <ul className="list-none space-y-2 pl-0">
                 {[
                   "inconsistency",
@@ -272,7 +292,7 @@ export function Philosophy() {
               </ul>
             </div>
             <p className="pt-3 text-[15px] font-medium leading-[1.75] text-zinc-300 sm:text-base sm:leading-[1.78]">
-              Ascend Theory exists to solve that.
+              Ascend exists to close that gap — with structure, not hype.
             </p>
           </motion.div>
         </motion.div>
@@ -284,7 +304,7 @@ export function Philosophy() {
           viewport={viewport}
           transition={txReveal(DURATION_OPACITY, 0.1)}
         >
-          Identity architecture — not conventional coaching
+          One system — not a course catalog.
         </motion.p>
 
         <div className="mt-12 max-w-5xl space-y-16 sm:mt-20 sm:space-y-24 lg:mt-24 lg:space-y-32">
@@ -294,6 +314,8 @@ export function Philosophy() {
               item={p}
               reversed={i % 2 === 1}
               viewport={viewport}
+              gridStaggerVariants={gridStagger}
+              fadeUpChildVariants={fadeChild}
             />
           ))}
         </div>

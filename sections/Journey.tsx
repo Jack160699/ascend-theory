@@ -1,22 +1,26 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useRevealViewport } from "@/contexts/mobile-conversion";
+import {
+  useIsMobileConversion,
+  useRevealViewport,
+} from "@/contexts/mobile-conversion";
 import {
   DURATION_LINE,
   EASE_CINEMATIC,
   SURFACE_SPRING,
-  fadeUp,
-  headerStaggerParent,
+  getFadeUpReveal,
+  getHeaderStaggerParent,
+  getListStaggerParent,
+  getNodeRevealSoftMobile,
   lineDrawHorizontal,
-  listStaggerParent,
-  nodeRevealSoft,
 } from "@/lib/motion";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { ClipboardPenLine, Map, Phone, Sparkles, Users } from "lucide-react";
+import { useMemo } from "react";
 
 const stages: {
   step: string;
@@ -26,37 +30,37 @@ const stages: {
 }[] = [
   {
     step: "01",
-    title: "Private intake",
+    title: "Intake",
     description:
-      "A manually reviewed intake — honest context, emotional stakes, and the architecture you need before allocation is discussed.",
+      "You share context in writing. We read it manually before any tier or price is discussed.",
     icon: ClipboardPenLine,
   },
   {
     step: "02",
-    title: "Calibration conversation",
+    title: "Call",
     description:
-      "Mentors map pressure points, identity tension, and the accountability density that matches your season.",
+      "We align on pressure points, pace, and how much accountability you actually need right now.",
     icon: Phone,
   },
   {
     step: "03",
-    title: "Transformation blueprint",
+    title: "Plan",
     description:
-      "A structured operating plan across physique, communication, discipline, and lifestyle — calibrated to your tier.",
+      "A clear operating plan across training, voice, discipline, and lifestyle — matched to your tier.",
     icon: Map,
   },
   {
     step: "04",
-    title: "Mentorship immersion",
+    title: "Immersion",
     description:
-      "Proximity, cadence, and response priority scale with your path — depth increases; philosophy stays constant.",
+      "Cadence and mentor access scale with your path. The philosophy does not.",
     icon: Users,
   },
   {
     step: "05",
-    title: "Identity consolidation",
+    title: "Default",
     description:
-      "Standards become default — presence, body, voice, and execution start matching the life you are building.",
+      "Standards stop feeling like a fight — body, voice, and execution line up with who you are building toward.",
     icon: Sparkles,
   },
 ];
@@ -69,10 +73,14 @@ function StageNode({
   className,
   timeline = "vertical",
   withReveal = true,
+  nodeVariants,
+  isMobile = false,
 }: (typeof stages)[number] & {
   className?: string;
   timeline?: "vertical" | "horizontal";
   withReveal?: boolean;
+  nodeVariants?: Variants;
+  isMobile?: boolean;
 }) {
   const isHorizontal = timeline === "horizontal";
   const body = (
@@ -108,9 +116,9 @@ function StageNode({
                 "flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-white/[0.14] group-hover:text-white",
                 isHorizontal && "ml-auto",
               )}
-              animate={{ y: [0, -2, 0] }}
+              animate={{ y: [0, isMobile ? -1.5 : -2, 0] }}
               transition={{
-                duration: 5.2,
+                duration: isMobile ? 4.4 : 5.2,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
@@ -131,12 +139,14 @@ function StageNode({
     </>
   );
 
-  if (withReveal) {
+  const hoverY = isMobile ? -1 : -2;
+
+  if (withReveal && nodeVariants) {
     return (
       <motion.div
-        variants={nodeRevealSoft}
+        variants={nodeVariants}
         className={cn("group relative", className)}
-        whileHover={{ y: -2 }}
+        whileHover={{ y: hoverY }}
         transition={SURFACE_SPRING}
       >
         {body}
@@ -147,7 +157,7 @@ function StageNode({
   return (
     <motion.div
       className={cn("group relative", className)}
-      whileHover={{ y: -2 }}
+      whileHover={{ y: hoverY }}
       transition={SURFACE_SPRING}
     >
       {body}
@@ -157,6 +167,17 @@ function StageNode({
 
 export function Journey() {
   const viewport = useRevealViewport();
+  const isMobile = useIsMobileConversion();
+  const headerStagger = useMemo(
+    () => getHeaderStaggerParent(isMobile),
+    [isMobile],
+  );
+  const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
+  const listStagger = useMemo(() => getListStaggerParent(isMobile), [isMobile]);
+  const nodeVariants = useMemo(
+    () => getNodeRevealSoftMobile(isMobile),
+    [isMobile],
+  );
   return (
     <section
       id="journey"
@@ -181,30 +202,30 @@ export function Journey() {
       <div className={shellStandard}>
         <motion.div
           className={leadLeft}
-          variants={headerStaggerParent}
+          variants={headerStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-eyebrow mb-6 text-zinc-500 lg:mb-7"
           >
-            The ascent sequence
+            How entry works
           </motion.p>
           <motion.h2
             id="journey-heading"
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-section-sm text-white"
           >
-            From tension to architecture — without theatrics.
+            Five steps. No theater.
           </motion.h2>
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
           >
-            Awareness opens the door. Execution architecture, private
-            accountability, and mentor proximity close it — without theatrics.
+            Intake, conversation, plan, immersion — then standards become normal
+            again.
           </motion.p>
         </motion.div>
 
@@ -220,15 +241,15 @@ export function Journey() {
             whileInView={{ scaleY: 1, opacity: 1 }}
             viewport={viewport}
             transition={{
-              duration: DURATION_LINE,
+              duration: DURATION_LINE * (isMobile ? 0.88 : 1),
               ease: EASE_CINEMATIC,
-              delay: 0.15,
+              delay: isMobile ? 0.08 : 0.15,
             }}
             aria-hidden
           />
           <motion.ul
-            className="relative flex list-none flex-col gap-9 p-0 sm:gap-12"
-            variants={listStaggerParent}
+            className="relative flex list-none flex-col gap-7 p-0 sm:gap-12"
+            variants={listStagger}
             initial="hidden"
             whileInView="visible"
             viewport={viewport}
@@ -236,7 +257,7 @@ export function Journey() {
             {stages.map((s, i) => (
               <motion.li
                 key={s.step}
-                variants={nodeRevealSoft}
+                variants={nodeVariants}
                 className="relative flex gap-6 pl-1"
               >
                 <div className="relative z-10 flex w-10 shrink-0 flex-col items-center pt-1">
@@ -250,10 +271,10 @@ export function Journey() {
                       ],
                     }}
                     transition={{
-                      duration: 3.2,
+                      duration: isMobile ? 2.6 : 3.2,
                       repeat: Infinity,
                       ease: "easeInOut",
-                      delay: i * 0.15,
+                      delay: i * (isMobile ? 0.09 : 0.15),
                     }}
                   />
                 </div>
@@ -261,6 +282,7 @@ export function Journey() {
                   {...s}
                   className="min-w-0 flex-1 pb-2"
                   withReveal={false}
+                  isMobile={isMobile}
                 />
               </motion.li>
             ))}
@@ -270,7 +292,7 @@ export function Journey() {
         {/* Desktop: horizontal timeline */}
         <motion.div
           className="relative mx-auto mt-24 hidden max-w-[90rem] px-4 lg:mt-28 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-0"
-          variants={listStaggerParent}
+          variants={listStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -289,13 +311,13 @@ export function Journey() {
           {stages.map((s, i) => (
             <motion.div
               key={s.step}
-              variants={nodeRevealSoft}
+              variants={nodeVariants}
               className="relative flex flex-col items-center"
             >
               <motion.div
                 className="relative z-20 mb-6 flex size-11 items-center justify-center rounded-full border border-white/[0.12] bg-zinc-950/80 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_8px_32px_-8px_rgba(0,0,0,0.6)] backdrop-blur-md"
                 animate={{
-                  y: [0, -3, 0],
+                  y: [0, -2.5, 0],
                   boxShadow: [
                     "0 0 0 1px rgba(255,255,255,0.04) inset, 0 8px 32px -8px rgba(0,0,0,0.6)",
                     "0 0 0 1px rgba(255,255,255,0.08) inset, 0 0 28px -4px rgba(255,255,255,0.1)",
@@ -303,10 +325,10 @@ export function Journey() {
                   ],
                 }}
                 transition={{
-                  duration: 3.5,
+                  duration: 3.2,
                   repeat: Infinity,
                   ease: "easeInOut",
-                  delay: i * 0.12,
+                  delay: i * 0.1,
                 }}
               >
                 <span className="font-mono text-[10px] font-semibold tracking-widest text-zinc-400">
@@ -318,6 +340,7 @@ export function Journey() {
                 className="w-full text-left"
                 timeline="horizontal"
                 withReveal={false}
+                isMobile={isMobile}
               />
             </motion.div>
           ))}

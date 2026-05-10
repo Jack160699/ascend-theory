@@ -193,13 +193,94 @@ export function getHeroLine2(isMobile: boolean): Variants {
 }
 
 export function getFadeUpReveal(isMobile: boolean): Variants {
-  const k = isMobile ? 0.86 : 1;
+  const k = isMobile ? 0.78 : 1;
   return {
-    hidden: { opacity: 0, y: RISE_Y * (isMobile ? 0.88 : 1) },
+    hidden: { opacity: 0, y: RISE_Y * (isMobile ? 0.75 : 1) },
     visible: {
       opacity: 1,
       y: 0,
       transition: txReveal(DURATION_REVEAL * k),
+    },
+  };
+}
+
+const MOBILE_SECTION_K = 0.76;
+
+/** Faster stagger / shorter delays on mobile — reads intentional, not “missing”. */
+export function getHeaderStaggerParent(isMobile: boolean): Variants {
+  const k = isMobile ? MOBILE_SECTION_K : 1;
+  return {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: STAGGER_CHILD * k,
+        delayChildren: DELAY_HEADER * k,
+      },
+    },
+  };
+}
+
+export function getGridStaggerParent(isMobile: boolean): Variants {
+  const k = isMobile ? MOBILE_SECTION_K : 1;
+  return {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: STAGGER_LIST * k,
+        delayChildren: DELAY_HEADER * k,
+      },
+    },
+  };
+}
+
+export function getListStaggerParent(isMobile: boolean): Variants {
+  const k = isMobile ? MOBILE_SECTION_K : 1;
+  return {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: STAGGER_LIST * k,
+        delayChildren: DELAY_LIST * k,
+      },
+    },
+  };
+}
+
+export function getFadeUpChild(isMobile: boolean): Variants {
+  const k = isMobile ? 0.8 : 1;
+  return {
+    hidden: { opacity: 0, y: RISE_Y_CARD * (isMobile ? 0.68 : 1) },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: txReveal(DURATION_REVEAL * 0.96 * k),
+    },
+  };
+}
+
+export function getCardRevealMobile(isMobile: boolean): Variants {
+  const k = isMobile ? 0.8 : 1;
+  return {
+    hidden: { opacity: 0, y: RISE_Y_CARD * (isMobile ? 0.65 : 1) },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: txReveal(DURATION_REVEAL * k),
+    },
+  };
+}
+
+export function getNodeRevealSoftMobile(isMobile: boolean): Variants {
+  const k = isMobile ? 0.78 : 1;
+  return {
+    hidden: { opacity: 0, scale: 0.98, y: isMobile ? 6 : 10 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: txReveal(0.9 * k),
     },
   };
 }

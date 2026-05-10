@@ -1,21 +1,24 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useRevealViewport } from "@/contexts/mobile-conversion";
+import {
+  useIsMobileConversion,
+  useRevealViewport,
+} from "@/contexts/mobile-conversion";
 import {
   DURATION_OPACITY,
   DURATION_REVEAL,
   SURFACE_SPRING,
   STAGGER_TABLE_ROW,
-  fadeUp,
-  fadeUpChild,
-  headerStaggerParent,
-  listStaggerParent,
+  getFadeUpChild,
+  getFadeUpReveal,
+  getHeaderStaggerParent,
+  getListStaggerParent,
   txReveal,
 } from "@/lib/motion";
 import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import Image from "next/image";
 import {
   CheckCheck,
@@ -25,7 +28,7 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /** Reference photography (Unsplash) — replace with member media when available. */
 const img = {
@@ -69,10 +72,10 @@ const demoVideos = [
 ] as const;
 
 const metrics = [
-  { label: "Structured cohort · execution consistency", value: "87%" },
-  { label: "Accountability streak window (avg.)", value: "12 wk" },
-  { label: "Private mentor allocation", value: "Capped" },
-  { label: "Methodology adherence (cohort)", value: "High" },
+  { label: "Cohort execution consistency", value: "87%" },
+  { label: "Avg. accountability streak", value: "12 wk" },
+  { label: "Mentor allocation", value: "Capped" },
+  { label: "Methodology adherence", value: "High" },
 ] as const;
 
 const marqueeProof = [
@@ -88,11 +91,11 @@ const marqueeProof = [
 
 const quotes = [
   {
-    text: "I wasn’t looking for hype — I needed an environment that wouldn’t negotiate with me. Six months in, training, sleep, and how I hold space in rooms stopped feeling like performance.",
+    text: "I did not want hype — I wanted a room that would not negotiate with me. Six months in, training, sleep, and how I take space stopped feeling like an act.",
     tag: "Physique · discipline",
   },
   {
-    text: "The shift wasn’t louder confidence — it was quieter standards. Reps, feedback, and accountability until steadiness became the default.",
+    text: "The shift was not louder confidence — it was quieter standards. Reps, feedback, and accountability until steadiness felt normal again.",
     tag: "Communication · presence",
   },
 ] as const;
@@ -170,16 +173,20 @@ function BeforeAfterCard({
   timeframe,
   beforeSrc,
   afterSrc,
+  fadeChildVariants,
+  isMobile,
 }: {
   name: string;
   timeframe: string;
   beforeSrc: string;
   afterSrc: string;
+  fadeChildVariants: Variants;
+  isMobile: boolean;
 }) {
   return (
     <motion.div
-      variants={fadeUpChild}
-      whileHover={{ y: -2 }}
+      variants={fadeChildVariants}
+      whileHover={{ y: isMobile ? -1 : -2 }}
       transition={SURFACE_SPRING}
       className="group relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-7"
     >
@@ -228,15 +235,19 @@ function MosaicTile({
   src,
   label,
   sub,
+  fadeChildVariants,
+  isMobile,
 }: {
   src: string;
   label: string;
   sub: string;
+  fadeChildVariants: Variants;
+  isMobile: boolean;
 }) {
   return (
     <motion.figure
-      variants={fadeUpChild}
-      whileHover={{ y: -2, scale: 1.006 }}
+      variants={fadeChildVariants}
+      whileHover={{ y: isMobile ? -1 : -2, scale: isMobile ? 1.004 : 1.006 }}
       transition={SURFACE_SPRING}
       className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-950/40 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]"
     >
@@ -266,7 +277,13 @@ function VideoStoryCard({
   poster,
   src,
   index,
-}: (typeof videoStories)[number] & { index: number }) {
+  fadeChildVariants,
+  isMobile,
+}: (typeof videoStories)[number] & {
+  index: number;
+  fadeChildVariants: Variants;
+  isMobile: boolean;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hover, setHover] = useState(false);
   const [ready, setReady] = useState(false);
@@ -291,11 +308,11 @@ function VideoStoryCard({
 
   return (
     <motion.div
-      variants={fadeUpChild}
+      variants={fadeChildVariants}
       className="group relative overflow-hidden rounded-[1.25rem] border border-white/[0.1] bg-black/50 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_40px_100px_-48px_rgba(0,0,0,0.85)] backdrop-blur-xl"
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      whileHover={{ scale: 1.006 }}
+      whileHover={{ scale: isMobile ? 1.003 : 1.006 }}
       transition={SURFACE_SPRING}
     >
       <div className="pointer-events-none absolute -inset-px rounded-[1.25rem] opacity-0 blur-2xl transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.82]">
@@ -380,6 +397,15 @@ function VideoStoryCard({
 
 export function Testimonials() {
   const viewport = useRevealViewport();
+  const isMobile = useIsMobileConversion();
+  const headerStagger = useMemo(
+    () => getHeaderStaggerParent(isMobile),
+    [isMobile],
+  );
+  const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
+  const listStagger = useMemo(() => getListStaggerParent(isMobile), [isMobile]);
+  const fadeChild = useMemo(() => getFadeUpChild(isMobile), [isMobile]);
+  const rowStagger = STAGGER_TABLE_ROW * (isMobile ? 0.62 : 1);
   return (
     <section
       id="testimonials"
@@ -404,37 +430,36 @@ export function Testimonials() {
       <div className={shellWide}>
         <motion.div
           className={leadLeft}
-          variants={headerStaggerParent}
+          variants={headerStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-eyebrow mb-6 text-zinc-500 lg:mb-7"
           >
-            Behavioral proof
+            Proof
           </motion.p>
           <motion.h2
             id="proof-heading"
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-section-sm text-white"
           >
-            Evidence lives in behavior — not captions.
+            Evidence is behavior — not captions.
           </motion.h2>
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
           >
-            A maturity-forward field of reference media, private cadence, and
-            accountability signals — placeholders architected for real member
-            assets when you are ready to replace them.
+            Reference media, cadence, and accountability UI — built so you can
+            swap in real member assets when you are ready.
           </motion.p>
         </motion.div>
 
         <motion.div
-          className="mt-16 grid w-full max-w-4xl grid-cols-2 gap-3 sm:mt-20 sm:grid-cols-4 sm:gap-4"
-          variants={listStaggerParent}
+          className="mt-14 grid w-full max-w-4xl grid-cols-2 gap-3 sm:mt-16 sm:grid-cols-4 sm:gap-4"
+          variants={listStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -442,7 +467,7 @@ export function Testimonials() {
           {metrics.map((m) => (
             <motion.div
               key={m.label}
-              variants={fadeUpChild}
+              variants={fadeChild}
               className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-4 text-left shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset] backdrop-blur-md sm:px-4 sm:py-5"
             >
               <p className="font-mono text-lg font-semibold tracking-tight text-white sm:text-xl">
@@ -456,8 +481,8 @@ export function Testimonials() {
         </motion.div>
 
         <motion.div
-          className="mt-16 grid max-w-5xl gap-7 lg:mt-20 lg:grid-cols-2"
-          variants={listStaggerParent}
+          className="mt-14 grid max-w-5xl gap-6 lg:mt-16 lg:grid-cols-2"
+          variants={listStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -467,18 +492,22 @@ export function Testimonials() {
             timeframe="Physique and presence block (demo photography)"
             beforeSrc={img.ba1Before}
             afterSrc={img.ba1After}
+            fadeChildVariants={fadeChild}
+            isMobile={isMobile}
           />
           <BeforeAfterCard
             name="Reference pair · A"
             timeframe="Communication and discipline (demo photography)"
             beforeSrc={img.ba2Before}
             afterSrc={img.ba2After}
+            fadeChildVariants={fadeChild}
+            isMobile={isMobile}
           />
         </motion.div>
 
         <motion.div
-          className="mt-16 w-full max-w-5xl lg:mt-20"
-          variants={fadeUp}
+          className="mt-14 w-full max-w-5xl lg:mt-16"
+          variants={fadeMain}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -493,7 +522,7 @@ export function Testimonials() {
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={viewport}
-                transition={txReveal(DURATION_REVEAL, i * STAGGER_TABLE_ROW)}
+                transition={txReveal(DURATION_REVEAL, i * rowStagger)}
                 className="group relative overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-950/60"
               >
                 <div className="relative aspect-[3/4]">
@@ -515,8 +544,8 @@ export function Testimonials() {
         </motion.div>
 
         <motion.div
-          className="mt-16 w-full max-w-5xl lg:mt-20"
-          variants={listStaggerParent}
+          className="mt-14 w-full max-w-5xl lg:mt-16"
+          variants={listStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -530,14 +559,19 @@ export function Testimonials() {
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
             {mosaic.map((m) => (
-              <MosaicTile key={m.src} {...m} />
+              <MosaicTile
+                key={m.src}
+                {...m}
+                fadeChildVariants={fadeChild}
+                isMobile={isMobile}
+              />
             ))}
           </div>
         </motion.div>
 
         <motion.div
-          className="mt-14 grid w-full max-w-5xl gap-7 lg:mt-20 lg:grid-cols-2"
-          variants={listStaggerParent}
+          className="mt-12 grid w-full max-w-5xl gap-6 lg:mt-16 lg:grid-cols-2"
+          variants={listStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -545,8 +579,8 @@ export function Testimonials() {
           {quotes.map((q) => (
             <motion.figure
               key={q.tag}
-              variants={fadeUpChild}
-              whileHover={{ y: -2 }}
+              variants={fadeChild}
+              whileHover={{ y: isMobile ? -1 : -2 }}
               transition={SURFACE_SPRING}
               className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-8"
             >
@@ -565,8 +599,8 @@ export function Testimonials() {
         </motion.div>
 
         <motion.div
-          className="mt-16 w-full max-w-5xl lg:mt-20"
-          variants={listStaggerParent}
+          className="mt-14 w-full max-w-5xl lg:mt-16"
+          variants={listStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -576,14 +610,20 @@ export function Testimonials() {
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {videoStories.map((v, i) => (
-              <VideoStoryCard key={v.title} {...v} index={i} />
+              <VideoStoryCard
+                key={v.title}
+                {...v}
+                index={i}
+                fadeChildVariants={fadeChild}
+                isMobile={isMobile}
+              />
             ))}
           </div>
         </motion.div>
 
         <motion.div
-          className="mt-16 w-full max-w-2xl lg:mt-20"
-          variants={fadeUp}
+          className="mt-14 w-full max-w-2xl lg:mt-16"
+          variants={fadeMain}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -612,7 +652,7 @@ export function Testimonials() {
                   initial={{ opacity: 0, x: 8 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={viewport}
-                  transition={txReveal(DURATION_OPACITY, i * STAGGER_TABLE_ROW)}
+                  transition={txReveal(DURATION_OPACITY, i * rowStagger)}
                   className={cn(
                     "ml-auto max-w-[94%] rounded-2xl rounded-tr-sm border px-4 py-3",
                     "border-emerald-500/12 bg-emerald-950/[0.2] shadow-[0_12px_40px_-16px_rgba(0,0,0,0.55)]",

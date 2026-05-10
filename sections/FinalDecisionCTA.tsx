@@ -2,25 +2,28 @@
 
 import { SectionContinuity } from "@/components/SectionContinuity";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
-import { useRevealViewport } from "@/contexts/mobile-conversion";
+import {
+  useIsMobileConversion,
+  useRevealViewport,
+} from "@/contexts/mobile-conversion";
 import {
   DURATION_OPACITY,
   DURATION_REVEAL,
   TAP_SPRING,
-  fadeUp,
-  headerStaggerParent,
+  getFadeUpReveal,
+  getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const ROTATING_LINES = [
-  "Potential without structure becomes drift — quietly.",
-  "Identity hardens where repetition meets refusal to negotiate.",
-  "Discipline becomes self-respect when performance stops being the point.",
-  "Your future self is financed by today’s non-negotiables.",
+  "Talent without structure becomes drift.",
+  "Identity hardens where you stop negotiating small exits.",
+  "Discipline becomes self-respect when the standard is quiet — and fixed.",
+  "The life you want is funded by today’s non-negotiables.",
 ] as const;
 
 const FLOAT_FRAGMENTS: readonly {
@@ -44,15 +47,22 @@ function scrollToPaths() {
 
 export function FinalDecisionCTA() {
   const viewport = useRevealViewport();
+  const isMobile = useIsMobileConversion();
   const { openAssessment } = useAssessmentModal();
   const [lineIndex, setLineIndex] = useState(0);
+  const headerStagger = useMemo(
+    () => getHeaderStaggerParent(isMobile),
+    [isMobile],
+  );
+  const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
+  const lineIntervalMs = isMobile ? 4800 : 6200;
 
   useEffect(() => {
     const id = window.setInterval(() => {
       setLineIndex((i) => (i + 1) % ROTATING_LINES.length);
-    }, 6200);
+    }, lineIntervalMs);
     return () => window.clearInterval(id);
-  }, []);
+  }, [lineIntervalMs]);
 
   return (
     <section
@@ -114,10 +124,10 @@ export function FinalDecisionCTA() {
           initial={{ opacity: 0 }}
           animate={{
             opacity: [0.15, 0.32, 0.18],
-            y: [0, -6, 0],
+            y: [0, -4, 0],
           }}
           transition={{
-            duration: 16 + f.delay,
+            duration: 13 + f.delay,
             repeat: Infinity,
             ease: "easeInOut",
             delay: f.delay,
@@ -131,35 +141,35 @@ export function FinalDecisionCTA() {
       <div className={shellStandard}>
         <motion.div
           className={cn(leadLeft, "max-w-[min(46rem,100%)] lg:max-w-[44rem]")}
-          variants={headerStaggerParent}
+          variants={headerStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <motion.h2
             id="final-decision-cta-heading"
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-section text-white"
           >
-            The next version of you is decided by standards.
+            The next version of you is a standards decision.
           </motion.h2>
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-prose-calm mt-10 max-w-[34rem] text-pretty text-zinc-500 sm:mt-11 sm:text-lg sm:leading-[1.78]"
           >
-            Most people spend years negotiating with their potential.
+            Most people negotiate with their potential for years.
             <span className="mt-3 block text-zinc-400">
-              Transformation begins when execution stops being optional.
+              Change starts when execution is no longer optional.
             </span>
           </motion.p>
         </motion.div>
 
         <motion.div
-          className="relative mt-14 max-w-xl sm:mt-16"
+          className="relative mt-12 max-w-xl sm:mt-14"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={viewport}
-          transition={txReveal(DURATION_OPACITY, 0.38)}
+          transition={txReveal(DURATION_OPACITY, isMobile ? 0.22 : 0.38)}
         >
           <div className="ascend-surface-soft relative min-h-[3.25rem] rounded-[1.25rem] px-6 py-5 sm:min-h-[3.5rem] sm:px-8">
             <AnimatePresence mode="wait">
@@ -178,11 +188,11 @@ export function FinalDecisionCTA() {
         </motion.div>
 
         <motion.div
-          className="mt-14 flex max-w-2xl flex-col items-stretch gap-4 sm:mt-16 sm:flex-row sm:items-center sm:gap-5 lg:gap-6"
-          initial={{ opacity: 0, y: 24 }}
+          className="mt-12 flex max-w-2xl flex-col items-stretch gap-3 sm:mt-14 sm:flex-row sm:items-center sm:gap-4 lg:gap-5"
+          initial={{ opacity: 0, y: isMobile ? 14 : 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL, 0.48)}
+          transition={txReveal(DURATION_REVEAL, isMobile ? 0.28 : 0.48)}
         >
           <motion.button
             type="button"
@@ -194,7 +204,7 @@ export function FinalDecisionCTA() {
             whileTap={{ scale: 0.988 }}
             transition={TAP_SPRING}
           >
-            Request Private Assessment
+            Start intake
           </motion.button>
           <motion.button
             type="button"
@@ -207,19 +217,19 @@ export function FinalDecisionCTA() {
             whileTap={{ scale: 0.988 }}
             transition={TAP_SPRING}
           >
-            Review Allocation & Depth
+            See pricing
           </motion.button>
         </motion.div>
 
         <motion.p
-          className="mt-16 max-w-md text-left text-[12px] leading-[1.72] text-zinc-600 sm:mt-20 sm:text-[13px] sm:leading-[1.75]"
+          className="mt-12 max-w-md text-left text-[12px] leading-[1.72] text-zinc-600 sm:mt-16 sm:text-[13px] sm:leading-[1.75]"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL, 0.58)}
+          transition={txReveal(DURATION_REVEAL, isMobile ? 0.36 : 0.58)}
         >
-          If nothing changes, nothing changes. The question is whether your
-          standards move first — or circumstance forces them later.
+          If nothing changes, nothing changes. Either your standards move first —
+          or life moves them for you.
         </motion.p>
       </div>
     </section>

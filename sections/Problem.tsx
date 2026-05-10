@@ -1,13 +1,16 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import { useRevealViewport } from "@/contexts/mobile-conversion";
+import {
+  useIsMobileConversion,
+  useRevealViewport,
+} from "@/contexts/mobile-conversion";
 import {
   SURFACE_SPRING,
   cardReveal,
-  fadeUp,
-  gridStaggerParent,
-  headerStaggerParent,
+  getFadeUpReveal,
+  getGridStaggerParent,
+  getHeaderStaggerParent,
 } from "@/lib/motion";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
@@ -21,7 +24,7 @@ import {
   ScanLine,
   UserRound,
 } from "lucide-react";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 const pains: {
   title: string;
@@ -29,33 +32,33 @@ const pains: {
   icon: LucideIcon;
 }[] = [
   {
-    title: "Identity Drift",
-    line: "Private behavior and public claim diverge — you register the tension before anyone else does.",
+    title: "Identity drift",
+    line: "What you do in private stops matching what you claim in public.",
     icon: UserRound,
   },
   {
-    title: "Negotiated Discipline",
-    line: "Standards flex the moment pressure arrives — and quiet resentment follows.",
+    title: "Negotiated discipline",
+    line: "Rules loosen the moment the week gets heavy — then the guilt stacks.",
     icon: CalendarClock,
   },
   {
-    title: "Physique Dissonance",
-    line: "Your body stops matching the presence you are trying to carry.",
+    title: "Physique gap",
+    line: "Your body no longer matches the presence you are trying to project.",
     icon: ScanLine,
   },
   {
-    title: "Presence Under Load",
-    line: "Communication tightens when stakes rise — and your voice follows.",
+    title: "Presence under pressure",
+    line: "When stakes rise, your voice and clarity are the first things to go.",
     icon: MessageCircle,
   },
   {
-    title: "Broken Cadence",
-    line: "Momentum stalls when accountability stays optional instead of ambient.",
+    title: "Broken cadence",
+    line: "You start strong, then accountability becomes optional again.",
     icon: RefreshCw,
   },
   {
-    title: "Architectural Fog",
-    line: "Effort without mentorship depth reads as motion — not trajectory.",
+    title: "No clear lane",
+    line: "Busy days feel like motion — but the trajectory is unclear.",
     icon: Compass,
   },
 ];
@@ -137,6 +140,13 @@ function PainCard({ title, line, icon: Icon }: (typeof pains)[number]) {
 
 export function Problem() {
   const viewport = useRevealViewport();
+  const isMobile = useIsMobileConversion();
+  const headerStagger = useMemo(
+    () => getHeaderStaggerParent(isMobile),
+    [isMobile],
+  );
+  const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
+  const gridStagger = useMemo(() => getGridStaggerParent(isMobile), [isMobile]);
   return (
     <section
       id="about"
@@ -161,46 +171,40 @@ export function Problem() {
       <div className={shellStandard}>
         <motion.div
           className={leadLeft}
-          variants={headerStaggerParent}
+          variants={headerStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <motion.h2
             id="problem-heading"
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-section-sm text-white"
           >
-            Transformation begins when self-negotiation ends.{" "}
+            The friction is not laziness.{" "}
             <br className="hidden sm:block" />
             <span className="sm:ml-1.5">
-              Most tension is architectural — not moral.
+              It is standards that bend when life gets loud.
             </span>
           </motion.h2>
           <motion.div
-            variants={fadeUp}
+            variants={fadeMain}
             className="mt-10 max-w-[34rem] space-y-5 text-pretty sm:mt-11"
           >
             <p className="ascend-prose-calm text-zinc-500">
-              Noise fragments discipline, dulls presence, and quietly rewrites
-              what you accept as normal — until your identity starts defending
-              the compromise.
-            </p>
-            <p className="ascend-prose-calm text-zinc-500">
-              The pain is not that you are incapable. It is that nothing around
-              you is engineered to hold a higher standard — until you choose a
-              private architecture that does.
+              Without a private structure, discipline fragments — and your
+              identity quietly starts defending small compromises.
             </p>
             <p className="text-[13px] font-medium leading-relaxed text-zinc-400/95 sm:text-[14px] sm:leading-relaxed">
-              Manual intake is sequenced — reserved for individuals ready for
-              structured change, not curiosity loops.
+              Limited capacity. Applications are read in order — not as a bulk
+              funnel.
             </p>
           </motion.div>
         </motion.div>
 
         <motion.div
           className="mt-14 grid w-full max-w-5xl grid-cols-1 gap-5 sm:mt-24 sm:grid-cols-2 sm:gap-6 lg:mt-28 lg:grid-cols-3 lg:gap-7 [perspective:1600px]"
-          variants={gridStaggerParent}
+          variants={gridStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}

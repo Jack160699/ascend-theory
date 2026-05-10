@@ -3,24 +3,27 @@
 import { SectionContinuity } from "@/components/SectionContinuity";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
-import { useRevealViewport } from "@/contexts/mobile-conversion";
+import {
+  useIsMobileConversion,
+  useRevealViewport,
+} from "@/contexts/mobile-conversion";
 import {
   DURATION_OPACITY,
   DURATION_REVEAL,
   SURFACE_SPRING,
   TAP_SPRING,
-  cardReveal,
-  fadeUp,
-  gridStaggerParent,
-  headerStaggerParent,
+  getCardRevealMobile,
+  getFadeUpReveal,
+  getGridStaggerParent,
+  getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
 import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import type { TierKey } from "@/lib/lead-context";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { Check } from "lucide-react";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 const tiers: {
   key: TierKey;
@@ -39,36 +42,32 @@ const tiers: {
     name: "Ascend Core",
     label: "Foundation access",
     purpose:
-      "Structured foundation entry — same transformation philosophy with calibrated mentorship proximity and execution discipline before higher density.",
+      "Full philosophy — foundation mentor rhythm, structured accountability, and room to earn density.",
     price: "₹7,000 + GST / month",
     features: [
-      "Identity-grade systems across physique, communication, discipline, lifestyle",
-      "Architected accountability and reserved mentor capacity",
-      "Foundation cadence — depth matched to season, not ego",
-      "Personalization through frameworks, audits, and weekly execution reviews",
-      "Response priority aligned to foundation allocation",
-      "Premium peer field — standards without noise",
-      "Private intake routing — read manually before invitation",
+      "Training, voice, discipline, lifestyle — one system",
+      "Structured check-ins and execution reviews",
+      "Mentor touchpoints inside the shared container",
+      "Peer field with a serious bar",
+      "Intake read manually before invite",
     ],
-    cta: "Apply For Foundation Allocation",
+    cta: "Apply — Core",
   },
   {
     key: "pro",
     name: "Ascend Pro",
     label: "High-accountability mentorship",
     purpose:
-      "Accelerated identity upgrade — the strongest balance of scale and private attention. Same philosophy; materially higher proximity, cadence, and response priority.",
+      "Same philosophy — more proximity, faster feedback, and priority when decisions cannot wait.",
     price: "₹15,000 + GST / month",
     features: [
-      "Elevated mentor proximity with high-frequency accountability loops",
-      "Priority response architecture for time-sensitive leadership decisions",
-      "Deeper personalization across communication, lifestyle, and execution",
-      "Integrated private calibration when stakes require it",
-      "Identity-grade transformation held with elite mentorship density",
-      "Selective cohort pacing — reserved onboarding windows",
-      "Same methodology as Core — different access cadence",
+      "Tighter accountability loops",
+      "Priority response windows",
+      "Deeper personalization across domains",
+      "Private calibration when stakes demand it",
+      "Reserved onboarding pacing",
     ],
-    cta: "Request Pro Allocation Review",
+    cta: "Apply — Pro",
     badge: "Primary allocation",
   },
   {
@@ -76,20 +75,18 @@ const tiers: {
     name: "Ascend Black",
     label: "Private transformation architecture",
     purpose:
-      "Confidential, executive-level allocation — highest-access mentorship, discretion-first, invitation-only after manual review.",
+      "Highest access — discretion-first, invitation-only after manual review.",
     price: "₹55,000 + GST / month",
     priceNote:
-      "Private allocation · Discretion-first · Manually reviewed · Invitation only",
+      "Private · discretion-first · manually reviewed · invitation only",
     features: [
-      "Reserved private rails — not a mass-market container",
-      "Highest mentor proximity and bespoke execution calibration",
-      "Confidential communication and offline-grade attention windows",
-      "Executive-tempo orchestration across domains",
-      "Full personalization of cadence, access, and accountability depth",
-      "Selective acceptance — alignment over volume",
-      "Same philosophy — maximum private attention architecture",
+      "Highest mentor proximity",
+      "Confidential communication rails",
+      "Bespoke cadence and accountability depth",
+      "Executive-tempo support across domains",
+      "Same philosophy — maximum private attention",
     ],
-    cta: "Request Private Allocation",
+    cta: "Request Black review",
     badge: "Invitation only",
   },
 ];
@@ -130,10 +127,12 @@ function PricingCard({
   tier,
   onOpenAssessment,
   urgencySlot,
+  cardVariants,
 }: {
   tier: (typeof tiers)[number];
   onOpenAssessment: (key: TierKey) => void;
   urgencySlot: number;
+  cardVariants: Variants;
 }) {
   const rootRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
@@ -175,7 +174,7 @@ function PricingCard({
   return (
     <motion.article
       ref={rootRef}
-      variants={cardReveal}
+      variants={cardVariants}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       className={cn(
@@ -397,7 +396,18 @@ function PricingCard({
 
 export function Pricing() {
   const viewport = useRevealViewport();
+  const isMobile = useIsMobileConversion();
   const { openAssessment } = useAssessmentModal();
+  const headerStagger = useMemo(
+    () => getHeaderStaggerParent(isMobile),
+    [isMobile],
+  );
+  const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
+  const gridStagger = useMemo(() => getGridStaggerParent(isMobile), [isMobile]);
+  const cardVariants = useMemo(
+    () => getCardRevealMobile(isMobile),
+    [isMobile],
+  );
 
   return (
     <section
@@ -424,56 +434,49 @@ export function Pricing() {
       <div className={shellWide}>
         <motion.div
           className={leadLeft}
-          variants={headerStaggerParent}
+          variants={headerStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-eyebrow mb-5 text-zinc-500 sm:mb-6"
           >
-            Allocation & entry
+            Pricing
           </motion.p>
           <motion.h2
             id="pricing-heading"
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-type-section-sm text-white"
           >
-            Request the mentorship depth that matches your season.
+            Pick the depth that matches your season.
           </motion.h2>
           <motion.p
-            variants={fadeUp}
+            variants={fadeMain}
             className="ascend-prose-calm mt-8 max-w-[34rem] text-pretty text-zinc-500 sm:mt-9"
           >
-            Same transformation philosophy across every tier. What scales is
-            mentor proximity, accountability intensity, response priority, and
-            private calibration — never how much change you are owed.
+            Same philosophy on every tier. What changes is mentor proximity,
+            how fast we respond, and how private the calibration can go.
           </motion.p>
         </motion.div>
 
         <motion.div
-          className="mt-9 max-w-2xl space-y-2.5 text-left text-[12px] leading-[1.72] text-zinc-600 sm:mt-10 sm:text-[13px] sm:leading-[1.75]"
-          variants={fadeUp}
+          className="mt-9 max-w-2xl space-y-2 text-left text-[12px] leading-[1.72] text-zinc-600 sm:mt-10 sm:text-[13px] sm:leading-[1.75]"
+          variants={fadeMain}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
-          <p>
-            Reserved mentor capacity · selective allocation · structured
-            methodology.
-          </p>
-          <p>
-            Reserved onboarding cadence · private accountability architecture.
-          </p>
-          <p>Identity-grade seriousness — not mass-market coaching.</p>
+          <p>Limited seats · manual intake · structured methodology.</p>
+          <p>Serious environment — not mass-market coaching.</p>
         </motion.div>
 
         <PricingCapacityRibbon viewport={viewport} />
 
         <motion.div
           className="relative mx-auto mt-14 max-w-6xl sm:mt-16 lg:mt-20"
-          variants={gridStaggerParent}
+          variants={gridStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -491,6 +494,7 @@ export function Pricing() {
                 tier={tiers[0]}
                 urgencySlot={0}
                 onOpenAssessment={openAssessment}
+                cardVariants={cardVariants}
               />
             </div>
             <div className="relative order-1 lg:order-2 lg:z-20 lg:px-1">
@@ -501,6 +505,7 @@ export function Pricing() {
                 tier={tiers[1]}
                 urgencySlot={1}
                 onOpenAssessment={openAssessment}
+                cardVariants={cardVariants}
               />
             </div>
             <div className="relative order-3 lg:order-3 lg:pb-10">
@@ -511,25 +516,25 @@ export function Pricing() {
                 tier={tiers[2]}
                 urgencySlot={2}
                 onOpenAssessment={openAssessment}
+                cardVariants={cardVariants}
               />
             </div>
           </div>
         </motion.div>
 
         <motion.div
-          className="mt-16 max-w-2xl space-y-4 text-left text-[13px] leading-[1.72] text-zinc-500 sm:mt-20 sm:leading-[1.75] lg:pl-1"
-          variants={fadeUp}
+          className="mt-12 max-w-2xl space-y-3 text-left text-[13px] leading-[1.72] text-zinc-500 sm:mt-16 sm:leading-[1.75] lg:pl-1"
+          variants={fadeMain}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
           <p>
-            Transformation depth scales with proximity, calibration, and
-            accountability — not with how much change you are owed.
+            Depth scales with access and calibration — not with entitlement.
           </p>
           <p className="text-zinc-600">
-            All paths follow the same philosophy. The difference is how deeply
-            mentorship integrates with your execution environment.
+            Same lane everywhere. Tiers change how close mentorship sits to
+            your week.
           </p>
         </motion.div>
       </div>
