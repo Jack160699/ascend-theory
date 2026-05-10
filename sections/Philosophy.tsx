@@ -11,6 +11,7 @@ import {
   headerStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useRef } from "react";
@@ -35,10 +36,7 @@ const principles: {
   {
     n: "02",
     title: "Structure Creates Discipline",
-    body: [
-      "Consistency is rarely emotional.",
-      "It is architectural.",
-    ],
+    body: ["Consistency is rarely emotional.", "It is architectural."],
     fragment: "Architecture over mood.",
   },
   {
@@ -99,19 +97,19 @@ function PrincipleRow({
         reversed ? "lg:pl-4" : "lg:pr-4",
       )}
     >
-      <div className="mb-4 flex items-baseline gap-4">
+      <div className="mb-5 flex items-baseline gap-4">
         <span className="font-mono text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-600">
           {item.n}
         </span>
         <span
-          className="h-px flex-1 max-w-[6rem] bg-gradient-to-r from-white/25 to-transparent"
+          className="h-px flex-1 max-w-[7rem] bg-gradient-to-r from-white/25 to-transparent"
           aria-hidden
         />
       </div>
-      <h3 className="text-balance font-sans text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl lg:text-[2rem] lg:leading-[1.12]">
+      <h3 className="text-balance font-sans text-2xl font-semibold tracking-[-0.032em] text-white sm:text-3xl lg:text-[2rem] lg:leading-[1.1]">
         {item.title}
       </h3>
-      <div className="mt-6 space-y-3 text-pretty text-[15px] leading-[1.75] text-zinc-500 sm:text-base sm:leading-relaxed">
+      <div className="mt-7 space-y-3.5 text-pretty text-[15px] leading-[1.78] text-zinc-500 sm:text-base sm:leading-[1.8]">
         {item.body.map((line) => (
           <p key={line}>{line}</p>
         ))}
@@ -125,7 +123,7 @@ function PrincipleRow({
         ref={rootRef}
         onMouseMove={onMove}
         onMouseLeave={onLeave}
-        className="group relative h-full min-h-[14rem] overflow-hidden rounded-[1.25rem] border border-white/[0.08] bg-white/[0.025] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:min-h-[16rem] sm:p-10"
+        className="group relative h-full min-h-[14rem] overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.025] p-9 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:min-h-[16rem] sm:p-11"
         whileHover={{ y: -3 }}
         transition={SURFACE_SPRING}
       >
@@ -172,7 +170,7 @@ function PrincipleRow({
       initial="hidden"
       whileInView="visible"
       viewport={viewport}
-      className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16 lg:gap-x-20"
+      className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-x-16 lg:gap-y-20 xl:gap-x-20"
     >
       {reversed ? (
         <>
@@ -194,7 +192,7 @@ export function Philosophy() {
     <section
       id="philosophy"
       data-conversion-zone="philosophy"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-36"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(6.5rem,12vw,9rem)] pb-[clamp(7rem,15vw,10.5rem)] sm:pt-32 sm:pb-40 lg:pt-[9.5rem] lg:pb-[10.5rem]"
       aria-labelledby="philosophy-heading"
     >
       <SectionContinuity top={false} />
@@ -220,9 +218,9 @@ export function Philosophy() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
+      <div className={shellStandard}>
         <motion.div
-          className="mx-auto max-w-4xl"
+          className={leadLeft}
           variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
@@ -230,29 +228,29 @@ export function Philosophy() {
         >
           <motion.p
             variants={fadeUp}
-            className="mb-6 text-[11px] font-medium uppercase tracking-[0.32em] text-zinc-500"
+            className="ascend-type-eyebrow mb-7 text-zinc-500 lg:mb-8"
           >
             The Ascend Philosophy
           </motion.p>
           <motion.h2
             id="philosophy-heading"
             variants={fadeUp}
-            className="text-balance font-sans text-[clamp(1.85rem,5vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-white"
+            className="ascend-type-section text-white"
           >
             Transformation Is Not Built Through Motivation.
           </motion.h2>
 
           <motion.div
             variants={fadeUp}
-            className="mx-auto mt-12 max-w-2xl space-y-6 border-l border-white/[0.1] pl-6 sm:pl-8"
+            className="mt-14 max-w-[34rem] space-y-7 border-l border-white/[0.09] pl-6 sm:pl-8 lg:mt-16"
           >
-            <p className="text-pretty text-lg leading-relaxed text-zinc-400 sm:text-xl sm:leading-relaxed">
+            <p className="ascend-prose-lede text-pretty text-zinc-400">
               Most people already know what they should do.
             </p>
-            <p className="text-pretty text-[15px] leading-relaxed text-zinc-500 sm:text-base">
-              The problem is not information.
+            <p className="ascend-prose-calm text-pretty text-zinc-500">
+              The problem is rarely information — it is buffered standards.
             </p>
-            <div className="space-y-2 text-[15px] leading-relaxed text-zinc-500 sm:text-base">
+            <div className="space-y-2.5 text-[15px] leading-[1.78] text-zinc-500 sm:text-base sm:leading-[1.8]">
               <p className="font-medium text-zinc-400">The problem is:</p>
               <ul className="list-none space-y-2 pl-0">
                 {[
@@ -272,23 +270,23 @@ export function Philosophy() {
                 ))}
               </ul>
             </div>
-            <p className="pt-2 text-[15px] font-medium leading-relaxed text-zinc-300 sm:text-base">
+            <p className="pt-3 text-[15px] font-medium leading-[1.75] text-zinc-300 sm:text-base sm:leading-[1.78]">
               Ascend Theory exists to solve that.
             </p>
           </motion.div>
         </motion.div>
 
         <motion.p
-          className="mx-auto mt-16 max-w-2xl text-center font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-600 sm:mt-20"
+          className="mt-20 max-w-[34rem] font-mono text-[10px] font-medium uppercase leading-relaxed tracking-[0.28em] text-zinc-600 sm:mt-24"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={viewport}
           transition={txReveal(DURATION_OPACITY, 0.1)}
         >
-          Identity reconstruction — not conventional coaching
+          Identity architecture — not conventional coaching
         </motion.p>
 
-        <div className="mx-auto mt-14 max-w-5xl space-y-20 sm:mt-20 lg:space-y-28">
+        <div className="mt-16 max-w-5xl space-y-24 sm:mt-20 lg:mt-24 lg:space-y-32">
           {principles.map((p, i) => (
             <PrincipleRow key={p.n} item={p} reversed={i % 2 === 1} />
           ))}

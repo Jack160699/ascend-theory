@@ -9,6 +9,7 @@ import {
   gridStaggerParent,
   headerStaggerParent,
 } from "@/lib/motion";
+import { leadRight, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
@@ -47,7 +48,7 @@ const pillars: {
   {
     title: "Luxury Accountability",
     description:
-      "Private mentorship density, response priority, and proximity — scaled to the tier you select, never to “better transformation.”",
+      "Private mentorship density, response priority, and proximity — scaled to the tier you select, never to “more transformation for everyone.”",
     icon: ShieldCheck,
     floatMs: 5400,
   },
@@ -116,8 +117,8 @@ function SystemCard({
     >
       <motion.div
         className={cn(
-          "relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.09]",
-          "bg-white/[0.025] p-7 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl",
+          "relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/[0.09]",
+          "bg-white/[0.025] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl sm:p-9",
           "transition-[border-color,box-shadow] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
           "group-hover:border-white/[0.16] group-hover:shadow-[0_32px_90px_-48px_rgba(0,0,0,0.9),0_0_72px_-24px_rgba(255,255,255,0.08)]",
         )}
@@ -157,10 +158,10 @@ function SystemCard({
           }}
         />
         <div
-          className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.04]"
+          className="pointer-events-none absolute inset-0 rounded-[1.35rem] ring-1 ring-inset ring-white/[0.04]"
           aria-hidden
         />
-        <div className="relative z-10 flex h-full flex-col gap-5">
+        <div className="relative z-10 flex h-full flex-col gap-6">
           <motion.div
             className="flex size-11 items-center justify-center rounded-xl border border-white/[0.1] bg-zinc-950/50 text-zinc-300 shadow-[0_0_24px_-8px_rgba(255,255,255,0.06)] transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:border-white/[0.14] group-hover:text-white"
             animate={{ y: [0, -3, 0] }}
@@ -173,10 +174,10 @@ function SystemCard({
             <Icon className="size-[20px]" strokeWidth={1.25} />
           </motion.div>
           <div className="flex flex-1 flex-col">
-            <h3 className="text-[16px] font-semibold leading-snug tracking-tight text-white">
+            <h3 className="text-[16px] font-semibold leading-snug tracking-[-0.012em] text-white">
               {title}
             </h3>
-            <p className="mt-3 text-[13px] leading-relaxed text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
+            <p className="mt-3.5 text-[13px] leading-[1.72] text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
               {description}
             </p>
           </div>
@@ -191,7 +192,7 @@ export function System() {
     <section
       id="programs"
       data-conversion-zone="programs"
-      className="relative overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-32"
+      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-[clamp(5.75rem,11vw,8rem)] pb-[clamp(6.5rem,14vw,10rem)] sm:pt-28 sm:pb-36 lg:pb-[9.5rem]"
       aria-labelledby="system-heading"
     >
       <SectionContinuity />
@@ -208,9 +209,9 @@ export function System() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.55)_75%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
+      <div className={shellStandard}>
         <motion.div
-          className="mx-auto max-w-3xl text-center"
+          className={leadRight}
           variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
@@ -218,20 +219,20 @@ export function System() {
         >
           <motion.p
             variants={fadeUp}
-            className="mb-5 text-[11px] font-medium uppercase tracking-[0.32em] text-zinc-500"
+            className="ascend-type-eyebrow mb-6 text-zinc-500 lg:mb-7"
           >
             The Ascend architecture
           </motion.p>
           <motion.h2
             id="system-heading"
             variants={fadeUp}
-            className="text-balance text-[clamp(1.95rem,9vw,2.45rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-white sm:text-4xl sm:leading-[1.1] lg:text-[2.45rem]"
+            className="ascend-type-section-sm text-white"
           >
             One Philosophy. Layered Mentorship Depth.
           </motion.h2>
           <motion.p
             variants={fadeUp}
-            className="mx-auto mt-8 max-w-2xl text-pretty text-[15px] leading-[1.75] text-zinc-500 sm:text-base sm:leading-relaxed"
+            className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
           >
             One philosophy. Tiers scale mentor proximity, accountability
             intensity, response priority, personalization depth, and private
@@ -240,7 +241,7 @@ export function System() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-16 grid max-w-6xl grid-cols-1 gap-5 sm:mt-20 sm:grid-cols-2 sm:gap-6 lg:mt-24 lg:grid-cols-3 xl:grid-cols-5"
+          className="mt-16 grid w-full max-w-6xl grid-cols-1 gap-6 sm:mt-20 sm:grid-cols-2 sm:gap-6 lg:mt-24 lg:grid-cols-3 xl:grid-cols-5"
           variants={gridStaggerParent}
           initial="hidden"
           whileInView="visible"

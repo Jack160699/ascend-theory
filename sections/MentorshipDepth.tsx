@@ -10,6 +10,7 @@ import {
   headerStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { leadRight, shellNarrow } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useRef } from "react";
@@ -109,7 +110,7 @@ function DepthCard({
     >
       <div
         className={cn(
-            "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100",
+          "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100",
           item.key === "private" &&
             "bg-[radial-gradient(ellipse_at_50%_0%,rgba(180,150,110,0.12),transparent_65%)]",
           item.key === "high" &&
@@ -120,8 +121,9 @@ function DepthCard({
       />
       <div
         className={cn(
-          "relative overflow-hidden rounded-[1.25rem] border border-white/[0.09] bg-white/[0.025] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl sm:p-10",
-          item.key === "private" && "border-amber-950/20 bg-gradient-to-br from-zinc-950/90 to-black",
+          "relative overflow-hidden rounded-[1.35rem] border border-white/[0.09] bg-white/[0.025] p-9 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl sm:p-11",
+          item.key === "private" &&
+            "border-amber-950/20 bg-gradient-to-br from-zinc-950/90 to-black",
         )}
       >
         <div
@@ -132,21 +134,23 @@ function DepthCard({
               "radial-gradient(640px circle at var(--dx, 50%) var(--dy, 50%), rgba(255,255,255,0.08), transparent 58%)",
           }}
         />
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-12">
-          <div className="shrink-0 lg:w-[8.5rem]">
+        <div className="relative z-10 flex flex-col gap-7 lg:flex-row lg:items-start lg:gap-14">
+          <div className="shrink-0 lg:w-[9rem]">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-600">
               {String(index + 1).padStart(2, "0")}
             </p>
-            <p className="mt-3 text-[11px] font-medium uppercase leading-relaxed tracking-[0.22em] text-zinc-500">
+            <p className="mt-3.5 text-[11px] font-medium uppercase leading-relaxed tracking-[0.22em] text-zinc-500">
               {item.label}
             </p>
-            <p className="mt-4 text-xs leading-relaxed text-zinc-600">{item.tone}</p>
+            <p className="mt-4 text-xs leading-[1.65] text-zinc-600">
+              {item.tone}
+            </p>
           </div>
-          <div className="min-w-0 flex-1 border-t border-white/[0.06] pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
-            <h3 className="text-balance font-sans text-xl font-semibold tracking-[-0.02em] text-white sm:text-2xl">
+          <div className="min-w-0 flex-1 border-t border-white/[0.06] pt-7 lg:border-l lg:border-t-0 lg:pl-11 lg:pt-0">
+            <h3 className="text-balance font-sans text-xl font-semibold tracking-[-0.024em] text-white sm:text-2xl sm:leading-[1.12]">
               {item.title}
             </h3>
-            <ul className="mt-6 space-y-3 text-[14px] leading-relaxed text-zinc-500 sm:text-[15px]">
+            <ul className="mt-7 space-y-3.5 text-[14px] leading-[1.72] text-zinc-500 sm:text-[15px] sm:leading-[1.75]">
               {item.bullets.map((b) => (
                 <li key={b} className="flex gap-3">
                   <span
@@ -169,7 +173,7 @@ export function MentorshipDepth() {
     <section
       id="mentorship-depth"
       data-conversion-zone="mentorship"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-36"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-[clamp(6.25rem,14vw,9.5rem)] sm:py-32 lg:py-[9rem]"
       aria-labelledby="mentorship-depth-heading"
     >
       <SectionContinuity />
@@ -188,49 +192,52 @@ export function MentorshipDepth() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.58)_78%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-3xl px-6 sm:px-10 lg:mx-auto lg:max-w-4xl lg:px-12">
+      <div className={shellNarrow}>
         <motion.div
           variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
-          className="text-center"
+          className={leadRight}
         >
           <motion.p
             variants={fadeUp}
-            className="mb-6 text-[11px] font-medium uppercase tracking-[0.32em] text-zinc-500"
+            className="ascend-type-eyebrow mb-7 text-zinc-500 lg:mb-8"
           >
             Mentorship depth
           </motion.p>
           <motion.h2
             id="mentorship-depth-heading"
             variants={fadeUp}
-            className="text-balance font-sans text-[clamp(1.75rem,4.5vw,3rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-white"
+            className="ascend-type-section text-white"
           >
             Transformation Does Not Change.
-            <span className="mt-3 block text-zinc-300">Mentorship Depth Does.</span>
+            <span className="mt-3 block text-zinc-300">
+              Mentorship Depth Does.
+            </span>
           </motion.h2>
           <motion.div
             variants={fadeUp}
-            className="mx-auto mt-10 max-w-2xl space-y-5 text-pretty text-[15px] leading-[1.8] text-zinc-500 sm:text-base"
+            className="mt-10 max-w-[34rem] space-y-6 text-pretty sm:mt-11"
           >
-            <p>
-              Every Ascend path follows the same philosophy: discipline, physique,
-              communication, accountability, and identity-level growth.
+            <p className="ascend-prose-calm text-zinc-500">
+              Every Ascend path follows the same philosophy: discipline,
+              physique, communication, accountability, and identity-level
+              growth.
             </p>
-            <p>
+            <p className="ascend-prose-calm text-zinc-500">
               The difference is how deeply mentorship integrates into your
               execution environment.
             </p>
           </motion.div>
         </motion.div>
 
-        <div className="relative mx-auto mt-16 max-w-3xl sm:mt-20 lg:mt-24 lg:max-w-3xl">
+        <div className="relative mx-auto mt-20 max-w-3xl sm:mt-24 lg:mt-28 lg:max-w-3xl">
           <div
             className="pointer-events-none absolute left-[1.1rem] top-0 hidden h-[calc(100%-2rem)] w-px bg-gradient-to-b from-white/15 via-white/[0.06] to-transparent sm:left-[1.25rem] lg:block"
             aria-hidden
           />
-          <div className="space-y-12 sm:space-y-14 lg:space-y-16 lg:pl-10">
+          <div className="space-y-14 sm:space-y-16 lg:space-y-20 lg:pl-10">
             {depthLevels.map((item, i) => (
               <DepthCard key={item.key} item={item} index={i} />
             ))}
@@ -238,23 +245,24 @@ export function MentorshipDepth() {
         </div>
 
         <motion.div
-          className="mx-auto mt-16 max-w-2xl space-y-4 border-t border-white/[0.06] pt-12 text-center sm:mt-20"
+          className="mt-16 max-w-xl space-y-4 border-t border-white/[0.06] pt-12 text-left sm:mt-20 lg:pl-1"
           initial={{ opacity: 0, y: RISE_Y_CARD * 0.85 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
           transition={txReveal(DURATION_REVEAL)}
         >
-          <p className="text-[13px] leading-relaxed text-zinc-600 sm:text-sm">
-            Transformation outcomes are shaped by execution consistency.
+          <p className="text-[13px] leading-[1.72] text-zinc-600 sm:text-sm sm:leading-[1.75]">
+            Transformation outcomes track execution consistency — not rhetoric.
           </p>
           <p className="text-[13px] leading-relaxed text-zinc-600 sm:text-sm">
-            Mentorship depth influences speed, calibration, and accountability.
+            Mentorship depth changes calibration speed, accountability density,
+            and how closely standards sit to your decisions.
           </p>
           <p className="text-[13px] leading-relaxed text-zinc-600 sm:text-sm">
-            Structure scales with proximity.
+            Structure scales with proximity — never with entitlement.
           </p>
           <p className="pt-4 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-700">
-            All paths create transformation · depth is mentor integration
+            All paths demand transformation · depth is mentor integration
           </p>
         </motion.div>
       </div>

@@ -67,22 +67,22 @@ function validate(
   black: BlackAssessmentAnswers,
 ): string | null {
   if (tier === "core") {
-    if (!core.fullName.trim()) return "Please add your name.";
-    if (!core.struggle.trim()) return "Share your biggest current struggle.";
-    if (!core.goal.trim()) return "Share your primary transformation goal.";
+    if (!core.fullName.trim()) return "Add your full name.";
+    if (!core.struggle.trim()) return "Name the tension that costs you most today.";
+    if (!core.goal.trim()) return "State the transformation you are unwilling to defer.";
   }
   if (tier === "pro") {
-    if (!pro.fullName.trim()) return "Please add your name.";
-    if (!pro.misaligned.trim()) return "Describe what feels most misaligned.";
+    if (!pro.fullName.trim()) return "Add your full name.";
+    if (!pro.misaligned.trim()) return "Describe what feels most structurally misaligned.";
     if (!pro.transformation.trim())
-      return "Share what transformation matters most.";
+      return "Name the transformation that must be true in the next season.";
   }
   if (tier === "black") {
-    if (!black.fullName.trim()) return "Please add your name.";
+    if (!black.fullName.trim()) return "Add your full name.";
     if (!black.transformationLevel.trim())
-      return "Describe the level of transformation you’re seeking.";
+      return "Describe the depth of transformation your context demands.";
     if (!black.whyPrivate.trim())
-      return "Share why private mentorship matters to you.";
+      return "Explain why private allocation matters for your season.";
   }
   return null;
 }
@@ -235,20 +235,20 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
 
   const title =
     tier === "core"
-      ? "Ascend Core Assessment"
+      ? "Ascend Core · Intake"
       : tier === "pro"
-        ? "Ascend Pro Assessment"
+        ? "Ascend Pro · Intake"
         : tier === "black"
-          ? "Private Transformation Request"
+          ? "Private Allocation Request"
           : "";
 
   const tone =
     tier === "core"
-      ? "Foundational questions — we read for cadence, structure, and emotional truth."
+      ? "Foundational questions — we read for cadence, structure, and emotional truth before any invitation."
       : tier === "pro"
-        ? "Intentional depth — we map stakes to mentorship density, not packaging."
+        ? "Intentional depth — we map stakes to mentorship density, never to packaging."
         : tier === "black"
-          ? "Private allocation — selective, discreet, reviewed by humans only."
+          ? "Private allocation — selective, discreet, reviewed manually before invitation."
           : "";
 
   return (
@@ -299,18 +299,17 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                   id="assessment-modal-title"
                   className="mt-2 text-xl font-semibold tracking-tight text-white sm:text-2xl"
                 >
-                  {phase === "interpretation"
-                    ? "Assessment interpretation"
-                    : title}
+                  {phase === "interpretation" ? "Calibration read" : title}
                 </h2>
                 <p className="mt-2 max-w-md text-[13px] leading-relaxed text-zinc-500">
                   {phase === "interpretation"
-                    ? "A psychologically grounded read — calibrated to mentorship depth, not tiers as trophies."
+                    ? "A psychologically grounded read — calibrated to mentorship depth, not tiers as status."
                     : tone}
                 </p>
                 {tier === "black" && phase === "form" ? (
                   <p className="mt-3 text-[11px] leading-relaxed text-zinc-600">
-                    Private applications are reviewed manually.
+                    Private applications are reviewed manually — invitation
+                    follows fit, never urgency.
                   </p>
                 ) : null}
               </div>
@@ -355,7 +354,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                       </div>
                       <div>
                         <label className={labelClass} htmlFor="m-core-struggle">
-                          Biggest current struggle
+                          Primary tension (today)
                         </label>
                         <textarea
                           id="m-core-struggle"
@@ -369,7 +368,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                       </div>
                       <div>
                         <label className={labelClass} htmlFor="m-core-goal">
-                          Primary transformation goal
+                          Transformation you refuse to defer
                         </label>
                         <textarea
                           id="m-core-goal"
@@ -405,7 +404,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                           className={labelClass}
                           htmlFor="m-pro-misaligned"
                         >
-                          What area of life feels most misaligned?
+                          Where life feels structurally misaligned
                         </label>
                         <textarea
                           id="m-pro-misaligned"
@@ -422,7 +421,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                       </div>
                       <div>
                         <label className={labelClass} htmlFor="m-pro-transform">
-                          What transformation matters most right now?
+                          Transformation the next season must hold
                         </label>
                         <textarea
                           id="m-pro-transform"
@@ -461,7 +460,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                       </div>
                       <div>
                         <label className={labelClass} htmlFor="m-blk-level">
-                          What level of transformation are you seeking?
+                          Depth of transformation your context demands
                         </label>
                         <textarea
                           id="m-blk-level"
@@ -478,7 +477,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                       </div>
                       <div>
                         <label className={labelClass} htmlFor="m-blk-why">
-                          Why is private mentorship important to you?
+                          Why private allocation matters now
                         </label>
                         <textarea
                           id="m-blk-why"
@@ -522,7 +521,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      Continue
+                      Submit for review
                     </motion.button>
                   </div>
                 </motion.div>
@@ -569,10 +568,11 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                     />
                   </motion.div>
                   <p className="mt-8 text-center text-sm text-zinc-400">
-                    Synthesizing tone, stakes, and structure…
+                    Calibrating tone, stakes, and structure…
                   </p>
                   <p className="mt-2 max-w-xs text-center text-[12px] leading-relaxed text-zinc-600">
-                    Quiet signal extraction — alignment over persuasion.
+                    Structured read — alignment before allocation, never
+                    persuasion.
                   </p>
                 </motion.div>
               ) : null}
@@ -588,7 +588,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                 >
                   <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
-                      Transformation summary
+                      Execution summary
                     </p>
                     <p className="mt-3 text-[14px] leading-relaxed text-zinc-200">
                       {recommendation.summary}
@@ -606,7 +606,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
 
                   <div>
                     <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
-                      Why this recommendation?
+                      Why this alignment
                     </p>
                     <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-zinc-400">
                       {recommendation.whyBullets.map((b) => (
@@ -648,7 +648,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      Edit responses
+                      Revise responses
                     </motion.button>
                     <motion.button
                       type="button"
@@ -657,7 +657,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      Continue on WhatsApp
+                      Continue in private thread
                     </motion.button>
                   </div>
                 </motion.div>

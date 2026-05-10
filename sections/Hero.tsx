@@ -11,6 +11,7 @@ import {
   fadeUp,
   heroStaggerContainer,
 } from "@/lib/motion";
+import { shellHero } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronDown, Play } from "lucide-react";
@@ -20,7 +21,7 @@ export function Hero() {
     <section
       data-conversion-zone="hero"
       className={cn(
-        "relative flex min-h-[100dvh] w-full flex-col overflow-hidden",
+        "ascend-section-world relative flex min-h-[100dvh] w-full flex-col overflow-hidden",
         "bg-[#050505]",
       )}
       aria-label="Ascend Theory introduction"
@@ -70,9 +71,9 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 pb-32 pt-[7.4rem] sm:px-10 sm:pb-32 sm:pt-[7.25rem] lg:px-12 lg:pb-36 lg:pt-32">
+      <div className={cn(shellHero, "items-start")}>
         <motion.p
-          className="mb-8 text-[11px] font-medium uppercase tracking-[0.34em] text-zinc-500 sm:mb-8 sm:text-xs sm:tracking-[0.38em]"
+          className="ascend-type-eyebrow mb-9 text-zinc-500 sm:mb-10"
           initial={{ opacity: 0, y: RISE_Y * 0.45 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: DURATION_REVEAL, ease: EASE_CINEMATIC }}
@@ -81,34 +82,32 @@ export function Hero() {
         </motion.p>
 
         <motion.div
-          className="flex max-w-4xl flex-col"
+          className="flex w-full max-w-[min(44rem,100%)] flex-col lg:max-w-[46rem]"
           variants={heroStaggerContainer}
           initial="hidden"
           animate="visible"
         >
-          <motion.h1
-            variants={fadeUp}
-            className="text-balance font-sans text-[clamp(2.2rem,11vw,2.95rem)] font-semibold leading-[1.05] tracking-[-0.036em] text-white sm:text-5xl sm:leading-[1.05] lg:text-[3.55rem] lg:leading-[1.04]"
-          >
+          <motion.h1 variants={fadeUp} className="ascend-type-hero text-white">
             Your current identity is not your ceiling.
           </motion.h1>
 
           <motion.p
             variants={fadeUp}
-            className="mt-8 max-w-2xl text-pretty text-[15px] leading-[1.72] text-zinc-400 sm:mt-10 sm:text-base sm:leading-relaxed"
+            className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-400 sm:mt-11"
           >
             Private mentorship architecture for ambitious professionals —
             identity-grade accountability across physique, communication,
-            discipline, and execution.
+            discipline, and execution. Entry is structured and reviewed — not
+            open-ended enrollment.
           </motion.p>
 
           <motion.div
             variants={fadeUp}
-            className="mt-12 flex flex-col gap-3.5 sm:mt-16 sm:flex-row sm:items-center sm:gap-5"
+            className="mt-14 flex w-full max-w-[min(36rem,100%)] flex-col gap-4 sm:mt-[3.25rem] sm:flex-row sm:items-center sm:gap-6"
           >
             <motion.a
               href="#pricing"
-              aria-label="Begin your transformation"
+              aria-label="Request structured transformation entry"
               className={cn(
                 "ascend-button-primary group relative inline-flex min-h-12 w-full max-w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 sm:w-auto sm:px-8",
                 "bg-white text-center text-zinc-950 text-xs font-medium leading-snug tracking-tight sm:text-sm",
@@ -119,7 +118,7 @@ export function Hero() {
               transition={TAP_SPRING}
             >
               <span className="relative z-10 max-w-[16rem] sm:max-w-none">
-                Begin Your Transformation
+                Request Structured Entry
               </span>
               <ArrowRight className="relative z-10 size-4 shrink-0 transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5" />
             </motion.a>
@@ -137,7 +136,7 @@ export function Hero() {
               transition={TAP_SPRING}
             >
               <Play className="size-4 fill-white/90 text-white/90" />
-              Watch Journey
+              Study The Ascent Sequence
             </motion.a>
           </motion.div>
         </motion.div>
@@ -148,7 +147,11 @@ export function Hero() {
         className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 text-zinc-500 sm:bottom-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: DURATION_OPACITY, ease: EASE_CINEMATIC }}
+        transition={{
+          delay: 1.2,
+          duration: DURATION_OPACITY,
+          ease: EASE_CINEMATIC,
+        }}
         aria-label="Scroll to content"
       >
         <span className="text-[10px] font-medium uppercase tracking-[0.28em]">

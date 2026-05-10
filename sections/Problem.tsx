@@ -9,6 +9,7 @@ import {
   gridStaggerParent,
   headerStaggerParent,
 } from "@/lib/motion";
+import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
@@ -31,12 +32,12 @@ const pains: {
 }[] = [
   {
     title: "Identity Drift",
-    line: "You feel the gap between who you are in private and who you claim to be in public.",
+    line: "Private behavior and public claim diverge — you register the tension before anyone else does.",
     icon: UserRound,
   },
   {
     title: "Negotiated Discipline",
-    line: "Standards flex the moment life applies pressure — and you notice.",
+    line: "Standards flex the moment pressure arrives — and quiet resentment follows.",
     icon: CalendarClock,
   },
   {
@@ -51,21 +52,17 @@ const pains: {
   },
   {
     title: "Broken Cadence",
-    line: "Momentum never compounds because accountability is optional, not ambient.",
+    line: "Momentum stalls when accountability stays optional instead of ambient.",
     icon: RefreshCw,
   },
   {
     title: "Architectural Fog",
-    line: "Motion without mentorship depth feels like effort without evolution.",
+    line: "Effort without mentorship depth reads as motion — not trajectory.",
     icon: Compass,
   },
 ];
 
-function PainCard({
-  title,
-  line,
-  icon: Icon,
-}: (typeof pains)[number]) {
+function PainCard({ title, line, icon: Icon }: (typeof pains)[number]) {
   const articleRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
 
@@ -103,8 +100,8 @@ function PainCard({
     >
       <motion.div
         className={cn(
-          "relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.08]",
-          "bg-white/[0.03] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl",
+          "relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/[0.08]",
+          "bg-white/[0.03] p-7 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-8",
           "transition-[border-color,box-shadow] duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
           "group-hover:border-white/[0.14] group-hover:shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85),0_0_60px_-20px_rgba(255,255,255,0.06)]",
         )}
@@ -122,15 +119,15 @@ function PainCard({
           className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-transparent opacity-40"
           aria-hidden
         />
-        <div className="relative z-10 flex flex-col gap-4">
+        <div className="relative z-10 flex flex-col gap-5">
           <div className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-zinc-950/40 text-zinc-400 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:border-white/[0.12] group-hover:text-zinc-200">
             <Icon className="size-[18px]" strokeWidth={1.35} />
           </div>
           <div>
-            <h3 className="text-[15px] font-semibold tracking-tight text-white">
+            <h3 className="text-[15px] font-semibold leading-snug tracking-[-0.012em] text-white">
               {title}
             </h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
+            <p className="mt-3 text-[13px] leading-[1.72] text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
               {line}
             </p>
           </div>
@@ -145,7 +142,7 @@ export function Problem() {
     <section
       id="about"
       data-conversion-zone="tension"
-      className="relative overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-32"
+      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-28 pb-[clamp(6.5rem,14vw,9.5rem)] sm:pt-32 sm:pb-36 lg:pt-[7.75rem] lg:pb-[9.5rem]"
       aria-labelledby="problem-heading"
     >
       <SectionContinuity />
@@ -162,9 +159,9 @@ export function Problem() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.5)_78%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
+      <div className={shellStandard}>
         <motion.div
-          className="mx-auto max-w-3xl text-center"
+          className={leadLeft}
           variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
@@ -173,22 +170,24 @@ export function Problem() {
           <motion.h2
             id="problem-heading"
             variants={fadeUp}
-            className="text-balance text-[clamp(1.9rem,9vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-4xl sm:leading-[1.12] lg:text-[2.5rem]"
+            className="ascend-type-section-sm text-white"
           >
             Transformation begins when self-negotiation ends.{" "}
             <br className="hidden sm:block" />
-            <span className="sm:ml-1.5">Most tension is architectural — not moral.</span>
+            <span className="sm:ml-1.5">
+              Most tension is architectural — not moral.
+            </span>
           </motion.h2>
           <motion.div
             variants={fadeUp}
-            className="mx-auto mt-8 max-w-2xl space-y-4 text-pretty text-[15px] leading-[1.7] text-zinc-500 sm:text-base sm:leading-relaxed"
+            className="mt-10 max-w-[34rem] space-y-5 text-pretty sm:mt-11"
           >
-            <p>
+            <p className="ascend-prose-calm text-zinc-500">
               Noise fragments discipline, dulls presence, and quietly rewrites
               what you accept as normal — until your identity starts defending
               the compromise.
             </p>
-            <p>
+            <p className="ascend-prose-calm text-zinc-500">
               The pain is not that you are incapable. It is that nothing around
               you is engineered to hold a higher standard — until you choose a
               private architecture that does.
@@ -197,7 +196,7 @@ export function Problem() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-5 sm:mt-20 sm:grid-cols-2 lg:mt-24 lg:grid-cols-3 lg:gap-6 [perspective:1600px]"
+          className="mt-20 grid w-full max-w-5xl grid-cols-1 gap-6 sm:mt-24 sm:grid-cols-2 lg:mt-28 lg:grid-cols-3 lg:gap-7 [perspective:1600px]"
           variants={gridStaggerParent}
           initial="hidden"
           whileInView="visible"

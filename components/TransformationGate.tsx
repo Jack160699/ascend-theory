@@ -221,8 +221,8 @@ export function TransformationGate() {
           </button>
 
           <p className="pointer-events-none absolute bottom-[max(6rem,calc(env(safe-area-inset-bottom)+5.2rem))] left-4 z-20 max-w-[min(17rem,calc(100vw-2rem))] text-pretty text-[10px] leading-relaxed text-zinc-500/40 sm:bottom-[5.5rem] sm:left-6 sm:text-[11px] sm:leading-relaxed">
-            Designed for ambitious individuals seeking structured
-            transformation.
+            Reserved for individuals committed to identity-grade transformation
+            — not casual curiosity.
           </p>
 
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))] sm:px-10 sm:py-20">
@@ -287,7 +287,8 @@ export function TransformationGate() {
                   >
                     Most people already know what they need to do.
                     <span className="mt-4 block text-zinc-300">
-                      They simply never build the structure to become it.
+                      They rarely build the private structure required to become
+                      it.
                     </span>
                   </h1>
 
@@ -296,13 +297,13 @@ export function TransformationGate() {
                     className="mt-8 max-w-xl space-y-4 text-pretty text-[14px] leading-[1.78] text-zinc-500 sm:mt-10 sm:text-[15px] sm:leading-relaxed"
                   >
                     <p>
-                      Ascend Theory is a private transformation architecture
-                      focused on discipline, physique, communication,
-                      accountability, and identity-level growth.
+                      Ascend Theory is private transformation architecture —
+                      discipline, physique, communication, accountability, and
+                      identity as one operating system.
                     </p>
                     <p>
-                      This is designed for people serious about changing how
-                      they think, perform, and live.
+                      Built for people unwilling to carry their potential as a
+                      negotiation.
                     </p>
                   </div>
 
@@ -325,7 +326,7 @@ export function TransformationGate() {
                       whileTap={{ scale: 0.98 }}
                       transition={TAP_SPRING}
                     >
-                      Begin Private Assessment
+                      Request Private Assessment
                     </motion.button>
                     <motion.button
                       type="button"
@@ -338,7 +339,7 @@ export function TransformationGate() {
                       whileTap={{ scale: 0.98 }}
                       transition={TAP_SPRING}
                     >
-                      Explore The Philosophy
+                      Review Philosophy First
                     </motion.button>
                   </motion.div>
                 </motion.div>
@@ -352,7 +353,7 @@ export function TransformationGate() {
             animate={{ opacity: 1 }}
             transition={txReveal(DURATION_OPACITY, 0.3)}
           >
-            Intentional entry · no countdown · leave anytime
+            Selective entry · human review · leave anytime
           </motion.div>
         </motion.div>
       ) : null}

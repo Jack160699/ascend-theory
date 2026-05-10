@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Ascend Theory",
   description:
-    "Private transformation architecture for founders, executives, and high-performers — identity-grade mentorship, discipline systems, and selective allocation.",
+    "Private transformation architecture for serious professionals — identity-grade mentorship, disciplined execution systems, and manually reviewed allocation.",
 };
 
 export default function RootLayout({

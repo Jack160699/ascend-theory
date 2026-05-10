@@ -129,9 +129,9 @@ export function interpretAssessment(lead: TierLeadAssessment): RecommendationOut
       return {
         appliedTier,
         recommendedTier: "pro",
-        headline: "Recommended Path: Ascend Pro",
+        headline: "Recommended alignment · Ascend Pro",
         summary:
-          "Your language carries identity-level stakes and appetite for closer mentorship — Pro’s accountability density appears proportionate without jumping past what you substantiated.",
+          "Your language carries identity-level stakes and appetite for closer mentorship — Pro’s accountability density appears proportionate without exceeding what you substantiated.",
         whyBullets: [
           "Identity, communication, or professional pressure reads as sustained",
           "Mentorship proximity and response priority appear proportionate",
@@ -143,16 +143,16 @@ export function interpretAssessment(lead: TierLeadAssessment): RecommendationOut
     return {
       appliedTier,
       recommendedTier: "core",
-      headline: "Best Starting Point: Ascend Core",
+      headline: "Honest starting point · Ascend Core",
         summary:
-          "Based on your responses, your strongest growth edge appears to be consistency, structure, and accountable foundations — a foundation rhythm before higher-touch density.",
+          "Based on your responses, your strongest edge appears to be consistency, structure, and accountable foundations — a foundation rhythm before higher-touch density.",
         whyBullets: [
           "Signals map to a structuring season more than an overload season",
           "Cadence and accountability systems appear most aligned first",
           "Discipline compounds cleaner when the container matches the stage",
         ],
         trustNote: moderateProHints
-        ? "There are hints of Pro-grade stakes — Core still reads as the most honest entry today."
+        ? "Hints of Pro-grade stakes appear — Core still reads as the most disciplined entry today."
         : undefined,
     };
   }
@@ -163,7 +163,7 @@ export function interpretAssessment(lead: TierLeadAssessment): RecommendationOut
       return {
         appliedTier,
         recommendedTier: "core",
-        headline: "Best Starting Point: Ascend Core",
+        headline: "Honest starting point · Ascend Core",
         summary:
           "Your answers read as early-stage and still forming — Core’s structured rhythm may match you more cleanly than a dense Pro container right now.",
         whyBullets: [
@@ -176,7 +176,7 @@ export function interpretAssessment(lead: TierLeadAssessment): RecommendationOut
     return {
       appliedTier,
       recommendedTier: "pro",
-      headline: "Recommended Path: Ascend Pro",
+      headline: "Recommended alignment · Ascend Pro",
       summary:
         "Your responses suggest readiness for deeper mentorship — higher accountability structure and mentor proximity appear aligned with what you shared.",
       whyBullets: [
@@ -192,9 +192,9 @@ export function interpretAssessment(lead: TierLeadAssessment): RecommendationOut
     return {
       appliedTier,
       recommendedTier: "black",
-      headline: "Private Path Consideration: Ascend Black",
+      headline: "Private allocation consideration · Ascend Black",
       summary:
-        "Your language signals discretion-heavy context or executive-grade tempo — Black may warrant consideration, always reviewed manually.",
+        "Your language signals discretion-heavy context or executive-grade tempo — Black may warrant consideration, always reviewed manually before invitation.",
       whyBullets: [
         "Private / high-performance signals crossed a selective threshold",
         "Commitment tone appears consistent with reserved allocation",
@@ -206,7 +206,7 @@ export function interpretAssessment(lead: TierLeadAssessment): RecommendationOut
   return {
     appliedTier,
     recommendedTier: "pro",
-    headline: "Ascend Pro may currently provide the strongest mentorship-depth fit",
+    headline: "Strongest fit today · Ascend Pro",
     summary:
       "Black stays intentionally narrow. From what you shared, Pro appears to carry the accountability architecture without moving you into private allocation prematurely.",
     whyBullets: [
@@ -215,7 +215,7 @@ export function interpretAssessment(lead: TierLeadAssessment): RecommendationOut
       "Black remains available if your context materially changes",
     ],
     trustNote:
-      "Honest calibration — Pro is not a consolation tier.",
+      "Honest calibration — Pro is a deliberate density, not a downgrade.",
   };
 }
 

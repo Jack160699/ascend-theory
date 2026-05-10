@@ -21,20 +21,20 @@ import {
 } from "react";
 
 export const URGENCY_MESSAGES = [
-  "Current intake nearly full",
-  "Limited onboarding slots this month",
-  "Priority mentor allocation active",
-  "Current transformation cohort closing soon",
-  "Private applications under review",
-  "Next onboarding window opens soon",
-  "Current pricing reserved for early allocation",
-  "Transformation applications closing this week",
+  "Applications read manually — in sequence",
+  "Mentor capacity remains intentionally limited",
+  "Reserved allocation — alignment over volume",
+  "Structured onboarding cadence · not always open",
+  "Private review precedes every invitation",
+  "Standards-first environment · selective entry",
+  "Accountability architecture holds density caps",
+  "Manual calibration — never automated acceptance",
 ] as const;
 
 const MOBILE_PHILOSOPHY_LINES = [
-  "Structure compounds quietly.",
-  "Identity follows repeated standards.",
-  "Discipline creates self-respect.",
+  "Standards compound without announcement.",
+  "Identity follows what you refuse to negotiate.",
+  "Discipline becomes quiet self-respect.",
 ] as const;
 
 export type ConversionZone =
@@ -63,16 +63,16 @@ const ZONE_ORDER: ConversionZone[] = [
 ];
 
 const CTA_BY_ZONE: Record<ConversionZone, string> = {
-  hero: "Begin Your Transformation",
+  hero: "Request Structured Entry",
   philosophy: "Read The Ascend Philosophy",
-  tension: "Structure Creates Identity",
-  programs: "Select Your Transformation Depth",
-  journey: "See The Ascent Sequence",
-  pricing: "Reserved Mentor Allocation",
-  mentorship: "Understand Mentorship Depth",
-  assessment: "Begin Private Assessment",
-  final: "Begin Private Assessment",
-  proof: "Transformation Leaves Evidence",
+  tension: "Face The Architectural Gap",
+  programs: "Review Mentorship Architecture",
+  journey: "Study The Ascent Sequence",
+  pricing: "Request Allocation Review",
+  mentorship: "Understand Depth & Proximity",
+  assessment: "Begin Identity Calibration",
+  final: "Begin Identity Calibration",
+  proof: "See Discipline In Behavior",
 };
 
 type ConversionValue = {
@@ -193,7 +193,7 @@ function StickyConversionBar({
                   "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_34px_-10px_rgba(255,255,255,0.2)]",
                 )}
               >
-                Begin Assessment
+                Request Entry
               </Link>
             </div>
           </motion.div>

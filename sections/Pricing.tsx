@@ -15,6 +15,7 @@ import {
   headerStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import type { TierKey } from "@/lib/lead-context";
 import { AnimatePresence, motion } from "framer-motion";
@@ -40,25 +41,25 @@ const tiers: {
     name: "Ascend Core",
     label: "Foundation access",
     purpose:
-      "Disciplined, structured entry — same transformation philosophy with foundation mentorship proximity and execution calibration.",
+      "Structured foundation entry — same transformation philosophy with calibrated mentorship proximity and execution discipline before higher density.",
     price: "₹7,000 + GST / month",
     features: [
       "Identity-grade systems across physique, communication, discipline, lifestyle",
-      "Structured accountability architecture and reserved mentor capacity",
-      "Foundation cadence — calibrated depth before maximum proximity",
+      "Architected accountability and reserved mentor capacity",
+      "Foundation cadence — depth matched to season, not ego",
       "Personalization through frameworks, audits, and weekly execution reviews",
       "Response priority aligned to foundation allocation",
       "Premium peer field — standards without noise",
-      "Private assessment routing — manually reviewed",
+      "Private intake routing — read manually before invitation",
     ],
-    cta: "Apply For Core Access",
+    cta: "Apply For Foundation Allocation",
   },
   {
     key: "pro",
     name: "Ascend Pro",
     label: "High-accountability mentorship",
     purpose:
-      "Accelerated identity upgrade — closest balance of scale and private attention. Same philosophy; materially higher proximity and response priority.",
+      "Accelerated identity upgrade — the strongest balance of scale and private attention. Same philosophy; materially higher proximity, cadence, and response priority.",
     price: "₹15,000 + GST / month",
     features: [
       "Elevated mentor proximity with high-frequency accountability loops",
@@ -66,21 +67,21 @@ const tiers: {
       "Deeper personalization across communication, lifestyle, and execution",
       "Integrated private calibration when stakes require it",
       "Identity-grade transformation held with elite mentorship density",
-      "Selective cohort pacing — limited onboarding slots",
+      "Selective cohort pacing — reserved onboarding windows",
       "Same methodology as Core — different access cadence",
     ],
-    cta: "Request Pro Assessment",
-    badge: "Primary offer",
+    cta: "Request Pro Allocation Review",
+    badge: "Primary allocation",
   },
   {
     key: "black",
     name: "Ascend Black",
     label: "Private transformation architecture",
     purpose:
-      "Confidential, executive-level allocation — highest-access mentorship, discretion-first, application-only.",
+      "Confidential, executive-level allocation — highest-access mentorship, discretion-first, invitation-only after manual review.",
     price: "₹55,000 + GST / month",
     priceNote:
-      "Private allocation · Discretion-first · Manually reviewed · Application only",
+      "Private allocation · Discretion-first · Manually reviewed · Invitation only",
     features: [
       "Reserved private rails — not a mass-market container",
       "Highest mentor proximity and bespoke execution calibration",
@@ -91,7 +92,7 @@ const tiers: {
       "Same philosophy — maximum private attention architecture",
     ],
     cta: "Request Private Allocation",
-    badge: "Application only",
+    badge: "Invitation only",
   },
 ];
 
@@ -101,7 +102,7 @@ function PricingCapacityRibbon() {
   if (!msg) return null;
   return (
     <motion.div
-      className="ascend-surface-soft mx-auto mt-10 max-w-2xl rounded-full px-5 py-2.5 text-center sm:mt-12"
+      className="ascend-surface-soft mt-10 max-w-2xl rounded-full px-5 py-2.5 text-left sm:mt-12"
       initial={{ opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewport}
@@ -318,8 +319,7 @@ function PricingCard({
               </p>
             ) : (
               <p className="mt-2 text-[12px] leading-relaxed text-zinc-600">
-                Reserved mentor capacity · selective allocation · GST as
-                applicable.
+                Reserved mentor capacity · manual review · GST as applicable.
               </p>
             )}
           </div>
@@ -400,7 +400,7 @@ export function Pricing() {
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-32"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-30 lg:py-[8.75rem]"
       aria-labelledby="pricing-heading"
     >
       <SectionContinuity />
@@ -418,9 +418,9 @@ export function Pricing() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.52)_78%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
+      <div className={shellWide}>
         <motion.div
-          className="mx-auto max-w-3xl text-center"
+          className={leadLeft}
           variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
@@ -428,29 +428,29 @@ export function Pricing() {
         >
           <motion.p
             variants={fadeUp}
-            className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 sm:mb-5 sm:tracking-[0.32em]"
+            className="ascend-type-eyebrow mb-5 text-zinc-500 sm:mb-6"
           >
-            Entry & allocation
+            Allocation & entry
           </motion.p>
           <motion.h2
             id="pricing-heading"
             variants={fadeUp}
-            className="text-balance text-[clamp(1.9rem,9vw,2.35rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-white sm:text-4xl sm:leading-[1.08] lg:text-[2.35rem]"
+            className="ascend-type-section-sm text-white"
           >
-            Select your mentorship depth.
+            Request the mentorship depth that matches your season.
           </motion.h2>
           <motion.p
             variants={fadeUp}
-            className="mx-auto mt-7 max-w-2xl text-pretty text-[15px] leading-[1.75] text-zinc-500 sm:mt-8 sm:text-base sm:leading-relaxed"
+            className="ascend-prose-calm mt-8 max-w-[34rem] text-pretty text-zinc-500 sm:mt-9"
           >
             Same transformation philosophy across every tier. What scales is
             mentor proximity, accountability intensity, response priority, and
-            private calibration — never how much change you deserve.
+            private calibration — never how much change you are owed.
           </motion.p>
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-8 max-w-3xl space-y-2 text-center text-[12px] leading-relaxed text-zinc-600"
+          className="mt-9 max-w-2xl space-y-2.5 text-left text-[12px] leading-[1.72] text-zinc-600 sm:mt-10 sm:text-[13px] sm:leading-[1.75]"
           variants={fadeUp}
           initial="hidden"
           whileInView="visible"
@@ -461,7 +461,7 @@ export function Pricing() {
             methodology.
           </p>
           <p>
-            Limited onboarding windows · private accountability architecture.
+            Reserved onboarding cadence · private accountability architecture.
           </p>
           <p>Identity-grade seriousness — not mass-market coaching.</p>
         </motion.div>
@@ -481,7 +481,7 @@ export function Pricing() {
           />
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:items-end lg:gap-5 xl:gap-8">
             <div className="relative order-2 lg:order-1 lg:pb-10">
-              <p className="mb-3 hidden text-center font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block">
+              <p className="mb-3 hidden text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block lg:pl-1">
                 I — Foundation access
               </p>
               <PricingCard
@@ -491,7 +491,7 @@ export function Pricing() {
               />
             </div>
             <div className="relative order-1 lg:order-2 lg:z-20 lg:px-1">
-              <p className="mb-3 hidden text-center font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-400 lg:block">
+              <p className="mb-3 hidden text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-400 lg:block lg:pl-1">
                 II — High accountability
               </p>
               <PricingCard
@@ -501,7 +501,7 @@ export function Pricing() {
               />
             </div>
             <div className="relative order-3 lg:order-3 lg:pb-10">
-              <p className="mb-3 hidden text-center font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block">
+              <p className="mb-3 hidden text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:block lg:pl-1">
                 III — Private architecture
               </p>
               <PricingCard
@@ -514,7 +514,7 @@ export function Pricing() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-16 max-w-3xl space-y-4 text-center text-[13px] leading-relaxed text-zinc-500 sm:mt-20"
+          className="mt-16 max-w-2xl space-y-4 text-left text-[13px] leading-[1.72] text-zinc-500 sm:mt-20 sm:leading-[1.75] lg:pl-1"
           variants={fadeUp}
           initial="hidden"
           whileInView="visible"
@@ -522,11 +522,11 @@ export function Pricing() {
         >
           <p>
             Transformation depth scales with proximity, calibration, and
-            accountability — not with how much change you deserve.
+            accountability — not with how much change you are owed.
           </p>
           <p className="text-zinc-600">
-            All paths follow the same transformation philosophy. The difference
-            is mentor allocation depth and execution architecture.
+            All paths follow the same philosophy. The difference is how deeply
+            mentorship integrates with your execution environment.
           </p>
         </motion.div>
       </div>

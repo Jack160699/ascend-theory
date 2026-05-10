@@ -18,7 +18,7 @@ const IDLE_FRAGMENTS = [
 ] as const;
 
 const INITIAL_GREETING =
-  "Welcome to Ascend Theory.\n\nThis platform is designed for ambitious individuals seeking structured transformation through discipline, accountability, and identity-level growth.\n\nHow can I guide you?";
+  "Welcome to Ascend Theory.\n\nThis environment is built for individuals unwilling to negotiate with their standards — discipline, accountability, and identity evolve as one system.\n\nHow should we orient your next move?";
 
 type Msg = {
   id: string;
@@ -29,10 +29,10 @@ type Msg = {
 };
 
 const QUICK_ACTIONS = [
-  { id: "path", label: "Which path fits me?" },
-  { id: "mentorship", label: "How does mentorship work?" },
-  { id: "different", label: "What makes Ascend different?" },
-  { id: "depth", label: "Explore transformation depth" },
+  { id: "path", label: "Which allocation fits my season?" },
+  { id: "mentorship", label: "How mentorship integrates" },
+  { id: "different", label: "What makes Ascend structurally different?" },
+  { id: "depth", label: "Understand transformation depth" },
 ] as const;
 
 function responseForAction(

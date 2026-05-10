@@ -27,13 +27,13 @@ const links = [
   {
     href: "#pricing",
     label: "Entry",
-    ariaLabel: "Transformation assessment entry",
+    ariaLabel: "Allocation and structured entry",
   },
 ] as const;
 
 export function Navbar() {
   const conversion = useConversionExperienceOptional();
-  const ctaLabel = conversion?.primaryCtaLabel ?? "Begin Your Transformation";
+  const ctaLabel = conversion?.primaryCtaLabel ?? "Request Allocation Review";
   const notice = conversion?.urgencyMessage ?? "";
 
   const [scrolled, setScrolled] = useState(false);
@@ -144,7 +144,7 @@ export function Navbar() {
                   "bg-white",
                 )}
               >
-                <span className="sm:hidden">Assessment</span>
+                <span className="sm:hidden">Request</span>
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={ctaLabel}

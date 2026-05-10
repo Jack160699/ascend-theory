@@ -1,3 +1,5 @@
+import { AscendFilmGrain } from "@/components/AscendFilmGrain";
+import { CursorAmbientLight } from "@/components/CursorAmbientLight";
 import { TransformationConcierge } from "@/components/TransformationConcierge";
 import { TransformationGate } from "@/components/TransformationGate";
 import { AssessmentModalProvider } from "@/contexts/assessment-modal";
@@ -20,7 +22,9 @@ export default function Home() {
     <ConversionExperienceProvider>
       <AssessmentModalProvider>
         <TransformationGate />
-        <main className="min-h-screen overflow-x-clip bg-black pb-40 text-white antialiased sm:pb-36">
+        <main className="ascend-main-depth min-h-screen overflow-x-clip bg-black pb-40 text-white antialiased sm:pb-36">
+          <AscendFilmGrain />
+          <CursorAmbientLight />
           <Hero />
           <Philosophy />
           <Problem />

@@ -8,8 +8,8 @@ export const EASE_CINEMATIC = [0.16, 1, 0.3, 1] as const;
 /** Scroll reveals: calm, slightly delayed trigger. */
 export const VIEWPORT_CALM = { once: true, margin: "-120px" } as const;
 
-export const DURATION_REVEAL = 0.88;
-export const DURATION_OPACITY = 0.76;
+export const DURATION_REVEAL = 0.94;
+export const DURATION_OPACITY = 0.82;
 export const DURATION_LINE = 1.02;
 export const DURATION_OVERLAY = 0.42;
 export const DURATION_OVERLAY_SLOW = 0.48;

@@ -11,6 +11,7 @@ import {
   headerStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -18,10 +19,10 @@ import { useEffect, useState } from "react";
 const viewport = VIEWPORT_CALM;
 
 const ROTATING_LINES = [
-  "Structure compounds quietly.",
-  "Identity follows repeated standards.",
-  "Discipline eventually becomes self-respect.",
-  "The future version of you is built through repetition.",
+  "Potential without structure becomes drift — quietly.",
+  "Identity hardens where repetition meets refusal to negotiate.",
+  "Discipline becomes self-respect when performance stops being the point.",
+  "Your future self is financed by today’s non-negotiables.",
 ] as const;
 
 const FLOAT_FRAGMENTS: readonly {
@@ -32,8 +33,8 @@ const FLOAT_FRAGMENTS: readonly {
   delay: number;
 }[] = [
   { text: "Non-negotiable execution", top: "14%", left: "8%", delay: 0 },
-  { text: "Repeated standards", top: "62%", right: "10%", delay: 1.2 },
-  { text: "Quiet compounding", top: "38%", left: "6%", delay: 2.4 },
+  { text: "Reserved standards", top: "62%", right: "10%", delay: 1.2 },
+  { text: "Quiet accountability", top: "38%", left: "6%", delay: 2.4 },
   { text: "Identity-grade cadence", top: "72%", left: "12%", delay: 0.8 },
 ];
 
@@ -58,7 +59,7 @@ export function FinalDecisionCTA() {
     <section
       id="final-decision-cta"
       data-conversion-zone="final"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-24 sm:py-32 lg:py-40"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-24 sm:py-32 lg:py-40"
       aria-labelledby="final-decision-cta-heading"
     >
       <SectionContinuity />
@@ -128,9 +129,9 @@ export function FinalDecisionCTA() {
         </motion.p>
       ))}
 
-      <div className="relative z-10 mx-auto max-w-5xl px-6 sm:px-10 lg:px-12">
+      <div className={shellStandard}>
         <motion.div
-          className="mx-auto max-w-4xl text-center"
+          className={cn(leadLeft, "max-w-[min(46rem,100%)] lg:max-w-[44rem]")}
           variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
@@ -139,29 +140,29 @@ export function FinalDecisionCTA() {
           <motion.h2
             id="final-decision-cta-heading"
             variants={fadeUp}
-            className="text-balance font-sans text-[1.85rem] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-4xl sm:leading-[1.06] lg:text-[2.85rem] lg:leading-[1.04]"
+            className="ascend-type-section text-white"
           >
-            The next version of you is built through standards.
+            The next version of you is decided by standards.
           </motion.h2>
           <motion.p
             variants={fadeUp}
-            className="mx-auto mt-10 max-w-2xl text-pretty text-[15px] leading-[1.8] text-zinc-500 sm:text-lg sm:leading-relaxed"
+            className="ascend-prose-calm mt-10 max-w-[34rem] text-pretty text-zinc-500 sm:mt-11 sm:text-lg sm:leading-[1.78]"
           >
             Most people spend years negotiating with their potential.
             <span className="mt-3 block text-zinc-400">
-              Transformation begins the moment execution becomes non-negotiable.
+              Transformation begins when execution stops being optional.
             </span>
           </motion.p>
         </motion.div>
 
         <motion.div
-          className="relative mx-auto mt-14 max-w-xl sm:mt-16"
+          className="relative mt-14 max-w-xl sm:mt-16"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={viewport}
           transition={txReveal(DURATION_OPACITY, 0.38)}
         >
-          <div className="ascend-surface-soft relative min-h-[3.25rem] rounded-2xl px-6 py-5 sm:min-h-[3.5rem] sm:px-8">
+          <div className="ascend-surface-soft relative min-h-[3.25rem] rounded-[1.25rem] px-6 py-5 sm:min-h-[3.5rem] sm:px-8">
             <AnimatePresence mode="wait">
               <motion.p
                 key={ROTATING_LINES[lineIndex]}
@@ -169,7 +170,7 @@ export function FinalDecisionCTA() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={txReveal(DURATION_OPACITY)}
-                className="text-center font-serif text-sm font-light italic leading-relaxed text-zinc-500 sm:text-[15px]"
+                className="text-left font-serif text-sm font-light italic leading-[1.72] text-zinc-500 sm:text-[15px] sm:leading-[1.75]"
               >
                 {ROTATING_LINES[lineIndex]}
               </motion.p>
@@ -178,7 +179,7 @@ export function FinalDecisionCTA() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-14 flex max-w-lg flex-col items-stretch gap-4 sm:mt-16 sm:flex-row sm:justify-center sm:gap-5"
+          className="mt-14 flex max-w-2xl flex-col items-stretch gap-4 sm:mt-16 sm:flex-row sm:items-center sm:gap-5 lg:gap-6"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
@@ -194,7 +195,7 @@ export function FinalDecisionCTA() {
             whileTap={{ scale: 0.98 }}
             transition={TAP_SPRING}
           >
-            Begin Private Assessment
+            Request Private Assessment
           </motion.button>
           <motion.button
             type="button"
@@ -207,19 +208,19 @@ export function FinalDecisionCTA() {
             whileTap={{ scale: 0.98 }}
             transition={TAP_SPRING}
           >
-            Explore Transformation Paths
+            Review Allocation & Depth
           </motion.button>
         </motion.div>
 
         <motion.p
-          className="mx-auto mt-16 max-w-md text-center text-[12px] leading-relaxed text-zinc-600 sm:mt-20 sm:text-[13px]"
+          className="mt-16 max-w-md text-left text-[12px] leading-[1.72] text-zinc-600 sm:mt-20 sm:text-[13px] sm:leading-[1.75]"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={viewport}
           transition={txReveal(DURATION_REVEAL, 0.58)}
         >
-          If you continue remaining the same, nothing changes. The question is
-          whether your standards move first — or circumstance forces them later.
+          If nothing changes, nothing changes. The question is whether your
+          standards move first — or circumstance forces them later.
         </motion.p>
       </div>
     </section>

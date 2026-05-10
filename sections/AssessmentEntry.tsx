@@ -1,12 +1,8 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
-import {
-  DURATION_REVEAL,
-  RISE_Y,
-  VIEWPORT_CALM,
-  txReveal,
-} from "@/lib/motion";
+import { DURATION_REVEAL, RISE_Y, VIEWPORT_CALM, txReveal } from "@/lib/motion";
+import { shellReading } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -18,7 +14,7 @@ export function AssessmentEntry() {
     <section
       id="assessment"
       data-conversion-zone="assessment"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-24 sm:py-28 lg:py-32"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#030303] py-28 sm:py-32 lg:py-36"
       aria-labelledby="assessment-heading"
     >
       <SectionContinuity />
@@ -28,19 +24,19 @@ export function AssessmentEntry() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.65)_75%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-3xl px-6 text-center sm:px-10 lg:px-12">
+      <div className={cn(shellReading, "text-left")}>
         <motion.p
-          className="mb-6 text-[11px] font-medium uppercase tracking-[0.32em] text-zinc-500"
+          className="ascend-type-eyebrow mb-7 text-zinc-500 lg:mb-8"
           initial={{ opacity: 0, y: RISE_Y * 0.65 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
           transition={txReveal(DURATION_REVEAL)}
         >
-          Private assessment
+          Manual intake
         </motion.p>
         <motion.h2
           id="assessment-heading"
-          className="text-balance font-sans text-[clamp(1.9rem,8.6vw,2.25rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-4xl sm:leading-[1.08]"
+          className="ascend-type-section-sm text-white"
           initial={{ opacity: 0, y: RISE_Y }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
@@ -49,17 +45,18 @@ export function AssessmentEntry() {
           Calibrate your entry with context — not impulse.
         </motion.h2>
         <motion.p
-          className="mx-auto mt-8 max-w-xl text-pretty text-[15px] leading-[1.75] text-zinc-500 sm:text-base"
+          className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
           initial={{ opacity: 0, y: RISE_Y * 0.9 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
           transition={txReveal(DURATION_REVEAL, 0.14)}
         >
-          The assessment maps tone, stakes, and structure to mentorship depth. It
-          is intentionally slow — alignment first, never pressure.
+          The intake maps tone, stakes, and structure to mentorship depth. It
+          moves slowly on purpose — alignment before allocation, never
+          pressure.
         </motion.p>
         <motion.div
-          className="mt-12"
+          className="mt-12 sm:mt-14"
           initial={{ opacity: 0, y: RISE_Y * 0.9 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
@@ -72,7 +69,7 @@ export function AssessmentEntry() {
               "transition-transform duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
             )}
           >
-            Continue to entry and assessment
+            Review allocation & continue
           </Link>
         </motion.div>
       </div>

@@ -12,16 +12,11 @@ import {
   listStaggerParent,
   nodeRevealSoft,
 } from "@/lib/motion";
+import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
-import {
-  ClipboardPenLine,
-  Map,
-  Phone,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { ClipboardPenLine, Map, Phone, Sparkles, Users } from "lucide-react";
 
 const viewport = VIEWPORT_CALM;
 
@@ -33,9 +28,9 @@ const stages: {
 }[] = [
   {
     step: "01",
-    title: "Private assessment",
+    title: "Private intake",
     description:
-      "A manually reviewed intake — honest context, emotional stakes, and the architecture you actually need.",
+      "A manually reviewed intake — honest context, emotional stakes, and the architecture you need before allocation is discussed.",
     icon: ClipboardPenLine,
   },
   {
@@ -86,13 +81,13 @@ function StageNode({
     <>
       <div
         className={cn(
-          "relative rounded-2xl border border-white/[0.09] bg-white/[0.03] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl",
+          "relative rounded-[1.35rem] border border-white/[0.09] bg-white/[0.03] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl",
           "transition-[border-color,box-shadow] duration-500",
           "group-hover:border-white/[0.16] group-hover:shadow-[0_28px_80px_-48px_rgba(0,0,0,0.88),0_0_48px_-16px_rgba(255,255,255,0.07)]",
         )}
       >
         <div
-          className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 rounded-[1.35rem] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
           style={{
             background:
               "radial-gradient(400px circle at 50% 0%, rgba(255,255,255,0.08), transparent 55%)",
@@ -126,10 +121,10 @@ function StageNode({
             </motion.div>
           </div>
           <div>
-            <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-white">
+            <h3 className="text-[15px] font-semibold leading-snug tracking-[-0.012em] text-white">
               {title}
             </h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
+            <p className="mt-3 text-[13px] leading-[1.72] text-zinc-500 transition-colors duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-zinc-400">
               {description}
             </p>
           </div>
@@ -167,7 +162,7 @@ export function Journey() {
     <section
       id="journey"
       data-conversion-zone="journey"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-32"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-28 pb-24 sm:pt-32 sm:pb-28 lg:py-36"
       aria-labelledby="journey-heading"
     >
       <SectionContinuity />
@@ -184,9 +179,9 @@ export function Journey() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.52)_78%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
+      <div className={shellStandard}>
         <motion.div
-          className="mx-auto max-w-3xl text-center"
+          className={leadLeft}
           variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
@@ -194,20 +189,20 @@ export function Journey() {
         >
           <motion.p
             variants={fadeUp}
-            className="mb-5 text-[11px] font-medium uppercase tracking-[0.32em] text-zinc-500"
+            className="ascend-type-eyebrow mb-6 text-zinc-500 lg:mb-7"
           >
             The ascent sequence
           </motion.p>
           <motion.h2
             id="journey-heading"
             variants={fadeUp}
-            className="text-balance text-[clamp(1.9rem,9vw,2.35rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-white sm:text-4xl sm:leading-[1.08] lg:text-[2.35rem]"
+            className="ascend-type-section-sm text-white"
           >
             From tension to architecture — without theatrics.
           </motion.h2>
           <motion.p
             variants={fadeUp}
-            className="mx-auto mt-8 max-w-2xl text-pretty text-[15px] leading-[1.75] text-zinc-500 sm:text-base sm:leading-relaxed"
+            className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
           >
             Awareness opens the door. Execution architecture, private
             accountability, and mentor proximity close it — without theatrics.
@@ -215,7 +210,7 @@ export function Journey() {
         </motion.div>
 
         {/* Mobile: vertical timeline */}
-        <div className="relative mx-auto mt-16 max-w-lg lg:hidden">
+        <div className="relative mx-auto mt-20 max-w-lg lg:hidden">
           <div
             className="absolute bottom-6 left-[19px] top-6 w-px bg-gradient-to-b from-white/[0.12] via-zinc-500/25 to-white/[0.08]"
             aria-hidden
@@ -233,7 +228,7 @@ export function Journey() {
             aria-hidden
           />
           <motion.ul
-            className="relative flex list-none flex-col gap-10 p-0"
+            className="relative flex list-none flex-col gap-12 p-0"
             variants={listStaggerParent}
             initial="hidden"
             whileInView="visible"
@@ -275,7 +270,7 @@ export function Journey() {
 
         {/* Desktop: horizontal timeline */}
         <motion.div
-          className="relative mx-auto mt-20 hidden max-w-[90rem] px-4 lg:mt-24 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-0"
+          className="relative mx-auto mt-24 hidden max-w-[90rem] px-4 lg:mt-28 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-0"
           variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"

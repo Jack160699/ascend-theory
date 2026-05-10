@@ -13,6 +13,7 @@ import {
   listStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
@@ -70,10 +71,10 @@ const demoVideos = [
 ] as const;
 
 const metrics = [
-  { label: "Consistency uplift (structured cohort)", value: "87%" },
-  { label: "Avg. accountability streak window", value: "12 wk" },
-  { label: "Private mentorship capacity", value: "Capped" },
-  { label: "Completion under methodology", value: "High" },
+  { label: "Structured cohort · execution consistency", value: "87%" },
+  { label: "Accountability streak window (avg.)", value: "12 wk" },
+  { label: "Private mentor allocation", value: "Capped" },
+  { label: "Methodology adherence (cohort)", value: "High" },
 ] as const;
 
 const marqueeProof = [
@@ -89,12 +90,12 @@ const marqueeProof = [
 
 const quotes = [
   {
-    text: "I wasn’t looking for hype. I needed structure. Six months in, my training, sleep, and how I show up in rooms are not the same person.",
+    text: "I wasn’t looking for hype — I needed an environment that wouldn’t negotiate with me. Six months in, training, sleep, and how I hold space in rooms stopped feeling like performance.",
     tag: "Physique · discipline",
   },
   {
-    text: "The shift wasn’t ‘more confidence’ quotes — it was reps, feedback, and accountability until my default became steadier.",
-    tag: "Communication · confidence",
+    text: "The shift wasn’t louder confidence — it was quieter standards. Reps, feedback, and accountability until steadiness became the default.",
+    tag: "Communication · presence",
   },
 ] as const;
 
@@ -122,29 +123,45 @@ const chats = [
 ] as const;
 
 const mosaic = [
-  { src: img.mosaicA, label: "Routine atmosphere", sub: "Reference · discipline" },
-  { src: img.mosaicB, label: "Portrait · presence", sub: "Reference · professional" },
-  { src: img.mosaicC, label: "Morning architecture", sub: "Reference · lifestyle" },
-  { src: img.mosaicD, label: "Training intelligence", sub: "Reference · physique" },
+  {
+    src: img.mosaicA,
+    label: "Routine atmosphere",
+    sub: "Reference · discipline",
+  },
+  {
+    src: img.mosaicB,
+    label: "Portrait · presence",
+    sub: "Reference · professional",
+  },
+  {
+    src: img.mosaicC,
+    label: "Morning architecture",
+    sub: "Reference · lifestyle",
+  },
+  {
+    src: img.mosaicD,
+    label: "Training intelligence",
+    sub: "Reference · physique",
+  },
   { src: img.mosaicE, label: "Outdoor cadence", sub: "Reference · identity" },
 ] as const;
 
 const videoStories = [
   {
-    title: "Confidence transformation",
-    subtitle: "Voice, presence, and pressure — documentary cut.",
+    title: "Presence under pressure",
+    subtitle: "Voice, stakes, and composure — identity-grade reference cut.",
     poster: img.vidPoster1,
     src: demoVideos[0],
   },
   {
     title: "Discipline and physique",
-    subtitle: "Training, sleep, execution — cinematic reference.",
+    subtitle: "Training, sleep, execution — structured reference.",
     poster: img.vidPoster2,
     src: demoVideos[1],
   },
   {
     title: "Lifestyle and identity",
-    subtitle: "Standards across domains — premium reference.",
+    subtitle: "Standards across domains — maturity-forward reference.",
     poster: img.vidPoster3,
     src: demoVideos[2],
   },
@@ -166,7 +183,7 @@ function BeforeAfterCard({
       variants={fadeUpChild}
       whileHover={{ y: -3 }}
       transition={SURFACE_SPRING}
-      className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl"
+      className="group relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-7"
     >
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent opacity-40 transition-opacity duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-60" />
       <p className="relative z-10 text-[11px] font-medium uppercase tracking-[0.22em] text-zinc-500">
@@ -235,7 +252,9 @@ function MosaicTile({
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
         <figcaption className="absolute inset-x-0 bottom-0 z-10 p-4">
-          <p className="text-sm font-medium tracking-tight text-white">{label}</p>
+          <p className="text-sm font-medium tracking-tight text-white">
+            {label}
+          </p>
           <p className="mt-1 text-[11px] text-zinc-500">{sub}</p>
         </figcaption>
       </div>
@@ -354,7 +373,7 @@ function VideoStoryCard({
         <p className="text-sm font-medium tracking-tight text-white">{title}</p>
         <p className="mt-1 text-xs leading-relaxed text-zinc-500">{subtitle}</p>
         <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-600">
-          Demo reel · replace with member story
+          Reference reel · replace with member story
         </p>
       </div>
     </motion.div>
@@ -366,7 +385,7 @@ export function Testimonials() {
     <section
       id="testimonials"
       data-conversion-zone="proof"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-24 sm:py-28 lg:py-32"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-28 sm:py-32 lg:py-[8.5rem]"
       aria-labelledby="proof-heading"
     >
       <SectionContinuity />
@@ -383,9 +402,9 @@ export function Testimonials() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.55)_78%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-10 lg:px-12">
+      <div className={shellWide}>
         <motion.div
-          className="mx-auto max-w-3xl text-center"
+          className={leadLeft}
           variants={headerStaggerParent}
           initial="hidden"
           whileInView="visible"
@@ -393,29 +412,29 @@ export function Testimonials() {
         >
           <motion.p
             variants={fadeUp}
-            className="mb-5 text-[11px] font-medium uppercase tracking-[0.32em] text-zinc-500"
+            className="ascend-type-eyebrow mb-6 text-zinc-500 lg:mb-7"
           >
-            Transformation proof
+            Behavioral proof
           </motion.p>
           <motion.h2
             id="proof-heading"
             variants={fadeUp}
-            className="text-balance text-[clamp(1.9rem,9vw,2.4rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-white sm:text-4xl sm:leading-[1.08] lg:text-[2.4rem]"
+            className="ascend-type-section-sm text-white"
           >
             Evidence lives in behavior — not captions.
           </motion.h2>
           <motion.p
             variants={fadeUp}
-            className="mx-auto mt-8 max-w-2xl text-pretty text-[15px] leading-[1.75] text-zinc-500 sm:text-base sm:leading-relaxed"
+            className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
           >
-            A documentary-style field of reference media, member texture, and
-            private accountability signals — placeholders architected for real
-            transformation assets.
+            A maturity-forward field of reference media, private cadence, and
+            accountability signals — placeholders architected for real member
+            assets when you are ready to replace them.
           </motion.p>
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-3 sm:mt-16 sm:grid-cols-4 sm:gap-4"
+          className="mt-16 grid w-full max-w-4xl grid-cols-2 gap-3 sm:mt-20 sm:grid-cols-4 sm:gap-4"
           variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
@@ -425,12 +444,12 @@ export function Testimonials() {
             <motion.div
               key={m.label}
               variants={fadeUpChild}
-              className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-4 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset] backdrop-blur-md sm:px-4"
+              className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-4 text-left shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset] backdrop-blur-md sm:px-4 sm:py-5"
             >
               <p className="font-mono text-lg font-semibold tracking-tight text-white sm:text-xl">
                 {m.value}
               </p>
-              <p className="mt-1.5 text-[10px] leading-snug text-zinc-500 sm:text-[11px]">
+              <p className="mt-2 text-[10px] leading-snug text-zinc-500 sm:text-[11px] sm:leading-snug">
                 {m.label}
               </p>
             </motion.div>
@@ -438,7 +457,7 @@ export function Testimonials() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-14 grid max-w-5xl gap-6 lg:mt-16 lg:grid-cols-2"
+          className="mt-16 grid max-w-5xl gap-7 lg:mt-20 lg:grid-cols-2"
           variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
@@ -459,13 +478,13 @@ export function Testimonials() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-16 max-w-5xl lg:mt-20"
+          className="mt-16 w-full max-w-5xl lg:mt-20"
           variants={fadeUp}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
-          <p className="mb-6 text-center text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500">
+          <p className="mb-6 text-left text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 lg:pl-1">
             Physique progression · reference frames
           </p>
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
@@ -497,14 +516,17 @@ export function Testimonials() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-16 max-w-5xl lg:mt-20"
+          className="mt-16 w-full max-w-5xl lg:mt-20"
           variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
-          <p className="mb-6 flex items-center justify-center gap-2 text-center text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500">
-            <Sparkles className="size-3.5 text-zinc-600" strokeWidth={1.25} />
+          <p className="mb-6 flex items-center gap-2 text-left text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 lg:pl-1">
+            <Sparkles
+              className="size-3.5 shrink-0 text-zinc-600"
+              strokeWidth={1.25}
+            />
             Field stills · cinematic reference
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
@@ -515,7 +537,7 @@ export function Testimonials() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-14 grid max-w-5xl gap-6 lg:mt-16 lg:grid-cols-2"
+          className="mt-14 grid w-full max-w-5xl gap-7 lg:mt-20 lg:grid-cols-2"
           variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
@@ -527,9 +549,12 @@ export function Testimonials() {
               variants={fadeUpChild}
               whileHover={{ y: -3 }}
               transition={SURFACE_SPRING}
-              className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-7 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl"
+              className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-8"
             >
-              <Quote className="absolute right-6 top-6 size-8 text-white/[0.06]" strokeWidth={1} />
+              <Quote
+                className="absolute right-6 top-6 size-8 text-white/[0.06]"
+                strokeWidth={1}
+              />
               <blockquote className="relative z-10 text-[15px] leading-relaxed text-zinc-300">
                 “{q.text}”
               </blockquote>
@@ -541,13 +566,13 @@ export function Testimonials() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-16 max-w-5xl lg:mt-20"
+          className="mt-16 w-full max-w-5xl lg:mt-20"
           variants={listStaggerParent}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
-          <p className="mb-6 text-center text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500">
+          <p className="mb-6 text-left text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 lg:pl-1">
             Member films · demo architecture
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -558,13 +583,13 @@ export function Testimonials() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-16 max-w-2xl lg:mt-20"
+          className="mt-16 w-full max-w-2xl lg:mt-20"
           variants={fadeUp}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
-          <p className="mb-4 text-center text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500">
+          <p className="mb-5 text-left text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 lg:pl-1">
             Accountability thread · reference UI
           </p>
           <div className="relative overflow-hidden rounded-2xl border border-white/[0.1] bg-gradient-to-b from-zinc-950/80 to-black/80 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_32px_80px_-40px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
@@ -573,8 +598,12 @@ export function Testimonials() {
                 <Zap className="size-[18px]" strokeWidth={1.35} />
               </div>
               <div>
-                <p className="text-sm font-medium text-zinc-200">Ascend · Mentor</p>
-                <p className="text-[11px] text-zinc-500">Private thread · demo copy</p>
+                <p className="text-sm font-medium text-zinc-200">
+                  Ascend · Mentor calibration
+                </p>
+                <p className="text-[11px] text-zinc-500">
+                  Private thread · reference cadence
+                </p>
               </div>
             </div>
             <div className="flex flex-col gap-3">
@@ -590,7 +619,9 @@ export function Testimonials() {
                     "border-emerald-500/12 bg-emerald-950/[0.2] shadow-[0_12px_40px_-16px_rgba(0,0,0,0.55)]",
                   )}
                 >
-                  <p className="text-[13px] leading-relaxed text-zinc-200">{c.body}</p>
+                  <p className="text-[13px] leading-relaxed text-zinc-200">
+                    {c.body}
+                  </p>
                   <div className="mt-2 flex items-center justify-end gap-1.5 text-[10px] text-emerald-500/65">
                     <span>{c.time}</span>
                     <CheckCheck className="size-3.5" strokeWidth={1.5} />
@@ -601,8 +632,8 @@ export function Testimonials() {
           </div>
         </motion.div>
 
-        <div className="relative mx-auto mt-16 max-w-[100vw] lg:mt-20">
-          <p className="mb-6 text-center text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500">
+        <div className="relative mt-16 w-full max-w-[100vw] lg:mt-20">
+          <p className="mb-6 text-left text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 lg:pl-1">
             Proof in motion
           </p>
           <div className="relative overflow-hidden py-2">
