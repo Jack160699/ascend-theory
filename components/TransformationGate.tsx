@@ -60,11 +60,18 @@ export function TransformationGate() {
   const pendingHashRef = useRef<string>("");
   const quoteTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [active, setActive] = useState(
-    () => typeof window !== "undefined" && !readDismissed(),
-  );
+  /** Must match SSR first paint — sessionStorage is read after mount. */
+  const [active, setActive] = useState(false);
   const [phase, setPhase] = useState<"main" | "transit">("main");
   const [quoteIndex, setQuoteIndex] = useState(0);
+
+  useEffect(() => {
+    if (readDismissed()) return;
+    const id = requestAnimationFrame(() => {
+      setActive(true);
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     if (!active) return;
@@ -105,7 +112,7 @@ export function TransformationGate() {
       quoteTimer.current = setInterval(() => {
         setQuoteIndex((i) => (i + 1) % PHILOSOPHY_LINES.length);
       }, step);
-      const dwell = reduceMotion ? 500 : 1200 + Math.floor(Math.random() * 601);
+      const dwell = reduceMotion ? 500 : 1530;
       window.setTimeout(() => {
         clearQuoteTimer();
         setActive(false);

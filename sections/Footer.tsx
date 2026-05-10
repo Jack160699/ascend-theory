@@ -42,7 +42,10 @@ export function Footer() {
         </nav>
       </div>
       <div className="relative z-10 mx-auto mt-12 max-w-6xl border-t border-white/[0.05] pt-8">
-        <p className="text-center text-[11px] text-zinc-700">
+        <p
+          className="text-center text-[11px] text-zinc-700"
+          suppressHydrationWarning
+        >
           © {new Date().getFullYear()} Ascend Theory. Reserved mentor capacity.
         </p>
       </div>

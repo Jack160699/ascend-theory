@@ -169,6 +169,7 @@ export function TransformationConcierge() {
   const greetingDoneRef = useRef(false);
   const typingTimerRef = useRef<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const messageIdSeq = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -204,7 +205,8 @@ export function TransformationConcierge() {
 
   const pushAssistant = useCallback(
     (body: Omit<Msg, "id" | "role">) => {
-      const id = `${baseId}-a-${Date.now()}`;
+      messageIdSeq.current += 1;
+      const id = `${baseId}-a-${messageIdSeq.current}`;
       setMessages((m) => [...m, { id, role: "assistant", ...body }]);
     },
     [baseId],
@@ -212,7 +214,8 @@ export function TransformationConcierge() {
 
   const pushUser = useCallback(
     (content: string) => {
-      const id = `${baseId}-u-${Date.now()}`;
+      messageIdSeq.current += 1;
+      const id = `${baseId}-u-${messageIdSeq.current}`;
       setMessages((m) => [...m, { id, role: "user", content }]);
     },
     [baseId],
@@ -224,14 +227,11 @@ export function TransformationConcierge() {
         window.clearTimeout(typingTimerRef.current);
       }
       setTyping(true);
-      typingTimerRef.current = window.setTimeout(
-        () => {
-          typingTimerRef.current = null;
-          setTyping(false);
-          pushAssistant(body);
-        },
-        900 + Math.random() * 400,
-      );
+      typingTimerRef.current = window.setTimeout(() => {
+        typingTimerRef.current = null;
+        setTyping(false);
+        pushAssistant(body);
+      }, 1100);
     },
     [pushAssistant],
   );
