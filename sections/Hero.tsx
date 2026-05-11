@@ -41,7 +41,7 @@ export function Hero() {
       data-conversion-zone="hero"
       className={cn(
         "ascend-section-world ascend-hero-perspective relative flex min-h-[100dvh] w-full flex-col overflow-hidden",
-        "bg-[#050505]",
+        "bg-ascend-canvas",
       )}
       aria-label="Ascend Theory introduction"
     >
@@ -89,11 +89,10 @@ export function Hero() {
 
           <motion.p
             variants={fadeUpHero}
-            className="ascend-prose-calm mt-8 max-w-[min(34rem,100%)] text-pretty text-zinc-400/92 sm:mt-12"
+            className="ascend-prose-calm mt-7 max-w-[min(34rem,100%)] text-pretty text-zinc-500 sm:mt-10"
           >
-            Private mentorship for serious professionals — training, presence,
-            discipline, and accountability in one rhythm. You apply; we review.
-            Invitation-only enrollment.
+            Private mentorship for serious professionals — one rhythm across
+            training, presence, and discipline. You apply. We review manually.
           </motion.p>
 
           <motion.div
@@ -152,20 +151,26 @@ export function Hero() {
         <span className="text-[10px] font-medium uppercase tracking-[0.28em]">
           Explore
         </span>
-        <motion.span
-          animate={{ y: [0, 6, 0] }}
-          transition={{
-            duration: 2.4,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        >
-          <ChevronDown className="size-5 opacity-70" strokeWidth={1.25} />
-        </motion.span>
+        {isMobile ? (
+          <span>
+            <ChevronDown className="size-5 opacity-60" strokeWidth={1.25} />
+          </span>
+        ) : (
+          <motion.span
+            animate={{ y: [0, 5, 0] }}
+            transition={{
+              duration: 2.8,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <ChevronDown className="size-5 opacity-65" strokeWidth={1.25} />
+          </motion.span>
+        )}
       </motion.a>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 z-[12] h-36 bg-gradient-to-t from-black/90 via-black/32 to-transparent sm:h-40"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 z-[12] h-28 bg-gradient-to-t from-ascend-canvas via-ascend-canvas/55 to-transparent sm:h-36"
         aria-hidden
       />
     </section>

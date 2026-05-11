@@ -64,9 +64,9 @@ const rows: { label: string; core: string; pro: string; black: string }[] = [
 ];
 
 const tierCards = [
-  { key: "core" as const, title: "Ascend Core", accent: "text-zinc-400" },
-  { key: "pro" as const, title: "Ascend Pro", accent: "text-zinc-200" },
-  { key: "black" as const, title: "Ascend Black", accent: "text-amber-200/80" },
+  { key: "core" as const, title: "Ascend Core", accent: "text-zinc-500" },
+  { key: "pro" as const, title: "Ascend Pro", accent: "text-[color:var(--ascend-accent)]" },
+  { key: "black" as const, title: "Ascend Black", accent: "text-amber-200/75" },
 ];
 
 export function AllPaths() {
@@ -83,15 +83,15 @@ export function AllPaths() {
     <section
       id="paths"
       data-conversion-zone="allocate"
-      className="ascend-section-world relative scroll-mt-28 overflow-x-clip border-t border-white/[0.04] bg-[#030303] py-8 sm:py-20 lg:py-[8.5rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-x-clip border-t border-[color:var(--ascend-border)] bg-ascend-surface py-7 sm:py-16 lg:py-20"
       aria-labelledby="all-paths-heading"
     >
       <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-ascend-canvas via-ascend-surface to-ascend-canvas" />
         <div className="absolute left-1/2 top-[12%] h-[20rem] w-[min(100%,48rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.04),transparent_72%)] blur-3xl sm:top-[15%] sm:h-[24rem]" />
         <div className="absolute -right-[18%] bottom-[10%] h-[22rem] w-[22rem] rounded-full bg-zinc-600/[0.035] blur-[100px] sm:h-[26rem] sm:w-[26rem] sm:blur-[110px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.55)_78%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,6,0.48)_78%)]" />
       </div>
 
       <div className={shellWide}>
@@ -111,7 +111,7 @@ export function AllPaths() {
           <motion.h2
             id="all-paths-heading"
             variants={fadeMain}
-            className="ascend-type-section-sm text-white"
+            className="ascend-type-section-sm ascend-headline"
           >
             Same lane. Different access.
           </motion.h2>
@@ -218,7 +218,7 @@ export function AllPaths() {
                     >
                       <th
                         scope="row"
-                        className="sticky left-0 z-10 max-w-[11rem] bg-[#060606]/95 px-4 py-4 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 backdrop-blur-md sm:max-w-[12.5rem] sm:px-6 sm:py-5 sm:text-[12px] sm:tracking-[0.2em]"
+                        className="sticky left-0 z-10 max-w-[11rem] border-r border-[color:var(--ascend-border)] bg-ascend-elevated/95 px-4 py-3.5 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600 backdrop-blur-md sm:max-w-[12.5rem] sm:px-6 sm:py-4 sm:text-[12px] sm:tracking-[0.2em]"
                       >
                         {row.label}
                       </th>
@@ -246,7 +246,7 @@ export function AllPaths() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/90 to-transparent sm:h-24"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-ascend-canvas/55 to-transparent sm:h-20"
         aria-hidden
       />
     </section>

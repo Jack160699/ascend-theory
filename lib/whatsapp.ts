@@ -13,7 +13,7 @@ export const HERO_CTA_LABEL = "Apply for private entry" as const;
 export const STICKY_MOBILE_CTA_LABEL = "Request assessment" as const;
 
 /** Final section — opens modal. */
-export const FINAL_SECTION_CTA_LABEL = "Begin private intake" as const;
+export const FINAL_SECTION_CTA_LABEL = "Request private entry" as const;
 
 /** Same wa.me target; optional prefill for handoff messages. */
 export function ascendWhatsAppUrl(prefill?: string): string {
@@ -24,7 +24,7 @@ export function ascendWhatsAppUrl(prefill?: string): string {
 
 export type WebsiteApplicationFields = {
   name: string;
-  email: string;
+  instagram: string;
   goal: string;
   challenge: string;
 };
@@ -32,21 +32,26 @@ export type WebsiteApplicationFields = {
 export function formatWebsiteApplicationWhatsAppBody(
   p: WebsiteApplicationFields,
 ): string {
+  const rawIg = p.instagram.trim();
+  const igLine = rawIg
+    ? rawIg.startsWith("@")
+      ? rawIg
+      : `@${rawIg.replace(/^@+/, "")}`
+    : "—";
+
   return [
     "Hi Ascend Theory,",
     "",
     `My name is ${p.name.trim()}.`,
     "",
-    "I'm interested in private mentorship.",
+    "Instagram:",
+    igLine,
     "",
-    "Current focus:",
+    "Current goal:",
     p.goal.trim(),
     "",
-    "Main challenge:",
+    "Biggest challenge:",
     p.challenge.trim(),
-    "",
-    "Email:",
-    p.email.trim(),
     "",
     "I came through the website application.",
     "",

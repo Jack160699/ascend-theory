@@ -10,7 +10,6 @@ import { FinalDecisionCTA } from "@/sections/FinalDecisionCTA";
 import { Footer } from "@/sections/Footer";
 import { Hero } from "@/sections/Hero";
 import { Journey } from "@/sections/Journey";
-import { MentorshipDepth } from "@/sections/MentorshipDepth";
 import { Philosophy } from "@/sections/Philosophy";
 import { Problem } from "@/sections/Problem";
 import { Pricing } from "@/sections/Pricing";
@@ -23,7 +22,7 @@ export default function Home() {
       <ConversionExperienceProvider>
         <MobileConversionProvider>
           <TransformationGate />
-          <main className="ascend-main-depth min-h-screen overflow-x-clip bg-black pb-[max(5.25rem,env(safe-area-inset-bottom)+4rem)] text-white antialiased sm:pb-28 lg:pb-32">
+          <main className="ascend-main-depth min-h-screen overflow-x-clip bg-ascend-canvas pb-[max(4.5rem,env(safe-area-inset-bottom)+3.5rem)] text-white antialiased sm:pb-24 lg:pb-28">
             <AscendFilmGrain />
             <CursorAmbientLight />
             <Hero />
@@ -31,7 +30,6 @@ export default function Home() {
             <Problem />
             <System />
             <Journey />
-            <MentorshipDepth />
             <Pricing />
             <Testimonials />
             <AssessmentEntry />

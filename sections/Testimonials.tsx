@@ -16,6 +16,7 @@ import {
   getListStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { EDITORIAL_PLACEHOLDERS } from "@/lib/editorial-placeholders";
 import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
@@ -30,38 +31,23 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-/** Reference photography (Unsplash) — dark editorial, masculine tone; replace with member media when available. */
+/** Aligned with `EDITORIAL_PLACEHOLDERS` — cinematic discipline / physique / presence. */
 const img = {
-  ba1Before:
-    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=82",
-  ba1After:
-    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=900&q=82",
-  ba2Before:
-    "https://images.unsplash.com/photo-1534438327276-14e5300d3ad4?auto=format&fit=crop&w=900&q=82",
-  ba2After:
-    "https://images.unsplash.com/photo-1576678927484-cc907957088f?auto=format&fit=crop&w=900&q=82",
-  mosaicA:
-    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=82",
-  mosaicB:
-    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=900&q=82",
-  mosaicC:
-    "https://images.unsplash.com/photo-1534438327276-14e5300d3ad4?auto=format&fit=crop&w=900&q=82",
-  mosaicD:
-    "https://images.unsplash.com/photo-1576678927484-cc907957088f?auto=format&fit=crop&w=900&q=82",
-  mosaicE:
-    "https://images.unsplash.com/photo-1534361960057-19889db9621e?auto=format&fit=crop&w=900&q=82",
-  prog1:
-    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=800&q=82",
-  prog2:
-    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=82",
-  prog3:
-    "https://images.unsplash.com/photo-1534438327276-14e5300d3ad4?auto=format&fit=crop&w=800&q=82",
-  vidPoster1:
-    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=82",
-  vidPoster2:
-    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=1200&q=82",
-  vidPoster3:
-    "https://images.unsplash.com/photo-1534438327276-14e5300d3ad4?auto=format&fit=crop&w=1200&q=82",
+  ba1Before: EDITORIAL_PLACEHOLDERS.training,
+  ba1After: EDITORIAL_PLACEHOLDERS.silhouette,
+  ba2Before: EDITORIAL_PLACEHOLDERS.focus,
+  ba2After: EDITORIAL_PLACEHOLDERS.presence,
+  mosaicA: EDITORIAL_PLACEHOLDERS.training,
+  mosaicB: EDITORIAL_PLACEHOLDERS.silhouette,
+  mosaicC: EDITORIAL_PLACEHOLDERS.focus,
+  mosaicD: EDITORIAL_PLACEHOLDERS.presence,
+  mosaicE: EDITORIAL_PLACEHOLDERS.silhouette,
+  prog1: EDITORIAL_PLACEHOLDERS.silhouette,
+  prog2: EDITORIAL_PLACEHOLDERS.training,
+  prog3: EDITORIAL_PLACEHOLDERS.focus,
+  vidPoster1: EDITORIAL_PLACEHOLDERS.training,
+  vidPoster2: EDITORIAL_PLACEHOLDERS.silhouette,
+  vidPoster3: EDITORIAL_PLACEHOLDERS.focus,
 } as const;
 
 /** Demo MP4 architecture (replace with hosted member films). */
@@ -309,7 +295,7 @@ function VideoStoryCard({
   return (
     <motion.div
       variants={fadeChildVariants}
-      className="group relative overflow-hidden rounded-[1.25rem] border border-white/[0.1] bg-black/50 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_40px_100px_-48px_rgba(0,0,0,0.85)] backdrop-blur-xl"
+      className="group relative overflow-hidden rounded-[1.25rem] border border-[color:var(--ascend-border)] bg-ascend-elevated/90 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_32px_80px_-40px_rgba(0,0,0,0.55)] backdrop-blur-xl"
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       whileHover={{ scale: isMobile ? 1.003 : 1.006 }}
@@ -358,7 +344,7 @@ function VideoStoryCard({
               className="pointer-events-none absolute inset-0 flex items-center justify-center"
             >
               <motion.div
-                className="flex size-16 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white shadow-[0_0_48px_-8px_rgba(255,255,255,0.25)] backdrop-blur-md"
+                className="flex size-16 items-center justify-center rounded-full border border-[color:var(--ascend-border)] bg-ascend-surface/95 text-zinc-100 shadow-[0_0_32px_-6px_var(--ascend-accent-glow)] backdrop-blur-md"
                 animate={{
                   boxShadow: [
                     "0 0 40px -10px rgba(255,255,255,0.12)",
@@ -410,12 +396,12 @@ export function Testimonials() {
     <section
       id="testimonials"
       data-conversion-zone="proof"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-white/[0.028] bg-[#050505] py-14 sm:py-24 lg:py-[8.5rem]"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-canvas py-10 sm:py-16 lg:py-24"
       aria-labelledby="proof-heading"
     >
       <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-ascend-surface/70 via-ascend-canvas to-ascend-surface/70" />
         <div className="absolute left-1/2 top-[5%] h-[22rem] w-[min(100%,56rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.055),transparent_72%)] blur-3xl" />
         <div className="absolute -right-[20%] bottom-[20%] h-[28rem] w-[28rem] rounded-full bg-emerald-950/[0.06] blur-[120px]" />
         <div className="absolute -left-[18%] top-[35%] h-[24rem] w-[24rem] rounded-full bg-zinc-600/[0.05] blur-[110px]" />
@@ -444,7 +430,7 @@ export function Testimonials() {
           <motion.h2
             id="proof-heading"
             variants={fadeMain}
-            className="ascend-type-section-sm text-white"
+            className="ascend-type-section-sm ascend-headline"
           >
             Evidence is behavior — not captions.
           </motion.h2>
@@ -705,7 +691,7 @@ export function Testimonials() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/48 via-black/14 to-transparent sm:h-32"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-ascend-surface/40 to-transparent sm:h-24"
         aria-hidden
       />
     </section>

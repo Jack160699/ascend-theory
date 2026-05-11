@@ -1,12 +1,10 @@
 "use client";
 
-import { EditorialImageStrip } from "@/components/EditorialImageStrip";
 import { SectionContinuity } from "@/components/SectionContinuity";
 import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
-import { EDITORIAL_PLACEHOLDERS } from "@/lib/editorial-placeholders";
 import {
   SURFACE_SPRING,
   getCardRevealMobile,
@@ -18,14 +16,7 @@ import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion, type Variants } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
-import {
-  CalendarClock,
-  Compass,
-  MessageCircle,
-  RefreshCw,
-  ScanLine,
-  UserRound,
-} from "lucide-react";
+import { CalendarClock, MessageCircle, UserRound } from "lucide-react";
 import { useMemo, useRef } from "react";
 
 const pains: {
@@ -35,33 +26,18 @@ const pains: {
 }[] = [
   {
     title: "Identity drift",
-    line: "What you do in private stops matching what you claim in public.",
+    line: "Private behavior stops matching public claims — quietly.",
     icon: UserRound,
   },
   {
     title: "Negotiated discipline",
-    line: "Rules loosen the moment the week gets heavy — then the guilt stacks.",
+    line: "Rules bend when the week gets loud; guilt stacks instead.",
     icon: CalendarClock,
   },
   {
-    title: "Physique gap",
-    line: "Your body no longer matches the presence you are trying to project.",
-    icon: ScanLine,
-  },
-  {
     title: "Presence under pressure",
-    line: "When stakes rise, your voice and clarity are the first things to go.",
+    line: "Voice and clarity are the first things to go when stakes rise.",
     icon: MessageCircle,
-  },
-  {
-    title: "Broken cadence",
-    line: "You start strong, then accountability becomes optional again.",
-    icon: RefreshCw,
-  },
-  {
-    title: "No clear lane",
-    line: "Busy days feel like motion — but the trajectory is unclear.",
-    icon: Compass,
   },
 ];
 
@@ -105,17 +81,17 @@ function PainCard({
       className="group relative h-full [perspective:1400px]"
       style={{ transformStyle: "preserve-3d" }}
       whileHover={{
-        rotateX: isMobile ? 1.2 : 2.5,
-        rotateY: isMobile ? -1.2 : -2.5,
+        rotateX: isMobile ? 0 : 2.5,
+        rotateY: isMobile ? 0 : -2.5,
         transition: SURFACE_SPRING,
       }}
     >
       <motion.div
-        className={cn(
-          "relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/[0.08]",
-          "bg-white/[0.03] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] backdrop-blur-xl sm:p-7 lg:p-8",
+          className={cn(
+          "relative flex h-full flex-col overflow-hidden rounded-xl border border-[color:var(--ascend-border)]",
+          "bg-ascend-elevated/95 p-3.5 shadow-[0_0_0_1px_rgba(255,255,255,0.025)_inset] backdrop-blur-md sm:rounded-[1.1rem] sm:p-4 sm:backdrop-blur-xl",
           "transition-[border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
-          "group-hover:border-white/[0.14] group-hover:shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85),0_0_60px_-20px_rgba(255,255,255,0.06)]",
+          "group-hover:border-[color:rgba(95,115,134,0.28)] group-hover:shadow-[0_16px_48px_-28px_rgba(0,0,0,0.55),0_0_32px_-14px_var(--ascend-accent-glow)]",
         )}
         style={{ transformStyle: "preserve-3d" }}
       >
@@ -124,22 +100,22 @@ function PainCard({
           className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.88]"
           style={{
             background:
-              "radial-gradient(520px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(255,255,255,0.1), transparent 58%)",
+              "radial-gradient(380px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(95,115,134,0.08), transparent 58%)",
           }}
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-transparent opacity-40"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.025] via-transparent to-transparent opacity-[0.34]"
           aria-hidden
         />
-        <div className="relative z-10 flex flex-col gap-5">
-          <div className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-zinc-950/40 text-zinc-400 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-white/[0.12] group-hover:text-zinc-200">
-            <Icon className="size-[18px]" strokeWidth={1.35} />
+          <div className="relative z-10 flex flex-col gap-2.5">
+          <div className="flex size-7 items-center justify-center rounded-lg border border-[color:var(--ascend-border)] bg-ascend-surface/80 text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-[color:rgba(95,115,134,0.3)] group-hover:text-zinc-300 sm:size-8">
+            <Icon className="size-[16px]" strokeWidth={1.35} />
           </div>
           <div>
-            <h3 className="text-[15px] font-semibold leading-snug tracking-[-0.012em] text-white">
+            <h3 className="text-[13px] font-semibold leading-snug tracking-[-0.012em] text-[rgb(249,249,247)] sm:text-[14px]">
               {title}
             </h3>
-            <p className="mt-2.5 text-[13px] leading-[1.68] text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:text-zinc-400 sm:mt-3 sm:leading-[1.72]">
+            <p className="mt-1.5 text-[11px] leading-snug text-zinc-600 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:text-zinc-500 sm:mt-2 sm:text-[12px] sm:leading-relaxed">
               {line}
             </p>
           </div>
@@ -166,21 +142,15 @@ export function Problem() {
     <section
       id="about"
       data-conversion-zone="tension"
-      className="ascend-section-world relative overflow-hidden border-t border-white/[0.028] bg-[#050505] pt-14 pb-[clamp(4.25rem,10vw,7rem)] sm:pt-28 sm:pb-32 lg:pt-[7.75rem] lg:pb-[9.5rem]"
+      className="ascend-section-world relative overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-canvas py-8 pb-10 sm:py-14 sm:pb-16 lg:py-20 lg:pb-20"
       aria-labelledby="problem-heading"
     >
       <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#060606] to-black" />
-        <div className="absolute -left-[30%] top-1/4 h-[28rem] w-[28rem] rounded-full bg-zinc-600/[0.06] blur-[120px]" />
-        <div className="absolute -right-[25%] bottom-[10%] h-[26rem] w-[26rem] rounded-full bg-white/[0.035] blur-[110px]" />
-        <div className="absolute left-1/2 top-0 h-[20rem] w-[min(90%,48rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.06),transparent_70%)] blur-2xl" />
-        <motion.div
-          className="absolute left-[15%] top-[55%] h-72 w-72 rounded-full bg-zinc-500/[0.04] blur-[90px]"
-          animate={{ y: [0, 24, 0], opacity: [0.5, 0.75, 0.5] }}
-          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.5)_78%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-ascend-canvas via-ascend-surface/80 to-ascend-canvas" />
+        <div className="absolute -left-[30%] top-1/4 h-[22rem] w-[22rem] rounded-full bg-zinc-600/[0.05] blur-[100px] sm:h-[28rem] sm:w-[28rem] sm:blur-[120px]" />
+        <div className="absolute -right-[25%] bottom-[10%] h-[20rem] w-[20rem] rounded-full bg-white/[0.03] blur-[90px] sm:h-[26rem] sm:w-[26rem] sm:blur-[110px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,6,0.48)_78%)]" />
       </div>
 
       <div className={shellStandard}>
@@ -194,45 +164,23 @@ export function Problem() {
           <motion.h2
             id="problem-heading"
             variants={fadeMain}
-            className="ascend-type-section-sm text-white"
+            className="ascend-type-section-sm ascend-headline"
           >
-            The friction is not laziness.{" "}
-            <br className="hidden sm:block" />
-            <span className="sm:ml-1.5">
-              It is standards that bend when life gets loud.
-            </span>
+            The friction is not laziness — it is standards that bend when life
+            gets loud.
           </motion.h2>
-          <motion.div
+          <motion.p
             variants={fadeMain}
-            className="mt-7 max-w-[34rem] space-y-4 text-pretty sm:mt-9 sm:space-y-5"
+            className="ascend-prose-calm mt-4 max-w-[34rem] text-pretty text-zinc-500 sm:mt-5"
           >
-            <p className="ascend-prose-calm text-zinc-500">
-              Without a private structure, discipline fragments — and your
-              identity quietly starts defending small compromises.
-            </p>
-            <p className="text-[13px] font-medium leading-relaxed text-zinc-400/95 sm:text-[14px] sm:leading-relaxed">
-              Limited capacity. Applications are read in order — not as a bulk
-              funnel.
-            </p>
-          </motion.div>
+            Without private structure, discipline fragments — and identity starts
+            defending small compromises. Limited capacity; applications read in
+            order.
+          </motion.p>
         </motion.div>
 
         <motion.div
-          className="mt-8 w-full max-w-5xl sm:mt-12"
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={viewport}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <EditorialImageStrip
-            src={EDITORIAL_PLACEHOLDERS.training}
-            alt="Training atmosphere — placeholder reference"
-            caption="Physique · discipline — reference frame"
-          />
-        </motion.div>
-
-        <motion.div
-          className="mt-8 grid w-full max-w-5xl grid-cols-1 gap-3.5 sm:mt-14 sm:grid-cols-2 sm:gap-5 lg:mt-20 lg:grid-cols-3 lg:gap-6 [perspective:1600px]"
+          className="mt-6 grid w-full max-w-5xl grid-cols-1 gap-2 sm:mt-8 sm:grid-cols-3 sm:gap-3"
           variants={gridStagger}
           initial="hidden"
           whileInView="visible"
@@ -250,7 +198,7 @@ export function Problem() {
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/45 via-black/12 to-transparent sm:h-32"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-ascend-surface/40 to-transparent sm:h-16"
         aria-hidden
       />
     </section>

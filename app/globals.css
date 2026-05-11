@@ -2,13 +2,26 @@
 @import "../styles/premium.css";
 
 :root {
+  /* Canvas + surfaces — charcoal / graphite (not flat #000) */
   --background: #050505;
   --foreground: #fafafa;
+  --ascend-canvas: #050505;
+  --ascend-surface: #0b0b0c;
+  --ascend-elevated: #111214;
+  --ascend-border: rgba(255, 255, 255, 0.08);
+  /* One restrained accent: cold steel / graphite blue */
+  --ascend-accent: #5f7386;
+  --ascend-accent-muted: rgba(95, 115, 134, 0.38);
+  --ascend-accent-glow: rgba(95, 115, 134, 0.12);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-ascend-canvas: #050505;
+  --color-ascend-surface: #0b0b0c;
+  --color-ascend-elevated: #111214;
+  --color-ascend-accent: #5f7386;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

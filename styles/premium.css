@@ -1,13 +1,14 @@
 :root {
-  --ascend-glow: rgba(255, 255, 255, 0.06);
-  --ascend-glow-strong: rgba(161, 161, 170, 0.12);
-  --ascend-vignette: rgba(0, 0, 0, 0.65);
-  /* Cinematic atmosphere tokens */
-  --ascend-key: rgba(255, 255, 255, 0.07);
-  --ascend-fill: rgba(8, 8, 12, 0.55);
-  --ascend-edge: rgba(0, 0, 0, 0.42);
-  --ascend-side-cool: rgba(130, 136, 160, 0.045);
-  --ascend-side-warm: rgba(150, 140, 125, 0.035);
+  /* Surfaces (see app/globals.css for canvas / accent) */
+  --ascend-glow: rgba(255, 255, 255, 0.05);
+  --ascend-glow-strong: rgba(161, 161, 170, 0.1);
+  --ascend-vignette: rgba(5, 5, 6, 0.72);
+  /* Cinematic atmosphere — graphite, not pure black */
+  --ascend-key: rgba(255, 255, 255, 0.065);
+  --ascend-fill: rgba(11, 11, 12, 0.62);
+  --ascend-edge: rgba(5, 5, 6, 0.5);
+  --ascend-side-cool: rgba(95, 115, 134, 0.06);
+  --ascend-side-warm: rgba(150, 140, 125, 0.028);
   /* Tactile rhythm — paired with `HOVER_MS` / `EASE_CINEMATIC` in `lib/motion/timing.ts` */
   --ascend-hover-duration: 440ms;
   --ascend-hover-ease: cubic-bezier(0.14, 0.88, 0.32, 1);
@@ -53,20 +54,19 @@
  */
 .ascend-section-world {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.016),
-    inset 0 -48px 80px -24px var(--ascend-edge),
-    inset 0 120px 100px -40px var(--ascend-fill);
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 0 0 1px var(--ascend-border),
+    inset 0 -40px 64px -20px var(--ascend-edge),
+    inset 0 96px 80px -36px var(--ascend-fill);
 }
 
 @media (max-width: 768px) {
   .ascend-section-world {
-    /* Lighter inset stack on small GPUs — same read, less overdraw */
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.035),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.014),
-      inset 0 -32px 56px -20px var(--ascend-edge),
-      inset 0 72px 72px -36px var(--ascend-fill);
+      inset 0 1px 0 rgba(255, 255, 255, 0.032),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+      inset 0 -24px 48px -16px var(--ascend-edge),
+      inset 0 56px 56px -28px var(--ascend-fill);
   }
 }
 
@@ -77,49 +77,50 @@
 }
 
 .ascend-surface {
-  border: 1px solid rgba(255, 255, 255, 0.076);
+  border: 1px solid var(--ascend-border);
   background: linear-gradient(
-    165deg,
-    rgba(255, 255, 255, 0.055) 0%,
-    rgba(255, 255, 255, 0.02) 44%,
-    rgba(4, 4, 6, 0.56) 100%
+    168deg,
+    rgba(255, 255, 255, 0.042) 0%,
+    rgba(17, 18, 20, 0.96) 42%,
+    var(--ascend-surface) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 1px 0 rgba(255, 255, 255, 0.034) inset,
-    0 32px 100px -52px rgba(0, 0, 0, 0.88),
-    0 0 72px -32px rgba(0, 0, 0, 0.48);
-  backdrop-filter: blur(22px) saturate(120%);
+    0 0 0 1px rgba(255, 255, 255, 0.028) inset,
+    0 1px 0 rgba(255, 255, 255, 0.038) inset,
+    0 24px 72px -44px rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(16px) saturate(112%);
 }
 
 .ascend-surface-soft {
-  border: 1px solid rgba(255, 255, 255, 0.068);
+  border: 1px solid var(--ascend-border);
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.034) 0%,
-    rgba(255, 255, 255, 0.016) 56%,
-    rgba(6, 6, 8, 0.33) 100%
+    rgba(255, 255, 255, 0.028) 0%,
+    rgba(17, 18, 20, 0.55) 52%,
+    var(--ascend-surface) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.024) inset,
-    0 22px 64px -40px rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(16px) saturate(118%);
+    0 0 0 1px rgba(255, 255, 255, 0.022) inset,
+    0 18px 52px -36px rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(12px) saturate(108%);
 }
 
 @media (max-width: 640px) {
   .ascend-surface {
-    backdrop-filter: blur(10px) saturate(108%);
+    backdrop-filter: blur(8px) saturate(104%);
   }
 
   .ascend-surface-soft {
-    backdrop-filter: blur(8px) saturate(104%);
+    backdrop-filter: blur(6px) saturate(102%);
   }
 }
 
 .ascend-button-primary {
+  letter-spacing: -0.01em;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.075),
-    0 22px 64px -22px rgba(255, 255, 255, 0.24);
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 0 1px var(--ascend-accent-muted) inset,
+    0 14px 40px -16px rgba(0, 0, 0, 0.5);
   transition:
     box-shadow var(--ascend-hover-duration) var(--ascend-hover-ease),
     transform var(--ascend-hover-duration) var(--ascend-hover-ease);
@@ -128,17 +129,40 @@
 
 .ascend-button-primary:hover {
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 28px 74px -18px rgba(255, 255, 255, 0.3);
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(95, 115, 134, 0.42) inset,
+    0 18px 48px -14px var(--ascend-accent-glow);
+}
+
+.ascend-button-primary:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--ascend-canvas),
+    0 0 0 4px var(--ascend-accent-muted),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 
 .ascend-button-ghost {
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   transition:
     border-color var(--ascend-hover-duration) var(--ascend-hover-ease),
     background-color var(--ascend-hover-duration) var(--ascend-hover-ease),
+    box-shadow var(--ascend-hover-duration) var(--ascend-hover-ease),
     transform var(--ascend-hover-duration) var(--ascend-hover-ease);
   touch-action: manipulation;
+}
+
+.ascend-button-ghost:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.07) inset,
+    0 0 24px -8px var(--ascend-accent-glow);
+}
+
+.ascend-button-ghost:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--ascend-canvas),
+    0 0 0 3px var(--ascend-accent-muted);
 }
 
 .ascend-vignette-divider {
@@ -153,7 +177,9 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.095) 50%,
+    rgba(95, 115, 134, 0.22) 46%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(95, 115, 134, 0.22) 54%,
     transparent 100%
   );
   pointer-events: none;
@@ -203,18 +229,19 @@
   letter-spacing: -0.038em;
   font-weight: 600;
   text-wrap: balance;
+  color: #fafafa;
 }
 
 @media (max-width: 639px) {
   .ascend-type-hero {
-    font-size: clamp(2.05rem, 9.2vw, 2.9rem);
-    line-height: 1.05;
+    font-size: clamp(1.92rem, 8.4vw, 2.75rem);
+    line-height: 1.06;
   }
 }
 
 .ascend-type-section {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
-  font-size: clamp(1.95rem, 2.6vw + 0.95rem, 2.95rem);
+  font-size: clamp(1.92rem, 2.5vw + 0.92rem, 2.92rem);
   line-height: 1.06;
   letter-spacing: -0.034em;
   font-weight: 600;
@@ -223,16 +250,21 @@
 
 .ascend-type-section-sm {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
-  font-size: clamp(1.78rem, 2.1vw + 0.85rem, 2.45rem);
+  font-size: clamp(1.72rem, 2.05vw + 0.82rem, 2.42rem);
   line-height: 1.08;
   letter-spacing: -0.032em;
   font-weight: 600;
   text-wrap: balance;
 }
 
+/* Section headlines: slightly under hero white for hierarchy */
+.ascend-headline {
+  color: rgb(249 249 247 / 0.94);
+}
+
 .ascend-prose-calm {
   font-size: 0.9375rem;
-  line-height: 1.8;
+  line-height: 1.78;
   letter-spacing: 0.011em;
 }
 
@@ -331,11 +363,12 @@
   height: 120%;
   background: radial-gradient(
     ellipse 52% 42% at 38% 32%,
-    rgba(255, 255, 255, 0.065) 0%,
-    transparent 70%
+    rgba(255, 255, 255, 0.055) 0%,
+    rgba(95, 115, 134, 0.04) 38%,
+    transparent 72%
   );
   mix-blend-mode: soft-light;
-  opacity: 0.42;
+  opacity: 0.36;
   animation: ascend-hero-sheen-drift 44s ease-in-out infinite;
   will-change: transform, opacity;
 }
@@ -366,8 +399,9 @@
 
 @media (max-width: 768px) {
   .ascend-hero-directional-sheen {
-    animation-name: ascend-hero-sheen-drift-mobile;
-    animation-duration: 52s;
+    animation: none;
+    opacity: 0.28;
+    will-change: auto;
   }
 }
 

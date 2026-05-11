@@ -6,11 +6,11 @@
 
 /** Default section shell (~72rem) with slight optical left weight */
 export const shellStandard =
-  "relative z-10 mx-auto w-full max-w-6xl px-6 sm:px-10 lg:pl-14 lg:pr-11 xl:pl-16 xl:pr-12";
+  "relative z-10 mx-auto w-full max-w-6xl px-5 sm:px-10 lg:pl-[4.5rem] lg:pr-10 xl:pl-[4.75rem] xl:pr-12";
 
 /** Wide shell for pricing grid, comparison table, proof collage */
 export const shellWide =
-  "relative z-10 mx-auto w-full max-w-7xl px-6 sm:px-10 lg:pl-14 lg:pr-11 xl:pl-16 xl:pr-12";
+  "relative z-10 mx-auto w-full max-w-7xl px-5 sm:px-10 lg:pl-14 lg:pr-11 xl:pl-16 xl:pr-12";
 
 /** Mentorship depth stack — narrower measure */
 export const shellNarrow =
@@ -18,11 +18,11 @@ export const shellNarrow =
 
 /** Hero / full-bleed narrative column */
 export const shellHero =
-  "relative z-10 mx-auto flex w-full max-w-[min(80rem,100%)] flex-1 flex-col justify-center px-6 pb-28 pt-[6.25rem] sm:px-10 sm:pb-40 sm:pt-[7.35rem] lg:pl-16 lg:pr-20 lg:pb-44 lg:pt-[8.25rem]";
+  "relative z-10 mx-auto flex w-full max-w-[min(80rem,100%)] flex-1 flex-col justify-center px-5 pb-20 pt-[5.5rem] sm:px-10 sm:pb-36 sm:pt-[6.75rem] lg:pl-[4.25rem] lg:pr-[5.5rem] lg:pb-40 lg:pt-[7.5rem]";
 
 /** Long-form reading width — assessment, calibration blocks */
 export const shellReading =
-  "relative z-10 mx-auto w-full max-w-[min(40rem,100%)] px-6 sm:px-10 lg:max-w-[42rem] lg:pl-14 lg:pr-12";
+  "relative z-10 mx-auto w-full max-w-[min(40rem,100%)] px-5 sm:px-10 lg:max-w-[42rem] lg:pl-[4.25rem] lg:pr-14";
 
 /** Left-anchored section lead (eyebrow + title + dek) */
 export const leadLeft =

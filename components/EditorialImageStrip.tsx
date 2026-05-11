@@ -17,13 +17,13 @@ export function EditorialImageStrip({
   alt,
   caption = "Reference imagery · replace with Ascend assets",
   className,
-  aspectClassName = "aspect-[2/1] min-h-[10.5rem] sm:aspect-[21/9] sm:min-h-0",
+        aspectClassName = "aspect-[2/1] min-h-[9rem] sm:aspect-[21/9] sm:min-h-0",
   priority = false,
 }: EditorialImageStripProps) {
   return (
     <figure
       className={cn(
-        "relative w-full overflow-hidden rounded-[1.05rem] border border-white/[0.08] bg-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset]",
+        "relative w-full overflow-hidden rounded-[1.05rem] border border-[color:var(--ascend-border)] bg-ascend-elevated shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(95,115,134,0.06)_inset]",
         className,
       )}
     >
@@ -38,15 +38,15 @@ export function EditorialImageStrip({
           decoding="async"
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/22 max-sm:from-black/70 max-sm:via-black/25"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ascend-canvas/90 via-ascend-surface/35 to-transparent max-sm:from-ascend-canvas/85"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 mix-blend-soft-light max-sm:bg-zinc-950/15 sm:bg-zinc-950/25"
+          className="pointer-events-none absolute inset-0 mix-blend-soft-light bg-[color:rgba(95,115,134,0.04)]"
           aria-hidden
         />
-        <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-3 py-2.5 sm:px-5 sm:py-3.5">
-          <p className="text-[9px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-500 sm:text-[10px] sm:tracking-[0.22em]">
+        <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-3 py-2 sm:px-5 sm:py-3">
+          <p className="text-[9px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600 sm:text-[10px] sm:tracking-[0.22em]">
             {caption}
           </p>
         </figcaption>

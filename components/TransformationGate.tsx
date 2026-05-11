@@ -146,7 +146,7 @@ export function TransformationGate() {
       {active ? (
         <motion.div
           key="transformation-gate"
-          className="fixed inset-0 z-[280] flex flex-col bg-[#030303]"
+          className="fixed inset-0 z-[280] flex flex-col bg-ascend-surface"
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}

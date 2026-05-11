@@ -1,6 +1,5 @@
 "use client";
 
-import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
 import {
   DURATION_OPACITY,
   DURATION_OVERLAY,
@@ -20,7 +19,6 @@ const links = [
   { href: "#philosophy", label: "Philosophy" },
   { href: "#journey", label: "Journey" },
   { href: "#programs", label: "Method" },
-  { href: "#mentorship-depth", label: "Depth" },
   { href: "#assessment", label: "Assessment" },
   { href: "#testimonials", label: "Proof" },
   {
@@ -31,9 +29,6 @@ const links = [
 ] as const;
 
 export function Navbar() {
-  const conversion = useConversionExperienceOptional();
-  const notice = conversion?.urgencyMessage ?? "";
-
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -70,7 +65,7 @@ export function Navbar() {
         className={cn(
           "fixed top-0 z-50 w-full transition-[background-color,backdrop-filter,border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           scrolled
-            ? "border-b border-white/[0.06] bg-zinc-950/45 shadow-[0_12px_48px_-12px_rgba(0,0,0,0.65)] backdrop-blur-md backdrop-saturate-100 sm:backdrop-blur-xl sm:backdrop-saturate-150"
+            ? "border-b border-[color:var(--ascend-border)] bg-[color:rgba(11,11,12,0.94)] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-125"
             : "border-b border-transparent bg-transparent",
         )}
         initial={{ opacity: 0, y: -18 }}
@@ -83,18 +78,10 @@ export function Navbar() {
         >
           <Link
             href="/"
-            className="relative z-10 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-400 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:text-zinc-300"
+            className="relative z-10 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:text-zinc-300"
           >
             Ascend Theory
           </Link>
-
-          <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 hidden w-[min(20rem,calc(100vw-14rem))] -translate-x-1/2 -translate-y-1/2 lg:block">
-            {notice ? (
-              <p className="truncate text-center text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-600">
-                {notice}
-              </p>
-            ) : null}
-          </div>
 
           <div className="relative z-10 hidden items-center gap-8 lg:ml-auto lg:flex xl:gap-10">
             {links.map((item) => (
@@ -103,18 +90,13 @@ export function Navbar() {
                 href={item.href}
                 aria-label={"ariaLabel" in item ? item.ariaLabel : undefined}
                 className={cn(
-                  "group relative text-[13px] font-medium tracking-tight text-zinc-400 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+                  "group relative pb-0.5 text-[13px] font-medium tracking-tight text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
                   "hover:text-zinc-200",
+                  "after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:rounded-full after:bg-[var(--ascend-accent)] after:opacity-80 after:transition-[width] after:duration-300 after:ease-[var(--ascend-hover-ease)]",
+                  "hover:after:w-full",
                 )}
               >
                 <span className="relative z-10">{item.label}</span>
-                <span
-                  className={cn(
-                    "pointer-events-none absolute -inset-x-3 -inset-y-2 rounded-lg opacity-0 shadow-[0_0_40px_-2px_rgba(255,255,255,0.14)] transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
-                    "group-hover:opacity-[0.72]",
-                  )}
-                  aria-hidden
-                />
               </Link>
             ))}
           </div>
@@ -152,12 +134,12 @@ export function Navbar() {
           >
             <button
               type="button"
-              className="absolute inset-0 bg-black/82 backdrop-blur-md sm:bg-black/78"
+              className="absolute inset-0 bg-ascend-canvas/88 backdrop-blur-md"
               aria-label="Close menu"
               onClick={close}
             />
             <motion.div
-              className="absolute inset-x-0 bottom-0 top-0 flex flex-col bg-zinc-950/94 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[5rem]"
+              className="absolute inset-x-0 bottom-0 top-0 flex flex-col border-r border-[color:var(--ascend-border)] bg-[color:rgba(11,11,12,0.98)] px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[5rem]"
               initial={{ y: -8, opacity: 0.6 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -8, opacity: 0 }}
@@ -175,7 +157,7 @@ export function Navbar() {
                     <Link
                       href={item.href}
                       onClick={close}
-                      className="ascend-surface-soft block rounded-xl px-3.5 py-3 text-[1rem] font-medium tracking-tight text-zinc-200 transition-colors hover:border-white/[0.12] hover:text-white"
+                      className="ascend-surface-soft block rounded-xl border border-transparent px-3.5 py-2.5 text-[0.9375rem] font-medium tracking-tight text-zinc-300 transition-colors hover:border-[color:rgba(95,115,134,0.35)] hover:text-zinc-100"
                     >
                       {item.label}
                     </Link>
