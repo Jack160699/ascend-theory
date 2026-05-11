@@ -7,7 +7,6 @@ import { ConversionExperienceProvider } from "@/contexts/conversion-experience";
 import { MobileConversionProvider } from "@/contexts/mobile-conversion";
 import { Brotherhood } from "@/sections/Brotherhood";
 import { FinalDecisionCTA } from "@/sections/FinalDecisionCTA";
-import { Footer } from "@/sections/Footer";
 import { Hero } from "@/sections/Hero";
 import { Philosophy } from "@/sections/Philosophy";
 import { Pricing } from "@/sections/Pricing";
@@ -35,7 +34,6 @@ export default function Home() {
             <Testimonials />
             <FinalDecisionCTA />
             </main>
-            <Footer />
           </MobileConversionProvider>
         </ConversionExperienceProvider>
       </AssessmentModalProvider>

@@ -46,6 +46,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Reserve space when the minimal privacy strip is visible (see CookieNotice). */
+body.ascend-cookie-strip-active {
+  padding-bottom: max(3.25rem, calc(env(safe-area-inset-bottom, 0px) + 2.5rem));
+  transition: padding-bottom 0.48s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.ascend-cookie-strip-active {
+    transition: none;
+  }
+}
+
 /* GSAP scroll layers — GPU hints only where parallax runs */
 [data-cinematic-parallax],
 [data-cinematic-fog] {

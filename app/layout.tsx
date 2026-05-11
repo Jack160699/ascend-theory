@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AscendFilmGrain } from "@/components/AscendFilmGrain";
+import { CookieNotice } from "@/components/CookieNotice";
+import { Footer } from "@/sections/Footer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,8 +31,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-black text-white">
-        {children}
+      <body className="flex min-h-full flex-col bg-black text-white">
+        <div className="flex min-h-full flex-1 flex-col">{children}</div>
+        <Footer />
+        <CookieNotice />
         <AscendFilmGrain />
       </body>
     </html>

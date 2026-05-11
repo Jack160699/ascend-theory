@@ -24,6 +24,10 @@ export const shellHero =
 export const shellReading =
   "relative z-10 mx-auto w-full max-w-[min(40rem,100%)] px-6 sm:px-10 lg:max-w-[42rem] lg:pl-[4.25rem] lg:pr-14";
 
+/** Legal / trust documents — narrow editorial measure */
+export const shellLegal =
+  "relative z-10 mx-auto w-full max-w-[min(36rem,100%)] px-6 pt-12 pb-24 sm:px-10 sm:pt-16 sm:pb-28 lg:max-w-[38rem] lg:pl-[4.25rem] lg:pr-14";
+
 /** Left-anchored section lead (eyebrow + title + dek) */
 export const leadLeft =
   "w-full text-left max-w-[min(42rem,100%)] lg:max-w-[41rem]";

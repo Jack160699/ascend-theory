@@ -3,11 +3,17 @@
 import Link from "next/link";
 
 const quick = [
-  { href: "#philosophy", label: "About" },
-  { href: "#brotherhood", label: "Brotherhood" },
-  { href: "#programs", label: "Outcomes" },
-  { href: "#pricing", label: "Membership" },
-  { href: "#testimonials", label: "Proof" },
+  { href: "/#philosophy", label: "About" },
+  { href: "/#brotherhood", label: "Brotherhood" },
+  { href: "/#programs", label: "Outcomes" },
+  { href: "/#pricing", label: "Membership" },
+  { href: "/#testimonials", label: "Proof" },
+] as const;
+
+const legal = [
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+  { href: "/refunds", label: "Refunds" },
 ] as const;
 
 export function Footer() {
@@ -44,13 +50,35 @@ export function Footer() {
         </nav>
       </div>
       <div className="relative z-10 mx-auto mt-10 max-w-6xl border-t border-[color:var(--ascend-border)] pt-6 sm:mt-12">
-        <p
-          className="text-left text-[11px] leading-relaxed text-zinc-700 sm:text-right"
-          suppressHydrationWarning
-        >
-          © {new Date().getFullYear()} Ascend Theory. Mentor capacity intentionally
-          limited.
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8">
+          <p
+            className="text-left text-[11px] leading-relaxed text-zinc-700"
+            suppressHydrationWarning
+          >
+            © {new Date().getFullYear()} Ascend Theory. Mentor capacity intentionally
+            limited.
+          </p>
+          <nav
+            aria-label="Legal and policies"
+            className="flex flex-wrap items-center gap-x-1 gap-y-1.5 text-[11px] tracking-[0.02em] text-zinc-700"
+          >
+            {legal.map((item, i) => (
+              <span key={item.href} className="inline-flex items-center">
+                {i > 0 ? (
+                  <span className="px-1.5 text-zinc-800 select-none" aria-hidden>
+                    ·
+                  </span>
+                ) : null}
+                <Link
+                  href={item.href}
+                  className="text-zinc-600 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:text-zinc-400"
+                >
+                  {item.label}
+                </Link>
+              </span>
+            ))}
+          </nav>
+        </div>
       </div>
     </footer>
   );
