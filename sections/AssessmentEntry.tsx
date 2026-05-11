@@ -15,8 +15,8 @@ import { useMemo } from "react";
 export function AssessmentEntry() {
   const viewport = useRevealViewport();
   const isMobile = useIsMobileConversion();
-  const yK = useMemo(() => (isMobile ? 0.62 : 1), [isMobile]);
-  const durK = useMemo(() => (isMobile ? 0.88 : 1), [isMobile]);
+  const yK = useMemo(() => (isMobile ? 0.7 : 1), [isMobile]);
+  const durK = useMemo(() => (isMobile ? 0.94 : 1), [isMobile]);
   return (
     <section
       id="assessment"
@@ -74,7 +74,7 @@ export function AssessmentEntry() {
           <Link
             href="#pricing"
             className={cn(
-                "ascend-button-ghost inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--ascend-border)] bg-white/[0.03] px-6 text-[13px] font-medium tracking-[-0.01em] text-zinc-300 backdrop-blur-sm transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-[color:rgba(95,115,134,0.35)] hover:bg-white/[0.05] hover:text-zinc-100 sm:px-7 sm:text-sm",
+                "ascend-button-ghost inline-flex min-h-11 items-center justify-center rounded-md border border-[color:var(--ascend-border)] bg-white/[0.03] px-6 text-[13px] font-medium tracking-[-0.01em] text-zinc-300 backdrop-blur-sm transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-[color:rgba(95,115,134,0.35)] hover:bg-white/[0.05] hover:text-zinc-100 sm:px-7 sm:text-sm",
             )}
           >
             View pricing

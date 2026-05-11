@@ -9,6 +9,10 @@ import {
 } from "@/contexts/mobile-conversion";
 import { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
 import {
+  CINEMATIC_IMAGE_CLASS,
+  cinematicImageClassForSrc,
+} from "@/lib/cinematic-composition";
+import {
   DURATION_OPACITY,
   DURATION_REVEAL,
   getFadeUpReveal,
@@ -101,7 +105,7 @@ function PillarRow({
     >
       <div
         className={cn(
-          "relative aspect-[16/10] overflow-hidden rounded-lg border border-white/[0.06] bg-zinc-950 sm:aspect-[5/3]",
+          "relative aspect-[16/10] overflow-hidden rounded-md border border-white/[0.055] bg-zinc-950 sm:aspect-[5/3] sm:rounded-lg",
           reverse && "sm:[direction:ltr]",
         )}
       >
@@ -109,7 +113,7 @@ function PillarRow({
           src={visual.src}
           alt={visual.alt}
           fill
-          className="object-cover object-center"
+          className={cinematicImageClassForSrc(visual.src)}
           sizes="(max-width:640px) 100vw, 38vw"
           loading="lazy"
         />
@@ -152,7 +156,11 @@ export function System() {
       aria-labelledby="system-heading"
     >
       <SectionContinuity />
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden
+        data-cinematic-parallax="8"
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-ascend-canvas via-ascend-surface to-ascend-canvas" />
         {!isMobile ? (
           <div className="absolute right-[-18%] top-[10%] h-[22rem] w-[22rem] rounded-full bg-[color:rgba(95,115,134,0.05)] blur-[88px]" />
@@ -192,24 +200,25 @@ export function System() {
 
         <motion.div
           className="mt-4 w-full max-w-[min(100%,68rem)] sm:mt-6 lg:ml-auto lg:mr-0"
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_OPACITY, 0.04)}
+          transition={txReveal(DURATION_OPACITY, 0.06)}
         >
           <EditorialImageStrip
             src={CINEMATIC_ASSETS.systemsPlanningWall}
             alt="Weekly planning wall — routines, training, work, recovery, communication"
             aspectClassName="aspect-[2/1] min-h-[7.5rem] sm:aspect-[21/9] sm:min-h-0"
+            imageClassName={CINEMATIC_IMAGE_CLASS.systemsPlanningWall}
           />
         </motion.div>
 
         <motion.article
-          className="mx-auto mt-8 max-w-5xl overflow-hidden rounded-xl border border-white/[0.07] bg-zinc-950/30 sm:mt-10"
-          initial={{ opacity: 0, y: 14 }}
+          className="mx-auto mt-8 max-w-5xl overflow-hidden rounded-lg border border-white/[0.06] bg-zinc-950/25 sm:mt-10 sm:rounded-xl"
+          initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL, 0.06)}
+          transition={txReveal(DURATION_REVEAL, 0.1)}
         >
           <div className="grid lg:grid-cols-2">
             <div className="relative aspect-[5/4] min-h-[13rem] border-b border-white/[0.06] lg:aspect-auto lg:min-h-[16rem] lg:border-b-0 lg:border-r">
@@ -217,7 +226,7 @@ export function System() {
                 src={CINEMATIC_ASSETS.leadershipLounge}
                 alt="Calm leadership — conversation in a premium lounge"
                 fill
-                className="object-cover object-[center_28%]"
+                className={CINEMATIC_IMAGE_CLASS.leadershipLounge}
                 sizes="(max-width:1024px) 100vw, 50vw"
                 loading="lazy"
               />

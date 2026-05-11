@@ -9,6 +9,8 @@ type EditorialImageStripProps = {
   caption?: string;
   className?: string;
   aspectClassName?: string;
+  /** `object-cover` + responsive `object-position` (defaults to centered). */
+  imageClassName?: string;
   priority?: boolean;
 };
 
@@ -18,12 +20,13 @@ export function EditorialImageStrip({
   caption,
   className,
   aspectClassName = "aspect-[2/1] min-h-[8.5rem] sm:aspect-[21/9] sm:min-h-0",
+  imageClassName = "object-cover object-center",
   priority = false,
 }: EditorialImageStripProps) {
   return (
     <figure
       className={cn(
-        "relative w-full overflow-hidden rounded-[1.05rem] border border-[color:var(--ascend-border)] bg-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(95,115,134,0.06)_inset]",
+        "relative w-full overflow-hidden rounded-lg border border-white/[0.055] bg-zinc-950 sm:rounded-xl",
         className,
       )}
     >
@@ -32,7 +35,7 @@ export function EditorialImageStrip({
           src={src}
           alt={alt}
           fill
-          className="object-cover object-center"
+          className={imageClassName}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 72rem"
           priority={priority}
           loading={priority ? "eager" : "lazy"}

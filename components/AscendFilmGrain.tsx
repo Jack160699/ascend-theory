@@ -1,7 +1,7 @@
 /**
- * Film grain layer inside `<main>` — static markup, no client JS.
- * Very low opacity; removes digital flatness without visible “noise UI”.
+ * Viewport-locked grain (see `.ascend-global-grain` in `styles/premium.css`).
+ * Rendered once in root layout — static markup, no client JS.
  */
 export function AscendFilmGrain() {
-  return <div className="ascend-film-grain" aria-hidden />;
+  return <div className="ascend-global-grain" aria-hidden />;
 }

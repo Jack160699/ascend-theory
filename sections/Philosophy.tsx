@@ -7,6 +7,7 @@ import {
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
 import { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
+import { CINEMATIC_IMAGE_CLASS } from "@/lib/cinematic-composition";
 import {
   DURATION_REVEAL,
   getFadeUpReveal,
@@ -40,7 +41,11 @@ export function Philosophy() {
       aria-labelledby="philosophy-heading"
     >
       <SectionContinuity top={false} />
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden
+        data-cinematic-parallax="9"
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-ascend-canvas via-ascend-surface to-ascend-canvas" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,6,0.45)_78%)]" />
       </div>
@@ -119,17 +124,17 @@ export function Philosophy() {
 
           <motion.figure
             className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none lg:sticky lg:top-28"
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={viewport}
-            transition={txReveal(DURATION_REVEAL * 1.05, 0.08)}
+            transition={txReveal(DURATION_REVEAL * 1.05, 0.12)}
           >
-            <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-950 shadow-[0_24px_64px_-32px_rgba(0,0,0,0.55)] sm:aspect-[3/4] lg:aspect-[4/5]">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-white/[0.065] bg-zinc-950 sm:aspect-[3/4] sm:rounded-xl lg:aspect-[4/5]">
               <AscendImage
                 src={CINEMATIC_ASSETS.philosophyLibrary}
                 alt="Private study — reading, notes, and intention in evening light"
                 fill
-                className="object-cover object-center"
+                className={CINEMATIC_IMAGE_CLASS.philosophyLibrary}
                 sizes="(max-width:1024px) 100vw, 42vw"
                 loading="lazy"
               />

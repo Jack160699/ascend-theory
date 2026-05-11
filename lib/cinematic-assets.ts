@@ -1,6 +1,6 @@
 /**
  * Ascend Theory — primary cinematic stills (`public/images/ascend/`).
- * Files are `.webp` filenames (PNG source); replace with true WebP when ready.
+ * Real WebP masters; re-encode with `npm run optimize:images` when sources change.
  */
 export const CINEMATIC_ASSETS = {
   heroRooftopSunrise: "/images/ascend/rooftop-sunrise.webp",

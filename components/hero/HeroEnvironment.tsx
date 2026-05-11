@@ -41,12 +41,12 @@ export function HeroEnvironment({
     offset: ["start start", "end start"],
   });
 
-  /** Tighter scroll-linked travel on mobile — same parallax read, less layer drift. */
-  const amp = reduceMotion ? 0 : liteMotion ? 0.14 : 1;
+  /** Minimal scroll-linked drift — only when decorative panes are visible. */
+  const amp = reduceMotion ? 0 : liteMotion ? 0.1 : 0.52;
 
-  const yFar = useTransform(scrollYProgress, [0, 1], [0, 30 * amp]);
-  const yMid = useTransform(scrollYProgress, [0, 1], [0, 16 * amp]);
-  const yNear = useTransform(scrollYProgress, [0, 1], [0, -11 * amp]);
+  const yFar = useTransform(scrollYProgress, [0, 1], [0, 14 * amp]);
+  const yMid = useTransform(scrollYProgress, [0, 1], [0, 8 * amp]);
+  const yNear = useTransform(scrollYProgress, [0, 1], [0, -5 * amp]);
 
   const cinematic = variant === "cinematic";
 
@@ -80,11 +80,11 @@ export function HeroEnvironment({
             reduceMotion
               ? undefined
               : liteMotion
-                ? { rotate: [-6.15, -5.85, -6.15], opacity: [0.9, 0.97, 0.9] }
-                : { rotate: [-6.5, -5.5, -6.5], opacity: [0.88, 1, 0.88] }
+                ? { rotate: [-6.08, -5.92, -6.08], opacity: [0.92, 0.98, 0.92] }
+                : { rotate: [-6.2, -5.8, -6.2], opacity: [0.9, 1, 0.9] }
           }
           transition={{
-            duration: liteMotion ? 36 : 26,
+            duration: liteMotion ? 48 : 38,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -108,11 +108,11 @@ export function HeroEnvironment({
             reduceMotion
               ? undefined
               : liteMotion
-                ? { rotate: [7.65, 8.35, 7.65], opacity: [0.92, 0.99, 0.92] }
-                : { rotate: [7.2, 8.8, 7.2], opacity: [0.9, 1, 0.9] }
+                ? { rotate: [7.82, 8.18, 7.82], opacity: [0.93, 0.99, 0.93] }
+                : { rotate: [7.65, 8.35, 7.65], opacity: [0.92, 1, 0.92] }
           }
           transition={{
-            duration: liteMotion ? 38 : 28,
+            duration: liteMotion ? 52 : 42,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -134,10 +134,10 @@ export function HeroEnvironment({
           animate={
             reduceMotion
               ? undefined
-              : { rotate: [-10.5, -9.2, -10.5], opacity: [0.85, 0.98, 0.85] }
+              : { rotate: [-10.25, -9.55, -10.25], opacity: [0.88, 0.98, 0.88] }
           }
           transition={{
-            duration: 30,
+            duration: 44,
             repeat: Infinity,
             ease: "easeInOut",
             delay: 1.6,

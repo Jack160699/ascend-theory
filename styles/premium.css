@@ -10,41 +10,48 @@
   --ascend-side-cool: rgba(95, 115, 134, 0.06);
   --ascend-side-warm: rgba(150, 140, 125, 0.028);
   /* Tactile rhythm — paired with `HOVER_MS` / `EASE_CINEMATIC` in `lib/motion/timing.ts` */
-  --ascend-hover-duration: 440ms;
-  --ascend-hover-ease: cubic-bezier(0.14, 0.88, 0.32, 1);
+  --ascend-hover-duration: 520ms;
+  --ascend-hover-ease: cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 @media (max-width: 639px) {
   :root {
     /* Slightly snappier tactile feedback on cold mobile traffic */
-    --ascend-hover-duration: 400ms;
+    --ascend-hover-duration: 470ms;
   }
 }
 
 /**
- * Film grain locked to the main canvas (not fixed) so section stacks paint above it.
- * Barely visible; kills flat digital black.
+ * Global film grain — fixed over page + footer; below modals (z-index 200+).
+ * Ultra-soft fractal noise + soft-light: depth only, not “noisy UI”.
  */
-.ascend-film-grain {
-  position: absolute;
+.ascend-global-grain {
+  position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: 120;
   pointer-events: none;
-  opacity: 0.032;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 512px 512px;
+}
+
+@media (min-width: 1024px) {
+  .ascend-global-grain {
+    opacity: 0.052;
+  }
 }
 
 @media (max-width: 768px) {
-  .ascend-film-grain {
-    opacity: 0.02;
-    mix-blend-mode: soft-light;
+  .ascend-global-grain {
+    opacity: 0.038;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ascend-film-grain {
-    opacity: 0.018;
+  .ascend-global-grain {
+    opacity: 0.03;
   }
 }
 
@@ -63,10 +70,10 @@
 @media (max-width: 768px) {
   .ascend-section-world {
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.032),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-      inset 0 -24px 48px -16px var(--ascend-edge),
-      inset 0 56px 56px -28px var(--ascend-fill);
+      inset 0 1px 0 rgba(255, 255, 255, 0.028),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.038),
+      inset 0 -20px 40px -14px var(--ascend-edge),
+      inset 0 48px 48px -26px var(--ascend-fill);
   }
 }
 
@@ -85,9 +92,9 @@
     var(--ascend-surface) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.028) inset,
-    0 1px 0 rgba(255, 255, 255, 0.038) inset,
-    0 24px 72px -44px rgba(0, 0, 0, 0.62);
+    0 0 0 1px rgba(255, 255, 255, 0.022) inset,
+    0 1px 0 rgba(255, 255, 255, 0.032) inset,
+    0 18px 48px -40px rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(16px) saturate(112%);
 }
 
@@ -100,8 +107,8 @@
     var(--ascend-surface) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.022) inset,
-    0 18px 52px -36px rgba(0, 0, 0, 0.58);
+    0 0 0 1px rgba(255, 255, 255, 0.018) inset,
+    0 14px 40px -32px rgba(0, 0, 0, 0.52);
   backdrop-filter: blur(12px) saturate(108%);
 }
 
@@ -118,9 +125,9 @@
 .ascend-button-primary {
   letter-spacing: -0.01em;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
     0 0 0 1px var(--ascend-accent-muted) inset,
-    0 14px 40px -16px rgba(0, 0, 0, 0.5);
+    0 10px 28px -14px rgba(0, 0, 0, 0.45);
   transition:
     box-shadow var(--ascend-hover-duration) var(--ascend-hover-ease),
     transform var(--ascend-hover-duration) var(--ascend-hover-ease);
@@ -129,9 +136,9 @@
 
 .ascend-button-primary:hover {
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 0 0 1px rgba(95, 115, 134, 0.42) inset,
-    0 18px 48px -14px var(--ascend-accent-glow);
+    0 0 0 1px rgba(255, 255, 255, 0.085),
+    0 0 0 1px rgba(95, 115, 134, 0.38) inset,
+    0 12px 36px -12px var(--ascend-accent-glow);
 }
 
 .ascend-button-primary:focus-visible {
@@ -209,8 +216,8 @@
 
 .ascend-type-eyebrow {
   font-size: 0.6875rem;
-  line-height: 1.55;
-  letter-spacing: 0.33em;
+  line-height: 1.6;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 500;
 }
@@ -218,7 +225,7 @@
 @media (min-width: 640px) {
   .ascend-type-eyebrow {
     font-size: 0.75rem;
-    letter-spacing: 0.35em;
+    letter-spacing: 0.24em;
   }
 }
 
@@ -251,8 +258,8 @@
 .ascend-type-section-sm {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   font-size: clamp(1.72rem, 2.05vw + 0.82rem, 2.42rem);
-  line-height: 1.08;
-  letter-spacing: -0.032em;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   font-weight: 600;
   text-wrap: balance;
 }
@@ -264,15 +271,15 @@
 
 .ascend-prose-calm {
   font-size: 0.9375rem;
-  line-height: 1.78;
-  letter-spacing: 0.011em;
+  line-height: 1.8;
+  letter-spacing: 0.004em;
 }
 
 @media (min-width: 640px) {
   .ascend-prose-calm {
     font-size: 1rem;
-    line-height: 1.84;
-    letter-spacing: 0.009em;
+    line-height: 1.82;
+    letter-spacing: 0.003em;
   }
 }
 

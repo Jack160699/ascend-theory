@@ -54,7 +54,7 @@ function StepBlock({
   return (
     <motion.article
       variants={cardVariants}
-      className="group relative flex min-w-0 flex-col gap-2 rounded-xl border border-[color:var(--ascend-border)] bg-ascend-elevated/95 p-3 shadow-[0_0_0_1px_rgba(255,255,255,0.025)_inset] backdrop-blur-md sm:gap-2.5 sm:rounded-[1.05rem] sm:p-3.5 lg:p-4"
+      className="group relative flex min-w-0 flex-col gap-2 rounded-lg border border-[color:var(--ascend-border)] bg-ascend-elevated/95 p-3.5 backdrop-blur-sm sm:gap-2.5 sm:p-4 lg:p-4"
     >
       <div className="flex items-center gap-2.5">
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-600">

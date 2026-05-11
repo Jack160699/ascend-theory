@@ -8,6 +8,11 @@ import {
 } from "@/contexts/mobile-conversion";
 import { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
 import {
+  CINEMATIC_IMAGE_CLASS,
+  cinematicThumbClassForSrc,
+  type CinematicAssetKey,
+} from "@/lib/cinematic-composition";
+import {
   DURATION_REVEAL,
   SURFACE_SPRING,
   getFadeUpChild,
@@ -33,8 +38,16 @@ const quotes = [
   },
 ] as const;
 
-const fieldStills = [
+const fieldStills: readonly {
+  assetKey: CinematicAssetKey;
+  src: string;
+  label: string;
+  sub: string;
+  span: string;
+  aspect: string;
+}[] = [
   {
+    assetKey: "leadershipLounge",
     src: CINEMATIC_ASSETS.leadershipLounge,
     label: "Presence",
     sub: "Calm leadership in conversation",
@@ -42,6 +55,7 @@ const fieldStills = [
     aspect: "aspect-[4/3] lg:aspect-auto lg:min-h-[14rem]",
   },
   {
+    assetKey: "systemsPlanningWall",
     src: CINEMATIC_ASSETS.systemsPlanningWall,
     label: "Systems",
     sub: "The week made legible on the wall",
@@ -49,15 +63,17 @@ const fieldStills = [
     aspect: "aspect-[5/4]",
   },
   {
+    assetKey: "brotherhoodWalk",
     src: CINEMATIC_ASSETS.brotherhoodWalk,
     label: "Field",
     sub: "Shared standard, private pace",
     span: "",
     aspect: "aspect-[5/4]",
   },
-] as const;
+];
 
 function FieldStillsFigure({
+  assetKey,
   src,
   label,
   sub,
@@ -72,10 +88,10 @@ function FieldStillsFigure({
   return (
     <motion.figure
       variants={fadeChildVariants}
-      whileHover={isMobile ? undefined : { y: -1 }}
+      whileHover={isMobile ? undefined : { y: -0.5 }}
       transition={SURFACE_SPRING}
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-white/[0.07] bg-zinc-950/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
+        "group relative overflow-hidden rounded-lg border border-white/[0.06] bg-zinc-950/40 sm:rounded-xl",
         span,
       )}
     >
@@ -84,7 +100,10 @@ function FieldStillsFigure({
           src={src}
           alt={label}
           fill
-          className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.01]"
+          className={cn(
+            CINEMATIC_IMAGE_CLASS[assetKey],
+            "transition-transform duration-[680ms] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.004]",
+          )}
           sizes="(max-width:1024px) 100vw, 40vw"
           loading="lazy"
         />
@@ -121,7 +140,11 @@ export function Testimonials() {
       aria-labelledby="proof-heading"
     >
       <SectionContinuity />
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden
+        data-cinematic-parallax="9"
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-ascend-surface/70 via-ascend-canvas to-ascend-surface/70" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.52)_78%)]" />
       </div>
@@ -157,11 +180,11 @@ export function Testimonials() {
         </motion.div>
 
         <motion.article
-          className="mt-8 max-w-5xl border border-white/[0.07] bg-white/[0.02] sm:mt-10 lg:mt-11"
-          initial={{ opacity: 0, y: 12 }}
+          className="mt-8 max-w-5xl border border-white/[0.055] bg-white/[0.015] sm:mt-10 lg:mt-11"
+          initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL, 0.06)}
+          transition={txReveal(DURATION_REVEAL, 0.12)}
         >
           <div className="grid lg:grid-cols-2">
             <div className="relative aspect-[5/4] min-h-[12rem] border-b border-white/[0.06] lg:aspect-auto lg:min-h-[17rem] lg:border-b-0 lg:border-r">
@@ -169,7 +192,7 @@ export function Testimonials() {
                 src={CINEMATIC_ASSETS.lifestyleRooftopStanding}
                 alt="Rooftop at dawn — solitude, clarity, quiet confidence"
                 fill
-                className="object-cover object-[center_35%]"
+                className={CINEMATIC_IMAGE_CLASS.lifestyleRooftopStanding}
                 sizes="(max-width:1024px) 100vw, 50vw"
                 loading="lazy"
               />
@@ -196,7 +219,9 @@ export function Testimonials() {
                     src={CINEMATIC_ASSETS.philosophyLibrary}
                     alt="Depth and study — weekly private work"
                     fill
-                    className="object-cover"
+                    className={cinematicThumbClassForSrc(
+                      CINEMATIC_ASSETS.philosophyLibrary,
+                    )}
                     sizes="120px"
                     loading="lazy"
                   />
@@ -206,7 +231,9 @@ export function Testimonials() {
                     src={CINEMATIC_ASSETS.systemsPlanningWall}
                     alt="Planning wall — structure and consistency"
                     fill
-                    className="object-cover"
+                    className={cinematicThumbClassForSrc(
+                      CINEMATIC_ASSETS.systemsPlanningWall,
+                    )}
                     sizes="240px"
                     loading="lazy"
                   />

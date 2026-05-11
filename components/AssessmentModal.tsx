@@ -3,7 +3,11 @@
 import { cn } from "@/lib/utils";
 import type { TierKey } from "@/lib/lead-context";
 import {
+  CTA_HOVER_SCALE,
+  CTA_TAP_SCALE,
   DURATION_OVERLAY_SLOW,
+  MODAL_ICON_HOVER_SCALE,
+  MODAL_ICON_TAP_SCALE,
   TAP_SPRING,
   txReveal,
 } from "@/lib/motion";
@@ -14,6 +18,7 @@ import {
 } from "@/lib/whatsapp";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import { useCinematicScrollLock } from "@/contexts/cinematic-scroll";
 import { useCallback, useEffect, useState } from "react";
 
 const inputClass = cn(
@@ -44,6 +49,7 @@ function validate(fields: typeof emptyFields): string | null {
 export function AssessmentModal({ tier: _tier, open, onClose }: Props) {
   const [fields, setFields] = useState(emptyFields);
   const [error, setError] = useState<string | null>(null);
+  useCinematicScrollLock(open);
 
   useEffect(() => {
     if (!open) return;
@@ -118,13 +124,13 @@ export function AssessmentModal({ tier: _tier, open, onClose }: Props) {
           />
           <motion.div
             className={cn(
-              "ascend-surface relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[color:var(--ascend-border)]",
-              "max-h-[min(calc(100dvh-1.5rem),36rem)] shadow-[0_20px_56px_-28px_rgba(0,0,0,0.55)]",
-              "bg-[color:rgba(14,14,15,0.92)] backdrop-blur-md",
+              "relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-lg border border-[color:var(--ascend-border)] sm:rounded-xl",
+              "max-h-[min(calc(100dvh-1.5rem),36rem)] shadow-[0_20px_48px_-28px_rgba(0,0,0,0.65)]",
+              "bg-[color:rgba(12,12,13,0.94)] backdrop-blur-md",
             )}
-            initial={{ opacity: 0, y: 12, scale: 0.99 }}
+            initial={{ opacity: 0, y: 8, scale: 0.996 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.99 }}
+            exit={{ opacity: 0, y: 5, scale: 0.996 }}
             transition={txReveal(DURATION_OVERLAY_SLOW)}
             onClick={(e) => e.stopPropagation()}
           >
@@ -150,8 +156,8 @@ export function AssessmentModal({ tier: _tier, open, onClose }: Props) {
                   type="button"
                   onClick={onClose}
                   className="ascend-button-ghost flex size-8 shrink-0 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.05] text-zinc-400 transition-colors hover:border-white/[0.14] hover:text-white"
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
+                  whileHover={{ scale: MODAL_ICON_HOVER_SCALE }}
+                  whileTap={{ scale: MODAL_ICON_TAP_SCALE }}
                   transition={TAP_SPRING}
                   aria-label="Close"
                 >
@@ -236,9 +242,9 @@ export function AssessmentModal({ tier: _tier, open, onClose }: Props) {
                 <motion.button
                   type="button"
                   onClick={onClose}
-                  className="h-9 rounded-full border border-white/[0.1] px-4 text-[12px] font-medium text-zinc-300 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-white/[0.14] hover:bg-white/[0.04] hover:text-white sm:h-10 sm:text-[13px]"
-                  whileHover={{ scale: 1.012 }}
-                  whileTap={{ scale: 0.988 }}
+                  className="h-9 rounded-md border border-white/[0.09] px-4 text-[12px] font-medium text-zinc-300 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-white/[0.14] hover:bg-white/[0.04] hover:text-white sm:h-10 sm:text-[13px]"
+                  whileHover={{ scale: CTA_HOVER_SCALE }}
+                  whileTap={{ scale: CTA_TAP_SCALE }}
                   transition={TAP_SPRING}
                 >
                   Cancel
@@ -246,9 +252,9 @@ export function AssessmentModal({ tier: _tier, open, onClose }: Props) {
                 <motion.button
                   type="button"
                   onClick={submitForm}
-                  className="h-9 rounded-full bg-white px-5 text-[12px] font-medium text-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_32px_-12px_rgba(255,255,255,0.18)] sm:h-10 sm:px-6 sm:text-[13px]"
-                  whileHover={{ scale: 1.012 }}
-                  whileTap={{ scale: 0.988 }}
+                  className="ascend-button-primary h-9 rounded-md bg-white px-5 text-[12px] font-medium text-zinc-950 sm:h-10 sm:px-6 sm:text-[13px]"
+                  whileHover={{ scale: CTA_HOVER_SCALE }}
+                  whileTap={{ scale: CTA_TAP_SCALE }}
                   transition={TAP_SPRING}
                 >
                   {MODAL_WHATSAPP_CTA_LABEL}

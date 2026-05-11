@@ -14,36 +14,36 @@ export function Footer() {
   return (
     <footer
       id="site-footer"
-      className="ascend-section-world relative overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface px-5 py-7 sm:px-10 sm:py-12 lg:pl-14 lg:pr-12 lg:py-14"
+      className="ascend-section-world relative overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface px-6 py-9 sm:px-10 sm:py-12 lg:pl-14 lg:pr-12 lg:py-14"
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-ascend-canvas/35 via-transparent to-transparent"
         aria-hidden
       />
-      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-end sm:justify-between sm:gap-8 lg:gap-10">
-        <div className="max-w-sm">
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between sm:gap-10 lg:gap-12">
+        <div className="max-w-md">
           <p className="ascend-type-eyebrow text-zinc-600">Ascend Theory</p>
-          <p className="mt-3 text-sm leading-[1.72] text-zinc-600 sm:leading-[1.75]">
+          <p className="ascend-prose-calm mt-4 text-zinc-600">
             Private mentorship — selective intake, manual review, serious room
             only.
           </p>
         </div>
         <nav
           aria-label="Footer"
-          className="flex flex-wrap gap-x-6 gap-y-2.5 sm:justify-end"
+          className="flex flex-wrap gap-x-8 gap-y-3 sm:justify-end"
         >
           {quick.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="text-[13px] font-medium tracking-tight text-zinc-600 transition-colors hover:text-[color:var(--ascend-accent)]"
+              className="text-[12px] font-medium tracking-[0.02em] text-zinc-600 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:text-zinc-300"
             >
               {l.label}
             </Link>
           ))}
         </nav>
       </div>
-      <div className="relative z-10 mx-auto mt-8 max-w-6xl border-t border-[color:var(--ascend-border)] pt-5 sm:mt-10">
+      <div className="relative z-10 mx-auto mt-10 max-w-6xl border-t border-[color:var(--ascend-border)] pt-6 sm:mt-12">
         <p
           className="text-left text-[11px] leading-relaxed text-zinc-700 sm:text-right"
           suppressHydrationWarning

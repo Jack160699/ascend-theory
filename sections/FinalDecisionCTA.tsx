@@ -7,7 +7,10 @@ import {
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
 import { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
+import { CINEMATIC_IMAGE_CLASS } from "@/lib/cinematic-composition";
 import {
+  CTA_HOVER_SCALE,
+  CTA_TAP_SCALE,
   DURATION_REVEAL,
   TAP_SPRING,
   getFadeUpReveal,
@@ -37,18 +40,18 @@ export function FinalDecisionCTA() {
       className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-[color:var(--ascend-border)] py-10 sm:py-16 lg:py-20"
       aria-labelledby="final-decision-cta-heading"
     >
-      <div className="absolute inset-0" aria-hidden>
+      <div className="absolute inset-0" aria-hidden data-cinematic-parallax="10">
         <AscendImage
           src={CINEMATIC_ASSETS.lifestyleRooftopStanding}
           alt=""
           fill
-          className="object-cover object-[center_32%] sm:object-[center_28%]"
+          className={CINEMATIC_IMAGE_CLASS.lifestyleRooftopStanding}
           sizes="100vw"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-black/55 sm:bg-black/50" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ascend-canvas via-black/40 to-black/25" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-transparent" />
+        <div className="absolute inset-0 bg-black/58 sm:bg-black/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ascend-canvas via-black/48 to-black/28 sm:via-black/40 sm:to-black/25" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/72 via-black/42 to-transparent sm:from-black/60 sm:via-black/35" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_60%_40%,transparent_0%,rgba(5,5,6,0.65)_70%)]" />
       </div>
 
@@ -84,19 +87,19 @@ export function FinalDecisionCTA() {
 
         <motion.div
           className="mt-7 sm:mt-9"
-          initial={{ opacity: 0, y: isMobile ? 10 : 16 }}
+          initial={{ opacity: 0, y: isMobile ? 8 : 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
-          transition={txReveal(DURATION_REVEAL, isMobile ? 0.12 : 0.2)}
+          transition={txReveal(DURATION_REVEAL, isMobile ? 0.16 : 0.26)}
         >
           <motion.button
             type="button"
             onClick={() => openAssessment()}
             className={cn(
-              "ascend-button-primary inline-flex min-h-11 w-full max-w-sm items-center justify-center rounded-full bg-white px-7 text-[13px] font-medium tracking-[-0.01em] text-zinc-950 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_18px_48px_-12px_rgba(0,0,0,0.45)] sm:min-h-12 sm:w-auto sm:px-8 sm:text-sm",
+              "ascend-button-primary inline-flex min-h-11 w-full max-w-sm items-center justify-center rounded-md bg-white px-7 text-[13px] font-medium tracking-[-0.01em] text-zinc-950 sm:min-h-12 sm:w-auto sm:px-8 sm:text-sm",
             )}
-            whileHover={{ scale: 1.012 }}
-            whileTap={{ scale: 0.988 }}
+            whileHover={{ scale: CTA_HOVER_SCALE }}
+            whileTap={{ scale: CTA_TAP_SCALE }}
             transition={TAP_SPRING}
           >
             {FINAL_SECTION_CTA_LABEL}

@@ -7,6 +7,7 @@ import {
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
 import { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
+import { CINEMATIC_IMAGE_CLASS } from "@/lib/cinematic-composition";
 import {
   DURATION_REVEAL,
   getFadeUpReveal,
@@ -36,17 +37,17 @@ export function Brotherhood() {
     >
       <SectionContinuity />
       <div className="relative min-h-[min(72vh,36rem)] w-full sm:min-h-[min(78vh,40rem)]">
-        <div className="absolute inset-0">
+        <div className="absolute inset-0" data-cinematic-parallax="12">
           <AscendImage
             src={CINEMATIC_ASSETS.brotherhoodWalk}
             alt="Two members walking together — calm conversation, shared standard"
             fill
-            className="object-cover object-[center_42%] sm:object-[center_38%]"
+            className={CINEMATIC_IMAGE_CLASS.brotherhoodWalk}
             sizes="100vw"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-black/45 sm:bg-black/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ascend-canvas via-black/25 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ascend-canvas via-black/36 to-black/32 sm:via-black/25 sm:to-black/30" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-black/35" />
         </div>
 
@@ -84,10 +85,10 @@ export function Brotherhood() {
 
       <motion.div
         className="relative z-10 border-t border-white/[0.06] bg-ascend-surface/95 backdrop-blur-sm"
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 7 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={viewport}
-        transition={txReveal(DURATION_REVEAL, 0.08)}
+        transition={txReveal(DURATION_REVEAL, 0.14)}
       >
         <div className={cn(shellStandard, "py-6 sm:py-8")}>
           <p className="max-w-2xl text-[12px] leading-relaxed text-zinc-500 sm:text-[13px]">

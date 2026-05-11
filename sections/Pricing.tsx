@@ -8,6 +8,8 @@ import {
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
 import {
+  CTA_HOVER_SCALE,
+  CTA_TAP_SCALE,
   DURATION_REVEAL,
   SURFACE_SPRING,
   TAP_SPRING,
@@ -22,7 +24,6 @@ import { FINAL_SECTION_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { TierKey } from "@/lib/lead-context";
 import { motion, type Variants } from "framer-motion";
-import { Check } from "lucide-react";
 import { useMemo, useRef } from "react";
 
 const tiers: {
@@ -94,8 +95,8 @@ function PricingCapacityRibbon({
   if (!msg) return null;
   return (
     <motion.div
-      className="ascend-surface-soft mt-5 max-w-2xl rounded-full px-4 py-2 text-left sm:mt-8"
-      initial={{ opacity: 0, y: 8 }}
+      className="mt-5 max-w-2xl border-l border-[color:rgba(95,115,134,0.38)] pl-4 text-left sm:mt-8 sm:pl-5"
+      initial={{ opacity: 0, y: 6 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewport}
       transition={txReveal(DURATION_REVEAL)}
@@ -160,40 +161,39 @@ function PricingCard({
       onMouseLeave={isMobile ? undefined : onLeave}
       className={cn(
         "group relative flex h-full min-h-0 flex-col [perspective:1600px]",
-        key === "pro" &&
-          "z-10 shadow-[0_24px_64px_-44px_rgba(255,255,255,0.15)] lg:z-20 lg:shadow-[0_48px_100px_-52px_rgba(0,0,0,0.82)]",
-        key === "black" &&
-          "ring-1 ring-amber-950/25 lg:opacity-[0.99] lg:shadow-[0_0_100px_-48px_rgba(160,120,70,0.12)]",
+        key === "pro" && "z-10 lg:z-20",
+        key === "black" && "lg:opacity-[0.99]",
       )}
-      whileHover={{ y: isMobile ? 0 : key === "pro" ? -3 : key === "black" ? -2.5 : -2 }}
+      whileHover={{
+        y: isMobile ? 0 : key === "pro" ? -1.5 : key === "black" ? -1.25 : -1,
+      }}
       transition={SURFACE_SPRING}
     >
       <div
         className={cn(
-          "pointer-events-none absolute -inset-px rounded-[1.25rem] opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.72] max-lg:hidden sm:rounded-[1.35rem]",
+          "pointer-events-none absolute -inset-px rounded-lg opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.45] max-lg:hidden sm:rounded-xl",
           key === "pro" &&
-            "bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.2),transparent_62%)] blur-2xl",
+            "bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.12),transparent_68%)] blur-2xl",
           key === "core" &&
-            "bg-[radial-gradient(ellipse_at_40%_0%,rgba(255,255,255,0.1),transparent_70%)] blur-2xl",
+            "bg-[radial-gradient(ellipse_at_40%_0%,rgba(255,255,255,0.06),transparent_72%)] blur-2xl",
           key === "black" &&
-            "bg-[radial-gradient(ellipse_at_50%_20%,rgba(120,100,80,0.12),transparent_65%)] blur-2xl",
+            "bg-[radial-gradient(ellipse_at_50%_20%,rgba(120,100,80,0.08),transparent_68%)] blur-2xl",
         )}
       />
       <div
         className={cn(
-          "relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-[1.1rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] transition-[border-color,box-shadow,transform] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:rounded-[1.25rem]",
-          "backdrop-blur-md sm:backdrop-blur-xl",
+          "relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border transition-[border-color,box-shadow,transform] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:rounded-xl",
           key === "core" &&
-            "border-[color:var(--ascend-border)] bg-ascend-elevated/95 p-3 group-hover:border-[color:rgba(95,115,134,0.22)] group-hover:shadow-[0_16px_48px_-32px_rgba(0,0,0,0.5)] sm:p-5 lg:p-6",
+            "border-white/[0.07] bg-ascend-elevated/98 p-4 backdrop-blur-sm sm:backdrop-blur-md group-hover:border-white/[0.11] sm:p-5 lg:p-6",
           key === "pro" &&
-            "border-[color:rgba(95,115,134,0.35)] bg-ascend-elevated p-3 shadow-[0_20px_56px_-40px_rgba(0,0,0,0.55),0_0_40px_-20px_var(--ascend-accent-glow)] group-hover:border-[color:rgba(95,115,134,0.48)] group-hover:shadow-[0_24px_64px_-40px_rgba(0,0,0,0.58),0_0_52px_-18px_var(--ascend-accent-glow)] sm:p-5 lg:p-7",
+            "border-[color:rgba(95,115,134,0.28)] bg-ascend-elevated/98 p-4 backdrop-blur-sm sm:backdrop-blur-md group-hover:border-[color:rgba(95,115,134,0.4)] sm:p-5 lg:p-7",
           key === "black" &&
-            "border-amber-950/22 bg-gradient-to-b from-ascend-elevated via-ascend-surface to-ascend-canvas p-3 group-hover:border-amber-900/38 group-hover:shadow-[0_24px_64px_-44px_rgba(0,0,0,0.58),0_0_48px_-20px_rgba(180,150,100,0.06)] sm:p-5 lg:p-6",
+            "border-amber-950/20 bg-gradient-to-b from-ascend-elevated via-ascend-surface to-ascend-canvas p-4 backdrop-blur-sm sm:backdrop-blur-md group-hover:border-amber-900/30 sm:p-5 lg:p-6",
         )}
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.85]"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.55]"
           style={{ background: glowSpot }}
         />
         <div
@@ -247,11 +247,11 @@ function PricingCard({
             {tier.badge ? (
               <span
                 className={cn(
-                  "hidden shrink-0 rounded-full border px-2 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] sm:inline-flex sm:px-2.5 sm:py-0.5 sm:text-[9px] sm:tracking-[0.16em]",
+                  "hidden max-w-[11rem] border-b border-white/[0.12] pb-1 text-right text-[8px] font-medium uppercase leading-snug tracking-[0.14em] text-zinc-500 sm:inline sm:text-[9px] sm:tracking-[0.16em]",
                   key === "pro" &&
-                    "border-white/[0.14] bg-white/[0.08] text-zinc-100",
+                    "border-[color:rgba(95,115,134,0.45)] text-zinc-400",
                   key === "black" &&
-                    "border-amber-950/30 bg-amber-950/10 text-amber-200/70",
+                    "border-amber-900/30 text-amber-200/55",
                 )}
               >
                 {tier.badge}
@@ -301,33 +301,17 @@ function PricingCard({
             )}
           </div>
 
-          <ul className="mt-2 flex min-h-0 flex-1 flex-col gap-1 sm:mt-3 sm:gap-1.5">
+          <ul className="mt-3 flex min-h-0 flex-1 flex-col gap-2 sm:mt-4 sm:gap-2.5">
             {featureList.map((f) => (
               <li
                 key={f}
-                className="flex gap-1.5 text-[10px] leading-snug text-zinc-400 sm:gap-2 sm:text-[12px]"
+                className={cn(
+                  "border-l border-white/[0.08] pl-2.5 text-[11px] leading-relaxed text-zinc-400 sm:pl-3 sm:text-[12px]",
+                  key === "pro" && "border-[color:rgba(95,115,134,0.25)]",
+                  key === "black" && "border-amber-950/25 text-zinc-500",
+                )}
               >
-                <span
-                  className={cn(
-                    "mt-0.5 flex size-3 shrink-0 items-center justify-center rounded border sm:size-4 sm:rounded-md",
-                    key === "pro" &&
-                      "border-white/[0.12] bg-white/[0.05] text-[color:var(--ascend-accent)]",
-                    key === "core" &&
-                      "border-white/[0.08] bg-zinc-950/40 text-zinc-300",
-                    key === "black" &&
-                      "border-zinc-800 bg-zinc-950/80 text-amber-200/50",
-                  )}
-                >
-                  <Check className="size-2 sm:size-2.5" strokeWidth={2.25} />
-                </span>
-                <span
-                  className={cn(
-                    "min-w-0 text-zinc-300",
-                    key === "black" && "text-zinc-400",
-                  )}
-                >
-                  {f}
-                </span>
+                {f}
               </li>
             ))}
           </ul>
@@ -343,15 +327,15 @@ function PricingCard({
               type="button"
               onClick={() => openAssessment(tier.key)}
               className={cn(
-                "h-10 w-full rounded-full border border-white/[0.1] bg-white/[0.06] text-center text-[12px] font-medium text-zinc-100 transition-colors",
-                "hover:border-white/[0.16] hover:bg-white/[0.1]",
+                "h-10 w-full rounded-md border border-white/[0.09] bg-white/[0.04] text-center text-[12px] font-medium text-zinc-100 transition-colors",
+                "hover:border-white/[0.14] hover:bg-white/[0.07]",
                 key === "pro" &&
-                  "border-[color:rgba(95,115,134,0.35)] bg-white/[0.08]",
+                  "border-[color:rgba(95,115,134,0.32)] bg-white/[0.06]",
                 key === "black" &&
-                  "border-amber-950/35 bg-amber-950/15 text-amber-100/90",
+                  "border-amber-950/28 bg-amber-950/12 text-amber-100/90",
               )}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.987 }}
+              whileHover={{ scale: CTA_HOVER_SCALE }}
+              whileTap={{ scale: CTA_TAP_SCALE }}
               transition={TAP_SPRING}
             >
               {FINAL_SECTION_CTA_LABEL}
@@ -381,11 +365,15 @@ export function Pricing() {
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="ascend-section-world relative scroll-mt-28 overflow-x-clip overflow-y-visible border-t border-[color:var(--ascend-border)] bg-ascend-surface py-6 sm:py-12 lg:py-16"
+      className="ascend-section-world relative scroll-mt-28 overflow-x-clip overflow-y-visible border-t border-[color:var(--ascend-border)] bg-ascend-surface py-8 sm:py-14 lg:py-[4.5rem]"
       aria-labelledby="pricing-heading"
     >
       <SectionContinuity />
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden
+        data-cinematic-parallax="8"
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-ascend-canvas via-ascend-surface to-ascend-canvas" />
         {!isMobile ? (
           <>
@@ -441,7 +429,7 @@ export function Pricing() {
           whileInView="visible"
           viewport={viewport}
         >
-          Limited seats · manual intake · serious room only.
+          Intake is manual; capacity stays intentionally small.
         </motion.p>
 
         <PricingCapacityRibbon viewport={viewport} />
@@ -457,7 +445,7 @@ export function Pricing() {
             className="pointer-events-none absolute left-[10%] right-[10%] top-[42%] hidden h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent lg:block"
             aria-hidden
           />
-          <div className="flex flex-col gap-3 lg:grid lg:grid-cols-3 lg:items-stretch lg:gap-4 xl:gap-5">
+          <div className="flex flex-col gap-5 lg:grid lg:grid-cols-3 lg:items-stretch lg:gap-6 xl:gap-7">
             {tiers.map((t) => (
               <div key={t.key} className="relative flex min-h-0 min-w-0">
                 <PricingCard tier={t} cardVariants={cardVariants} />

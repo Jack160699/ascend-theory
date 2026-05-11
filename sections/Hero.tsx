@@ -6,7 +6,10 @@ import { Navbar } from "@/components/Navbar";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useIsMobileConversion } from "@/contexts/mobile-conversion";
 import { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
+import { CINEMATIC_IMAGE_CLASS } from "@/lib/cinematic-composition";
 import {
+  CTA_HOVER_SCALE,
+  CTA_TAP_SCALE,
   DURATION_OPACITY,
   DURATION_REVEAL,
   EASE_CINEMATIC,
@@ -47,17 +50,21 @@ export function Hero() {
       )}
       aria-label="Ascend Theory introduction"
     >
-      <div className="pointer-events-none absolute inset-0 z-[1]" aria-hidden>
+      <div
+        className="pointer-events-none absolute inset-0 z-[1]"
+        aria-hidden
+        data-cinematic-parallax="6"
+      >
         <Image
           src={CINEMATIC_ASSETS.heroRooftopSunrise}
           alt="Rooftop at sunrise — quiet reflection, architectural space, city horizon"
           fill
           priority
-          className="object-cover object-[72%_42%] sm:object-[68%_38%] lg:object-[62%_35%]"
+          className={CINEMATIC_IMAGE_CLASS.heroRooftopSunrise}
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-black/40 sm:bg-black/35" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-black/15 sm:from-black/65 sm:via-black/28 sm:to-transparent" />
+        <div className="absolute inset-0 bg-black/44 sm:bg-black/35" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/78 via-black/40 to-black/18 sm:from-black/65 sm:via-black/28 sm:to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-ascend-canvas via-transparent to-black/25 sm:to-black/20" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_35%,transparent_0%,rgba(5,5,6,0.55)_68%)] opacity-90 sm:opacity-100" />
       </div>
@@ -72,7 +79,7 @@ export function Hero() {
           initial={{ opacity: 0, y: RISE_Y * 0.45 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
-            duration: DURATION_REVEAL * (isMobile ? 0.78 : 1),
+            duration: DURATION_REVEAL * (isMobile ? 0.92 : 1),
             ease: EASE_CINEMATIC,
           }}
         >
@@ -122,13 +129,13 @@ export function Hero() {
               onClick={() => openAssessment()}
               aria-label={HERO_CTA_LABEL}
               className={cn(
-                "ascend-button-primary group relative inline-flex min-h-12 w-full max-w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 sm:w-auto sm:px-8",
+                "ascend-button-primary group relative inline-flex min-h-12 w-full max-w-full items-center justify-center gap-2 overflow-hidden rounded-md px-6 py-3 sm:w-auto sm:px-8",
                 "bg-white text-center text-zinc-950 text-xs font-medium leading-snug tracking-tight sm:text-sm",
                 "shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_18px_48px_-12px_rgba(0,0,0,0.5)]",
                 "transition-[transform] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
               )}
-              whileHover={{ scale: 1.012 }}
-              whileTap={{ scale: 0.988 }}
+              whileHover={{ scale: CTA_HOVER_SCALE }}
+              whileTap={{ scale: CTA_TAP_SCALE }}
               transition={TAP_SPRING}
             >
               <span className="relative z-10 max-w-[16rem] sm:max-w-none">
@@ -146,8 +153,8 @@ export function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{
-          delay: isMobile ? 0.68 : 1.2,
-          duration: DURATION_OPACITY * (isMobile ? 0.88 : 1),
+          delay: isMobile ? 0.85 : 1.45,
+          duration: DURATION_OPACITY * (isMobile ? 0.95 : 1),
           ease: EASE_CINEMATIC,
         }}
         aria-label="Scroll to content"
@@ -161,9 +168,9 @@ export function Hero() {
           </span>
         ) : (
           <motion.span
-            animate={{ y: [0, 5, 0] }}
+            animate={{ y: [0, 3, 0] }}
             transition={{
-              duration: 2.8,
+              duration: 4.2,
               repeat: Infinity,
               ease: "easeInOut",
             }}

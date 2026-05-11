@@ -39,11 +39,11 @@ export function useConversionExperienceOptional(): ConversionValue | null {
 }
 
 const stickyCtaButtonClass = cn(
-  "relative inline-flex h-11 max-h-11 w-full max-w-[min(100%,17.5rem)] items-center justify-center rounded-full px-5 text-center text-[11px] font-medium leading-none tracking-[0.02em] text-zinc-200",
+  "relative inline-flex h-11 max-h-11 w-full max-w-[min(100%,17.5rem)] items-center justify-center rounded-md px-5 text-center text-[11px] font-medium leading-none tracking-[0.02em] text-zinc-200",
   "border border-white/[0.09] bg-zinc-950/[0.55] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
   "backdrop-blur-md backdrop-saturate-125",
   "transition-[transform,opacity,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
-  "active:scale-[0.99]",
+  "active:scale-[0.995]",
 );
 
 function StickyConversionBar() {
@@ -75,9 +75,9 @@ function StickyConversionBar() {
             "fixed inset-x-0 bottom-0 z-[60] sm:hidden",
             "pointer-events-none flex justify-center px-4 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-0.5",
           )}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 7 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 6 }}
+          exit={{ opacity: 0, y: 4 }}
           transition={txReveal(DURATION_OPACITY)}
         >
           <div className="pointer-events-auto w-full max-w-[17.5rem]">
@@ -85,7 +85,7 @@ function StickyConversionBar() {
               type="button"
               onClick={() => openAssessment()}
               className={stickyCtaButtonClass}
-              whileTap={{ scale: 0.99 }}
+              whileTap={{ scale: 0.995 }}
               transition={TAP_SPRING}
             >
               {STICKY_MOBILE_CTA_LABEL}

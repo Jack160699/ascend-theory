@@ -21,6 +21,7 @@ export function SectionContinuity({
     <>
       {top ? (
         <div
+          data-cinematic-fog="4"
           className={cn(
             "pointer-events-none absolute inset-x-0 top-0 z-[2] h-[min(7rem,15dvh)] sm:h-[min(7.5rem,15dvh)]",
             "bg-gradient-to-b from-black/48 via-black/12 to-transparent",
@@ -31,6 +32,7 @@ export function SectionContinuity({
       ) : null}
       {bottom ? (
         <div
+          data-cinematic-fog="5"
           className={cn(
             "pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[min(8rem,16dvh)] sm:h-[min(8.5rem,17dvh)]",
             "bg-gradient-to-t from-black/44 via-black/11 to-transparent",

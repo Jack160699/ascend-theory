@@ -7,6 +7,8 @@ import {
   DURATION_OVERLAY_SLOW,
   DURATION_REVEAL,
   EASE_CINEMATIC,
+  NAV_INLINE_HOVER_SCALE,
+  NAV_INLINE_TAP_SCALE,
   TAP_SPRING,
   txReveal,
 } from "@/lib/motion";
@@ -69,10 +71,10 @@ export function Navbar() {
         className={cn(
           "fixed top-0 z-[100] isolate w-full transition-[background-color,backdrop-filter,border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           scrolled
-            ? "border-b border-[color:var(--ascend-border)] bg-[color:rgba(11,11,12,0.94)] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-125"
+            ? "border-b border-[color:var(--ascend-border)] bg-[color:rgba(11,11,12,0.94)] shadow-[0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-xl backdrop-saturate-125"
             : "border-b border-transparent bg-[color:rgba(5,5,6,0.35)] backdrop-blur-md",
         )}
-        initial={{ opacity: 0, y: -18 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: DURATION_REVEAL, ease: EASE_CINEMATIC }}
       >
@@ -82,7 +84,7 @@ export function Navbar() {
         >
           <Link
             href="/"
-            className="relative z-10 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:text-zinc-300"
+            className="relative z-10 text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:text-zinc-300"
           >
             Ascend Theory
           </Link>
@@ -95,7 +97,7 @@ export function Navbar() {
                 className={cn(
                   "group relative pb-0.5 text-[13px] font-medium tracking-tight text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
                   "hover:text-zinc-200",
-                  "after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:rounded-full after:bg-[var(--ascend-accent)] after:opacity-80 after:transition-[width] after:duration-300 after:ease-[var(--ascend-hover-ease)]",
+                  "after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-[var(--ascend-accent)] after:opacity-80 after:transition-[width] after:duration-500 after:ease-[var(--ascend-hover-ease)]",
                   "hover:after:w-full",
                 )}
               >
@@ -106,9 +108,9 @@ export function Navbar() {
               <motion.button
                 type="button"
                 onClick={() => openAssessment()}
-                className="ml-2 inline-flex h-9 shrink-0 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.06] px-4 text-[12px] font-medium tracking-tight text-zinc-100 transition-colors hover:border-white/[0.18] hover:bg-white/[0.1]"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.988 }}
+                className="ml-2 inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.05] px-4 text-[12px] font-medium tracking-tight text-zinc-100 transition-colors hover:border-white/[0.15] hover:bg-white/[0.08]"
+                whileHover={{ scale: NAV_INLINE_HOVER_SCALE }}
+                whileTap={{ scale: NAV_INLINE_TAP_SCALE }}
                 transition={TAP_SPRING}
               >
                 {HERO_CTA_LABEL}
@@ -155,19 +157,19 @@ export function Navbar() {
             />
             <motion.div
               className="absolute inset-x-0 bottom-0 top-0 flex flex-col border-r border-[color:var(--ascend-border)] bg-[color:rgba(11,11,12,0.98)] px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[5rem]"
-              initial={{ y: -8, opacity: 0.6 }}
+              initial={{ y: -5, opacity: 0.72 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -8, opacity: 0 }}
+              exit={{ y: -5, opacity: 0 }}
               transition={txReveal(DURATION_OVERLAY_SLOW)}
             >
               <div className="flex flex-1 flex-col justify-center gap-1.5">
                 {links.map((item, i) => (
                   <motion.div
                     key={item.href}
-                    initial={{ opacity: 0, x: -16 }}
+                    initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -12 }}
-                    transition={txReveal(DURATION_OPACITY, 0.06 + i * 0.04)}
+                    exit={{ opacity: 0, x: -6 }}
+                    transition={txReveal(DURATION_OPACITY, 0.08 + i * 0.055)}
                   >
                     <Link
                       href={item.href}

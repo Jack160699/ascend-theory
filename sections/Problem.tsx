@@ -81,23 +81,23 @@ function PainCard({
       className="group relative h-full [perspective:1400px]"
       style={{ transformStyle: "preserve-3d" }}
       whileHover={{
-        rotateX: isMobile ? 0 : 2.5,
-        rotateY: isMobile ? 0 : -2.5,
+        rotateX: isMobile ? 0 : 1.1,
+        rotateY: isMobile ? 0 : -1.1,
         transition: SURFACE_SPRING,
       }}
     >
       <motion.div
           className={cn(
-          "relative flex h-full flex-col overflow-hidden rounded-xl border border-[color:var(--ascend-border)]",
-          "bg-ascend-elevated/95 p-3.5 shadow-[0_0_0_1px_rgba(255,255,255,0.025)_inset] backdrop-blur-md sm:rounded-[1.1rem] sm:p-4 sm:backdrop-blur-xl",
-          "transition-[border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
-          "group-hover:border-[color:rgba(95,115,134,0.28)] group-hover:shadow-[0_16px_48px_-28px_rgba(0,0,0,0.55),0_0_32px_-14px_var(--ascend-accent-glow)]",
+          "relative flex h-full flex-col overflow-hidden rounded-lg border border-[color:var(--ascend-border)]",
+          "bg-ascend-elevated/95 p-4 backdrop-blur-sm sm:p-4 sm:backdrop-blur-md",
+          "transition-[border-color,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+          "group-hover:border-white/[0.12] group-hover:bg-ascend-elevated",
         )}
         style={{ transformStyle: "preserve-3d" }}
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.88]"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.5]"
           style={{
             background:
               "radial-gradient(380px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(95,115,134,0.08), transparent 58%)",
@@ -108,7 +108,7 @@ function PainCard({
           aria-hidden
         />
           <div className="relative z-10 flex flex-col gap-2.5">
-          <div className="flex size-7 items-center justify-center rounded-lg border border-[color:var(--ascend-border)] bg-ascend-surface/80 text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-[color:rgba(95,115,134,0.3)] group-hover:text-zinc-300 sm:size-8">
+          <div className="flex size-7 items-center justify-center rounded-md border border-[color:var(--ascend-border)] bg-ascend-surface/70 text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-white/[0.1] group-hover:text-zinc-300 sm:size-8">
             <Icon className="size-[16px]" strokeWidth={1.35} />
           </div>
           <div>
@@ -180,7 +180,7 @@ export function Problem() {
         </motion.div>
 
         <motion.div
-          className="mt-6 grid w-full max-w-5xl grid-cols-1 gap-2 sm:mt-8 sm:grid-cols-3 sm:gap-3"
+          className="mt-8 grid w-full max-w-5xl grid-cols-1 gap-4 sm:mt-10 sm:grid-cols-3 sm:gap-5"
           variants={gridStagger}
           initial="hidden"
           whileInView="visible"

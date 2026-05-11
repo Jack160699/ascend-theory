@@ -79,12 +79,12 @@ export const cardReveal: Variants = {
 
 /** Timeline / node marks — minimal scale, no “pop”. */
 export const nodeRevealSoft: Variants = {
-  hidden: { opacity: 0, scale: 0.97, y: 10 },
+  hidden: { opacity: 0, scale: 0.992, y: 6 },
   visible: {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: txReveal(0.9),
+    transition: txReveal(DURATION_OPACITY * 1.05),
   },
 };
 
@@ -93,7 +93,7 @@ export const lineDrawHorizontal: Variants = {
   visible: {
     scaleX: 1,
     opacity: 1,
-    transition: { ...txReveal(DURATION_LINE), delay: 0.18 },
+    transition: { ...txReveal(DURATION_LINE), delay: 0.24 },
   },
 };
 
@@ -112,7 +112,7 @@ export const heroStaggerContainer: Variants = {
     opacity: 1,
     transition: {
       staggerChildren: STAGGER_CHILD,
-      delayChildren: 0.22,
+      delayChildren: 0.28,
     },
   },
 };
@@ -123,8 +123,8 @@ export const heroStaggerCinematic: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.205,
-      delayChildren: 0.38,
+      staggerChildren: 0.28,
+      delayChildren: 0.52,
     },
   },
 };
@@ -135,7 +135,7 @@ export const heroLine1: Variants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: txReveal(DURATION_REVEAL * 1.02, 0.4),
+    transition: txReveal(DURATION_REVEAL * 1.02, 0.52),
   },
 };
 
@@ -145,11 +145,11 @@ export const heroLine2: Variants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: txReveal(DURATION_REVEAL * 1.02, 0.64),
+    transition: txReveal(DURATION_REVEAL * 1.02, 0.82),
   },
 };
 
-const HERO_MOBILE_FACTOR = 0.82;
+const HERO_MOBILE_FACTOR = 0.94;
 
 /** Shorter hero orchestration on mobile — cold traffic hooks faster, desktop unchanged. */
 export function getHeroStaggerCinematic(isMobile: boolean): Variants {
@@ -159,8 +159,8 @@ export function getHeroStaggerCinematic(isMobile: boolean): Variants {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.205 * k,
-        delayChildren: 0.38 * k,
+        staggerChildren: 0.28 * k,
+        delayChildren: 0.52 * k,
       },
     },
   };
@@ -174,7 +174,7 @@ export function getHeroLine1(isMobile: boolean): Variants {
     visible: {
       opacity: 1,
       y: 0,
-      transition: txReveal(DURATION_REVEAL * 1.02 * k, 0.4 * k),
+      transition: txReveal(DURATION_REVEAL * 1.02 * k, 0.52 * k),
     },
   };
 }
@@ -187,13 +187,13 @@ export function getHeroLine2(isMobile: boolean): Variants {
     visible: {
       opacity: 1,
       y: 0,
-      transition: txReveal(DURATION_REVEAL * 1.02 * k, 0.64 * k),
+      transition: txReveal(DURATION_REVEAL * 1.02 * k, 0.82 * k),
     },
   };
 }
 
 export function getFadeUpReveal(isMobile: boolean): Variants {
-  const k = isMobile ? 0.78 : 1;
+  const k = isMobile ? 0.92 : 1;
   return {
     hidden: { opacity: 0, y: RISE_Y * (isMobile ? 0.75 : 1) },
     visible: {
@@ -204,7 +204,7 @@ export function getFadeUpReveal(isMobile: boolean): Variants {
   };
 }
 
-const MOBILE_SECTION_K = 0.76;
+const MOBILE_SECTION_K = 0.9;
 
 /** Faster stagger / shorter delays on mobile — reads intentional, not “missing”. */
 export function getHeaderStaggerParent(isMobile: boolean): Variants {
@@ -249,7 +249,7 @@ export function getListStaggerParent(isMobile: boolean): Variants {
 }
 
 export function getFadeUpChild(isMobile: boolean): Variants {
-  const k = isMobile ? 0.8 : 1;
+  const k = isMobile ? 0.9 : 1;
   return {
     hidden: { opacity: 0, y: RISE_Y_CARD * (isMobile ? 0.68 : 1) },
     visible: {
@@ -261,7 +261,7 @@ export function getFadeUpChild(isMobile: boolean): Variants {
 }
 
 export function getCardRevealMobile(isMobile: boolean): Variants {
-  const k = isMobile ? 0.8 : 1;
+  const k = isMobile ? 0.9 : 1;
   return {
     hidden: { opacity: 0, y: RISE_Y_CARD * (isMobile ? 0.65 : 1) },
     visible: {
@@ -273,14 +273,14 @@ export function getCardRevealMobile(isMobile: boolean): Variants {
 }
 
 export function getNodeRevealSoftMobile(isMobile: boolean): Variants {
-  const k = isMobile ? 0.78 : 1;
+  const k = isMobile ? 0.9 : 1;
   return {
-    hidden: { opacity: 0, scale: 0.98, y: isMobile ? 6 : 10 },
+    hidden: { opacity: 0, scale: 0.992, y: isMobile ? 4 : 6 },
     visible: {
       opacity: 1,
       scale: 1,
       y: 0,
-      transition: txReveal(0.9 * k),
+      transition: txReveal(DURATION_OPACITY * 1.05 * k),
     },
   };
 }
