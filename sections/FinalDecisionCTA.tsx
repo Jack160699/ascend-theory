@@ -17,7 +17,6 @@ import {
   getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
-import { cinematicSceneRootProps } from "@/lib/cinematic-v2/cinematic-layout";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { FINAL_SECTION_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
@@ -37,7 +36,6 @@ export function FinalDecisionCTA() {
   return (
     <section
       id="assessment"
-      {...cinematicSceneRootProps("final")}
       data-conversion-zone="final"
       className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-[color:var(--ascend-border)] py-10 sm:py-16 lg:py-20"
       aria-labelledby="final-decision-cta-heading"

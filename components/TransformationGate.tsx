@@ -316,7 +316,7 @@ export function TransformationGate() {
                     <motion.button
                       ref={primaryRef}
                       type="button"
-                      onClick={() => startClose("#philosophy")}
+                      onClick={() => startClose("#mirror")}
                       className={cn(
                         "inline-flex min-h-[3.1rem] w-full items-center justify-center rounded-md bg-white px-6 text-sm font-medium tracking-tight text-zinc-950",
                         "shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_12px_32px_-16px_rgba(0,0,0,0.35)]",
@@ -330,7 +330,7 @@ export function TransformationGate() {
                     </motion.button>
                     <motion.button
                       type="button"
-                      onClick={() => startClose("#philosophy")}
+                      onClick={() => startClose("#mirror")}
                       className={cn(
                         "inline-flex min-h-[3.1rem] w-full items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.035] px-6 text-sm font-medium tracking-tight text-zinc-200 backdrop-blur-sm",
                         "transition-[border-color,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-white/[0.22] hover:bg-white/[0.07]",

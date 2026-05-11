@@ -20,7 +20,6 @@ import {
   getHeroLine2,
   getHeroStaggerCinematic,
 } from "@/lib/motion";
-import { cinematicSceneRootProps } from "@/lib/cinematic-v2/cinematic-layout";
 import { shellHero } from "@/lib/editorial-layout";
 import { HERO_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
@@ -44,7 +43,6 @@ export function Hero() {
   return (
     <section
       ref={heroRef}
-      {...cinematicSceneRootProps("hero")}
       data-conversion-zone="hero"
       className={cn(
         "ascend-section-world ascend-hero-perspective relative flex min-h-[100dvh] w-full flex-col overflow-hidden",
@@ -150,7 +148,7 @@ export function Hero() {
       </div>
 
       <motion.a
-        href="#philosophy"
+        href="#mirror"
         className="absolute bottom-5 left-1/2 z-[15] flex -translate-x-1/2 flex-col items-center gap-2 text-zinc-400 sm:bottom-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

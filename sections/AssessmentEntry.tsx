@@ -72,7 +72,7 @@ export function AssessmentEntry() {
           transition={txReveal(DURATION_REVEAL * durK, 0.2 * durK)}
         >
           <Link
-            href="#pricing"
+            href="#transformation"
             className={cn(
                 "ascend-button-ghost inline-flex min-h-11 items-center justify-center rounded-md border border-[color:var(--ascend-border)] bg-white/[0.03] px-6 text-[13px] font-medium tracking-[-0.01em] text-zinc-300 backdrop-blur-sm transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:border-[color:rgba(95,115,134,0.35)] hover:bg-white/[0.05] hover:text-zinc-100 sm:px-7 sm:text-sm",
             )}

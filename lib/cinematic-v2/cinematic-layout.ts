@@ -10,15 +10,15 @@ export const CINEMATIC_CSS_VARS = {
   sceneCount: "--ascend-cinematic-scene-count",
 } as const;
 
-/** Ordered narrative scenes on the home experience (index = scroll progression order). */
+/** Ordered narrative scenes — scroll index + orchestration contract. */
 export const HOME_SCENE_ORDER = [
-  "hero",
-  "philosophy",
+  "interruption",
+  "mirror",
+  "realization",
+  "system",
   "brotherhood",
-  "programs",
-  "pricing",
-  "testimonials",
-  "final",
+  "transformation",
+  "entry",
 ] as const;
 
 export type HomeSceneId = (typeof HOME_SCENE_ORDER)[number];

@@ -1,17 +1,11 @@
 import { AtmosphereLayers, MasterSceneOrchestrator } from "@/components/cinematic-v2";
+import { CinematicHomeStory } from "@/components/cinematic-scenes";
 import { CursorAmbientLight } from "@/components/CursorAmbientLight";
 import { TransformationGate } from "@/components/TransformationGate";
 import { AssessmentModalProvider } from "@/contexts/assessment-modal";
 import { CinematicScrollProvider } from "@/contexts/cinematic-scroll";
 import { ConversionExperienceProvider } from "@/contexts/conversion-experience";
 import { MobileConversionProvider } from "@/contexts/mobile-conversion";
-import { Brotherhood } from "@/sections/Brotherhood";
-import { FinalDecisionCTA } from "@/sections/FinalDecisionCTA";
-import { Hero } from "@/sections/Hero";
-import { Philosophy } from "@/sections/Philosophy";
-import { Pricing } from "@/sections/Pricing";
-import { System } from "@/sections/System";
-import { Testimonials } from "@/sections/Testimonials";
 
 export default function Home() {
   return (
@@ -27,13 +21,7 @@ export default function Home() {
             >
             <AtmosphereLayers />
             <CursorAmbientLight />
-            <Hero />
-            <Philosophy />
-            <Brotherhood />
-            <System />
-            <Pricing />
-            <Testimonials />
-            <FinalDecisionCTA />
+            <CinematicHomeStory />
             </main>
           </MobileConversionProvider>
         </ConversionExperienceProvider>

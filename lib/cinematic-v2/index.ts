@@ -10,3 +10,13 @@ export {
   clearScrollProgressionVars,
   type ScrollProgressionSnapshot,
 } from "./scroll-progression";
+export {
+  CINEMATIC_ATMOS_SCRUB,
+  CINEMATIC_ATMOS_Y,
+  CINEMATIC_CAMERA_ROTATE_X,
+  CINEMATIC_CAMERA_Y,
+  CINEMATIC_DEPTH_ATTENUATION,
+  CINEMATIC_EASE_OUT,
+  CINEMATIC_EASE_SOFT,
+  CINEMATIC_SCROLL_SCRUB,
+} from "./scroll-motion";

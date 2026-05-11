@@ -3,11 +3,11 @@
 import Link from "next/link";
 
 const quick = [
-  { href: "/#philosophy", label: "About" },
+  { href: "/#mirror", label: "Mirror" },
   { href: "/#brotherhood", label: "Brotherhood" },
-  { href: "/#programs", label: "Outcomes" },
-  { href: "/#pricing", label: "Membership" },
-  { href: "/#testimonials", label: "Proof" },
+  { href: "/#system", label: "System" },
+  { href: "/#transformation", label: "Proof" },
+  { href: "/#entry", label: "Entry" },
 ] as const;
 
 const legal = [

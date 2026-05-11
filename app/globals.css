@@ -65,14 +65,16 @@ body.ascend-cookie-strip-active {
 
 /* GSAP scroll layers — GPU hints only where parallax runs */
 [data-cinematic-parallax],
-[data-cinematic-fog] {
+[data-cinematic-fog],
+[data-cinematic-atmos-depth] {
   transform: translateZ(0);
   will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
   [data-cinematic-parallax],
-  [data-cinematic-fog] {
+  [data-cinematic-fog],
+  [data-cinematic-atmos-depth] {
     will-change: auto;
   }
 }

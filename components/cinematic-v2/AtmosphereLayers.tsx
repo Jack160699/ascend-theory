@@ -8,6 +8,11 @@ export function AtmosphereLayers() {
       aria-hidden
       data-cinematic-atmosphere-root
       className="pointer-events-none fixed inset-0 z-[1]"
-    />
+    >
+      <div
+        data-cinematic-atmos-depth
+        className="absolute inset-0 will-change-transform"
+      />
+    </div>
   );
 }

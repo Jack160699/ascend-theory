@@ -14,7 +14,6 @@ import {
   getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
-import { cinematicSceneRootProps } from "@/lib/cinematic-v2/cinematic-layout";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -32,7 +31,6 @@ export function Brotherhood() {
   return (
     <section
       id="brotherhood"
-      {...cinematicSceneRootProps("brotherhood")}
       data-conversion-zone="brotherhood"
       className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-canvas"
       aria-labelledby="brotherhood-heading"
