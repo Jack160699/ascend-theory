@@ -91,8 +91,9 @@ export function Hero() {
             variants={fadeUpHero}
             className="ascend-prose-calm mt-7 max-w-[min(34rem,100%)] text-pretty text-zinc-500 sm:mt-10"
           >
-            Private mentorship for serious professionals — training, presence,
-            and discipline in one lane. You apply. We read every message.
+            Private mentorship for serious professionals — identity, how you
+            communicate, and the structure you run your life on. Conditioning
+            sits inside that standard. You apply. We read every message.
           </motion.p>
 
           <motion.div

@@ -104,8 +104,9 @@ export function Philosophy() {
           whileInView="visible"
           viewport={viewport}
         >
-          Ascend exists to close that gap. One system — training, presence, and
-          discipline together — not a course catalog.
+          Ascend exists to close that gap. One private system — presence,
+          accountability, and lifestyle discipline — with training as one
+          supporting layer, not a course catalog.
         </motion.p>
       </div>
 

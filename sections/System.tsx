@@ -28,44 +28,63 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 
+/** Order: identity-forward first; physique last as a supporting layer. */
 const pillars: {
   title: string;
   description: string;
   icon: LucideIcon;
 }[] = [
   {
-    title: "Physique",
-    description: "Training and body composition you can repeat.",
-    icon: Activity,
-  },
-  {
     title: "Presence",
-    description: "Clear under pressure.",
+    description:
+      "Posture, silence, and how you speak when the stakes are visible.",
     icon: Mic2,
   },
   {
     title: "Routine",
-    description: "A week you can actually run.",
+    description: "Planning and rhythm that still hold on ordinary weeks.",
     icon: AlarmClock,
   },
   {
     title: "Accountability",
-    description: "Someone holds the standard with you.",
+    description: "Private review, clear replies, and nowhere for drift to hide.",
     icon: ShieldCheck,
   },
   {
     title: "Peer environment",
-    description: "Others at the same bar — quiet reinforcement.",
+    description:
+      "Others at the same standard — composed, direct, quiet reinforcement.",
     icon: UsersRound,
+  },
+  {
+    title: "Physique",
+    description:
+      "Movement and composition, held to the same bar as the rest of your life.",
+    icon: Activity,
   },
 ];
 
 const pillarVisuals = [
-  { src: EDITORIAL_ASSETS.training, alt: "Training floor — low light" },
-  { src: EDITORIAL_ASSETS.focus, alt: "Gym floor — focused work" },
-  { src: EDITORIAL_ASSETS.silhouette, alt: "Athlete silhouette — controlled effort" },
-  { src: EDITORIAL_ASSETS.training, alt: "Training repetition" },
-  { src: EDITORIAL_ASSETS.presence, alt: "Training environment — steady presence" },
+  {
+    src: EDITORIAL_ASSETS.presenceComposed,
+    alt: "Composed professional presence — calm eye-line",
+  },
+  {
+    src: EDITORIAL_ASSETS.structureRoutine,
+    alt: "Planning and structure — desk, notes, intention",
+  },
+  {
+    src: EDITORIAL_ASSETS.accountabilityReview,
+    alt: "Focused discussion — review and alignment",
+  },
+  {
+    src: EDITORIAL_ASSETS.communication,
+    alt: "Calm collaboration — leadership without performance",
+  },
+  {
+    src: EDITORIAL_ASSETS.physiqueAnchor,
+    alt: "Conditioning layer — disciplined movement, low light",
+  },
 ] as const;
 
 function PillarRow({
@@ -172,13 +191,14 @@ export function System() {
             variants={fadeMain}
             className="ascend-type-section-sm ascend-headline"
           >
-            Standards you can run every week.
+            How you think, speak, move, and operate — under one private standard.
           </motion.h2>
           <motion.p
             variants={fadeMain}
             className="ascend-prose-calm mt-2 max-w-[34rem] text-pretty text-zinc-500 sm:mt-3"
           >
-            One private structure — not a catalog of courses.
+            Identity and communication first. Structure and accountability hold
+            the week. Conditioning sits in the same lane — never the whole story.
           </motion.p>
         </motion.div>
 
@@ -190,8 +210,8 @@ export function System() {
           transition={txReveal(DURATION_OPACITY, 0.04)}
         >
           <EditorialImageStrip
-            src={EDITORIAL_ASSETS.lifestyle}
-            alt="Training floor in low light"
+            src={EDITORIAL_ASSETS.deepWork}
+            alt="Focused work session — quiet discipline, editorial light"
             aspectClassName="aspect-[2/1] min-h-[7.5rem] sm:aspect-[21/9] sm:min-h-0"
           />
         </motion.div>

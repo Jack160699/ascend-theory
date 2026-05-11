@@ -24,34 +24,34 @@ import { useMemo } from "react";
 
 const quotes = [
   {
-    text: "I wanted a room that would not negotiate with me. Training and sleep stopped feeling like an act.",
-    tag: "Physique · discipline",
+    text: "I wanted something that would not negotiate with my standards — how I plan, speak, and close the week.",
+    tag: "Identity · discipline",
   },
   {
-    text: "The shift was quieter standards — reps and feedback until steadiness felt normal again.",
+    text: "The shift was quieter: clearer communication and fewer exceptions I had to explain away.",
     tag: "Presence · communication",
   },
 ] as const;
 
 const fieldStills = [
   {
-    src: EDITORIAL_ASSETS.training,
-    label: "Training floor",
-    sub: "Load and repetition",
+    src: EDITORIAL_ASSETS.presenceComposed,
+    label: "Presence",
+    sub: "Stillness before the room responds",
     span: "lg:col-span-2 lg:row-span-2",
     aspect: "aspect-[4/3] lg:aspect-auto lg:min-h-[14rem]",
   },
   {
-    src: EDITORIAL_ASSETS.focus,
-    label: "Focus",
-    sub: "Single-task blocks",
+    src: EDITORIAL_ASSETS.deepWork,
+    label: "Structure",
+    sub: "Deep work, clean edges",
     span: "",
     aspect: "aspect-[5/4]",
   },
   {
-    src: EDITORIAL_ASSETS.presence,
-    label: "Presence",
-    sub: "Under fluorescent light",
+    src: EDITORIAL_ASSETS.identityReflection,
+    label: "Reflection",
+    sub: "Evening light, honest review",
     span: "",
     aspect: "aspect-[5/4]",
   },
@@ -151,12 +151,11 @@ export function Testimonials() {
             variants={fadeMain}
             className="ascend-prose-calm mt-3 max-w-[32rem] text-pretty text-zinc-500 sm:mt-4"
           >
-            One transformation lane: stills, voice, and check-ins — kept
-            minimal on purpose.
+            Stills lean toward how members think, communicate, and hold structure
+            — not a highlight reel of sets and reps.
           </motion.p>
         </motion.div>
 
-        {/* Single transformation editorial block */}
         <motion.article
           className="mt-8 max-w-5xl border border-white/[0.07] bg-white/[0.02] sm:mt-10 lg:mt-11"
           initial={{ opacity: 0, y: 12 }}
@@ -167,8 +166,8 @@ export function Testimonials() {
           <div className="grid lg:grid-cols-2">
             <div className="relative aspect-[5/4] min-h-[12rem] border-b border-white/[0.06] lg:aspect-auto lg:min-h-[17rem] lg:border-b-0 lg:border-r">
               <AscendImage
-                src={EDITORIAL_ASSETS.silhouette}
-                alt="Member training — eight-week block"
+                src={EDITORIAL_ASSETS.identityReflection}
+                alt="Quiet workspace — reflection and standards"
                 fill
                 className="object-cover object-center"
                 sizes="(max-width:1024px) 100vw, 50vw"
@@ -181,20 +180,21 @@ export function Testimonials() {
                 Transformation
               </p>
               <h3 className="mt-2 text-lg font-semibold leading-snug tracking-tight text-zinc-100 sm:text-xl">
-                Eight weeks. Same standard.
+                A season of operating differently.
               </h3>
               <blockquote className="mt-4 border-l border-white/[0.12] pl-4 text-[13px] leading-relaxed text-zinc-400 sm:text-[14px] sm:leading-relaxed">
-                “Sessions stopped feeling negotiable. The bar was in the room —
-                not in my head.”
+                “Decisions stopped living only in my head. The standard was in the
+                thread, the calendar, and how I showed up — not in a burst of
+                motivation.”
               </blockquote>
               <p className="mt-3 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600">
-                Physique block · member note
+                Private member note
               </p>
               <div className="mt-5 flex gap-2">
                 <div className="relative h-16 w-[28%] overflow-hidden rounded-md border border-white/[0.08] bg-zinc-950 sm:h-20">
                   <AscendImage
-                    src={EDITORIAL_ASSETS.training}
-                    alt="Week two — training floor"
+                    src={EDITORIAL_ASSETS.structureRoutine}
+                    alt="Planning and weekly structure"
                     fill
                     className="object-cover"
                     sizes="120px"
@@ -203,8 +203,8 @@ export function Testimonials() {
                 </div>
                 <div className="relative h-16 flex-1 overflow-hidden rounded-md border border-white/[0.08] bg-zinc-950 sm:h-20">
                   <AscendImage
-                    src={EDITORIAL_ASSETS.focus}
-                    alt="Week six — same floor, heavier work"
+                    src={EDITORIAL_ASSETS.physiqueAnchor}
+                    alt="Conditioning — one layer of the same standard"
                     fill
                     className="object-cover"
                     sizes="240px"
@@ -216,7 +216,6 @@ export function Testimonials() {
           </div>
         </motion.article>
 
-        {/* Field stills — 3 items, asymmetric grid */}
         <motion.div
           className="mt-8 sm:mt-10"
           variants={listStagger}
@@ -239,7 +238,6 @@ export function Testimonials() {
           </div>
         </motion.div>
 
-        {/* Quotes — flat, low chrome */}
         <motion.div
           className="mt-8 grid max-w-5xl gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-5"
           variants={listStagger}
