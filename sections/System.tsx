@@ -20,6 +20,7 @@ import {
   getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { cinematicSceneRootProps } from "@/lib/cinematic-v2/cinematic-layout";
 import { leadRight, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion, type Variants } from "framer-motion";
@@ -151,6 +152,7 @@ export function System() {
   return (
     <section
       id="programs"
+      {...cinematicSceneRootProps("programs")}
       data-conversion-zone="programs"
       className="ascend-section-world relative overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface py-6 sm:py-10 lg:py-14"
       aria-labelledby="system-heading"

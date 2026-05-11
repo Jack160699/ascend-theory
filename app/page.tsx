@@ -1,4 +1,4 @@
-import { CinematicScrollOrchestrator } from "@/components/cinematic-scroll/CinematicScrollOrchestrator";
+import { AtmosphereLayers, MasterSceneOrchestrator } from "@/components/cinematic-v2";
 import { CursorAmbientLight } from "@/components/CursorAmbientLight";
 import { TransformationGate } from "@/components/TransformationGate";
 import { AssessmentModalProvider } from "@/contexts/assessment-modal";
@@ -19,12 +19,13 @@ export default function Home() {
       <AssessmentModalProvider>
         <ConversionExperienceProvider>
           <MobileConversionProvider>
-            <CinematicScrollOrchestrator />
+            <MasterSceneOrchestrator />
             <TransformationGate />
             <main
               id="ascend-cinematic-main"
               className="ascend-main-depth min-h-screen overflow-x-clip bg-ascend-canvas pb-[max(3.25rem,env(safe-area-inset-bottom)+2.75rem)] text-white antialiased sm:pb-16 lg:pb-20"
             >
+            <AtmosphereLayers />
             <CursorAmbientLight />
             <Hero />
             <Philosophy />

@@ -14,6 +14,7 @@ import {
   getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { cinematicSceneRootProps } from "@/lib/cinematic-v2/cinematic-layout";
 import { shellStandard } from "@/lib/editorial-layout";
 import { motion } from "framer-motion";
 import { useMemo } from "react";
@@ -36,6 +37,7 @@ export function Philosophy() {
   return (
     <section
       id="philosophy"
+      {...cinematicSceneRootProps("philosophy")}
       data-conversion-zone="philosophy"
       className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface py-6 sm:py-9 lg:py-11"
       aria-labelledby="philosophy-heading"

@@ -19,6 +19,7 @@ import {
   getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { cinematicSceneRootProps } from "@/lib/cinematic-v2/cinematic-layout";
 import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { FINAL_SECTION_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
@@ -364,6 +365,7 @@ export function Pricing() {
   return (
     <section
       id="pricing"
+      {...cinematicSceneRootProps("pricing")}
       data-conversion-zone="pricing"
       className="ascend-section-world relative scroll-mt-28 overflow-x-clip overflow-y-visible border-t border-[color:var(--ascend-border)] bg-ascend-surface py-8 sm:py-14 lg:py-[4.5rem]"
       aria-labelledby="pricing-heading"

@@ -20,6 +20,7 @@ import {
   getHeroLine2,
   getHeroStaggerCinematic,
 } from "@/lib/motion";
+import { cinematicSceneRootProps } from "@/lib/cinematic-v2/cinematic-layout";
 import { shellHero } from "@/lib/editorial-layout";
 import { HERO_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ export function Hero() {
   return (
     <section
       ref={heroRef}
+      {...cinematicSceneRootProps("hero")}
       data-conversion-zone="hero"
       className={cn(
         "ascend-section-world ascend-hero-perspective relative flex min-h-[100dvh] w-full flex-col overflow-hidden",

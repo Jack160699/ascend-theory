@@ -2,6 +2,11 @@
 @import "../styles/premium.css";
 
 :root {
+  /* Cinematic V2 — scroll progression (set by MasterSceneOrchestrator; defaults for SSR) */
+  --ascend-cinematic-scroll-progress: 0;
+  --ascend-cinematic-active-scene-index: 0;
+  --ascend-cinematic-scene-count: 0;
+
   /* Canvas + surfaces — charcoal / graphite (not flat #000) */
   --background: #050505;
   --foreground: #fafafa;

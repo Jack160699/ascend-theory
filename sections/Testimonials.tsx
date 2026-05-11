@@ -21,6 +21,7 @@ import {
   getListStaggerParent,
   txReveal,
 } from "@/lib/motion";
+import { cinematicSceneRootProps } from "@/lib/cinematic-v2/cinematic-layout";
 import { leadLeft, shellWide } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion, type Variants } from "framer-motion";
@@ -135,6 +136,7 @@ export function Testimonials() {
   return (
     <section
       id="testimonials"
+      {...cinematicSceneRootProps("testimonials")}
       data-conversion-zone="proof"
       className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-canvas py-7 sm:py-11 lg:py-14"
       aria-labelledby="proof-heading"
