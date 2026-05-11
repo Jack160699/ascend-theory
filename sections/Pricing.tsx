@@ -425,6 +425,13 @@ export function Pricing() {
             Same standards. What changes is how close the support sits, how fast
             we reply, and how private the work can go.
           </motion.p>
+          <motion.p
+            variants={fadeMain}
+            className="mt-2 max-w-[34rem] text-[11px] leading-snug text-zinc-600 sm:mt-3 sm:text-[12px]"
+          >
+            Entry: apply privately → we review by hand → we continue on
+            WhatsApp.
+          </motion.p>
         </motion.div>
 
         <motion.p

@@ -39,11 +39,11 @@ export function useConversionExperienceOptional(): ConversionValue | null {
 }
 
 const stickyCtaButtonClass = cn(
-  "relative inline-flex h-[52px] w-full max-w-md items-center justify-center rounded-full px-6 text-center text-[13px] font-medium leading-none tracking-tight text-zinc-950",
-  "bg-white/[0.92] shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_10px_32px_-12px_rgba(0,0,0,0.45)]",
-  "backdrop-blur-md backdrop-saturate-150",
-  "transition-[transform,box-shadow,opacity] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
-  "active:scale-[0.987]",
+  "relative inline-flex h-11 max-h-11 w-full max-w-[min(100%,17.5rem)] items-center justify-center rounded-full px-5 text-center text-[11px] font-medium leading-none tracking-[0.02em] text-zinc-200",
+  "border border-white/[0.09] bg-zinc-950/[0.55] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+  "backdrop-blur-md backdrop-saturate-125",
+  "transition-[transform,opacity,background-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+  "active:scale-[0.99]",
 );
 
 function StickyConversionBar() {
@@ -73,19 +73,19 @@ function StickyConversionBar() {
         <motion.div
           className={cn(
             "fixed inset-x-0 bottom-0 z-[60] sm:hidden",
-            "pointer-events-none flex justify-center px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1",
+            "pointer-events-none flex justify-center px-4 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-0.5",
           )}
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
+          exit={{ opacity: 0, y: 6 }}
           transition={txReveal(DURATION_OPACITY)}
         >
-          <div className="pointer-events-auto w-full max-w-md">
+          <div className="pointer-events-auto w-full max-w-[17.5rem]">
             <motion.button
               type="button"
               onClick={() => openAssessment()}
               className={stickyCtaButtonClass}
-              whileTap={{ scale: 0.988 }}
+              whileTap={{ scale: 0.99 }}
               transition={TAP_SPRING}
             >
               {STICKY_MOBILE_CTA_LABEL}

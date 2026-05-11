@@ -5,49 +5,16 @@ import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
-import {
-  SURFACE_SPRING,
-  getCardRevealMobile,
-  getFadeUpReveal,
-  getGridStaggerParent,
-  getHeaderStaggerParent,
-} from "@/lib/motion";
+import { getFadeUpReveal, getHeaderStaggerParent } from "@/lib/motion";
 import { leadLeft, shellStandard } from "@/lib/editorial-layout";
-import { cn } from "@/lib/utils";
-import { motion, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { useMemo } from "react";
 
-const cards: { title: string; line: string }[] = [
+const points: { title: string; line: string }[] = [
   { title: "Inconsistent discipline", line: "Rules bend when the week gets loud." },
   { title: "No accountability", line: "No one who holds the standard with you." },
-  { title: "Identity drift", line: "Private habits stop matching who you say you are." },
+  { title: "Identity drift", line: "Habits stop matching who you say you are." },
 ];
-
-function StallCard({
-  title,
-  line,
-  cardVariants,
-  isMobile,
-}: (typeof cards)[number] & { cardVariants: Variants; isMobile: boolean }) {
-  return (
-    <motion.article
-      variants={cardVariants}
-      whileHover={
-        isMobile
-          ? undefined
-          : { y: -2, transition: SURFACE_SPRING }
-      }
-      className="flex flex-col rounded-xl border border-[color:var(--ascend-border)] bg-ascend-elevated/95 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-4"
-    >
-      <h3 className="text-[13px] font-semibold leading-snug text-[rgb(249,249,247)] sm:text-[14px]">
-        {title}
-      </h3>
-      <p className="mt-1.5 text-[11px] leading-snug text-zinc-500 sm:text-[12px]">
-        {line}
-      </p>
-    </motion.article>
-  );
-}
 
 export function Philosophy() {
   const viewport = useRevealViewport();
@@ -57,17 +24,12 @@ export function Philosophy() {
     [isMobile],
   );
   const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
-  const gridStagger = useMemo(() => getGridStaggerParent(isMobile), [isMobile]);
-  const cardVariants = useMemo(
-    () => getCardRevealMobile(isMobile),
-    [isMobile],
-  );
 
   return (
     <section
       id="philosophy"
       data-conversion-zone="philosophy"
-      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface py-7 sm:py-11 lg:py-14"
+      className="ascend-section-world relative scroll-mt-28 overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface py-6 sm:py-9 lg:py-11"
       aria-labelledby="philosophy-heading"
     >
       <SectionContinuity top={false} />
@@ -86,7 +48,7 @@ export function Philosophy() {
         >
           <motion.p
             variants={fadeMain}
-            className="ascend-type-eyebrow mb-2 text-zinc-600 sm:mb-3"
+            className="ascend-type-eyebrow mb-1.5 text-zinc-600 sm:mb-2"
           >
             Why people stall
           </motion.p>
@@ -99,44 +61,56 @@ export function Philosophy() {
           </motion.h2>
           <motion.p
             variants={fadeMain}
-            className="ascend-prose-calm mt-3 max-w-[34rem] text-pretty text-zinc-500 sm:mt-4"
+            className="ascend-prose-calm mt-2 max-w-[34rem] text-pretty text-zinc-500 sm:mt-3"
           >
             You need standards that still hold when life gets loud.
           </motion.p>
         </motion.div>
 
         <motion.div
-          className={cn(
-            "mt-5 grid max-w-3xl grid-cols-1 gap-2 sm:mt-6 sm:grid-cols-3 sm:gap-3",
-          )}
-          variants={gridStagger}
+          className="mt-4 max-w-xl border-t border-white/[0.06] pt-4 sm:mt-5 sm:pt-5"
+          variants={headerStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
-          {cards.map((c) => (
-            <StallCard
-              key={c.title}
-              {...c}
-              cardVariants={cardVariants}
-              isMobile={isMobile}
-            />
-          ))}
+          <ul className="space-y-3 sm:space-y-3.5">
+            {points.map((p, i) => (
+              <motion.li
+                key={p.title}
+                variants={fadeMain}
+                className="flex gap-3 border-l border-white/[0.08] pl-3 sm:pl-4"
+              >
+                <span className="font-mono text-[10px] font-medium text-zinc-600 tabular-nums">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <p className="text-[13px] font-medium leading-snug text-zinc-200">
+                    {p.title}
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 sm:text-[12px]">
+                    {p.line}
+                  </p>
+                </div>
+              </motion.li>
+            ))}
+          </ul>
         </motion.div>
 
         <motion.p
           variants={fadeMain}
-          className="mt-5 max-w-[34rem] text-[14px] font-medium leading-snug text-zinc-400 sm:mt-6 sm:text-[15px]"
+          className="mt-4 max-w-[34rem] text-[13px] font-medium leading-snug text-zinc-400 sm:mt-5 sm:text-[14px]"
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
-          Ascend exists to close that gap.
+          Ascend exists to close that gap. One system — training, presence, and
+          discipline together — not a course catalog.
         </motion.p>
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-ascend-canvas/45 to-transparent sm:h-14"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-ascend-canvas/45 to-transparent sm:h-12"
         aria-hidden
       />
     </section>

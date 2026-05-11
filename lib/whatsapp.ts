@@ -10,7 +10,7 @@ export const ASCEND_WHATSAPP_ME_URL = "https://wa.me/917777812777";
 export const HERO_CTA_LABEL = "Apply privately" as const;
 
 /** Mobile sticky bar — opens modal after scroll threshold. */
-export const STICKY_MOBILE_CTA_LABEL = "Private entry" as const;
+export const STICKY_MOBILE_CTA_LABEL = "Request private entry" as const;
 
 /** Final section — opens modal. */
 export const FINAL_SECTION_CTA_LABEL = "Apply privately" as const;

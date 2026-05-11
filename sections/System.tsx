@@ -1,27 +1,32 @@
 "use client";
 
+import { AscendImage } from "@/components/AscendImage";
 import { EditorialImageStrip } from "@/components/EditorialImageStrip";
 import { SectionContinuity } from "@/components/SectionContinuity";
 import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
+import { EDITORIAL_ASSETS } from "@/lib/editorial-assets";
 import {
   DURATION_OPACITY,
-  SURFACE_SPRING,
-  getCardRevealMobile,
   getFadeUpReveal,
   getGridStaggerParent,
   getHeaderStaggerParent,
   txReveal,
 } from "@/lib/motion";
-import { EDITORIAL_PLACEHOLDERS } from "@/lib/editorial-placeholders";
 import { leadRight, shellStandard } from "@/lib/editorial-layout";
 import { cn } from "@/lib/utils";
 import { motion, type Variants } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
-import { Activity, Mic2, AlarmClock, ShieldCheck, UsersRound } from "lucide-react";
-import { useMemo, useRef } from "react";
+import {
+  Activity,
+  AlarmClock,
+  Mic2,
+  ShieldCheck,
+  UsersRound,
+} from "lucide-react";
+import { useMemo } from "react";
 
 const pillars: {
   title: string;
@@ -55,120 +60,70 @@ const pillars: {
   },
 ];
 
-function SystemCard({
+const pillarVisuals = [
+  { src: EDITORIAL_ASSETS.training, alt: "Training floor — low light" },
+  { src: EDITORIAL_ASSETS.focus, alt: "Gym floor — focused work" },
+  { src: EDITORIAL_ASSETS.silhouette, alt: "Athlete silhouette — controlled effort" },
+  { src: EDITORIAL_ASSETS.training, alt: "Training repetition" },
+  { src: EDITORIAL_ASSETS.presence, alt: "Training environment — steady presence" },
+] as const;
+
+function PillarRow({
   title,
   description,
   icon: Icon,
-  cardVariants,
-  isMobile,
+  index,
+  fadeVariants,
 }: (typeof pillars)[number] & {
-  cardVariants: Variants;
-  isMobile: boolean;
+  index: number;
+  fadeVariants: Variants;
 }) {
-  const articleRef = useRef<HTMLElement>(null);
-  const glowRef = useRef<HTMLDivElement>(null);
-  const sheenRef = useRef<HTMLDivElement>(null);
-
-  const handleMove = (e: React.MouseEvent<HTMLElement>) => {
-    if (isMobile) return;
-    const root = articleRef.current;
-    const glow = glowRef.current;
-    const sheen = sheenRef.current;
-    if (!root || !glow) return;
-    const r = root.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * 100;
-    const y = ((e.clientY - r.top) / r.height) * 100;
-    glow.style.setProperty("--spot-x", `${x}%`);
-    glow.style.setProperty("--spot-y", `${y}%`);
-    if (sheen) {
-      sheen.style.setProperty("--spot-x", `${x}%`);
-      sheen.style.setProperty("--spot-y", `${y}%`);
-    }
-  };
-
-  const handleLeave = () => {
-    if (isMobile) return;
-    const glow = glowRef.current;
-    const sheen = sheenRef.current;
-    if (glow) {
-      glow.style.setProperty("--spot-x", "50%");
-      glow.style.setProperty("--spot-y", "50%");
-    }
-    if (sheen) {
-      sheen.style.setProperty("--spot-x", "50%");
-      sheen.style.setProperty("--spot-y", "50%");
-    }
-  };
-
+  const reverse = index % 2 === 1;
+  const visual = pillarVisuals[index] ?? pillarVisuals[0];
   return (
-    <motion.article
-      ref={articleRef}
-      variants={cardVariants}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      className="group relative h-full [perspective:1500px]"
-      style={{ transformStyle: "preserve-3d" }}
-      whileHover={{
-        rotateX: isMobile ? 0 : 2,
-        rotateY: isMobile ? 0 : 2.4,
-        y: isMobile ? 0 : -2,
-        transition: SURFACE_SPRING,
-      }}
+    <motion.div
+      variants={fadeVariants}
+      className={cn(
+        "grid gap-4 border-t border-white/[0.06] pt-5 first:border-t-0 first:pt-0 sm:gap-6 sm:pt-6",
+        "sm:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] sm:items-center",
+        reverse && "sm:[direction:rtl]",
+      )}
     >
-      <motion.div
+      <div
         className={cn(
-          "relative flex h-full min-h-[7.5rem] flex-col overflow-hidden rounded-xl border border-[color:var(--ascend-border)]",
-          "bg-ascend-elevated/98 p-3 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] sm:rounded-[1.05rem] sm:p-4",
-          "backdrop-blur-none sm:backdrop-blur-md",
-          "transition-[border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
-          "group-hover:border-[color:rgba(95,115,134,0.22)] group-hover:shadow-[0_12px_40px_-28px_rgba(0,0,0,0.5)] sm:group-hover:shadow-[0_20px_56px_-36px_rgba(0,0,0,0.55)]",
+          "relative aspect-[16/10] overflow-hidden rounded-lg border border-white/[0.06] bg-zinc-950 sm:aspect-[5/3]",
+          reverse && "sm:[direction:ltr]",
         )}
-        style={{ transformStyle: "preserve-3d" }}
       >
+        <AscendImage
+          src={visual.src}
+          alt={visual.alt}
+          fill
+          className="object-cover object-center"
+          sizes="(max-width:640px) 100vw, 38vw"
+          loading="lazy"
+        />
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.1] sm:opacity-[0.14]"
-          style={{
-            background:
-              "linear-gradient(118deg, transparent 0%, rgba(95,115,134,0.05) 48%, transparent 62%)",
-          }}
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent"
           aria-hidden
         />
-
-        <div
-          ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.65] sm:group-hover:opacity-[0.75]"
-          style={{
-            background:
-              "radial-gradient(420px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(95,115,134,0.08), transparent 58%)",
-          }}
-        />
-        <div
-          ref={sheenRef}
-          className="pointer-events-none absolute inset-0 hidden opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.35] sm:block sm:group-hover:opacity-[0.45]"
-          style={{
-            background:
-              "radial-gradient(280px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(255,255,255,0.06), transparent 55%)",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/[0.03] sm:rounded-[1.05rem]"
-          aria-hidden
-        />
-        <div className="relative z-10 flex h-full flex-col gap-2 sm:gap-3">
-          <div className="flex size-7 items-center justify-center rounded-lg border border-[color:var(--ascend-border)] bg-ascend-surface/90 text-zinc-400 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:border-[color:rgba(95,115,134,0.24)] group-hover:text-zinc-200 sm:size-8">
-            <Icon className="size-[15px] sm:size-[16px]" strokeWidth={1.25} />
+      </div>
+      <div className={cn("min-w-0 sm:pl-2", reverse && "sm:[direction:ltr]")}>
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.03] text-zinc-400">
+            <Icon className="size-[15px]" strokeWidth={1.25} />
           </div>
-          <div className="flex min-h-0 flex-1 flex-col">
-            <h3 className="text-[12px] font-semibold leading-snug tracking-[-0.012em] text-[rgb(249,249,247)] sm:text-[13px]">
+          <div>
+            <h3 className="text-[13px] font-semibold leading-snug text-zinc-100 sm:text-[14px]">
               {title}
             </h3>
-            <p className="mt-1 text-[11px] leading-snug text-zinc-500 sm:mt-1.5 sm:text-[12px]">
+            <p className="mt-1 text-[11px] leading-snug text-zinc-500 sm:text-[12px]">
               {description}
             </p>
           </div>
         </div>
-      </motion.div>
-    </motion.article>
+      </div>
+    </motion.div>
   );
 }
 
@@ -181,26 +136,19 @@ export function System() {
   );
   const fadeMain = useMemo(() => getFadeUpReveal(isMobile), [isMobile]);
   const gridStagger = useMemo(() => getGridStaggerParent(isMobile), [isMobile]);
-  const cardVariants = useMemo(
-    () => getCardRevealMobile(isMobile),
-    [isMobile],
-  );
+
   return (
     <section
       id="programs"
       data-conversion-zone="programs"
-      className="ascend-section-world relative overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface py-7 sm:py-12 lg:py-16"
+      className="ascend-section-world relative overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface py-6 sm:py-10 lg:py-14"
       aria-labelledby="system-heading"
     >
       <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute inset-0 bg-gradient-to-b from-ascend-canvas via-ascend-surface to-ascend-canvas" />
         {!isMobile ? (
-          <>
-            <div className="absolute right-[-20%] top-[8%] h-[28rem] w-[28rem] rounded-full bg-[color:rgba(95,115,134,0.06)] blur-[100px]" />
-            <div className="absolute -left-[22%] bottom-[5%] h-[24rem] w-[24rem] rounded-full bg-white/[0.025] blur-[96px]" />
-            <div className="absolute left-1/2 top-[18%] h-[16rem] w-[min(100%,52rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.04),transparent_72%)] blur-3xl" />
-          </>
+          <div className="absolute right-[-18%] top-[10%] h-[22rem] w-[22rem] rounded-full bg-[color:rgba(95,115,134,0.05)] blur-[88px]" />
         ) : null}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,6,0.42)_76%)]" />
       </div>
@@ -215,7 +163,7 @@ export function System() {
         >
           <motion.p
             variants={fadeMain}
-            className="ascend-type-eyebrow mb-2 text-zinc-600 sm:mb-3"
+            className="ascend-type-eyebrow mb-1.5 text-zinc-600 sm:mb-2"
           >
             What you get
           </motion.p>
@@ -228,46 +176,46 @@ export function System() {
           </motion.h2>
           <motion.p
             variants={fadeMain}
-            className="ascend-prose-calm mt-3 max-w-[34rem] text-pretty text-zinc-500 sm:mt-4"
+            className="ascend-prose-calm mt-2 max-w-[34rem] text-pretty text-zinc-500 sm:mt-3"
           >
-            Training, presence, routine, accountability — one private structure.
+            One private structure — not a catalog of courses.
           </motion.p>
         </motion.div>
 
         <motion.div
-          className="mt-5 w-full max-w-[min(100%,68rem)] sm:mt-7 lg:ml-auto lg:mr-0"
-          initial={{ opacity: 0, y: 10 }}
+          className="mt-4 w-full max-w-[min(100%,68rem)] sm:mt-6 lg:ml-auto lg:mr-0"
+          initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={viewport}
           transition={txReveal(DURATION_OPACITY, 0.04)}
         >
           <EditorialImageStrip
-            src={EDITORIAL_PLACEHOLDERS.lifestyle}
-            alt="Structured training and lifestyle — low light, realistic"
-            aspectClassName="aspect-[2/1] min-h-[8rem] sm:aspect-[21/9] sm:min-h-0"
+            src={EDITORIAL_ASSETS.lifestyle}
+            alt="Training floor in low light"
+            aspectClassName="aspect-[2/1] min-h-[7.5rem] sm:aspect-[21/9] sm:min-h-0"
           />
         </motion.div>
 
         <motion.div
-          className="mt-4 grid w-full max-w-6xl auto-rows-fr grid-cols-2 gap-2 sm:mt-5 sm:gap-2.5 lg:grid-cols-5"
+          className="mx-auto mt-5 max-w-3xl sm:mt-6"
           variants={gridStagger}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
-          {pillars.map((p) => (
-            <SystemCard
+          {pillars.map((p, i) => (
+            <PillarRow
               key={p.title}
               {...p}
-              cardVariants={cardVariants}
-              isMobile={isMobile}
+              index={i}
+              fadeVariants={fadeMain}
             />
           ))}
         </motion.div>
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-ascend-canvas/45 to-transparent sm:h-20"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-ascend-canvas/45 to-transparent sm:h-16"
         aria-hidden
       />
     </section>

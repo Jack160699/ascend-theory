@@ -7,8 +7,6 @@ import { MobileConversionProvider } from "@/contexts/mobile-conversion";
 import { FinalDecisionCTA } from "@/sections/FinalDecisionCTA";
 import { Footer } from "@/sections/Footer";
 import { Hero } from "@/sections/Hero";
-import { Journey } from "@/sections/Journey";
-import { OneSystem } from "@/sections/OneSystem";
 import { Philosophy } from "@/sections/Philosophy";
 import { Pricing } from "@/sections/Pricing";
 import { System } from "@/sections/System";
@@ -20,14 +18,12 @@ export default function Home() {
       <ConversionExperienceProvider>
         <MobileConversionProvider>
           <TransformationGate />
-          <main className="ascend-main-depth min-h-screen overflow-x-clip bg-ascend-canvas pb-[max(3.75rem,env(safe-area-inset-bottom)+3.25rem)] text-white antialiased sm:pb-20 lg:pb-24">
+          <main className="ascend-main-depth min-h-screen overflow-x-clip bg-ascend-canvas pb-[max(3.25rem,env(safe-area-inset-bottom)+2.75rem)] text-white antialiased sm:pb-16 lg:pb-20">
             <AscendFilmGrain />
             <CursorAmbientLight />
             <Hero />
             <Philosophy />
-            <OneSystem />
             <System />
-            <Journey />
             <Pricing />
             <Testimonials />
             <FinalDecisionCTA />

@@ -3,9 +3,9 @@
 import Link from "next/link";
 
 const quick = [
-  { href: "#philosophy", label: "Philosophy" },
-  { href: "#programs", label: "Method" },
-  { href: "#pricing", label: "View pricing" },
+  { href: "#philosophy", label: "About" },
+  { href: "#programs", label: "Outcomes" },
+  { href: "#pricing", label: "Membership" },
   { href: "#testimonials", label: "Proof" },
 ] as const;
 
@@ -23,8 +23,8 @@ export function Footer() {
         <div className="max-w-sm">
           <p className="ascend-type-eyebrow text-zinc-600">Ascend Theory</p>
           <p className="mt-3 text-sm leading-[1.72] text-zinc-600 sm:leading-[1.75]">
-            Private transformation architecture · selective accountability
-            environment
+            Private mentorship — selective intake, manual review, serious room
+            only.
           </p>
         </div>
         <nav

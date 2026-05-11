@@ -4,12 +4,12 @@
 
 export const SURFACE_SPRING = {
   type: "spring" as const,
-  stiffness: 198,
-  damping: 36,
+  stiffness: 152,
+  damping: 38,
 };
 
 export const TAP_SPRING = {
   type: "spring" as const,
-  stiffness: 238,
-  damping: 32,
+  stiffness: 196,
+  damping: 34,
 };

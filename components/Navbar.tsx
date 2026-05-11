@@ -19,9 +19,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const links = [
   { href: "#philosophy", label: "About" },
-  { href: "#one-system", label: "Method" },
   { href: "#programs", label: "Outcomes" },
-  { href: "#journey", label: "Entry" },
   { href: "#testimonials", label: "Proof" },
   { href: "#pricing", label: "Membership" },
   { href: "#assessment", label: "Apply" },
