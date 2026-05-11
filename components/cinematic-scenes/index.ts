@@ -1,4 +1,5 @@
 export { CinematicHomeStory } from "./CinematicHomeStory";
+export { SceneNarrativeEnvironment } from "./SceneNarrativeEnvironment";
 export { SceneShell } from "./SceneShell";
 export { SceneBrotherhood } from "./SceneBrotherhood";
 export { SceneEntry } from "./SceneEntry";

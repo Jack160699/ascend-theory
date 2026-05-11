@@ -6,6 +6,24 @@ export {
 } from "./cinematic-layout";
 export { CINEMATIC_MAIN_ID, CINEMATIC_SCENE_SELECTOR } from "./constants";
 export {
+  HOME_SCENE_NARRATIVE_KIND,
+  sceneRailClass,
+  type SceneNarrativeKind,
+} from "./scene-environment";
+export {
+  applyEmotionalRhythmVars,
+  clearEmotionalRhythmVars,
+  EMOTIONAL_RHYTHM_CSS_VARS,
+} from "./emotional-progression-vars";
+export {
+  computeEmotionalRhythmSnapshot,
+  HOME_SCENE_EMOTION,
+  HOME_SCENE_SPATIAL,
+  type EmotionalRhythmSnapshot,
+  type SceneEmotionalProfile,
+  type SceneSpatialPosture,
+} from "./emotional-rhythm";
+export {
   applyScrollProgressionVars,
   clearScrollProgressionVars,
   type ScrollProgressionSnapshot,

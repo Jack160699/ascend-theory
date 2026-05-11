@@ -296,6 +296,41 @@
   }
 }
 
+/* Cinematic story spine — fragment rhythm, editorial air (color in Tailwind) */
+.ascend-narrative-stack {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.4rem, 4.2vh, 2.75rem);
+}
+
+.ascend-narrative-stack--tight {
+  gap: clamp(1.1rem, 3vh, 2rem);
+}
+
+.ascend-prose-fragment {
+  font-size: 0.9375rem;
+  line-height: 1.72;
+  letter-spacing: 0.012em;
+  font-weight: 400;
+  font-variant-numeric: oldstyle-nums;
+  max-width: 38ch;
+  text-wrap: pretty;
+}
+
+@media (min-width: 640px) {
+  .ascend-prose-fragment {
+    font-size: 1rem;
+    line-height: 1.76;
+    letter-spacing: 0.01em;
+    max-width: 40ch;
+  }
+}
+
+/** After a scene headline — deliberate pause before the first line lands */
+.ascend-after-scene-headline {
+  margin-top: clamp(2rem, 5.5vh, 3.5rem);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ascend-testimonial-marquee {
     animation: none;

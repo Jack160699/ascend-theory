@@ -10,6 +10,11 @@ import {
   registerSceneDepthTimeline,
 } from "@/lib/cinematic-v2/register-scene-depth";
 import {
+  applyEmotionalRhythmVars,
+  clearEmotionalRhythmVars,
+} from "@/lib/cinematic-v2/emotional-progression-vars";
+import { computeEmotionalRhythmSnapshot } from "@/lib/cinematic-v2/emotional-rhythm";
+import {
   applyScrollProgressionVars,
   clearScrollProgressionVars,
 } from "@/lib/cinematic-v2/scroll-progression";
@@ -63,6 +68,14 @@ export function MasterSceneOrchestrator() {
         end: "bottom bottom",
         onUpdate: (self) => {
           applyScrollProgressionVars(root, { globalProgress: self.progress });
+          const scrollY = self.scroll();
+          const snap = computeEmotionalRhythmSnapshot(
+            Array.from(scenes),
+            scrollY,
+            window.innerHeight,
+            self.progress,
+          );
+          applyEmotionalRhythmVars(root, snap);
         },
       });
 
@@ -91,6 +104,7 @@ export function MasterSceneOrchestrator() {
       window.cancelAnimationFrame(t);
       ctx.revert();
       clearScrollProgressionVars(root);
+      clearEmotionalRhythmVars(root);
     };
   }, [lenis]);
 

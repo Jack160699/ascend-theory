@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { SceneNarrativeEnvironment } from "./SceneNarrativeEnvironment";
 import { SceneShell } from "./SceneShell";
 
 export function SceneInterruption() {
@@ -21,35 +22,43 @@ export function SceneInterruption() {
       ariaLabel="Scene one — interruption"
       conversionZone="hero"
       atmosphere={
-        <div
-          className="pointer-events-none absolute inset-0 z-0"
-          aria-hidden
-          data-cinematic-parallax="7"
-        >
-          <Image
-            src={CINEMATIC_ASSETS.heroRooftopSunrise}
-            alt="Rooftop at sunrise — city horizon, quiet architectural space"
-            fill
-            priority
-            className={CINEMATIC_IMAGE_CLASS.heroRooftopSunrise}
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-black/50 sm:bg-black/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ascend-canvas via-black/25 to-black/35" />
-        </div>
+        <>
+          <div
+            className="pointer-events-none absolute inset-0 z-0"
+            aria-hidden
+            data-cinematic-parallax="7"
+          >
+            <Image
+              src={CINEMATIC_ASSETS.heroRooftopSunrise}
+              alt="Rooftop at sunrise — city horizon, quiet architectural space"
+              fill
+              priority
+              className={CINEMATIC_IMAGE_CLASS.heroRooftopSunrise}
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-black/[0.52] sm:bg-black/[0.42]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-ascend-canvas via-black/30 to-[rgb(12,14,18)]/55" />
+          </div>
+          <SceneNarrativeEnvironment scene="interruption" stack="overlay" />
+        </>
       }
     >
       <Navbar />
       <div className="relative z-10 flex flex-1 flex-col justify-end px-6 pb-16 pt-28 sm:px-10 sm:pb-24 sm:pt-32 lg:pl-16 lg:pb-28">
         <p className="ascend-type-eyebrow text-zinc-400">Ascend Theory</p>
-        <h1 className="ascend-type-hero ascend-headline mt-6 max-w-[16ch] text-pretty">
-          The room you have been avoiding.
+        <h1 className="ascend-type-hero ascend-headline mt-8 max-w-[15ch] text-pretty sm:mt-10">
+          The room you keep circling.
         </h1>
-        <p className="ascend-prose-lede mt-8 max-w-xl text-pretty text-zinc-400">
-          Private mentorship — selective intake, manual review. One standard for
-          identity, communication, and execution.
-        </p>
-        <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="ascend-narrative-stack ascend-after-scene-headline max-w-md text-zinc-400">
+          <p className="ascend-prose-lede text-pretty text-zinc-300">
+            Narrow door. Hand read.
+          </p>
+          <p className="ascend-prose-fragment text-zinc-400">
+            A private bar for how you speak, choose, and hold shape when the
+            room is still.
+          </p>
+        </div>
+        <div className="mt-14 flex flex-col gap-4 sm:mt-16 sm:flex-row sm:items-center">
           <button
             type="button"
             onClick={() => openAssessment()}

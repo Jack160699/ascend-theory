@@ -5,6 +5,11 @@ import {
   cinematicSceneRootProps,
   type HomeSceneId,
 } from "@/lib/cinematic-v2/cinematic-layout";
+import { HOME_SCENE_SPATIAL } from "@/lib/cinematic-v2/emotional-rhythm";
+import {
+  HOME_SCENE_NARRATIVE_KIND,
+  sceneRailClass,
+} from "@/lib/cinematic-v2/scene-environment";
 import { cn } from "@/lib/utils";
 
 /**
@@ -30,39 +35,56 @@ export function SceneShell({
   children: ReactNode;
   className?: string;
 }) {
+  const spatial = HOME_SCENE_SPATIAL[scene];
+  const blockMin =
+    spatial === "open"
+      ? "min-h-[min(108dvh,108svh)]"
+      : spatial === "intimate"
+        ? "min-h-[min(98dvh,98svh)]"
+        : "min-h-[min(100dvh,100svh)]";
+
   return (
     <section
       {...cinematicSceneRootProps(scene)}
+      data-scene-spatial={spatial}
+      data-scene-environment={HOME_SCENE_NARRATIVE_KIND[scene]}
       id={anchorId}
       aria-label={ariaLabel}
       {...(conversionZone ? { "data-conversion-zone": conversionZone } : {})}
       className={cn(
-        "relative isolate min-h-[100dvh] min-h-[100svh] w-full overflow-hidden scroll-mt-24 bg-ascend-canvas text-white",
-        "[transform-style:preserve-3d]",
+        "ascend-scene-rhythm-root relative isolate w-full overflow-hidden scroll-mt-24 bg-ascend-canvas text-white [transform-style:preserve-3d]",
+        blockMin,
         className,
       )}
       style={{ perspective: "min(2200px, 120vw)" }}
     >
       {atmosphere}
 
-      <div className="relative min-h-[100dvh] min-h-[100svh] w-full [transform-style:preserve-3d]">
+      <div
+        className={cn(
+          "relative w-full [transform-style:preserve-3d]",
+          blockMin,
+        )}
+      >
         <div
           data-scene-camera
-          className="relative flex min-h-[100dvh] min-h-[100svh] w-full flex-col will-change-transform [backface-visibility:hidden] [transform-style:preserve-3d]"
+          className={cn(
+            "relative flex w-full flex-col will-change-transform [backface-visibility:hidden] [transform-style:preserve-3d]",
+            blockMin,
+          )}
         >
           {children}
         </div>
       </div>
 
-      {/* Continuity rail into the next beat — transform-only fog drift */}
+      {/* Continuity rail — opacity follows emotional handoff (next room bleeds in early) */}
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[4] h-[min(11rem,22dvh)] sm:h-[min(12rem,24dvh)]"
+        className={cn(
+          "ascend-scene-rail pointer-events-none absolute inset-x-0 bottom-0 z-[4] h-[min(11rem,22dvh)] sm:h-[min(12rem,24dvh)]",
+          sceneRailClass(scene),
+        )}
         aria-hidden
         data-cinematic-fog="6"
-        style={{
-          background:
-            "linear-gradient(to top, rgba(5,5,6,0.88) 0%, rgba(5,5,6,0.35) 42%, transparent 100%)",
-        }}
       />
     </section>
   );
