@@ -15,9 +15,9 @@ type EditorialImageStripProps = {
 export function EditorialImageStrip({
   src,
   alt,
-  caption = "Reference imagery · replace with Ascend assets",
+  caption,
   className,
-        aspectClassName = "aspect-[2/1] min-h-[9rem] sm:aspect-[21/9] sm:min-h-0",
+  aspectClassName = "aspect-[2/1] min-h-[9rem] sm:aspect-[21/9] sm:min-h-0",
   priority = false,
 }: EditorialImageStripProps) {
   return (
@@ -45,11 +45,13 @@ export function EditorialImageStrip({
           className="pointer-events-none absolute inset-0 mix-blend-soft-light bg-[color:rgba(95,115,134,0.04)]"
           aria-hidden
         />
-        <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-3 py-2 sm:px-5 sm:py-3">
-          <p className="text-[9px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600 sm:text-[10px] sm:tracking-[0.22em]">
-            {caption}
-          </p>
-        </figcaption>
+        {caption ? (
+          <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-3 py-2 sm:px-5 sm:py-3">
+            <p className="text-[9px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600 sm:text-[10px] sm:tracking-[0.22em]">
+              {caption}
+            </p>
+          </figcaption>
+        ) : null}
       </div>
     </figure>
   );

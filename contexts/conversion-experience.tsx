@@ -1,11 +1,7 @@
 "use client";
 
 import { useAssessmentModal } from "@/contexts/assessment-modal";
-import {
-  DURATION_OPACITY,
-  TAP_SPRING,
-  txReveal,
-} from "@/lib/motion";
+import { DURATION_OPACITY, TAP_SPRING, txReveal } from "@/lib/motion";
 import { STICKY_MOBILE_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -18,7 +14,8 @@ import {
   useState,
 } from "react";
 
-const STATIC_NOTICE = "We read applications in order.";
+/** Empty = no ribbon / urgency strip (avoid repeating intake copy site-wide). */
+const STATIC_NOTICE = "";
 
 type ConversionValue = {
   urgencyMessage: string;
@@ -42,22 +39,22 @@ export function useConversionExperienceOptional(): ConversionValue | null {
 }
 
 const stickyCtaButtonClass = cn(
-  "ascend-button-primary relative inline-flex min-h-10 w-full items-center justify-center rounded-full bg-white px-5 text-center text-[12px] font-medium leading-snug tracking-tight text-zinc-950",
-  "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_34px_-10px_rgba(255,255,255,0.18)]",
+  "relative inline-flex h-[52px] w-full max-w-md items-center justify-center rounded-full px-6 text-center text-[13px] font-medium leading-none tracking-tight text-zinc-950",
+  "bg-white/[0.92] shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_10px_32px_-12px_rgba(0,0,0,0.45)]",
+  "backdrop-blur-md backdrop-saturate-150",
   "transition-[transform,box-shadow,opacity] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
-  "hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_14px_40px_-10px_rgba(255,255,255,0.24)]",
   "active:scale-[0.987]",
 );
 
 function StickyConversionBar() {
-  const { openAssessment } = useAssessmentModal();
+  const { openAssessment, isOpen } = useAssessmentModal();
   const [showMobile, setShowMobile] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
-      const h = window.innerHeight;
-      setShowMobile(y > Math.min(h * 0.72, 400));
+      const threshold = window.innerHeight * 0.35;
+      setShowMobile(y > threshold);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -68,21 +65,22 @@ function StickyConversionBar() {
     };
   }, []);
 
+  const visible = showMobile && !isOpen;
+
   return (
     <AnimatePresence>
-      {showMobile ? (
+      {visible ? (
         <motion.div
           className={cn(
-            "fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.07] sm:hidden",
-            "bg-zinc-950/82 shadow-[0_-8px_40px_-6px_rgba(0,0,0,0.5)] backdrop-blur-md backdrop-saturate-100",
-            "supports-[padding:max(0px)]:pb-[max(0.35rem,env(safe-area-inset-bottom))]",
+            "fixed inset-x-0 bottom-0 z-[60] sm:hidden",
+            "pointer-events-none flex justify-center px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1",
           )}
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
+          exit={{ opacity: 0, y: 8 }}
           transition={txReveal(DURATION_OPACITY)}
         >
-          <div className="mx-auto max-w-lg px-3 pt-2">
+          <div className="pointer-events-auto w-full max-w-md">
             <motion.button
               type="button"
               onClick={() => openAssessment()}

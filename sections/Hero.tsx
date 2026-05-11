@@ -91,13 +91,13 @@ export function Hero() {
             variants={fadeUpHero}
             className="ascend-prose-calm mt-7 max-w-[min(34rem,100%)] text-pretty text-zinc-500 sm:mt-10"
           >
-            Private mentorship for serious professionals — one rhythm across
-            training, presence, and discipline. You apply. We review manually.
+            Private mentorship for serious professionals — training, presence,
+            and discipline in one lane. You apply. We read every message.
           </motion.p>
 
           <motion.div
             variants={fadeUpHero}
-            className="mt-11 flex w-full max-w-[min(36rem,100%)] flex-col gap-3.5 sm:mt-[3.25rem] sm:flex-row sm:items-center sm:gap-6"
+            className="mt-11 w-full max-w-[min(36rem,100%)] sm:mt-[3.25rem]"
           >
             <motion.button
               type="button"
@@ -117,27 +117,12 @@ export function Hero() {
               </span>
               <ArrowRight className="relative z-10 size-4 shrink-0 transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:translate-x-0.5" />
             </motion.button>
-
-            <motion.a
-              href="#pricing"
-              className={cn(
-                "ascend-button-ghost inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-8 text-sm font-medium tracking-tight text-white sm:w-auto",
-                "border border-white/[0.12] bg-white/[0.04] backdrop-blur-xl",
-                "transition-[transform,background-color,border-color] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
-                "hover:border-white/[0.18] hover:bg-white/[0.07]",
-              )}
-              whileHover={{ scale: 1.012 }}
-              whileTap={{ scale: 0.988 }}
-              transition={TAP_SPRING}
-            >
-              View pricing
-            </motion.a>
           </motion.div>
         </motion.div>
       </div>
 
       <motion.a
-        href="#about"
+        href="#philosophy"
         className="absolute bottom-5 left-1/2 z-[15] flex -translate-x-1/2 flex-col items-center gap-2 text-zinc-500 sm:bottom-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

@@ -15,6 +15,8 @@ type AssessmentModalValue = {
   /** Opens the premium intake modal. Pass a tier when opened from pricing (optional context in WhatsApp). */
   openAssessment: (tier?: TierKey) => void;
   closeAssessment: () => void;
+  /** Whether the intake modal is currently open (for hiding duplicate CTAs). */
+  isOpen: boolean;
 };
 
 const AssessmentModalContext = createContext<AssessmentModalValue | null>(
@@ -35,8 +37,8 @@ export function AssessmentModalProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ openAssessment, closeAssessment }),
-    [openAssessment, closeAssessment],
+    () => ({ openAssessment, closeAssessment, isOpen: open }),
+    [openAssessment, closeAssessment, open],
   );
 
   return (

@@ -1,18 +1,15 @@
 /**
- * Cinematic editorial placeholders (Unsplash) — low-key, disciplined, masculine.
- * Dark neutrals, realistic training / presence; replace with brand assets when ready.
+ * Cinematic editorial imagery (Unsplash) — dark, realistic training and presence.
  */
 export const EDITORIAL_PLACEHOLDERS = {
-  /** Training floor — barbells, depth, not ad-gym saturation */
   training:
-    "https://images.unsplash.com/photo-1583454110551-21f2fa2cfe61?auto=format&fit=crop&w=1600&q=78",
-  /** Silhouette / composure — structured, private */
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1600&q=80",
   silhouette:
-    "https://images.unsplash.com/photo-1517963841347-938877637793?auto=format&fit=crop&w=1600&q=78",
-  /** Focus — equipment, repetition, discipline */
+    "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=1600&q=80",
   focus:
-    "https://images.unsplash.com/photo-1534438327276-14e5300d3ad4?auto=format&fit=crop&w=1600&q=78",
-  /** Presence — controlled environment */
+    "https://images.unsplash.com/photo-1534438327276-14e5300d3ad4?auto=format&fit=crop&w=1600&q=80",
   presence:
-    "https://images.unsplash.com/photo-1576678927484-cc907957088f?auto=format&fit=crop&w=1600&q=78",
+    "https://images.unsplash.com/photo-1576678927484-cc907957088f?auto=format&fit=crop&w=1600&q=80",
+  lifestyle:
+    "https://images.unsplash.com/photo-1571019613454-1cb2e99a2df8?auto=format&fit=crop&w=1600&q=80",
 } as const;

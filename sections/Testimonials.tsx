@@ -50,7 +50,7 @@ const img = {
   vidPoster3: EDITORIAL_PLACEHOLDERS.focus,
 } as const;
 
-/** Demo MP4 architecture (replace with hosted member films). */
+/** Short preview clips (replace with hosted member films when ready). */
 const demoVideos = [
   "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
   "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
@@ -58,10 +58,10 @@ const demoVideos = [
 ] as const;
 
 const metrics = [
-  { label: "Cohort execution consistency", value: "87%" },
-  { label: "Avg. accountability streak", value: "12 wk" },
-  { label: "Mentor allocation", value: "Capped" },
-  { label: "Methodology adherence", value: "High" },
+  { label: "Weekly follow-through", value: "87%" },
+  { label: "Accountability streak", value: "12 wk" },
+  { label: "Mentor seats", value: "Capped" },
+  { label: "Standard adherence", value: "High" },
 ] as const;
 
 const marqueeProof = [
@@ -112,43 +112,43 @@ const chats = [
 const mosaic = [
   {
     src: img.mosaicA,
-    label: "Routine atmosphere",
-    sub: "Reference · discipline",
+    label: "Routine",
+    sub: "Discipline in ordinary days",
   },
   {
     src: img.mosaicB,
-    label: "Portrait · presence",
-    sub: "Reference · professional",
+    label: "Presence",
+    sub: "Quiet professional standard",
   },
   {
     src: img.mosaicC,
-    label: "Morning architecture",
-    sub: "Reference · lifestyle",
+    label: "Morning",
+    sub: "Lifestyle that holds",
   },
   {
     src: img.mosaicD,
-    label: "Training intelligence",
-    sub: "Reference · physique",
+    label: "Training floor",
+    sub: "Physique under load",
   },
-  { src: img.mosaicE, label: "Outdoor cadence", sub: "Reference · identity" },
+  { src: img.mosaicE, label: "Outdoor work", sub: "Identity in motion" },
 ] as const;
 
 const videoStories = [
   {
     title: "Presence under pressure",
-    subtitle: "Voice, stakes, and composure — identity-grade reference cut.",
+    subtitle: "Voice and composure when stakes rise.",
     poster: img.vidPoster1,
     src: demoVideos[0],
   },
   {
     title: "Discipline and physique",
-    subtitle: "Training, sleep, execution — structured reference.",
+    subtitle: "Training, sleep, execution — one thread.",
     poster: img.vidPoster2,
     src: demoVideos[1],
   },
   {
     title: "Lifestyle and identity",
-    subtitle: "Standards across domains — maturity-forward reference.",
+    subtitle: "Standards that cross domains.",
     poster: img.vidPoster3,
     src: demoVideos[2],
   },
@@ -159,6 +159,8 @@ function BeforeAfterCard({
   timeframe,
   beforeSrc,
   afterSrc,
+  beforeCaption = "Earlier",
+  afterCaption = "Later",
   fadeChildVariants,
   isMobile,
 }: {
@@ -166,6 +168,8 @@ function BeforeAfterCard({
   timeframe: string;
   beforeSrc: string;
   afterSrc: string;
+  beforeCaption?: string;
+  afterCaption?: string;
   fadeChildVariants: Variants;
   isMobile: boolean;
 }) {
@@ -186,7 +190,7 @@ function BeforeAfterCard({
           <div className="relative aspect-[4/5]">
             <Image
               src={beforeSrc}
-              alt="Editorial reference frame one"
+              alt={`${name} — earlier`}
               fill
               className="object-cover transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.008]"
               sizes="(max-width: 768px) 45vw, 280px"
@@ -194,14 +198,14 @@ function BeforeAfterCard({
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           </div>
           <p className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-            Reference I
+            {beforeCaption}
           </p>
         </div>
         <div className="overflow-hidden rounded-xl border border-white/[0.1] bg-zinc-950/80 shadow-[0_0_48px_-12px_rgba(255,255,255,0.08)]">
           <div className="relative aspect-[4/5]">
             <Image
               src={afterSrc}
-              alt="Editorial reference frame two"
+              alt={`${name} — later`}
               fill
               className="object-cover transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.008]"
               sizes="(max-width: 768px) 45vw, 280px"
@@ -209,7 +213,7 @@ function BeforeAfterCard({
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           </div>
           <p className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-            Reference II
+            {afterCaption}
           </p>
         </div>
       </div>
@@ -240,7 +244,7 @@ function MosaicTile({
       <div className="relative aspect-[4/5] sm:aspect-[3/4]">
         <Image
           src={src}
-          alt={`Reference: ${label}`}
+          alt={label}
           fill
           className="object-cover transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.008]"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
@@ -270,6 +274,7 @@ function VideoStoryCard({
   fadeChildVariants: Variants;
   isMobile: boolean;
 }) {
+  const pulseShadow = !isMobile;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hover, setHover] = useState(false);
   const [ready, setReady] = useState(false);
@@ -301,7 +306,12 @@ function VideoStoryCard({
       whileHover={{ scale: isMobile ? 1.003 : 1.006 }}
       transition={SURFACE_SPRING}
     >
-      <div className="pointer-events-none absolute -inset-px rounded-[1.25rem] opacity-0 blur-2xl transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.82]">
+      <div
+        className={cn(
+          "pointer-events-none absolute -inset-px rounded-[1.25rem] opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.82]",
+          isMobile ? "hidden" : "blur-2xl",
+        )}
+      >
         <div className="h-full w-full bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.15),transparent_65%)]" />
       </div>
       <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[2/1]">
@@ -345,16 +355,20 @@ function VideoStoryCard({
             >
               <motion.div
                 className="flex size-16 items-center justify-center rounded-full border border-[color:var(--ascend-border)] bg-ascend-surface/95 text-zinc-100 shadow-[0_0_32px_-6px_var(--ascend-accent-glow)] backdrop-blur-md"
-                animate={{
-                  boxShadow: [
-                    "0 0 40px -10px rgba(255,255,255,0.12)",
-                    "0 0 56px -6px rgba(255,255,255,0.2)",
-                    "0 0 40px -10px rgba(255,255,255,0.12)",
-                  ],
-                }}
+                animate={
+                  pulseShadow
+                    ? {
+                        boxShadow: [
+                          "0 0 40px -10px rgba(255,255,255,0.12)",
+                          "0 0 56px -6px rgba(255,255,255,0.2)",
+                          "0 0 40px -10px rgba(255,255,255,0.12)",
+                        ],
+                      }
+                    : undefined
+                }
                 transition={{
                   duration: 3.4 + index * 0.15,
-                  repeat: Infinity,
+                  repeat: pulseShadow ? Infinity : 0,
                   ease: "easeInOut",
                 }}
               >
@@ -374,7 +388,7 @@ function VideoStoryCard({
         <p className="text-sm font-medium tracking-tight text-white">{title}</p>
         <p className="mt-1 text-xs leading-relaxed text-zinc-500">{subtitle}</p>
         <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-600">
-          Reference reel · replace with member story
+          Private preview
         </p>
       </div>
     </motion.div>
@@ -405,11 +419,15 @@ export function Testimonials() {
         <div className="absolute left-1/2 top-[5%] h-[22rem] w-[min(100%,56rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.055),transparent_72%)] blur-3xl" />
         <div className="absolute -right-[20%] bottom-[20%] h-[28rem] w-[28rem] rounded-full bg-emerald-950/[0.06] blur-[120px]" />
         <div className="absolute -left-[18%] top-[35%] h-[24rem] w-[24rem] rounded-full bg-zinc-600/[0.05] blur-[110px]" />
-        <motion.div
-          className="absolute right-[10%] top-[40%] h-72 w-72 rounded-full bg-white/[0.03] blur-[90px]"
-          animate={{ opacity: [0.35, 0.55, 0.35] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-        />
+        {!isMobile ? (
+          <motion.div
+            className="absolute right-[10%] top-[40%] h-72 w-72 rounded-full bg-white/[0.03] blur-[90px]"
+            animate={{ opacity: [0.35, 0.55, 0.35] }}
+            transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+          />
+        ) : (
+          <div className="absolute right-[10%] top-[40%] h-72 w-72 rounded-full bg-white/[0.03] blur-[90px] opacity-40" />
+        )}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.55)_78%)]" />
       </div>
 
@@ -436,10 +454,10 @@ export function Testimonials() {
           </motion.h2>
           <motion.p
             variants={fadeMain}
-            className="ascend-prose-calm mt-9 max-w-[34rem] text-pretty text-zinc-500 sm:mt-10"
+            className="ascend-prose-calm mt-6 max-w-[34rem] text-pretty text-zinc-500 sm:mt-8"
           >
-            Reference media, cadence, and accountability UI — built so you can
-            swap in real member assets when you are ready.
+            Behavior first — training stills, private threads, and member film
+            cuts in one quiet lane.
           </motion.p>
         </motion.div>
 
@@ -474,16 +492,16 @@ export function Testimonials() {
           viewport={viewport}
         >
           <BeforeAfterCard
-            name="Reference pair · M"
-            timeframe="Physique and presence block (demo photography)"
+            name="Physique · presence"
+            timeframe="Eight-week training block"
             beforeSrc={img.ba1Before}
             afterSrc={img.ba1After}
             fadeChildVariants={fadeChild}
             isMobile={isMobile}
           />
           <BeforeAfterCard
-            name="Reference pair · A"
-            timeframe="Communication and discipline (demo photography)"
+            name="Communication · discipline"
+            timeframe="Structured accountability season"
             beforeSrc={img.ba2Before}
             afterSrc={img.ba2After}
             fadeChildVariants={fadeChild}
@@ -499,7 +517,7 @@ export function Testimonials() {
           viewport={viewport}
         >
           <p className="mb-6 text-left text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 lg:pl-1">
-            Physique progression · reference frames
+            Physique progression
           </p>
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {[img.prog1, img.prog2, img.prog3].map((src, i) => (
@@ -514,7 +532,7 @@ export function Testimonials() {
                 <div className="relative aspect-[3/4]">
                   <Image
                     src={src}
-                    alt={`Physique reference frame ${i + 1}`}
+                    alt={`Physique progression ${i + 1}`}
                     fill
                     className="object-cover transition-transform duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.008]"
                     sizes="(max-width: 768px) 33vw, 240px"
@@ -541,7 +559,7 @@ export function Testimonials() {
               className="size-3.5 shrink-0 text-zinc-600"
               strokeWidth={1.25}
             />
-            Field stills · cinematic reference
+            Field stills
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
             {mosaic.map((m) => (
@@ -592,7 +610,7 @@ export function Testimonials() {
           viewport={viewport}
         >
           <p className="mb-6 text-left text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 lg:pl-1">
-            Member films · demo architecture
+            Member films
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {videoStories.map((v, i) => (
@@ -615,7 +633,7 @@ export function Testimonials() {
           viewport={viewport}
         >
           <p className="mb-5 text-left text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-500 lg:pl-1">
-            Accountability thread · reference UI
+            Accountability thread
           </p>
           <div className="relative overflow-hidden rounded-2xl border border-white/[0.1] bg-gradient-to-b from-zinc-950/80 to-black/80 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset,0_32px_80px_-40px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
             <div className="mb-4 flex items-center gap-3 border-b border-white/[0.07] pb-4">
@@ -624,10 +642,10 @@ export function Testimonials() {
               </div>
               <div>
                 <p className="text-sm font-medium text-zinc-200">
-                  Ascend · Mentor calibration
+                  Ascend · Private mentor thread
                 </p>
                 <p className="text-[11px] text-zinc-500">
-                  Private thread · reference cadence
+                  Check-ins and replies in one lane
                 </p>
               </div>
             </div>

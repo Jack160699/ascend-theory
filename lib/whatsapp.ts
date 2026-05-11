@@ -7,13 +7,16 @@ export const ASCEND_WHATSAPP_DIGITS = "917777812777";
 export const ASCEND_WHATSAPP_ME_URL = "https://wa.me/917777812777";
 
 /** Hero — primary conversion (modal). */
-export const HERO_CTA_LABEL = "Apply for private entry" as const;
+export const HERO_CTA_LABEL = "Apply privately" as const;
 
 /** Mobile sticky bar — opens modal after scroll threshold. */
-export const STICKY_MOBILE_CTA_LABEL = "Request assessment" as const;
+export const STICKY_MOBILE_CTA_LABEL = "Private entry" as const;
 
 /** Final section — opens modal. */
-export const FINAL_SECTION_CTA_LABEL = "Request private entry" as const;
+export const FINAL_SECTION_CTA_LABEL = "Apply privately" as const;
+
+/** Application modal — WhatsApp handoff. */
+export const MODAL_WHATSAPP_CTA_LABEL = "Open WhatsApp" as const;
 
 /** Same wa.me target; optional prefill for handoff messages. */
 export function ascendWhatsAppUrl(prefill?: string): string {

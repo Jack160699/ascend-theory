@@ -1,39 +1,44 @@
 "use client";
 
+import { useAssessmentModal } from "@/contexts/assessment-modal";
 import {
   DURATION_OPACITY,
   DURATION_OVERLAY,
   DURATION_OVERLAY_SLOW,
   DURATION_REVEAL,
   EASE_CINEMATIC,
+  TAP_SPRING,
   txReveal,
 } from "@/lib/motion";
+import { HERO_CTA_LABEL } from "@/lib/whatsapp";
+import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "#about", label: "About" },
-  { href: "#philosophy", label: "Philosophy" },
-  { href: "#journey", label: "Journey" },
-  { href: "#programs", label: "Method" },
-  { href: "#assessment", label: "Assessment" },
+  { href: "#philosophy", label: "About" },
+  { href: "#one-system", label: "Method" },
+  { href: "#programs", label: "Outcomes" },
+  { href: "#journey", label: "Entry" },
   { href: "#testimonials", label: "Proof" },
-  {
-    href: "#pricing",
-    label: "View pricing",
-    ariaLabel: "Allocation and structured entry",
-  },
+  { href: "#pricing", label: "Membership" },
+  { href: "#assessment", label: "Apply" },
 ] as const;
 
 export function Navbar() {
+  const { openAssessment } = useAssessmentModal();
   const [scrolled, setScrolled] = useState(false);
+  const [showCta, setShowCta] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 24);
+      setShowCta(y > window.innerHeight * 0.35);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -63,10 +68,10 @@ export function Navbar() {
     <>
       <motion.header
         className={cn(
-          "fixed top-0 z-50 w-full transition-[background-color,backdrop-filter,border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+          "fixed top-0 z-[100] isolate w-full transition-[background-color,backdrop-filter,border-color,box-shadow] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
           scrolled
             ? "border-b border-[color:var(--ascend-border)] bg-[color:rgba(11,11,12,0.94)] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-125"
-            : "border-b border-transparent bg-transparent",
+            : "border-b border-transparent bg-[color:rgba(5,5,6,0.35)] backdrop-blur-md",
         )}
         initial={{ opacity: 0, y: -18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -83,12 +88,11 @@ export function Navbar() {
             Ascend Theory
           </Link>
 
-          <div className="relative z-10 hidden items-center gap-8 lg:ml-auto lg:flex xl:gap-10">
+          <div className="relative z-10 hidden items-center gap-6 lg:ml-auto lg:flex xl:gap-8">
             {links.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                aria-label={"ariaLabel" in item ? item.ariaLabel : undefined}
                 className={cn(
                   "group relative pb-0.5 text-[13px] font-medium tracking-tight text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
                   "hover:text-zinc-200",
@@ -99,6 +103,18 @@ export function Navbar() {
                 <span className="relative z-10">{item.label}</span>
               </Link>
             ))}
+            {showCta ? (
+              <motion.button
+                type="button"
+                onClick={() => openAssessment()}
+                className="ml-2 inline-flex h-9 shrink-0 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.06] px-4 text-[12px] font-medium tracking-tight text-zinc-100 transition-colors hover:border-white/[0.18] hover:bg-white/[0.1]"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.988 }}
+                transition={TAP_SPRING}
+              >
+                {HERO_CTA_LABEL}
+              </motion.button>
+            ) : null}
           </div>
 
           <div className="relative z-10 flex items-center lg:hidden">
@@ -126,7 +142,7 @@ export function Navbar() {
         {open ? (
           <motion.div
             id="mobile-nav"
-            className="fixed inset-0 z-40 lg:hidden"
+            className="fixed inset-0 z-[95] lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

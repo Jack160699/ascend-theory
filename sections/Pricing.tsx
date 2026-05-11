@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionContinuity } from "@/components/SectionContinuity";
+import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { useConversionExperienceOptional } from "@/contexts/conversion-experience";
 import {
   useIsMobileConversion,
@@ -9,6 +10,7 @@ import {
 import {
   DURATION_REVEAL,
   SURFACE_SPRING,
+  TAP_SPRING,
   getCardRevealMobile,
   getFadeUpReveal,
   getGridStaggerParent,
@@ -16,6 +18,7 @@ import {
   txReveal,
 } from "@/lib/motion";
 import { leadLeft, shellWide } from "@/lib/editorial-layout";
+import { FINAL_SECTION_CTA_LABEL } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { TierKey } from "@/lib/lead-context";
 import { motion, type Variants } from "framer-motion";
@@ -36,40 +39,46 @@ const tiers: {
   {
     key: "core",
     name: "Ascend Core",
-    label: "Foundation access",
-    purpose: "Foundation accountability inside the shared lane.",
+    label: "Foundation",
+    purpose: "Shared lane. Firm structure.",
     price: "₹7,000 + GST / month",
     features: [
-      "One system across training, voice, discipline",
-      "Structured check-ins you cannot ghost",
-      "Manual intake before any invite",
+      "Standard accountability rhythm",
+      "Cohort mentor access",
+      "Replies within business hours",
+      "Structured private depth",
+      "Manual review before entry",
     ],
   },
   {
     key: "pro",
     name: "Ascend Pro",
-    label: "High-accountability mentorship",
-    purpose: "More proximity and faster feedback when decisions cannot wait.",
+    label: "Accelerated",
+    purpose: "Closer access when decisions cannot wait.",
     price: "₹15,000 + GST / month",
     features: [
-      "Tighter accountability loops",
-      "Priority response windows",
-      "Deeper calibration when stakes rise",
+      "Higher accountability rhythm",
+      "Priority mentor access",
+      "Faster reply windows",
+      "Deeper private support",
+      "Tighter weekly structure",
     ],
     badge: "Primary allocation",
   },
   {
     key: "black",
     name: "Ascend Black",
-    label: "Private transformation architecture",
-    purpose: "Discretion-first access — invitation only after manual review.",
+    label: "Private",
+    purpose: "Discretion-first. Invitation after review.",
     price: "₹55,000 + GST / month",
     priceNote:
       "Private · discretion-first · manually reviewed · invitation only",
     features: [
-      "Highest mentor proximity",
-      "Confidential communication rails",
-      "Bespoke cadence after manual review",
+      "Maximum accountability",
+      "Closest private mentor access",
+      "Fastest replies where possible",
+      "Fully bespoke private support",
+      "Discretion-first communication",
     ],
     badge: "Invitation only",
   },
@@ -85,7 +94,7 @@ function PricingCapacityRibbon({
   if (!msg) return null;
   return (
     <motion.div
-      className="ascend-surface-soft mt-7 max-w-2xl rounded-full px-5 py-2.5 text-left sm:mt-10"
+      className="ascend-surface-soft mt-5 max-w-2xl rounded-full px-4 py-2 text-left sm:mt-8"
       initial={{ opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewport}
@@ -105,13 +114,14 @@ function PricingCard({
   tier: (typeof tiers)[number];
   cardVariants: Variants;
 }) {
+  const { openAssessment } = useAssessmentModal();
   const rootRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobileConversion();
   const conv = useConversionExperienceOptional();
   const slotLine = conv?.urgencyForTier(0) ?? "";
   const { key } = tier;
-  const featureList = tier.features.slice(0, 3);
+  const featureList = tier.features.slice(0, 5);
 
   const onMove = (e: React.MouseEvent<HTMLElement>) => {
     const root = rootRef.current;
@@ -146,12 +156,12 @@ function PricingCard({
     <motion.article
       ref={rootRef}
       variants={cardVariants}
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
+      onMouseMove={isMobile ? undefined : onMove}
+      onMouseLeave={isMobile ? undefined : onLeave}
       className={cn(
         "group relative flex h-full min-h-0 flex-col [perspective:1600px]",
         key === "pro" &&
-          "z-10 shadow-[0_30px_80px_-48px_rgba(255,255,255,0.2)] lg:z-20 lg:shadow-[0_48px_100px_-52px_rgba(0,0,0,0.82)]",
+          "z-10 shadow-[0_24px_64px_-44px_rgba(255,255,255,0.15)] lg:z-20 lg:shadow-[0_48px_100px_-52px_rgba(0,0,0,0.82)]",
         key === "black" &&
           "ring-1 ring-amber-950/25 lg:opacity-[0.99] lg:shadow-[0_0_100px_-48px_rgba(160,120,70,0.12)]",
       )}
@@ -160,29 +170,30 @@ function PricingCard({
     >
       <div
         className={cn(
-          "pointer-events-none absolute -inset-px rounded-[1.35rem] opacity-0 blur-2xl transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.82]",
+          "pointer-events-none absolute -inset-px rounded-[1.25rem] opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.72] max-lg:hidden sm:rounded-[1.35rem]",
           key === "pro" &&
-            "bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.2),transparent_62%)]",
+            "bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.2),transparent_62%)] blur-2xl",
           key === "core" &&
-            "bg-[radial-gradient(ellipse_at_40%_0%,rgba(255,255,255,0.1),transparent_70%)]",
+            "bg-[radial-gradient(ellipse_at_40%_0%,rgba(255,255,255,0.1),transparent_70%)] blur-2xl",
           key === "black" &&
-            "bg-[radial-gradient(ellipse_at_50%_20%,rgba(120,100,80,0.12),transparent_65%)]",
+            "bg-[radial-gradient(ellipse_at_50%_20%,rgba(120,100,80,0.12),transparent_65%)] blur-2xl",
         )}
       />
       <div
         className={cn(
-          "relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-[1.25rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)]",
+          "relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-[1.1rem] border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] transition-[border-color,box-shadow,transform] duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] sm:rounded-[1.25rem]",
+          "backdrop-blur-md sm:backdrop-blur-xl",
           key === "core" &&
-            "border-[color:var(--ascend-border)] bg-ascend-elevated/95 p-2.5 group-hover:border-[color:rgba(95,115,134,0.22)] group-hover:shadow-[0_20px_56px_-36px_rgba(0,0,0,0.55)] sm:p-6 lg:p-7",
+            "border-[color:var(--ascend-border)] bg-ascend-elevated/95 p-3 group-hover:border-[color:rgba(95,115,134,0.22)] group-hover:shadow-[0_16px_48px_-32px_rgba(0,0,0,0.5)] sm:p-5 lg:p-6",
           key === "pro" &&
-            "border-[color:rgba(95,115,134,0.35)] bg-ascend-elevated p-2.5 shadow-[0_24px_64px_-40px_rgba(0,0,0,0.55),0_0_48px_-20px_var(--ascend-accent-glow)] group-hover:border-[color:rgba(95,115,134,0.48)] group-hover:shadow-[0_28px_72px_-40px_rgba(0,0,0,0.58),0_0_56px_-18px_var(--ascend-accent-glow)] sm:p-6 lg:p-8",
+            "border-[color:rgba(95,115,134,0.35)] bg-ascend-elevated p-3 shadow-[0_20px_56px_-40px_rgba(0,0,0,0.55),0_0_40px_-20px_var(--ascend-accent-glow)] group-hover:border-[color:rgba(95,115,134,0.48)] group-hover:shadow-[0_24px_64px_-40px_rgba(0,0,0,0.58),0_0_52px_-18px_var(--ascend-accent-glow)] sm:p-5 lg:p-7",
           key === "black" &&
-            "border-amber-950/22 bg-gradient-to-b from-ascend-elevated via-ascend-surface to-ascend-canvas p-2.5 group-hover:border-amber-900/38 group-hover:shadow-[0_28px_72px_-44px_rgba(0,0,0,0.58),0_0_56px_-20px_rgba(180,150,100,0.06)] sm:p-6 lg:p-7",
+            "border-amber-950/22 bg-gradient-to-b from-ascend-elevated via-ascend-surface to-ascend-canvas p-3 group-hover:border-amber-900/38 group-hover:shadow-[0_24px_64px_-44px_rgba(0,0,0,0.58),0_0_48px_-20px_rgba(180,150,100,0.06)] sm:p-5 lg:p-6",
         )}
       >
         <div
           ref={glowRef}
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.9]"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] group-hover:opacity-[0.85]"
           style={{ background: glowSpot }}
         />
         <div
@@ -211,22 +222,22 @@ function PricingCard({
         ) : null}
 
         <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h3
                 className={cn(
                   "font-semibold tracking-tight text-[rgb(249,249,247)]",
-                  key === "pro" && "text-[13px] sm:text-xl lg:text-2xl",
-                  key === "core" && "text-[12px] sm:text-lg lg:text-xl",
+                  key === "pro" && "text-[13px] sm:text-lg lg:text-xl",
+                  key === "core" && "text-[12px] sm:text-base lg:text-lg",
                   key === "black" &&
-                    "text-[12px] font-semibold tracking-[0.06em] text-stone-100 sm:text-base lg:text-xl",
+                    "text-[12px] font-semibold tracking-[0.04em] text-stone-100 sm:text-base lg:text-lg",
                 )}
               >
                 {tier.name}
               </h3>
               <p
                 className={cn(
-                  "mt-1 text-[9px] font-medium uppercase leading-tight tracking-[0.2em] sm:mt-1.5 sm:text-[11px] sm:tracking-[0.26em]",
+                  "mt-0.5 text-[9px] font-medium uppercase leading-tight tracking-[0.2em] sm:mt-1 sm:text-[10px] sm:tracking-[0.24em]",
                   key === "black" ? "text-zinc-600" : "text-zinc-500",
                 )}
               >
@@ -236,9 +247,9 @@ function PricingCard({
             {tier.badge ? (
               <span
                 className={cn(
-                  "hidden shrink-0 rounded-full border px-2.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] sm:inline-flex sm:px-3 sm:py-1 sm:text-[10px] sm:tracking-[0.18em]",
+                  "hidden shrink-0 rounded-full border px-2 py-0.5 text-[8px] font-medium uppercase tracking-[0.12em] sm:inline-flex sm:px-2.5 sm:py-0.5 sm:text-[9px] sm:tracking-[0.16em]",
                   key === "pro" &&
-                    "border-white/[0.14] bg-white/[0.08] text-zinc-100 shadow-[0_0_24px_-8px_rgba(255,255,255,0.12)]",
+                    "border-white/[0.14] bg-white/[0.08] text-zinc-100",
                   key === "black" &&
                     "border-amber-950/30 bg-amber-950/10 text-amber-200/70",
                 )}
@@ -248,57 +259,57 @@ function PricingCard({
             ) : null}
           </div>
 
-          <p className="mt-2 line-clamp-2 text-[10px] leading-snug text-zinc-400 sm:mt-3 sm:text-[13px] sm:leading-relaxed lg:line-clamp-none">
+          <p className="mt-1.5 line-clamp-2 text-[10px] leading-snug text-zinc-400 sm:mt-2 sm:text-[12px] sm:leading-relaxed">
             {tier.purpose}
           </p>
 
-          <div className="mt-3 border-t border-white/[0.06] pt-3 sm:mt-5 sm:pt-5">
+          <div className="mt-2.5 border-t border-white/[0.06] pt-2.5 sm:mt-4 sm:pt-4">
             {tier.priceLead ? (
-              <p className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.26em] text-zinc-600">
+              <p className="mb-1 text-[9px] font-medium uppercase tracking-[0.24em] text-zinc-600 sm:text-[10px]">
                 {tier.priceLead}
               </p>
             ) : null}
             <p
               className={cn(
                 "font-mono font-semibold tracking-tight text-white",
-                key === "pro" && "text-base sm:text-3xl lg:text-4xl",
-                key === "core" && "text-sm sm:text-2xl lg:text-3xl",
+                key === "pro" && "text-[15px] sm:text-2xl lg:text-3xl",
+                key === "core" && "text-sm sm:text-xl lg:text-2xl",
                 key === "black" &&
-                  "text-sm tracking-tight text-stone-100 sm:text-3xl lg:text-[2rem]",
+                  "text-sm tracking-tight text-stone-100 sm:text-2xl lg:text-[1.75rem]",
               )}
             >
               {tier.price}
             </p>
             {key === "black" ? (
-              <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-200/40">
+              <p className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.24em] text-amber-200/40 sm:text-[10px]">
                 Private allocation
               </p>
             ) : null}
             {tier.priceNote ? (
               <p
                 className={cn(
-                  "mt-2 max-w-sm text-[12px] leading-relaxed",
+                  "mt-1.5 max-w-sm text-[11px] leading-snug sm:text-[12px] sm:leading-relaxed",
                   key === "black" ? "text-zinc-500" : "text-zinc-600",
                 )}
               >
                 {tier.priceNote}
               </p>
             ) : (
-              <p className="mt-2 text-[12px] leading-relaxed text-zinc-600">
-                Reserved mentor capacity · manual review · GST as applicable.
+              <p className="mt-1.5 text-[11px] leading-snug text-zinc-600 sm:text-[12px]">
+                Reserved capacity · manual review · GST as applicable.
               </p>
             )}
           </div>
 
-          <ul className="mt-2 flex min-h-0 flex-1 flex-col gap-1 sm:mt-4 sm:gap-2.5">
+          <ul className="mt-2 flex min-h-0 flex-1 flex-col gap-1 sm:mt-3 sm:gap-1.5">
             {featureList.map((f) => (
               <li
                 key={f}
-                className="flex gap-1.5 text-[10px] leading-snug text-zinc-400 sm:gap-3 sm:text-[13px]"
+                className="flex gap-1.5 text-[10px] leading-snug text-zinc-400 sm:gap-2 sm:text-[12px]"
               >
                 <span
                   className={cn(
-                    "mt-0.5 flex size-3.5 shrink-0 items-center justify-center rounded border sm:size-5 sm:rounded-md",
+                    "mt-0.5 flex size-3 shrink-0 items-center justify-center rounded border sm:size-4 sm:rounded-md",
                     key === "pro" &&
                       "border-white/[0.12] bg-white/[0.05] text-[color:var(--ascend-accent)]",
                     key === "core" &&
@@ -307,7 +318,7 @@ function PricingCard({
                       "border-zinc-800 bg-zinc-950/80 text-amber-200/50",
                   )}
                 >
-                  <Check className="size-2 sm:size-3" strokeWidth={2.25} />
+                  <Check className="size-2 sm:size-2.5" strokeWidth={2.25} />
                 </span>
                 <span
                   className={cn(
@@ -322,10 +333,30 @@ function PricingCard({
           </ul>
 
           {slotLine ? (
-            <p className="mt-2 hidden border-t border-white/[0.06] pt-2 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600 sm:mt-4 sm:block sm:pt-3">
+            <p className="mt-2 hidden border-t border-white/[0.06] pt-2 text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-zinc-600 sm:block sm:pt-2.5">
               {slotLine}
             </p>
           ) : null}
+
+          <div className="mt-auto flex shrink-0 flex-col pt-3 sm:pt-4">
+            <motion.button
+              type="button"
+              onClick={() => openAssessment(tier.key)}
+              className={cn(
+                "h-10 w-full rounded-full border border-white/[0.1] bg-white/[0.06] text-center text-[12px] font-medium text-zinc-100 transition-colors",
+                "hover:border-white/[0.16] hover:bg-white/[0.1]",
+                key === "pro" &&
+                  "border-[color:rgba(95,115,134,0.35)] bg-white/[0.08]",
+                key === "black" &&
+                  "border-amber-950/35 bg-amber-950/15 text-amber-100/90",
+              )}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.987 }}
+              transition={TAP_SPRING}
+            >
+              {FINAL_SECTION_CTA_LABEL}
+            </motion.button>
+          </div>
         </div>
       </div>
     </motion.article>
@@ -350,17 +381,19 @@ export function Pricing() {
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="ascend-section-world relative scroll-mt-28 overflow-x-clip overflow-y-visible border-t border-[color:var(--ascend-border)] bg-ascend-surface py-5 sm:py-14 lg:py-20"
+      className="ascend-section-world relative scroll-mt-28 overflow-x-clip overflow-y-visible border-t border-[color:var(--ascend-border)] bg-ascend-surface py-6 sm:py-12 lg:py-16"
       aria-labelledby="pricing-heading"
     >
       <SectionContinuity />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute inset-0 bg-gradient-to-b from-ascend-canvas via-ascend-surface to-ascend-canvas" />
-        <div className="absolute left-1/2 top-0 h-[26rem] w-[min(100%,56rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.065),transparent_72%)] blur-3xl" />
-        <div className="absolute -right-[24%] top-[38%] h-[32rem] w-[32rem] rounded-full bg-white/[0.03] blur-[130px]" />
-        <div className="absolute -left-[20%] bottom-[8%] h-[28rem] w-[28rem] rounded-full bg-zinc-600/[0.045] blur-[120px]" />
-        <div className="absolute left-[42%] top-[52%] h-[18rem] w-[18rem] -translate-x-1/2 rounded-full bg-amber-950/[0.05] blur-[90px]" />
-        <div className="absolute right-[18%] top-[22%] h-48 w-48 rounded-full bg-[color:rgba(95,115,134,0.07)] blur-[64px] sm:h-64 sm:w-64 sm:blur-[80px]" />
+        {!isMobile ? (
+          <>
+            <div className="absolute left-1/2 top-0 h-[22rem] w-[min(100%,56rem)] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.055),transparent_72%)] blur-3xl" />
+            <div className="absolute -right-[24%] top-[38%] h-[28rem] w-[28rem] rounded-full bg-white/[0.03] blur-[110px]" />
+            <div className="absolute -left-[20%] bottom-[8%] h-[24rem] w-[24rem] rounded-full bg-zinc-600/[0.04] blur-[100px]" />
+          </>
+        ) : null}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,5,6,0.46)_78%)]" />
       </div>
 
@@ -374,40 +407,40 @@ export function Pricing() {
         >
           <motion.p
             variants={fadeMain}
-            className="ascend-type-eyebrow mb-4 text-zinc-500 sm:mb-5"
+            className="ascend-type-eyebrow mb-2 text-zinc-500 sm:mb-4"
           >
-            Pricing
+            Membership
           </motion.p>
           <motion.h2
             id="pricing-heading"
             variants={fadeMain}
             className="ascend-type-section-sm ascend-headline"
           >
-            Pick the depth that matches your season.
+            Choose the depth that fits this season.
           </motion.h2>
           <motion.p
             variants={fadeMain}
-            className="ascend-prose-calm mt-4 max-w-[34rem] text-pretty text-zinc-500 sm:mt-6"
+            className="ascend-prose-calm mt-3 max-w-[34rem] text-pretty text-zinc-500 sm:mt-5"
           >
-            Same philosophy. What changes is proximity, speed, and how private
-            calibration can go.
+            Same standards. What changes is how close the support sits, how fast
+            we reply, and how private the work can go.
           </motion.p>
         </motion.div>
 
         <motion.p
-          className="mt-4 max-w-2xl text-left text-[11px] leading-snug text-zinc-600 sm:mt-6 sm:text-[13px] sm:leading-[1.75]"
+          className="mt-3 max-w-2xl text-left text-[11px] leading-snug text-zinc-600 sm:mt-5 sm:text-[13px] sm:leading-relaxed"
           variants={fadeMain}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
-          Limited seats · manual intake · serious environment only.
+          Limited seats · manual intake · serious room only.
         </motion.p>
 
         <PricingCapacityRibbon viewport={viewport} />
 
         <motion.div
-          className="relative mx-auto mt-6 max-w-6xl overflow-x-clip sm:mt-10 lg:mt-12"
+          className="relative mx-auto mt-5 max-w-6xl sm:mt-8 lg:mt-10"
           variants={gridStagger}
           initial="hidden"
           whileInView="visible"
@@ -417,47 +450,28 @@ export function Pricing() {
             className="pointer-events-none absolute left-[10%] right-[10%] top-[42%] hidden h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent lg:block"
             aria-hidden
           />
-          <div className="grid grid-cols-3 gap-2 lg:items-stretch lg:gap-4 xl:gap-6">
-            <div className="relative flex min-h-0 min-w-0 flex-col lg:order-1">
-              <p className="mb-2 hidden shrink-0 text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:mb-3 lg:block lg:pl-1">
-                I — Foundation access
-              </p>
-              <div className="min-h-0 min-w-0 flex-1">
-                <PricingCard tier={tiers[0]} cardVariants={cardVariants} />
+          <div className="flex flex-col gap-3 lg:grid lg:grid-cols-3 lg:items-stretch lg:gap-4 xl:gap-5">
+            {tiers.map((t) => (
+              <div key={t.key} className="relative flex min-h-0 min-w-0">
+                <PricingCard tier={t} cardVariants={cardVariants} />
               </div>
-            </div>
-            <div className="relative flex min-h-0 min-w-0 flex-col lg:order-2 lg:z-20 lg:px-1">
-              <p className="mb-2 hidden shrink-0 text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-400 lg:mb-3 lg:block lg:pl-1">
-                II — High accountability
-              </p>
-              <div className="min-h-0 min-w-0 flex-1">
-                <PricingCard tier={tiers[1]} cardVariants={cardVariants} />
-              </div>
-            </div>
-            <div className="relative flex min-h-0 min-w-0 flex-col lg:order-3">
-              <p className="mb-2 hidden shrink-0 text-left font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-zinc-600 lg:mb-3 lg:block lg:pl-1">
-                III — Private architecture
-              </p>
-              <div className="min-h-0 min-w-0 flex-1">
-                <PricingCard tier={tiers[2]} cardVariants={cardVariants} />
-              </div>
-            </div>
+            ))}
           </div>
         </motion.div>
 
         <motion.p
-          className="mt-6 max-w-2xl text-left text-[12px] leading-snug text-zinc-600 sm:mt-8 sm:text-[13px] sm:leading-[1.75] lg:pl-1"
+          className="mt-5 max-w-2xl text-left text-[11px] leading-snug text-zinc-600 sm:mt-7 sm:text-[13px] sm:leading-relaxed lg:pl-1"
           variants={fadeMain}
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
         >
-          Access scales with calibration — not entitlement.
+          Depth follows the tier you enter — not entitlement.
         </motion.p>
       </div>
 
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-ascend-canvas/40 to-transparent sm:h-24"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-ascend-canvas/40 to-transparent sm:h-20"
         aria-hidden
       />
     </section>
