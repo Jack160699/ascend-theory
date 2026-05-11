@@ -19,6 +19,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const links = [
   { href: "#philosophy", label: "About" },
+  { href: "#brotherhood", label: "Brotherhood" },
   { href: "#programs", label: "Outcomes" },
   { href: "#testimonials", label: "Proof" },
   { href: "#pricing", label: "Membership" },

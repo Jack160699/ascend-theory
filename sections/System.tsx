@@ -7,9 +7,10 @@ import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
-import { EDITORIAL_ASSETS } from "@/lib/editorial-assets";
+import { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
 import {
   DURATION_OPACITY,
+  DURATION_REVEAL,
   getFadeUpReveal,
   getGridStaggerParent,
   getHeaderStaggerParent,
@@ -22,68 +23,58 @@ import type { LucideIcon } from "lucide-react";
 import {
   Activity,
   AlarmClock,
-  Mic2,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
 import { useMemo } from "react";
 
-/** Order: identity-forward first; physique last as a supporting layer. */
 const pillars: {
   title: string;
   description: string;
   icon: LucideIcon;
 }[] = [
   {
-    title: "Presence",
-    description:
-      "Posture, silence, and how you speak when the stakes are visible.",
-    icon: Mic2,
-  },
-  {
     title: "Routine",
-    description: "Planning and rhythm that still hold on ordinary weeks.",
+    description:
+      "Depth, notes, and repetition — the private work no one applauds.",
     icon: AlarmClock,
   },
   {
     title: "Accountability",
-    description: "Private review, clear replies, and nowhere for drift to hide.",
+    description:
+      "Private review, clear language, and nowhere for drift to hide.",
     icon: ShieldCheck,
   },
   {
     title: "Peer environment",
     description:
-      "Others at the same standard — composed, direct, quiet reinforcement.",
+      "Others walking the same bar — composed, direct, emotionally literate.",
     icon: UsersRound,
   },
   {
     title: "Physique",
     description:
-      "Movement and composition, held to the same bar as the rest of your life.",
+      "Conditioning as one layer of the same standard — never the headline.",
     icon: Activity,
   },
 ];
 
 const pillarVisuals = [
   {
-    src: EDITORIAL_ASSETS.presenceComposed,
-    alt: "Composed professional presence — calm eye-line",
+    src: CINEMATIC_ASSETS.philosophyLibrary,
+    alt: "Study and intention — reading and journaling in quiet light",
   },
   {
-    src: EDITORIAL_ASSETS.structureRoutine,
-    alt: "Planning and structure — desk, notes, intention",
+    src: CINEMATIC_ASSETS.systemsPlanningWall,
+    alt: "Weekly planning wall — routines, training, work, recovery, communication",
   },
   {
-    src: EDITORIAL_ASSETS.accountabilityReview,
-    alt: "Focused discussion — review and alignment",
+    src: CINEMATIC_ASSETS.brotherhoodWalk,
+    alt: "Shared walk — brotherhood and modern masculine presence",
   },
   {
-    src: EDITORIAL_ASSETS.communication,
-    alt: "Calm collaboration — leadership without performance",
-  },
-  {
-    src: EDITORIAL_ASSETS.physiqueAnchor,
-    alt: "Conditioning layer — disciplined movement, low light",
+    src: CINEMATIC_ASSETS.lifestyleRooftopStanding,
+    alt: "Rooftop at dawn — clarity, solitude, quiet confidence",
   },
 ] as const;
 
@@ -122,10 +113,7 @@ function PillarRow({
           sizes="(max-width:640px) 100vw, 38vw"
           loading="lazy"
         />
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent"
-          aria-hidden
-        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
       </div>
       <div className={cn("min-w-0 sm:pl-2", reverse && "sm:[direction:ltr]")}>
         <div className="flex items-start gap-3">
@@ -184,7 +172,7 @@ export function System() {
             variants={fadeMain}
             className="ascend-type-eyebrow mb-1.5 text-zinc-600 sm:mb-2"
           >
-            What you get
+            Discipline & systems
           </motion.p>
           <motion.h2
             id="system-heading"
@@ -197,8 +185,8 @@ export function System() {
             variants={fadeMain}
             className="ascend-prose-calm mt-2 max-w-[34rem] text-pretty text-zinc-500 sm:mt-3"
           >
-            Identity and communication first. Structure and accountability hold
-            the week. Conditioning sits in the same lane — never the whole story.
+            Structure first: the week, the thread, the room. Identity and
+            communication stay in charge — conditioning follows the same line.
           </motion.p>
         </motion.div>
 
@@ -210,14 +198,48 @@ export function System() {
           transition={txReveal(DURATION_OPACITY, 0.04)}
         >
           <EditorialImageStrip
-            src={EDITORIAL_ASSETS.deepWork}
-            alt="Focused work session — quiet discipline, editorial light"
+            src={CINEMATIC_ASSETS.systemsPlanningWall}
+            alt="Weekly planning wall — routines, training, work, recovery, communication"
             aspectClassName="aspect-[2/1] min-h-[7.5rem] sm:aspect-[21/9] sm:min-h-0"
           />
         </motion.div>
 
+        <motion.article
+          className="mx-auto mt-8 max-w-5xl overflow-hidden rounded-xl border border-white/[0.07] bg-zinc-950/30 sm:mt-10"
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={viewport}
+          transition={txReveal(DURATION_REVEAL, 0.06)}
+        >
+          <div className="grid lg:grid-cols-2">
+            <div className="relative aspect-[5/4] min-h-[13rem] border-b border-white/[0.06] lg:aspect-auto lg:min-h-[16rem] lg:border-b-0 lg:border-r">
+              <AscendImage
+                src={CINEMATIC_ASSETS.leadershipLounge}
+                alt="Calm leadership — conversation in a premium lounge"
+                fill
+                className="object-cover object-[center_28%]"
+                sizes="(max-width:1024px) 100vw, 50vw"
+                loading="lazy"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent lg:bg-gradient-to-r" />
+            </div>
+            <div className="flex flex-col justify-center px-4 py-6 sm:px-7 sm:py-9 lg:px-10 lg:py-10">
+              <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-zinc-600">
+                Leadership & presence
+              </p>
+              <h3 className="mt-2 text-base font-semibold leading-snug tracking-tight text-zinc-100 sm:text-lg">
+                Communication that stays composed when the stakes show up.
+              </h3>
+              <p className="mt-3 text-[12px] leading-relaxed text-zinc-500 sm:text-[13px]">
+                Voice, posture, and listening — held to the same private standard
+                as your calendar. No performance. No volume for its own sake.
+              </p>
+            </div>
+          </div>
+        </motion.article>
+
         <motion.div
-          className="mx-auto mt-5 max-w-3xl sm:mt-6"
+          className="mx-auto mt-6 max-w-3xl sm:mt-8"
           variants={gridStagger}
           initial="hidden"
           whileInView="visible"
@@ -234,10 +256,7 @@ export function System() {
         </motion.div>
       </div>
 
-      <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-ascend-canvas/45 to-transparent sm:h-16"
-        aria-hidden
-      />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-ascend-canvas/45 to-transparent sm:h-16" />
     </section>
   );
 }

@@ -6,7 +6,7 @@ import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
-import { EDITORIAL_ASSETS } from "@/lib/editorial-assets";
+import { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
 import {
   DURATION_REVEAL,
   SURFACE_SPRING,
@@ -35,23 +35,23 @@ const quotes = [
 
 const fieldStills = [
   {
-    src: EDITORIAL_ASSETS.presenceComposed,
+    src: CINEMATIC_ASSETS.leadershipLounge,
     label: "Presence",
-    sub: "Stillness before the room responds",
+    sub: "Calm leadership in conversation",
     span: "lg:col-span-2 lg:row-span-2",
     aspect: "aspect-[4/3] lg:aspect-auto lg:min-h-[14rem]",
   },
   {
-    src: EDITORIAL_ASSETS.deepWork,
-    label: "Structure",
-    sub: "Deep work, clean edges",
+    src: CINEMATIC_ASSETS.systemsPlanningWall,
+    label: "Systems",
+    sub: "The week made legible on the wall",
     span: "",
     aspect: "aspect-[5/4]",
   },
   {
-    src: EDITORIAL_ASSETS.identityReflection,
-    label: "Reflection",
-    sub: "Evening light, honest review",
+    src: CINEMATIC_ASSETS.brotherhoodWalk,
+    label: "Field",
+    sub: "Shared standard, private pace",
     span: "",
     aspect: "aspect-[5/4]",
   },
@@ -151,8 +151,8 @@ export function Testimonials() {
             variants={fadeMain}
             className="ascend-prose-calm mt-3 max-w-[32rem] text-pretty text-zinc-500 sm:mt-4"
           >
-            Stills lean toward how members think, communicate, and hold structure
-            — not a highlight reel of sets and reps.
+            Stills from how members think, speak, and hold structure — editorial,
+            restrained, and grounded.
           </motion.p>
         </motion.div>
 
@@ -166,10 +166,10 @@ export function Testimonials() {
           <div className="grid lg:grid-cols-2">
             <div className="relative aspect-[5/4] min-h-[12rem] border-b border-white/[0.06] lg:aspect-auto lg:min-h-[17rem] lg:border-b-0 lg:border-r">
               <AscendImage
-                src={EDITORIAL_ASSETS.identityReflection}
-                alt="Quiet workspace — reflection and standards"
+                src={CINEMATIC_ASSETS.lifestyleRooftopStanding}
+                alt="Rooftop at dawn — solitude, clarity, quiet confidence"
                 fill
-                className="object-cover object-center"
+                className="object-cover object-[center_35%]"
                 sizes="(max-width:1024px) 100vw, 50vw"
                 loading="lazy"
               />
@@ -193,8 +193,8 @@ export function Testimonials() {
               <div className="mt-5 flex gap-2">
                 <div className="relative h-16 w-[28%] overflow-hidden rounded-md border border-white/[0.08] bg-zinc-950 sm:h-20">
                   <AscendImage
-                    src={EDITORIAL_ASSETS.structureRoutine}
-                    alt="Planning and weekly structure"
+                    src={CINEMATIC_ASSETS.philosophyLibrary}
+                    alt="Depth and study — weekly private work"
                     fill
                     className="object-cover"
                     sizes="120px"
@@ -203,8 +203,8 @@ export function Testimonials() {
                 </div>
                 <div className="relative h-16 flex-1 overflow-hidden rounded-md border border-white/[0.08] bg-zinc-950 sm:h-20">
                   <AscendImage
-                    src={EDITORIAL_ASSETS.physiqueAnchor}
-                    alt="Conditioning — one layer of the same standard"
+                    src={CINEMATIC_ASSETS.systemsPlanningWall}
+                    alt="Planning wall — structure and consistency"
                     fill
                     className="object-cover"
                     sizes="240px"
@@ -267,10 +267,7 @@ export function Testimonials() {
         </motion.div>
       </div>
 
-      <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-ascend-surface/35 to-transparent sm:h-16"
-        aria-hidden
-      />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-ascend-surface/35 to-transparent sm:h-16" />
     </section>
   );
 }

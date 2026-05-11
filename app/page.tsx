@@ -4,6 +4,7 @@ import { TransformationGate } from "@/components/TransformationGate";
 import { AssessmentModalProvider } from "@/contexts/assessment-modal";
 import { ConversionExperienceProvider } from "@/contexts/conversion-experience";
 import { MobileConversionProvider } from "@/contexts/mobile-conversion";
+import { Brotherhood } from "@/sections/Brotherhood";
 import { FinalDecisionCTA } from "@/sections/FinalDecisionCTA";
 import { Footer } from "@/sections/Footer";
 import { Hero } from "@/sections/Hero";
@@ -23,6 +24,7 @@ export default function Home() {
             <CursorAmbientLight />
             <Hero />
             <Philosophy />
+            <Brotherhood />
             <System />
             <Pricing />
             <Testimonials />
