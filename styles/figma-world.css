@@ -1,28 +1,9 @@
-/* ASCEND THEORY — WORLD SYSTEM (production polish) */
+/* ASCEND THEORY — WORLD (editorial restraint, mobile-first) */
 
 .world-canvas {
-  position: relative;
   background-color: #0d0d0d;
   color: #fff;
   -webkit-font-smoothing: antialiased;
-}
-
-.world-canvas::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 118;
-  pointer-events: none;
-  mix-blend-mode: overlay;
-  opacity: 0.028;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 256px 256px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .world-canvas::before {
-    opacity: 0.02;
-  }
 }
 
 .world-dot-grid {
@@ -38,29 +19,12 @@
   background-size: 48px 48px;
 }
 
-.world-warm-glow {
-  background: radial-gradient(
-    ellipse 60% 50% at 70% 30%,
-    rgba(255, 220, 180, 0.25) 0%,
-    transparent 60%
-  );
-}
-
-.world-warm-glow--center {
-  background: radial-gradient(
-    ellipse 50% 40% at 50% 45%,
-    rgba(255, 220, 180, 0.12) 0%,
-    transparent 70%
-  );
-}
-
 .world-brand-mark {
   font-size: clamp(6px, 1.8vw, 7px);
   font-weight: 300;
   letter-spacing: 0.4em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.72);
-  text-shadow: 0 1px 24px rgba(0, 0, 0, 0.65);
 }
 
 .world-eyebrow {
@@ -69,7 +33,6 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.5);
-  text-shadow: 0 1px 20px rgba(0, 0, 0, 0.55);
 }
 
 .world-display {
@@ -77,9 +40,6 @@
   line-height: 0.88;
   letter-spacing: -0.02em;
   color: #fff;
-  text-shadow:
-    0 2px 40px rgba(0, 0, 0, 0.55),
-    0 1px 0 rgba(0, 0, 0, 0.35);
 }
 
 .world-display--hero {
@@ -112,7 +72,6 @@
   font-weight: 300;
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.58);
-  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.5);
 }
 
 .world-body--muted {
@@ -120,7 +79,6 @@
   font-weight: 300;
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.5);
-  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.45);
 }
 
 .world-tier-name {
@@ -137,24 +95,18 @@
   color: #fff;
 }
 
-/* Scene readability + transitions */
-.world-scene-vignette {
+/* Scenes — one gradient overlay, no scroll FX */
+.world-scene-overlay {
   pointer-events: none;
-  background:
-    radial-gradient(ellipse 120% 80% at 50% 100%, rgba(13, 13, 13, 0.55) 0%, transparent 55%),
-    linear-gradient(to bottom, rgba(13, 13, 13, 0.35) 0%, transparent 28%, transparent 62%, rgba(13, 13, 13, 0.5) 100%);
-}
-
-.world-scene-edge-fade--top {
-  background: linear-gradient(to bottom, #0d0d0d 0%, transparent 100%);
-}
-
-.world-scene-edge-fade--bottom {
-  background: linear-gradient(to top, #0d0d0d 0%, transparent 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(13, 13, 13, 0.42) 0%,
+    rgba(13, 13, 13, 0.58) 42%,
+    rgba(13, 13, 13, 0.84) 100%
+  );
 }
 
 .world-scene-content {
-  position: relative;
   display: flex;
   height: 100%;
   width: 100%;
@@ -163,7 +115,7 @@
 .world-scene-content--bottom {
   align-items: flex-end;
   padding: clamp(1.25rem, 4vw, 2rem) clamp(1.15rem, 4vw, 1.35rem)
-    clamp(3.5rem, 12vw, 5rem);
+    clamp(3rem, 10vw, 4.5rem);
 }
 
 .world-scene-content--center {
@@ -178,38 +130,36 @@
   padding: clamp(1.25rem, 4vw, 2rem) clamp(1.15rem, 4vw, 1.35rem);
 }
 
-.world-scene-scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    to top,
-    rgba(13, 13, 13, 0.92) 0%,
-    rgba(13, 13, 13, 0.72) 28%,
-    rgba(13, 13, 13, 0.2) 58%,
-    transparent 78%
-  );
-}
-
-.world-scene-content--center .world-scene-scrim,
-.world-scene-content--center-left .world-scene-scrim {
-  background: radial-gradient(
-    ellipse 90% 70% at 30% 50%,
-    rgba(13, 13, 13, 0.88) 0%,
-    rgba(13, 13, 13, 0.55) 45%,
-    transparent 72%
-  );
-}
-
 .world-scene-copy {
-  position: relative;
-  z-index: 1;
   width: 100%;
   max-width: 36rem;
 }
 
 .world-scene-copy--wide {
   max-width: 42rem;
+}
+
+.world-hero-in {
+  opacity: 0;
+  animation: world-fade-in 1.1s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+}
+
+.world-hero-in--delay {
+  animation-delay: 0.35s;
+}
+
+@keyframes world-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-hero-in,
+  .world-hero-in--delay {
+    opacity: 1;
+    animation: none;
+  }
 }
 
 /* Buttons */
@@ -226,20 +176,13 @@
   color: #fff;
   background: transparent;
   transition:
-    background-color var(--ascend-hover-duration, 520ms) var(--ascend-hover-ease, cubic-bezier(0.33, 1, 0.68, 1)),
-    border-color var(--ascend-hover-duration, 520ms) var(--ascend-hover-ease, cubic-bezier(0.33, 1, 0.68, 1)),
-    box-shadow var(--ascend-hover-duration, 520ms) var(--ascend-hover-ease, cubic-bezier(0.33, 1, 0.68, 1)),
-    transform 280ms var(--ascend-hover-ease, cubic-bezier(0.33, 1, 0.68, 1));
+    background-color 400ms ease,
+    border-color 400ms ease;
 }
 
 .world-btn-outline:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.38);
-  box-shadow: 0 0 32px rgba(255, 255, 255, 0.06);
-}
-
-.world-btn-outline:active {
-  transform: translateY(1px);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .world-btn-solid {
@@ -254,22 +197,11 @@
   letter-spacing: 0.28em;
   text-transform: uppercase;
   border: 1px solid transparent;
-  transition:
-    background-color var(--ascend-hover-duration, 520ms) var(--ascend-hover-ease, cubic-bezier(0.33, 1, 0.68, 1)),
-    color var(--ascend-hover-duration, 520ms) var(--ascend-hover-ease, cubic-bezier(0.33, 1, 0.68, 1)),
-    box-shadow var(--ascend-hover-duration, 520ms) var(--ascend-hover-ease, cubic-bezier(0.33, 1, 0.68, 1)),
-    transform 280ms var(--ascend-hover-ease, cubic-bezier(0.33, 1, 0.68, 1));
+  transition: background-color 400ms ease, opacity 400ms ease;
 }
 
 .world-btn-solid:hover {
-  background-color: rgba(255, 255, 255, 0.94);
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.15) inset;
-}
-
-.world-btn-solid:active {
-  transform: translateY(1px);
+  background-color: rgba(255, 255, 255, 0.92);
 }
 
 .world-btn-solid--cta {
@@ -284,8 +216,7 @@
   color: rgba(255, 255, 255, 0.72);
   padding: 0.3rem 0.85rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .world-story-item-title {
@@ -293,7 +224,6 @@
   font-size: clamp(0.95rem, 4vw, 1.25rem);
   letter-spacing: -0.01em;
   color: #fff;
-  text-shadow: 0 1px 20px rgba(0, 0, 0, 0.5);
 }
 
 .world-bullet {
@@ -305,7 +235,6 @@
   margin-top: 0.55rem;
 }
 
-/* Pricing */
 .world-section-pricing {
   padding-block: clamp(4.5rem, 14vw, 8rem);
 }
@@ -314,42 +243,14 @@
   position: relative;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: clamp(2rem, 6vw, 2.75rem);
-  transition:
-    border-color 520ms cubic-bezier(0.33, 1, 0.68, 1),
-    background-color 520ms cubic-bezier(0.33, 1, 0.68, 1);
-}
-
-.world-pricing-card:hover {
-  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .world-pricing-card--featured {
-  border-color: rgba(255, 255, 255, 0.18);
   padding: clamp(2rem, 6vw, 2.75rem) clamp(1.25rem, 4vw, 1.75rem) clamp(2.25rem, 6vw, 3rem);
   margin-inline: clamp(-0.75rem, -2vw, -1rem);
-  background: linear-gradient(
-    165deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.01) 48%,
-    transparent 100%
-  );
-  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.world-pricing-card--featured:hover {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: linear-gradient(
-    165deg,
-    rgba(255, 255, 255, 0.055) 0%,
-    rgba(255, 255, 255, 0.015) 48%,
-    transparent 100%
-  );
-}
-
-.world-transformation-rail {
-  height: clamp(88vh, 100vh, 100vh);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .world-transformation-panel {
@@ -368,8 +269,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .world-btn-outline,
-  .world-btn-solid,
-  .world-pricing-card {
+  .world-btn-solid {
     transition: none;
   }
 }

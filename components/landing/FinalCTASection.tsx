@@ -2,7 +2,6 @@
 
 import { WorldButton } from "@/components/landing/world/WorldButton";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
-import { motion, useReducedMotion } from "framer-motion";
 
 const BULLETS = [
   "Daily structured routines",
@@ -12,7 +11,6 @@ const BULLETS = [
 
 export function FinalCTASection() {
   const { openAssessment } = useAssessmentModal();
-  const reduceMotion = useReducedMotion();
 
   return (
     <section
@@ -22,25 +20,11 @@ export function FinalCTASection() {
       aria-labelledby="final-cta-heading"
     >
       <div
-        className="world-dot-grid world-dot-grid--fine pointer-events-none absolute inset-0 opacity-[0.015]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.08]"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 40% at 50% 45%, rgba(255, 220, 180, 0.12) 0%, transparent 70%)",
-        }}
+        className="world-dot-grid world-dot-grid--fine pointer-events-none absolute inset-0 opacity-[0.01]"
         aria-hidden
       />
 
-      <motion.div
-        className="relative z-10 mx-auto max-w-lg text-center"
-        initial={reduceMotion ? false : { opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, ease: [0.33, 1, 0.68, 1] }}
-        viewport={{ once: true, margin: "-10%" }}
-      >
+      <div className="relative z-10 mx-auto max-w-lg text-center">
         <p className="world-brand-mark mb-8 sm:mb-12">ASCEND THEORY</p>
         <p className="mb-8 text-xs font-light uppercase tracking-[0.12em] text-white/55 sm:mb-10">
           A Structured Environment for Men
@@ -79,7 +63,7 @@ export function FinalCTASection() {
         <p className="mt-4 text-[10px] font-light tracking-[0.08em] text-white/35 sm:mt-5">
           Limited spaces · Application required
         </p>
-      </motion.div>
+      </div>
 
       <p
         className="absolute bottom-8 text-[7px] font-light tracking-[0.35em] text-white/12 sm:bottom-10"

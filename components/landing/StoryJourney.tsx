@@ -3,8 +3,6 @@
 import { SceneContent } from "@/components/landing/world/SceneContent";
 import { StickyScene } from "@/components/landing/world/StickyScene";
 import { HERO_SCENES } from "@/lib/figma-world-content";
-import { SCENE_SCROLL } from "@/lib/world-scene-metrics";
-import { motion, useReducedMotion } from "framer-motion";
 
 function ItemBlock({ title, body }: { title: string; body: string }) {
   return (
@@ -20,25 +18,11 @@ export function StoryJourney() {
     <>
       <StickyScene
         id="momentum"
-        scrollHeight={SCENE_SCROLL.storyLg}
         image={HERO_SCENES.momentum.image}
         imageAlt={HERO_SCENES.momentum.imageAlt}
         imageClass={HERO_SCENES.momentum.imageClass}
         imagePosition="center 40%"
-        overlayClass="bg-[#0d0d0d]/86"
-        gradientClass="bg-gradient-to-b from-[#0d0d0d]/72 via-[#0d0d0d]/82 to-[#0d0d0d]"
         contentClassName="flex items-end"
-        parallax={{ y: [36, -36] }}
-        extraOverlay={
-          <div
-            className="absolute inset-0 opacity-12"
-            style={{
-              background:
-                "radial-gradient(ellipse 50% 40% at 50% 55%, rgba(140, 170, 200, 0.28) 0%, transparent 50%)",
-            }}
-            aria-hidden
-          />
-        }
       >
         <SceneContent layout="bottom">
           <h2 className="world-display world-display--lg mb-5 sm:mb-6">
@@ -56,14 +40,10 @@ export function StoryJourney() {
 
       <StickyScene
         id="distraction"
-        scrollHeight={SCENE_SCROLL.storyMd}
         image={HERO_SCENES.distraction.image}
         imageAlt={HERO_SCENES.distraction.imageAlt}
         imageClass={HERO_SCENES.distraction.imageClass}
-        overlayClass="bg-[#0d0d0d]/88"
-        gradientClass="bg-gradient-to-b from-[#0d0d0d]/76 via-[#0d0d0d]/86 to-[#0d0d0d]"
         contentClassName="flex items-end"
-        parallax={{ y: [32, -32] }}
       >
         <SceneContent layout="bottom">
           <h2 className="world-display world-display--md mb-5 sm:mb-6">
@@ -83,14 +63,11 @@ export function StoryJourney() {
 
       <StickyScene
         id="environment"
-        scrollHeight={SCENE_SCROLL.storyLg}
         image={HERO_SCENES.environment.image}
         imageAlt={HERO_SCENES.environment.imageAlt}
         imageClass={HERO_SCENES.environment.imageClass}
-        overlayClass="bg-[#0d0d0d]/82"
-        gradientClass="bg-gradient-to-br from-[#0d0d0d]/62 via-[#0d0d0d]/78 to-[#0d0d0d]/96"
+        imagePosition="center 32%"
         contentClassName="flex items-end"
-        parallax={{ scale: [1.06, 1.03], y: [18, -14] }}
       >
         <SceneContent layout="bottom">
           <h2 className="world-display world-display--md mb-5 sm:mb-6">
@@ -110,14 +87,10 @@ export function StoryJourney() {
 
       <StickyScene
         id="solution"
-        scrollHeight={SCENE_SCROLL.storyLg}
         image={HERO_SCENES.solution.image}
         imageAlt={HERO_SCENES.solution.imageAlt}
         imageClass={HERO_SCENES.solution.imageClass}
-        overlayClass="bg-[#0d0d0d]/84"
-        gradientClass="bg-gradient-to-br from-[#0d0d0d]/72 via-[#0d0d0d]/82 to-[#0d0d0d]/92"
         contentClassName="flex items-center"
-        parallax={{ scale: [1.04, 1] }}
       >
         <SceneContent layout="center-left">
           <p className="world-eyebrow mb-4 sm:mb-5">The Solution</p>
@@ -142,14 +115,11 @@ export function StoryJourney() {
 
       <StickyScene
         id="how-it-works"
-        scrollHeight={SCENE_SCROLL.storyMd}
         image={HERO_SCENES.howItWorks.image}
         imageAlt={HERO_SCENES.howItWorks.imageAlt}
         imageClass={HERO_SCENES.howItWorks.imageClass}
-        overlayClass="bg-[#0d0d0d]/84"
-        gradientClass="bg-gradient-to-b from-[#0d0d0d]/72 via-[#0d0d0d]/82 to-[#0d0d0d]/92"
+        imagePosition="55% 42%"
         contentClassName="flex items-center"
-        parallax={{ y: [24, -24] }}
       >
         <SceneContent layout="center-left" innerClassName="world-scene-copy--wide">
           <p className="world-eyebrow mb-4 sm:mb-5">How It Works</p>
@@ -172,14 +142,11 @@ export function StoryJourney() {
 
       <StickyScene
         id="what-you-build"
-        scrollHeight={SCENE_SCROLL.storyLg}
         image={HERO_SCENES.whatYouBuild.image}
         imageAlt={HERO_SCENES.whatYouBuild.imageAlt}
         imageClass={HERO_SCENES.whatYouBuild.imageClass}
-        overlayClass="bg-[#0d0d0d]/80"
-        gradientClass="bg-gradient-to-bl from-[#0d0d0d]/68 via-[#0d0d0d]/82 to-[#0d0d0d]/92"
+        imagePosition="center 30%"
         contentClassName="flex items-center"
-        parallax={{ y: [32, -32], scale: [1.04, 1] }}
       >
         <SceneContent layout="center-left" innerClassName="world-scene-copy--wide">
           <p className="world-eyebrow mb-4 sm:mb-5">What You Build</p>
@@ -206,14 +173,10 @@ export function StoryJourney() {
 
       <StickyScene
         id="brotherhood"
-        scrollHeight={SCENE_SCROLL.storyLg}
         image={HERO_SCENES.brotherhood.image}
         imageAlt={HERO_SCENES.brotherhood.imageAlt}
         imageClass={HERO_SCENES.brotherhood.imageClass}
-        overlayClass="bg-[#0d0d0d]/78"
-        gradientClass="bg-gradient-to-tr from-[#0d0d0d]/88 via-[#0d0d0d]/72 to-[#0d0d0d]/88"
         contentClassName="flex items-end"
-        parallax={{ scale: [1.05, 1.02], y: [20, -18] }}
       >
         <SceneContent layout="bottom">
           <p className="world-eyebrow mb-3 sm:mb-4">The Brotherhood</p>
@@ -238,46 +201,28 @@ export function StoryJourney() {
 }
 
 function TransformationBeat() {
-  const reduceMotion = useReducedMotion();
-
   return (
-    <div
+    <section
       id="transformation"
-      className="world-transformation-rail relative w-full"
+      className="flex min-h-[100svh] w-full flex-col items-center justify-center bg-[#0d0d0d] px-5"
     >
-      <div className="sticky top-0 flex h-[100dvh] min-h-[100svh] w-full flex-col items-center justify-center overflow-hidden bg-[#0d0d0d]">
-        <div
-          className="world-scene-vignette absolute inset-0"
-          aria-hidden
-        />
-        <div
-          className="absolute inset-0 world-warm-glow--center opacity-[0.09]"
-          aria-hidden
-        />
-        <motion.div
-          className="world-transformation-panel relative z-10 text-center"
-          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.1, ease: [0.33, 1, 0.68, 1] }}
-          viewport={{ once: true, margin: "-12%" }}
-        >
-          <p className="world-eyebrow mb-5 sm:mb-6">The Transformation</p>
-          <h2 className="world-display world-display--lg mb-6 sm:mb-8">
-            Confident.
-            <br />
-            Disciplined.
-            <br />
-            Unstoppable.
-          </h2>
-          <p className="world-body mx-auto max-w-md">
-            You rebuild yourself from the ground up.
-            <br />
-            This is where men become who they&apos;re
-            <br />
-            supposed to be.
-          </p>
-        </motion.div>
+      <div className="world-transformation-panel max-w-lg text-center">
+        <p className="world-eyebrow mb-5 sm:mb-6">The Transformation</p>
+        <h2 className="world-display world-display--lg mb-6 sm:mb-8">
+          Confident.
+          <br />
+          Disciplined.
+          <br />
+          Unstoppable.
+        </h2>
+        <p className="world-body mx-auto max-w-md">
+          You rebuild yourself from the ground up.
+          <br />
+          This is where men become who they&apos;re
+          <br />
+          supposed to be.
+        </p>
       </div>
-    </div>
+    </section>
   );
 }

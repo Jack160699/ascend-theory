@@ -26,7 +26,6 @@ export function SceneContent({
         className,
       )}
     >
-      <div className="world-scene-scrim" aria-hidden />
       <div className={cn("world-scene-copy", innerClassName)}>{children}</div>
     </div>
   );

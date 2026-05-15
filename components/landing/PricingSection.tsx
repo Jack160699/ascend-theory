@@ -4,7 +4,6 @@ import { WorldButton } from "@/components/landing/world/WorldButton";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { WORLD_PRICING_TIERS } from "@/lib/figma-world-content";
 import { cn } from "@/lib/utils";
-import { motion, useReducedMotion } from "framer-motion";
 
 function FeatureRow({ text }: { text: string }) {
   return (
@@ -25,19 +24,11 @@ function PricingTierCard({
   const featured = Boolean(tier.recommended);
 
   return (
-    <motion.article
+    <article
       className={cn(
         "world-pricing-card",
         featured && "world-pricing-card--featured",
       )}
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.85,
-        delay: tier.key === "pro" ? 0.12 : tier.key === "black" ? 0.22 : 0,
-        ease: [0.33, 1, 0.68, 1],
-      }}
-      viewport={{ once: true, margin: "-40px" }}
     >
       {featured ? (
         <div className="mb-6">
@@ -96,13 +87,12 @@ function PricingTierCard({
           {tier.footnote}
         </p>
       ) : null}
-    </motion.article>
+    </article>
   );
 }
 
 export function PricingSection() {
   const { openAssessment } = useAssessmentModal();
-  const reduceMotion = useReducedMotion();
 
   return (
     <section
@@ -112,25 +102,11 @@ export function PricingSection() {
       aria-labelledby="pricing-heading"
     >
       <div
-        className="world-dot-grid pointer-events-none absolute inset-0 opacity-[0.012]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 35% at 50% 40%, rgba(255, 215, 170, 0.15) 0%, transparent 75%)",
-        }}
+        className="world-dot-grid pointer-events-none absolute inset-0 opacity-[0.01]"
         aria-hidden
       />
 
-      <motion.div
-        className="relative z-10 px-5"
-        initial={reduceMotion ? false : { opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.9, ease: [0.33, 1, 0.68, 1] }}
-        viewport={{ once: true, margin: "-80px" }}
-      >
+      <div className="relative z-10 px-5">
         <div className="mb-14 text-center sm:mb-20 md:mb-24">
           <p className="world-eyebrow mb-4 tracking-[0.2em] sm:mb-5">
             Levels of Entry
@@ -165,7 +141,7 @@ export function PricingSection() {
           <br />
           for men who are serious about transformation.
         </p>
-      </motion.div>
+      </div>
     </section>
   );
 }

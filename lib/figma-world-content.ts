@@ -4,46 +4,50 @@ import { ASCEND_IMAGE_CLASS } from "@/lib/cinematic-composition";
 
 export const WORLD_BG = "#0d0d0d";
 
+/**
+ * Brand stills only — lonely, architectural, restrained.
+ * (lifestyle-golf removed: reads leisure/stock, not editorial.)
+ */
 export const HERO_SCENES = {
   hero: {
     image: ASCEND_IMAGES.editorialArchitecture,
     imageClass: ASCEND_IMAGE_CLASS.editorialArchitecture,
-    imageAlt: "Ascend Theory — cinematic architectural space",
+    imageAlt: "Minimal architectural interior — Ascend Theory",
   },
   momentum: {
     image: ASCEND_IMAGES.lifestyleAirport,
     imageClass: ASCEND_IMAGE_CLASS.lifestyleAirport,
-    imageAlt: "Ascend Theory — composed professional in motion",
+    imageAlt: "Man in transit — momentum lost",
   },
   distraction: {
     image: ASCEND_IMAGES.lifestyleCoastal,
     imageClass: ASCEND_IMAGE_CLASS.lifestyleCoastal,
-    imageAlt: "Ascend Theory — man on a coastal promenade at golden hour",
+    imageAlt: "Solitary figure on a coastal walk",
   },
   environment: {
-    image: ASCEND_IMAGES.lifestyleGolf,
-    imageClass: ASCEND_IMAGE_CLASS.lifestyleGolf,
-    imageAlt: "Ascend Theory — members at a private club",
+    image: ASCEND_IMAGES.heroStorefront,
+    imageClass: ASCEND_IMAGE_CLASS.heroStorefront,
+    imageAlt: "Architectural facade — environment shapes identity",
   },
   solution: {
     image: ASCEND_IMAGES.teamStudio,
     imageClass: ASCEND_IMAGE_CLASS.teamStudio,
-    imageAlt: "Ascend Theory — structured environment for men",
+    imageAlt: "Structured studio space for men",
   },
   howItWorks: {
     image: ASCEND_IMAGES.editorialArchitecture,
     imageClass: ASCEND_IMAGE_CLASS.editorialArchitecture,
-    imageAlt: "Ascend Theory — architectural discipline",
+    imageAlt: "Editorial architecture — systems and discipline",
   },
   whatYouBuild: {
     image: ASCEND_IMAGES.heroStorefront,
     imageClass: ASCEND_IMAGE_CLASS.heroStorefront,
-    imageAlt: "Ascend Theory — identity in motion",
+    imageAlt: "Built identity — discipline in the world",
   },
   brotherhood: {
     image: ASCEND_IMAGES.brotherhoodDining,
     imageClass: ASCEND_IMAGE_CLASS.brotherhoodDining,
-    imageAlt: "Ascend Theory — private brotherhood",
+    imageAlt: "Private brotherhood at table",
   },
 } as const;
 
