@@ -5,97 +5,91 @@ import { FIGMA_SCENE_SCROLL, type SceneScrollSpec } from "@/lib/world-scene-metr
 
 export const WORLD_BG = "#0d0d0d";
 
+/** Atmospheric grade — CSS-only overlays (see `figma-world.css`). */
+export type AtmosphereGrade =
+  | "hero"
+  | "story-bottom"
+  | "story-bottom-env"
+  | "story-center"
+  | "brotherhood";
+
 export type WorldSceneConfig = {
   image: string;
   imageClass: string;
   imageAlt: string;
-  imagePosition?: string;
+  /** Figma-aligned crop; preserves negative space for type. */
+  imagePosition: string;
   scroll: SceneScrollSpec;
-  /** Solid scrim over photo */
-  scrimClass: string;
-  /** Gradient stack on top of scrim */
-  gradientClass: string;
+  grade: AtmosphereGrade;
   warmGlow?: boolean;
 };
 
-/** Scene order + visuals aligned to published Figma Make site bundle. */
+/** Scene order + visuals aligned to published Figma WORLD SYSTEM. */
 export const HERO_SCENES = {
   hero: {
     image: ASCEND_IMAGES.editorialArchitecture,
     imageClass: ASCEND_IMAGE_CLASS.editorialArchitecture,
     imageAlt: "Ascend Theory — architectural editorial hero",
-    imagePosition: "center 35%",
+    imagePosition: "50% 28%",
     scroll: FIGMA_SCENE_SCROLL.hero,
-    scrimClass: "bg-[#0d0d0d]/70",
-    gradientClass:
-      "bg-gradient-to-br from-transparent via-[#0d0d0d]/60 to-[#0d0d0d]/90",
+    grade: "hero",
     warmGlow: true,
   },
   momentum: {
     image: ASCEND_IMAGES.lifestyleAirport,
     imageClass: ASCEND_IMAGE_CLASS.lifestyleAirport,
     imageAlt: "Ascend Theory — man in transit",
-    imagePosition: "center 40%",
+    imagePosition: "42% 38%",
     scroll: FIGMA_SCENE_SCROLL.story130,
-    scrimClass: "bg-[#0d0d0d]/85",
-    gradientClass:
-      "bg-gradient-to-b from-[#0d0d0d]/70 via-[#0d0d0d]/80 to-[#0d0d0d]",
+    grade: "story-bottom",
   },
   distraction: {
     image: ASCEND_IMAGES.lifestyleCoastal,
     imageClass: ASCEND_IMAGE_CLASS.lifestyleCoastal,
     imageAlt: "Ascend Theory — coastal walk",
+    imagePosition: "50% 48%",
     scroll: FIGMA_SCENE_SCROLL.story120,
-    scrimClass: "bg-[#0d0d0d]/88",
-    gradientClass:
-      "bg-gradient-to-b from-[#0d0d0d]/75 via-[#0d0d0d]/85 to-[#0d0d0d]",
+    grade: "story-bottom",
   },
   environment: {
     image: ASCEND_IMAGES.lifestyleGolf,
     imageClass: ASCEND_IMAGE_CLASS.lifestyleGolf,
     imageAlt: "Ascend Theory — private environment",
+    imagePosition: "50% 36%",
     scroll: FIGMA_SCENE_SCROLL.story135,
-    scrimClass: "bg-[#0d0d0d]/80",
-    gradientClass:
-      "bg-gradient-to-br from-[#0d0d0d]/60 via-[#0d0d0d]/75 to-[#0d0d0d]/95",
+    grade: "story-bottom-env",
   },
   solution: {
     image: ASCEND_IMAGES.teamStudio,
     imageClass: ASCEND_IMAGE_CLASS.teamStudio,
     imageAlt: "Ascend Theory — structured environment",
+    imagePosition: "48% 40%",
     scroll: FIGMA_SCENE_SCROLL.story125,
-    scrimClass: "bg-[#0d0d0d]/82",
-    gradientClass:
-      "bg-gradient-to-br from-[#0d0d0d]/70 via-[#0d0d0d]/80 to-[#0d0d0d]/90",
+    grade: "story-center",
   },
   howItWorks: {
     image: ASCEND_IMAGES.editorialArchitecture,
     imageClass: ASCEND_IMAGE_CLASS.editorialArchitecture,
     imageAlt: "Ascend Theory — discipline and systems",
-    imagePosition: "52% 40%",
+    imagePosition: "52% 38%",
     scroll: FIGMA_SCENE_SCROLL.story120,
-    scrimClass: "bg-[#0d0d0d]/82",
-    gradientClass:
-      "bg-gradient-to-b from-[#0d0d0d]/70 via-[#0d0d0d]/80 to-[#0d0d0d]/90",
+    grade: "story-center",
   },
   whatYouBuild: {
     image: ASCEND_IMAGES.heroStorefront,
     imageClass: ASCEND_IMAGE_CLASS.heroStorefront,
     imageAlt: "Ascend Theory — identity in the world",
-    imagePosition: "center 30%",
+    imagePosition: "50% 26%",
     scroll: FIGMA_SCENE_SCROLL.story125,
-    scrimClass: "bg-[#0d0d0d]/78",
-    gradientClass:
-      "bg-gradient-to-bl from-[#0d0d0d]/65 via-[#0d0d0d]/80 to-[#0d0d0d]/90",
+    grade: "story-center",
   },
   brotherhood: {
     image: ASCEND_IMAGES.brotherhoodDining,
     imageClass: ASCEND_IMAGE_CLASS.brotherhoodDining,
     imageAlt: "Ascend Theory — brotherhood",
+    imagePosition: "48% 40%",
     scroll: FIGMA_SCENE_SCROLL.story130,
-    scrimClass: "bg-[#0d0d0d]/76",
-    gradientClass:
-      "bg-gradient-to-tr from-[#0d0d0d]/85 via-[#0d0d0d]/70 to-[#0d0d0d]/85",
+    grade: "brotherhood",
   },
 } as const satisfies Record<string, WorldSceneConfig>;
 

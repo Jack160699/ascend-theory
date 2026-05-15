@@ -16,7 +16,8 @@ type StickySceneProps = {
 };
 
 /**
- * CSS-only sticky scene (Figma WORLD SYSTEM). No scroll listeners or blur.
+ * CSS-only sticky scene: subtle scale drift, layered atmosphere, section fades.
+ * No scroll listeners, blur, or JS motion.
  */
 export function StickyScene({
   id,
@@ -35,31 +36,34 @@ export function StickyScene({
       style={{ height: railHeight }}
     >
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
-        <div className="absolute inset-0">
-          <AscendImage
-            src={scene.image}
-            alt={scene.imageAlt}
-            fill
-            priority={priority}
-            loading={priority ? "eager" : "lazy"}
-            fetchPriority={priority ? "high" : "auto"}
-            quality={priority ? 78 : 68}
-            sizes="100vw"
-            className={cn(scene.imageClass, "object-cover")}
-            style={
-              scene.imagePosition
-                ? { objectPosition: scene.imagePosition }
-                : undefined
-            }
-          />
-          <div className={cn("absolute inset-0", scene.scrimClass)} aria-hidden />
-          <div
-            className={cn("absolute inset-0", scene.gradientClass)}
-            aria-hidden
-          />
-          {scene.warmGlow ? (
-            <div className="world-warm-glow absolute inset-0 opacity-[0.14]" aria-hidden />
-          ) : null}
+        <div className="world-scene-backdrop absolute inset-0" aria-hidden>
+          <div className="world-scene-media">
+            <AscendImage
+              src={scene.image}
+              alt=""
+              fill
+              priority={priority}
+              loading={priority ? "eager" : "lazy"}
+              fetchPriority={priority ? "high" : "auto"}
+              quality={priority ? 78 : 68}
+              sizes="100vw"
+              className={cn(scene.imageClass, "world-scene-image object-cover")}
+              style={{ objectPosition: scene.imagePosition }}
+            />
+          </div>
+
+          <div className="world-scene-atmosphere">
+            <div className="world-scene-vignette" />
+            <div
+              className={cn(
+                "world-scene-grade",
+                `world-scene-grade--${scene.grade}`,
+              )}
+            />
+            {scene.warmGlow ? <div className="world-scene-warm" /> : null}
+          </div>
+
+          <div className="world-scene-continuity" />
         </div>
 
         <div

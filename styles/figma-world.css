@@ -6,11 +6,216 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.world-warm-glow {
+/* --- Scene atmosphere (CSS-only, no scroll JS) --- */
+
+.world-scene-backdrop {
+  isolation: isolate;
+}
+
+.world-scene-media {
+  position: absolute;
+  inset: -3%;
+  transform: scale(1);
+  transform-origin: center center;
+  animation: world-scene-drift 38s ease-in-out infinite alternate;
+}
+
+@media (min-width: 640px) {
+  .world-scene-media {
+    will-change: transform;
+  }
+}
+
+@keyframes world-scene-drift {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes world-scene-drift-subtle {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.025);
+  }
+}
+
+.world-scene-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.world-scene-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 130% 90% at 50% 100%,
+      rgba(13, 13, 13, 0.72) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 80% 55% at 50% 0%,
+      rgba(13, 13, 13, 0.45) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse 90% 70% at 0% 50%,
+      rgba(13, 13, 13, 0.35) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 90% 70% at 100% 50%,
+      rgba(13, 13, 13, 0.35) 0%,
+      transparent 50%
+    );
+}
+
+.world-scene-grade {
+  position: absolute;
+  inset: 0;
+}
+
+.world-scene-grade--hero {
+  background:
+    linear-gradient(
+      155deg,
+      rgba(13, 13, 13, 0.15) 0%,
+      rgba(13, 13, 13, 0.45) 42%,
+      rgba(13, 13, 13, 0.88) 100%
+    ),
+    linear-gradient(
+      to top,
+      rgba(13, 13, 13, 0.95) 0%,
+      rgba(13, 13, 13, 0.55) 32%,
+      transparent 62%
+    );
+}
+
+.world-scene-grade--story-bottom {
+  background: linear-gradient(
+    to top,
+    #0d0d0d 0%,
+    rgba(13, 13, 13, 0.92) 18%,
+    rgba(13, 13, 13, 0.72) 42%,
+    rgba(13, 13, 13, 0.28) 68%,
+    transparent 88%
+  );
+}
+
+.world-scene-grade--story-bottom-env {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(13, 13, 13, 0.2) 0%,
+      rgba(13, 13, 13, 0.55) 38%,
+      rgba(13, 13, 13, 0.9) 100%
+    ),
+    linear-gradient(
+      to top,
+      #0d0d0d 0%,
+      rgba(13, 13, 13, 0.88) 22%,
+      rgba(13, 13, 13, 0.5) 50%,
+      transparent 78%
+    );
+}
+
+.world-scene-grade--story-center {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(13, 13, 13, 0.94) 0%,
+      rgba(13, 13, 13, 0.78) 28%,
+      rgba(13, 13, 13, 0.42) 52%,
+      rgba(13, 13, 13, 0.18) 72%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to top,
+      rgba(13, 13, 13, 0.85) 0%,
+      rgba(13, 13, 13, 0.35) 35%,
+      transparent 70%
+    );
+}
+
+.world-scene-grade--brotherhood {
+  background:
+    linear-gradient(
+      225deg,
+      rgba(13, 13, 13, 0.92) 0%,
+      rgba(13, 13, 13, 0.55) 35%,
+      rgba(13, 13, 13, 0.2) 58%,
+      transparent 78%
+    ),
+    linear-gradient(
+      to top,
+      #0d0d0d 0%,
+      rgba(13, 13, 13, 0.9) 20%,
+      rgba(13, 13, 13, 0.45) 48%,
+      transparent 75%
+    );
+}
+
+.world-scene-warm {
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
   background: radial-gradient(
-    ellipse 60% 50% at 70% 30%,
-    rgba(255, 220, 180, 0.22) 0%,
-    transparent 60%
+    ellipse 55% 45% at 72% 28%,
+    rgba(255, 214, 170, 0.28) 0%,
+    transparent 62%
+  );
+}
+
+.world-scene-continuity {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(13, 13, 13, 0.55) 0%,
+    transparent 8%,
+    transparent 92%,
+    rgba(13, 13, 13, 0.65) 100%
+  );
+  opacity: 0.9;
+}
+
+.world-scene-rail:not(:first-of-type)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  height: min(14vh, 120px);
+  pointer-events: none;
+  background: linear-gradient(to bottom, #0d0d0d 0%, transparent 100%);
+}
+
+.world-transformation-rail .world-scene-vignette--soft {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 70% 55% at 50% 45%,
+    rgba(13, 13, 13, 0.5) 0%,
+    transparent 70%
+  );
+}
+
+.world-transformation-rail .world-scene-warm--center {
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  background: radial-gradient(
+    ellipse 50% 40% at 50% 45%,
+    rgba(255, 220, 180, 0.18) 0%,
+    transparent 70%
   );
 }
 
@@ -257,7 +462,19 @@
   content-visibility: auto;
 }
 
+@media (max-width: 639px) {
+  .world-scene-media {
+    animation-name: world-scene-drift-subtle;
+    animation-duration: 48s;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .world-scene-media {
+    animation: none;
+    transform: scale(1.02);
+  }
+
   .world-btn-outline,
   .world-btn-solid {
     transition: none;

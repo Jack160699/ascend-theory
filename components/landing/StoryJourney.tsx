@@ -194,8 +194,10 @@ function TransformationBeat() {
       className="world-transformation-rail relative w-full bg-[#0d0d0d]"
       style={{ height }}
     >
-      <div className="sticky top-0 flex h-[100svh] flex-col items-center justify-center">
-        <div className="world-transformation-panel max-w-lg text-center">
+      <div className="sticky top-0 flex h-[100svh] flex-col items-center justify-center overflow-hidden">
+        <div className="world-scene-vignette--soft" aria-hidden />
+        <div className="world-scene-warm--center" aria-hidden />
+        <div className="world-transformation-panel relative z-10 max-w-lg text-center">
           <p className="world-eyebrow mb-6">The Transformation</p>
           <h2 className="world-display world-display--transformation mb-8">
             Confident.

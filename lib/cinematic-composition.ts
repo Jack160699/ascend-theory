@@ -12,15 +12,15 @@ const DEFAULT = "object-cover object-center";
  */
 export const ASCEND_IMAGE_CLASS = {
   heroStorefront:
-    "object-cover object-[center_35%] sm:object-[55%_30%] lg:object-[center_28%]",
+    "object-cover object-[50%_30%] sm:object-[52%_28%] lg:object-[50%_24%]",
   editorialArchitecture:
-    "object-cover object-[center_42%] sm:object-[52%_38%] lg:object-[center_35%]",
+    "object-cover object-[50%_30%] sm:object-[52%_28%] lg:object-[50%_24%]",
   brotherhoodDining:
-    "object-cover object-[center_40%] sm:object-[center_38%] lg:object-[center_42%]",
+    "object-cover object-[48%_44%] sm:object-[50%_40%] lg:object-[48%_38%]",
   teamStudio:
     "object-cover object-[center_45%] sm:object-[48%_42%] lg:object-[center_40%]",
   lifestyleGolf:
-    "object-cover object-[center_38%] sm:object-[center_36%] lg:object-[center_32%]",
+    "object-cover object-[50%_40%] sm:object-[48%_36%] lg:object-[50%_32%]",
   lifestyleAirport:
     "object-cover object-[42%_40%] sm:object-[center_38%] lg:object-[48%_35%]",
   lifestyleCoastal:
