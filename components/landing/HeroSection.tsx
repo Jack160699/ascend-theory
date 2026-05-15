@@ -8,14 +8,9 @@ export function HeroSection() {
   const scene = HERO_SCENES.hero;
 
   return (
-    <StickyScene
-      id="hero"
-      scene={scene}
-      priority
-      contentClassName="flex flex-col justify-between px-5 py-8"
-    >
+    <StickyScene id="hero" scene={scene} priority>
       <p className="world-brand-mark">ASCEND THEORY</p>
-      <SceneContent layout="bottom">
+      <SceneContent placement="hero-split">
         <h1 className="world-display world-display--hero">
           You know
           <br />

@@ -9,7 +9,7 @@ import { FIGMA_SCENE_SCROLL, sceneScrollHeight } from "@/lib/world-scene-metrics
 function ItemBlock({ title, body }: { title: string; body: string }) {
   return (
     <div>
-      <h3 className="world-story-item-title mb-1.5">{title}</h3>
+      <h3 className="world-story-item-title mb-1.5 tracking-tight">{title}</h3>
       <p className="world-body--muted whitespace-pre-line">{body}</p>
     </div>
   );
@@ -18,12 +18,8 @@ function ItemBlock({ title, body }: { title: string; body: string }) {
 export function StoryJourney() {
   return (
     <>
-      <StickyScene
-        id="momentum"
-        scene={HERO_SCENES.momentum}
-        contentClassName="flex items-end"
-      >
-        <SceneContent layout="bottom">
+      <StickyScene id="momentum" scene={HERO_SCENES.momentum}>
+        <SceneContent placement="bottom-16">
           <h2 className="world-display world-display--lg mb-6">
             You lost
             <br />
@@ -37,12 +33,8 @@ export function StoryJourney() {
         </SceneContent>
       </StickyScene>
 
-      <StickyScene
-        id="distraction"
-        scene={HERO_SCENES.distraction}
-        contentClassName="flex items-end"
-      >
-        <SceneContent layout="bottom">
+      <StickyScene id="distraction" scene={HERO_SCENES.distraction}>
+        <SceneContent placement="bottom-16">
           <h2 className="world-display world-display--md mb-6">
             You became
             <br />
@@ -58,12 +50,8 @@ export function StoryJourney() {
         </SceneContent>
       </StickyScene>
 
-      <StickyScene
-        id="environment"
-        scene={HERO_SCENES.environment}
-        contentClassName="flex items-end"
-      >
-        <SceneContent layout="bottom">
+      <StickyScene id="environment" scene={HERO_SCENES.environment}>
+        <SceneContent placement="bottom-16">
           <h2 className="world-display world-display--md mb-6">
             You become
             <br />
@@ -79,12 +67,8 @@ export function StoryJourney() {
         </SceneContent>
       </StickyScene>
 
-      <StickyScene
-        id="solution"
-        scene={HERO_SCENES.solution}
-        contentClassName="flex items-center"
-      >
-        <SceneContent layout="center-left">
+      <StickyScene id="solution" scene={HERO_SCENES.solution}>
+        <SceneContent placement="center-left">
           <p className="world-eyebrow mb-5">The Solution</p>
           <h2 className="world-display world-display--sm mb-6">
             ASCEND THEORY
@@ -105,12 +89,8 @@ export function StoryJourney() {
         </SceneContent>
       </StickyScene>
 
-      <StickyScene
-        id="how-it-works"
-        scene={HERO_SCENES.howItWorks}
-        contentClassName="flex items-center"
-      >
-        <SceneContent layout="center-left" innerClassName="world-scene-copy--wide">
+      <StickyScene id="how-it-works" scene={HERO_SCENES.howItWorks}>
+        <SceneContent placement="center-left" innerClassName="world-scene-copy--wide">
           <p className="world-eyebrow mb-5">How It Works</p>
           <div className="mb-8 space-y-5">
             <ItemBlock
@@ -129,12 +109,8 @@ export function StoryJourney() {
         </SceneContent>
       </StickyScene>
 
-      <StickyScene
-        id="what-you-build"
-        scene={HERO_SCENES.whatYouBuild}
-        contentClassName="flex items-center"
-      >
-        <SceneContent layout="center-left" innerClassName="world-scene-copy--wide">
+      <StickyScene id="what-you-build" scene={HERO_SCENES.whatYouBuild}>
+        <SceneContent placement="center-left" innerClassName="world-scene-copy--wide">
           <p className="world-eyebrow mb-5">What You Build</p>
           <div className="max-w-md space-y-5">
             <ItemBlock
@@ -157,12 +133,8 @@ export function StoryJourney() {
         </SceneContent>
       </StickyScene>
 
-      <StickyScene
-        id="brotherhood"
-        scene={HERO_SCENES.brotherhood}
-        contentClassName="flex items-end"
-      >
-        <SceneContent layout="bottom">
+      <StickyScene id="brotherhood" scene={HERO_SCENES.brotherhood}>
+        <SceneContent placement="bottom-20-left">
           <p className="world-eyebrow mb-4">The Brotherhood</p>
           <h2 className="world-display world-display--md mb-6">
             Curated.
@@ -191,13 +163,12 @@ function TransformationBeat() {
   return (
     <section
       id="transformation"
-      className="world-transformation-rail relative w-full bg-[#0d0d0d]"
+      className="world-transformation-rail relative w-full"
       style={{ height }}
     >
-      <div className="sticky top-0 flex h-[100svh] flex-col items-center justify-center overflow-hidden">
-        <div className="world-scene-vignette--soft" aria-hidden />
-        <div className="world-scene-warm--center" aria-hidden />
-        <div className="world-transformation-panel relative z-10 max-w-lg text-center">
+      <div className="sticky top-0 flex h-screen min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-[#0d0d0d]">
+        <div className="world-transformation-glow" aria-hidden />
+        <div className="world-transformation-panel max-w-lg text-center world-copy-enter">
           <p className="world-eyebrow mb-6">The Transformation</p>
           <h2 className="world-display world-display--transformation mb-8">
             Confident.

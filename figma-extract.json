@@ -1,0 +1,78 @@
+{
+  "clamps": [
+    "clamp(3.2rem, 15vw, 6rem)",
+    "clamp(2.8rem, 13.5vw, 5.8rem)",
+    "clamp(2.5rem, 12.5vw, 5.5rem)",
+    "clamp(2.6rem, 13vw, 5.5rem)",
+    "clamp(2.4rem, 12vw, 5.2rem)",
+    "clamp(1rem, 4.5vw, 1.25rem)",
+    "clamp(2.6rem, 13vw, 5.8rem)",
+    "clamp(2.2rem, 11vw, 4.5rem)",
+    "clamp(0.7rem, 3vw, 0.85rem)",
+    "clamp(1.8rem, 8vw, 2.5rem)",
+    "clamp(2.8rem, 14vw, 6rem)"
+  ],
+  "vhHeights": [
+    "h-[150vh]",
+    "h-[130vh]",
+    "h-[120vh]",
+    "h-[135vh]",
+    "h-[125vh]",
+    "h-[100vh]"
+  ],
+  "scrollHeights": [
+    "150vh",
+    "130vh",
+    "120vh",
+    "135vh",
+    "125vh",
+    "100vh"
+  ],
+  "overlays": [
+    "bg-[#0d0d0d]",
+    "bg-[#0d0d0d]/85",
+    "bg-[#0d0d0d]/88",
+    "bg-[#0d0d0d]/80",
+    "bg-[#0d0d0d]/82",
+    "bg-[#0d0d0d]/78",
+    "bg-[#0d0d0d]/76",
+    "bg-[#0d0d0d] flex items-center justify-center",
+    "bg-[#0d0d0d] py-32",
+    "bg-[#0d0d0d] flex flex-col items-center justify-cent"
+  ],
+  "gradients": [
+    "via-[#0d0d0d]/60 to-[#0d0d0d]/90",
+    "from-[#0d0d0d]/70 via-[#0d0d0d]/80 to-[#0d0d",
+    "from-[#0d0d0d]/75 via-[#0d0d0d]/85 to-[#0d0d",
+    "from-[#0d0d0d]/60 via-[#0d0d0d]/75 to-[#0d0d",
+    "from-[#0d0d0d]/65 via-[#0d0d0d]/80 to-[#0d0d",
+    "from-[#0d0d0d]/85 via-[#0d0d0d]/70 to-[#0d0d"
+  ],
+  "objectPos": [],
+  "tracking": [
+    "tracking-[0.4em]",
+    "tracking-[-0.02em]",
+    "tracking-[0.18em]",
+    "tracking-[0.2em]",
+    "tracking-[0.08em]",
+    "tracking-[0.25em]",
+    "tracking-[0.28em]",
+    "tracking-[0.1em]",
+    "tracking-[0.12em]",
+    "tracking-[0.35em]"
+  ],
+  "imageUrls": [
+    "https://images.unsplash.com/photo-1610899632923-3751bc4b427a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080)",
+    "https://images.unsplash.com/photo-1633070374521-b45f91ea5cec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080)",
+    "https://images.unsplash.com/photo-1590501949668-2442efd4d3d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080)",
+    "https://images.unsplash.com/photo-1599718100450-8c59eed42a40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080)",
+    "https://images.unsplash.com/photo-1738748444676-113d30c9a25b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080)",
+    "https://images.unsplash.com/photo-1699766868222-56056eb963ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080)",
+    "https://images.unsplash.com/photo-1771408662069-7a78b1942801?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080)"
+  ],
+  "context_How It Works": "translate-y-1/2 px-5\",\n        style: { opacity: i },\n        children: [\n          /* @__PURE__ */ d(\"p\", { className: \"text-white/45 text-xs tracking-[0.18em] mb-5 uppercase font-light\", children: \"How It Works\" }),\n          /* @__PURE__ */ p(\"div\", { className: \"space-y-5 mb-8\", children: [\n            /* @__PURE__ */ p(\"div\", { children: [\n              /* @__PURE__ */ d(\"h3\", { className: \"text-white text-lg tracking-tight mb-1.5\", style: { fontWeight: 400, fontSize: \"clamp(1rem, 4.5vw, 1.25rem)\" }, children: \"Daily structured routines\" }),\n              /* @__PURE__ */ p(\"p\", { classNam",
+  "context_What You Build": "translate-y-1/2 px-5\",\n        style: { opacity: i },\n        children: [\n          /* @__PURE__ */ d(\"p\", { className: \"text-white/45 text-xs tracking-[0.18em] mb-5 uppercase font-light\", children: \"What You Build\" }),\n          /* @__PURE__ */ p(\"div\", { className: \"space-y-5 max-w-md\", children: [\n            /* @__PURE__ */ p(\"div\", { children: [\n              /* @__PURE__ */ d(\"h3\", { className: \"text-white tracking-tight mb-1.5\", style: { fontWeight: 400, fontSize: \"clamp(1rem, 4.5vw, 1.25rem)\" }, children: \"Discipline & execution\" }),\n              /* @__PURE__ */ p(\"p\", { className: \"t",
+  "context_Brotherhood": "eft-0 px-5\",\n        style: { y: s, opacity: i },\n        children: [\n          /* @__PURE__ */ d(\"p\", { className: \"text-white/45 text-xs tracking-[0.18em] mb-4 uppercase font-light\", children: \"The Brotherhood\" }),\n          /* @__PURE__ */ p(\n            \"h2\",\n            {\n              className: \"text-white leading-[0.85] tracking-[-0.02em] mb-6\",\n              style: { fontSize: \"clamp(2.5rem, 12.5vw, 5.5rem)\", fontWeight: 300 },\n              children: [\n                \"Curated.\",\n                /* @__PURE__ */ d(\"br\", {}),\n                \"Accountable.\",\n                /* @__PURE__",
+  "context_Transformation": ".div, { className: \"px-5 text-center\", style: { opacity: n }, children: [\n      /* @__PURE__ */ d(\"p\", { className: \"text-white/45 text-xs tracking-[0.18em] mb-6 uppercase font-light\", children: \"The Transformation\" }),\n      /* @__PURE__ */ p(\n        \"h2\",\n        {\n          className: \"text-white leading-[0.85] tracking-[-0.02em] mb-8\",\n          style: { fontSize: \"clamp(2.6rem, 13vw, 5.8rem)\", fontWeight: 300 },\n          children: [\n            \"Confident.\",\n            /* @__PURE__ */ d(\"br\", {}),\n            \"Disciplined.\",\n            /* @__PURE__ */ d(\"br\", {}),\n            \"Unstopp",
+  "context_rebuild yourself": " \"Unstoppable.\"\n          ]\n        }\n      ),\n      /* @__PURE__ */ p(\"p\", { className: \"text-white/50 text-sm leading-relaxed max-w-md mx-auto\", style: { fontWeight: 300 }, children: [\n        \"You rebuild yourself from the ground up.\",\n        /* @__PURE__ */ d(\"br\", {}),\n        \"This is where men become who they're\",\n        /* @__PURE__ */ d(\"br\", {}),\n        \"supposed to be.\"\n      ] })\n    ] })\n  ] }) });\n}\nfunction hh() {\n  const t = F(null), { scrollYProgress: e } = et({\n    target: t,\n    offset: [\"start end\", \"end start\"]\n  }), n = M(e, [0.15, 0.35, 0.85], [0, 1, 1]);\n  return /* "
+}

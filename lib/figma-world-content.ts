@@ -5,91 +5,132 @@ import { FIGMA_SCENE_SCROLL, type SceneScrollSpec } from "@/lib/world-scene-metr
 
 export const WORLD_BG = "#0d0d0d";
 
-/** Atmospheric grade — CSS-only overlays (see `figma-world.css`). */
-export type AtmosphereGrade =
-  | "hero"
-  | "story-bottom"
-  | "story-bottom-env"
-  | "story-center"
-  | "brotherhood";
+/** Figma copy anchor — matches absolute positioning in published bundle. */
+export type CopyPlacement =
+  | "hero-split"
+  | "bottom-16"
+  | "bottom-20-left"
+  | "center-left";
+
+/** Overlay stack keys — see `.world-scene-gradient--*` in figma-world.css */
+export type SceneGradient =
+  | "hero-br"
+  | "story-b"
+  | "story-br-env"
+  | "solution-br"
+  | "story-b-flat"
+  | "story-bl"
+  | "brotherhood-tr";
+
+export type SceneAccent = "momentum-cool" | "warm-55" | "warm-40" | "brotherhood-warm" | "none";
 
 export type WorldSceneConfig = {
   image: string;
   imageClass: string;
   imageAlt: string;
-  /** Figma-aligned crop; preserves negative space for type. */
   imagePosition: string;
   scroll: SceneScrollSpec;
-  grade: AtmosphereGrade;
+  /** Solid scrim — Figma `bg-[#0d0d0d]/XX` */
+  scrimOpacity: number;
+  gradient: SceneGradient;
+  accent: SceneAccent;
   warmGlow?: boolean;
+  copyPlacement: CopyPlacement;
 };
 
-/** Scene order + visuals aligned to published Figma WORLD SYSTEM. */
+/**
+ * Scene order + visuals from Figma WORLD SYSTEM bundle.
+ * Images: brand WebPs mapped to Figma Unsplash sequence.
+ */
 export const HERO_SCENES = {
   hero: {
     image: ASCEND_IMAGES.editorialArchitecture,
     imageClass: ASCEND_IMAGE_CLASS.editorialArchitecture,
     imageAlt: "Ascend Theory — architectural editorial hero",
-    imagePosition: "50% 28%",
+    imagePosition: "center center",
     scroll: FIGMA_SCENE_SCROLL.hero,
-    grade: "hero",
+    scrimOpacity: 0.72,
+    gradient: "hero-br",
+    accent: "none",
     warmGlow: true,
+    copyPlacement: "hero-split",
   },
   momentum: {
     image: ASCEND_IMAGES.lifestyleAirport,
     imageClass: ASCEND_IMAGE_CLASS.lifestyleAirport,
     imageAlt: "Ascend Theory — man in transit",
-    imagePosition: "42% 38%",
+    imagePosition: "center center",
     scroll: FIGMA_SCENE_SCROLL.story130,
-    grade: "story-bottom",
+    scrimOpacity: 0.85,
+    gradient: "story-b",
+    accent: "momentum-cool",
+    copyPlacement: "bottom-16",
   },
   distraction: {
     image: ASCEND_IMAGES.lifestyleCoastal,
     imageClass: ASCEND_IMAGE_CLASS.lifestyleCoastal,
     imageAlt: "Ascend Theory — coastal walk",
-    imagePosition: "50% 48%",
+    imagePosition: "center center",
     scroll: FIGMA_SCENE_SCROLL.story120,
-    grade: "story-bottom",
+    scrimOpacity: 0.88,
+    gradient: "story-b",
+    accent: "none",
+    copyPlacement: "bottom-16",
   },
   environment: {
     image: ASCEND_IMAGES.lifestyleGolf,
     imageClass: ASCEND_IMAGE_CLASS.lifestyleGolf,
     imageAlt: "Ascend Theory — private environment",
-    imagePosition: "50% 36%",
+    imagePosition: "center center",
     scroll: FIGMA_SCENE_SCROLL.story135,
-    grade: "story-bottom-env",
+    scrimOpacity: 0.8,
+    gradient: "story-br-env",
+    accent: "none",
+    copyPlacement: "bottom-16",
   },
   solution: {
     image: ASCEND_IMAGES.teamStudio,
     imageClass: ASCEND_IMAGE_CLASS.teamStudio,
     imageAlt: "Ascend Theory — structured environment",
-    imagePosition: "48% 40%",
+    imagePosition: "center center",
     scroll: FIGMA_SCENE_SCROLL.story125,
-    grade: "story-center",
+    scrimOpacity: 0.82,
+    gradient: "solution-br",
+    accent: "warm-55",
+    copyPlacement: "center-left",
   },
   howItWorks: {
     image: ASCEND_IMAGES.editorialArchitecture,
     imageClass: ASCEND_IMAGE_CLASS.editorialArchitecture,
     imageAlt: "Ascend Theory — discipline and systems",
-    imagePosition: "52% 38%",
+    imagePosition: "center center",
     scroll: FIGMA_SCENE_SCROLL.story120,
-    grade: "story-center",
+    scrimOpacity: 0.82,
+    gradient: "story-b-flat",
+    accent: "none",
+    copyPlacement: "center-left",
   },
   whatYouBuild: {
-    image: ASCEND_IMAGES.heroStorefront,
-    imageClass: ASCEND_IMAGE_CLASS.heroStorefront,
-    imageAlt: "Ascend Theory — identity in the world",
-    imagePosition: "50% 26%",
+    image: ASCEND_IMAGES.teamStudio,
+    imageClass: ASCEND_IMAGE_CLASS.teamStudio,
+    imageAlt: "Ascend Theory — what you build",
+    imagePosition: "center center",
     scroll: FIGMA_SCENE_SCROLL.story125,
-    grade: "story-center",
+    scrimOpacity: 0.78,
+    gradient: "story-bl",
+    accent: "warm-55",
+    copyPlacement: "center-left",
   },
   brotherhood: {
     image: ASCEND_IMAGES.brotherhoodDining,
     imageClass: ASCEND_IMAGE_CLASS.brotherhoodDining,
     imageAlt: "Ascend Theory — brotherhood",
-    imagePosition: "48% 40%",
+    imagePosition: "center center",
     scroll: FIGMA_SCENE_SCROLL.story130,
-    grade: "brotherhood",
+    scrimOpacity: 0.76,
+    gradient: "brotherhood-tr",
+    accent: "brotherhood-warm",
+    copyPlacement: "bottom-20-left",
   },
 } as const satisfies Record<string, WorldSceneConfig>;
 

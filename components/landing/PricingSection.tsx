@@ -36,14 +36,14 @@ function PricingTierCard({
         </div>
       ) : null}
 
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h3 className="world-tier-name mb-2">{tier.name}</h3>
           <p className="max-w-xs text-xs font-light leading-relaxed tracking-wide text-white/45">
             {tier.tagline}
           </p>
         </div>
-        <div className="shrink-0 sm:text-right">
+        <div className="shrink-0 text-right">
           <p className="world-tier-price">{tier.price}</p>
           {tier.priceAlt ? (
             <p className="mt-1 text-xs font-light tracking-wider text-white/40">

@@ -1,12 +1,12 @@
-/** Figma WORLD SYSTEM scroll runways — shorter on mobile for 60fps scroll. */
+/** Figma WORLD SYSTEM scroll runways (exact desktop; slightly shorter on mobile). */
 export type SceneScrollSpec = { desktop: string; mobile: string };
 
 export const FIGMA_SCENE_SCROLL = {
-  hero: { desktop: "150vh", mobile: "108vh" },
-  story130: { desktop: "130vh", mobile: "106vh" },
-  story120: { desktop: "120vh", mobile: "104vh" },
-  story135: { desktop: "135vh", mobile: "107vh" },
-  story125: { desktop: "125vh", mobile: "105vh" },
+  hero: { desktop: "150vh", mobile: "112vh" },
+  story130: { desktop: "130vh", mobile: "108vh" },
+  story120: { desktop: "120vh", mobile: "102vh" },
+  story135: { desktop: "135vh", mobile: "110vh" },
+  story125: { desktop: "125vh", mobile: "106vh" },
   transformation: { desktop: "100vh", mobile: "100svh" },
 } as const satisfies Record<string, SceneScrollSpec>;
 

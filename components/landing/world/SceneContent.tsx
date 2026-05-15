@@ -1,32 +1,44 @@
 "use client";
 
+import type { CopyPlacement } from "@/lib/figma-world-content";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
 type SceneContentProps = {
   children: ReactNode;
-  layout?: "bottom" | "center" | "center-left";
+  placement: CopyPlacement;
   className?: string;
   innerClassName?: string;
 };
 
 export function SceneContent({
   children,
-  layout = "bottom",
+  placement,
   className,
   innerClassName,
 }: SceneContentProps) {
+  if (placement === "hero-split") {
+    return (
+      <div className={cn("world-hero-copy pb-12", className)}>
+        <div className={cn("world-scene-copy world-copy-enter", innerClassName)}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
-        "world-scene-content",
-        layout === "bottom" && "world-scene-content--bottom",
-        layout === "center" && "world-scene-content--center",
-        layout === "center-left" && "world-scene-content--center-left",
+        "world-scene-copy world-copy-enter",
+        placement === "bottom-16" && "world-copy--bottom-16",
+        placement === "bottom-20-left" && "world-copy--bottom-20-left",
+        placement === "center-left" && "world-copy--center-left",
+        innerClassName,
         className,
       )}
     >
-      <div className={cn("world-scene-copy", innerClassName)}>{children}</div>
+      {children}
     </div>
   );
 }
