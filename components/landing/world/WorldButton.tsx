@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { motion, useReducedMotion } from "framer-motion";
 
 type WorldButtonProps = {
   children: React.ReactNode;
@@ -18,10 +17,8 @@ export function WorldButton({
   onClick,
   type = "button",
 }: WorldButtonProps) {
-  const reduceMotion = useReducedMotion();
-
   return (
-    <motion.button
+    <button
       type={type}
       onClick={onClick}
       className={cn(
@@ -30,11 +27,8 @@ export function WorldButton({
         variant === "outline" && "world-btn-outline",
         className,
       )}
-      whileHover={reduceMotion ? undefined : { scale: variant === "outline" ? 1.01 : 1.02 }}
-      whileTap={reduceMotion ? undefined : { scale: 0.99 }}
-      transition={{ duration: 0.15 }}
     >
       {children}
-    </motion.button>
+    </button>
   );
 }

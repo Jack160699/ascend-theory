@@ -1,17 +1,15 @@
 "use client";
 
+import { SceneContent } from "@/components/landing/world/SceneContent";
 import { StickyScene } from "@/components/landing/world/StickyScene";
 import { HERO_SCENES } from "@/lib/figma-world-content";
+import { SCENE_SCROLL } from "@/lib/world-scene-metrics";
+import { motion, useReducedMotion } from "framer-motion";
 
 function ItemBlock({ title, body }: { title: string; body: string }) {
   return (
     <div>
-      <h3
-        className="mb-1.5 tracking-tight text-white"
-        style={{ fontWeight: 400, fontSize: "clamp(1rem, 4.5vw, 1.25rem)" }}
-      >
-        {title}
-      </h3>
+      <h3 className="world-story-item-title mb-1.5">{title}</h3>
       <p className="world-body--muted whitespace-pre-line">{body}</p>
     </div>
   );
@@ -22,28 +20,28 @@ export function StoryJourney() {
     <>
       <StickyScene
         id="momentum"
-        scrollHeight="130vh"
+        scrollHeight={SCENE_SCROLL.storyLg}
         image={HERO_SCENES.momentum.image}
         imageAlt={HERO_SCENES.momentum.imageAlt}
         imageClass={HERO_SCENES.momentum.imageClass}
         imagePosition="center 40%"
-        overlayClass="bg-[#0d0d0d]/85"
-        gradientClass="bg-gradient-to-b from-[#0d0d0d]/70 via-[#0d0d0d]/80 to-[#0d0d0d]"
+        overlayClass="bg-[#0d0d0d]/86"
+        gradientClass="bg-gradient-to-b from-[#0d0d0d]/72 via-[#0d0d0d]/82 to-[#0d0d0d]"
         contentClassName="flex items-end"
-        parallax={{ y: [50, -50] }}
+        parallax={{ y: [36, -36] }}
         extraOverlay={
           <div
-            className="absolute inset-0 opacity-15"
+            className="absolute inset-0 opacity-12"
             style={{
               background:
-                "radial-gradient(ellipse 50% 40% at 50% 55%, rgba(140, 170, 200, 0.3) 0%, transparent 50%)",
+                "radial-gradient(ellipse 50% 40% at 50% 55%, rgba(140, 170, 200, 0.28) 0%, transparent 50%)",
             }}
             aria-hidden
           />
         }
       >
-        <div className="absolute bottom-16 left-0 right-0 px-5">
-          <h2 className="world-display world-display--lg mb-6">
+        <SceneContent layout="bottom">
+          <h2 className="world-display world-display--lg mb-5 sm:mb-6">
             You lost
             <br />
             momentum.
@@ -53,22 +51,22 @@ export function StoryJourney() {
             <br />
             You&apos;re inconsistent. Distracted. Alone.
           </p>
-        </div>
+        </SceneContent>
       </StickyScene>
 
       <StickyScene
         id="distraction"
-        scrollHeight="120vh"
+        scrollHeight={SCENE_SCROLL.storyMd}
         image={HERO_SCENES.distraction.image}
         imageAlt={HERO_SCENES.distraction.imageAlt}
         imageClass={HERO_SCENES.distraction.imageClass}
         overlayClass="bg-[#0d0d0d]/88"
-        gradientClass="bg-gradient-to-b from-[#0d0d0d]/75 via-[#0d0d0d]/85 to-[#0d0d0d]"
+        gradientClass="bg-gradient-to-b from-[#0d0d0d]/76 via-[#0d0d0d]/86 to-[#0d0d0d]"
         contentClassName="flex items-end"
-        parallax={{ y: [40, -40] }}
+        parallax={{ y: [32, -32] }}
       >
-        <div className="absolute bottom-20 left-0 right-0 px-5">
-          <h2 className="world-display world-display--md mb-6">
+        <SceneContent layout="bottom">
+          <h2 className="world-display world-display--md mb-5 sm:mb-6">
             You became
             <br />
             addicted to
@@ -80,22 +78,22 @@ export function StoryJourney() {
             <br />
             The pattern keeps repeating.
           </p>
-        </div>
+        </SceneContent>
       </StickyScene>
 
       <StickyScene
         id="environment"
-        scrollHeight="135vh"
+        scrollHeight={SCENE_SCROLL.storyLg}
         image={HERO_SCENES.environment.image}
         imageAlt={HERO_SCENES.environment.imageAlt}
         imageClass={HERO_SCENES.environment.imageClass}
-        overlayClass="bg-[#0d0d0d]/80"
-        gradientClass="bg-gradient-to-br from-[#0d0d0d]/60 via-[#0d0d0d]/75 to-[#0d0d0d]/95"
+        overlayClass="bg-[#0d0d0d]/82"
+        gradientClass="bg-gradient-to-br from-[#0d0d0d]/62 via-[#0d0d0d]/78 to-[#0d0d0d]/96"
         contentClassName="flex items-end"
-        parallax={{ scale: [1.08, 1.05], y: [20, -15] }}
+        parallax={{ scale: [1.06, 1.03], y: [18, -14] }}
       >
-        <div className="absolute bottom-20 left-0 px-5">
-          <h2 className="world-display world-display--md mb-6">
+        <SceneContent layout="bottom">
+          <h2 className="world-display world-display--md mb-5 sm:mb-6">
             You become
             <br />
             who you spend
@@ -107,23 +105,23 @@ export function StoryJourney() {
             <br />
             The right room changes everything.
           </p>
-        </div>
+        </SceneContent>
       </StickyScene>
 
       <StickyScene
         id="solution"
-        scrollHeight="125vh"
+        scrollHeight={SCENE_SCROLL.storyLg}
         image={HERO_SCENES.solution.image}
         imageAlt={HERO_SCENES.solution.imageAlt}
         imageClass={HERO_SCENES.solution.imageClass}
-        overlayClass="bg-[#0d0d0d]/82"
-        gradientClass="bg-gradient-to-br from-[#0d0d0d]/70 via-[#0d0d0d]/80 to-[#0d0d0d]/90"
+        overlayClass="bg-[#0d0d0d]/84"
+        gradientClass="bg-gradient-to-br from-[#0d0d0d]/72 via-[#0d0d0d]/82 to-[#0d0d0d]/92"
         contentClassName="flex items-center"
-        parallax={{ scale: [1.05, 1] }}
+        parallax={{ scale: [1.04, 1] }}
       >
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 px-5">
-          <p className="world-eyebrow mb-5">The Solution</p>
-          <h2 className="world-display world-display--sm mb-6">
+        <SceneContent layout="center-left">
+          <p className="world-eyebrow mb-4 sm:mb-5">The Solution</p>
+          <h2 className="world-display world-display--sm mb-5 sm:mb-6">
             ASCEND THEORY
             <br />
             is a structured
@@ -139,23 +137,23 @@ export function StoryJourney() {
             <br />
             and proven systems.
           </p>
-        </div>
+        </SceneContent>
       </StickyScene>
 
       <StickyScene
         id="how-it-works"
-        scrollHeight="120vh"
+        scrollHeight={SCENE_SCROLL.storyMd}
         image={HERO_SCENES.howItWorks.image}
         imageAlt={HERO_SCENES.howItWorks.imageAlt}
         imageClass={HERO_SCENES.howItWorks.imageClass}
-        overlayClass="bg-[#0d0d0d]/82"
-        gradientClass="bg-gradient-to-b from-[#0d0d0d]/70 via-[#0d0d0d]/80 to-[#0d0d0d]/90"
+        overlayClass="bg-[#0d0d0d]/84"
+        gradientClass="bg-gradient-to-b from-[#0d0d0d]/72 via-[#0d0d0d]/82 to-[#0d0d0d]/92"
         contentClassName="flex items-center"
-        parallax={{ y: [30, -30] }}
+        parallax={{ y: [24, -24] }}
       >
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 px-5">
-          <p className="world-eyebrow mb-5">How It Works</p>
-          <div className="mb-8 space-y-5">
+        <SceneContent layout="center-left" innerClassName="world-scene-copy--wide">
+          <p className="world-eyebrow mb-4 sm:mb-5">How It Works</p>
+          <div className="mb-2 space-y-4 sm:space-y-5">
             <ItemBlock
               title="Daily structured routines"
               body={"Morning systems. Execution frameworks.\nHabits that compound."}
@@ -169,23 +167,23 @@ export function StoryJourney() {
               body={"Private group of ambitious men.\nNo excuses. Just execution."}
             />
           </div>
-        </div>
+        </SceneContent>
       </StickyScene>
 
       <StickyScene
         id="what-you-build"
-        scrollHeight="125vh"
+        scrollHeight={SCENE_SCROLL.storyLg}
         image={HERO_SCENES.whatYouBuild.image}
         imageAlt={HERO_SCENES.whatYouBuild.imageAlt}
         imageClass={HERO_SCENES.whatYouBuild.imageClass}
-        overlayClass="bg-[#0d0d0d]/78"
-        gradientClass="bg-gradient-to-bl from-[#0d0d0d]/65 via-[#0d0d0d]/80 to-[#0d0d0d]/90"
+        overlayClass="bg-[#0d0d0d]/80"
+        gradientClass="bg-gradient-to-bl from-[#0d0d0d]/68 via-[#0d0d0d]/82 to-[#0d0d0d]/92"
         contentClassName="flex items-center"
-        parallax={{ y: [40, -40], scale: [1.05, 1] }}
+        parallax={{ y: [32, -32], scale: [1.04, 1] }}
       >
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 px-5">
-          <p className="world-eyebrow mb-5">What You Build</p>
-          <div className="max-w-md space-y-5">
+        <SceneContent layout="center-left" innerClassName="world-scene-copy--wide">
+          <p className="world-eyebrow mb-4 sm:mb-5">What You Build</p>
+          <div className="max-w-md space-y-4 sm:space-y-5">
             <ItemBlock
               title="Discipline & execution"
               body={"Daily routines. Consistent action.\nNo more starting and stopping."}
@@ -203,23 +201,23 @@ export function StoryJourney() {
               body={"Master your reactions.\nStay composed under pressure."}
             />
           </div>
-        </div>
+        </SceneContent>
       </StickyScene>
 
       <StickyScene
         id="brotherhood"
-        scrollHeight="130vh"
+        scrollHeight={SCENE_SCROLL.storyLg}
         image={HERO_SCENES.brotherhood.image}
         imageAlt={HERO_SCENES.brotherhood.imageAlt}
         imageClass={HERO_SCENES.brotherhood.imageClass}
-        overlayClass="bg-[#0d0d0d]/76"
-        gradientClass="bg-gradient-to-tr from-[#0d0d0d]/85 via-[#0d0d0d]/70 to-[#0d0d0d]/85"
+        overlayClass="bg-[#0d0d0d]/78"
+        gradientClass="bg-gradient-to-tr from-[#0d0d0d]/88 via-[#0d0d0d]/72 to-[#0d0d0d]/88"
         contentClassName="flex items-end"
-        parallax={{ scale: [1.06, 1.03], y: [25, -20] }}
+        parallax={{ scale: [1.05, 1.02], y: [20, -18] }}
       >
-        <div className="absolute bottom-20 left-0 px-5">
-          <p className="world-eyebrow mb-4">The Brotherhood</p>
-          <h2 className="world-display world-display--md mb-6">
+        <SceneContent layout="bottom">
+          <p className="world-eyebrow mb-3 sm:mb-4">The Brotherhood</p>
+          <h2 className="world-display world-display--md mb-5 sm:mb-6">
             Curated.
             <br />
             Accountable.
@@ -231,7 +229,7 @@ export function StoryJourney() {
             <br />
             A private brotherhood of men who execute.
           </p>
-        </div>
+        </SceneContent>
       </StickyScene>
 
       <TransformationBeat />
@@ -240,16 +238,31 @@ export function StoryJourney() {
 }
 
 function TransformationBeat() {
+  const reduceMotion = useReducedMotion();
+
   return (
-    <div id="transformation" className="relative h-[100vh] w-full">
-      <div className="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-[#0d0d0d]">
+    <div
+      id="transformation"
+      className="world-transformation-rail relative w-full"
+    >
+      <div className="sticky top-0 flex h-[100dvh] min-h-[100svh] w-full flex-col items-center justify-center overflow-hidden bg-[#0d0d0d]">
         <div
-          className="absolute inset-0 world-warm-glow--center opacity-[0.08]"
+          className="world-scene-vignette absolute inset-0"
           aria-hidden
         />
-        <div className="relative z-10 px-5 text-center">
-          <p className="world-eyebrow mb-6">The Transformation</p>
-          <h2 className="world-display world-display--lg mb-8">
+        <div
+          className="absolute inset-0 world-warm-glow--center opacity-[0.09]"
+          aria-hidden
+        />
+        <motion.div
+          className="world-transformation-panel relative z-10 text-center"
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.1, ease: [0.33, 1, 0.68, 1] }}
+          viewport={{ once: true, margin: "-12%" }}
+        >
+          <p className="world-eyebrow mb-5 sm:mb-6">The Transformation</p>
+          <h2 className="world-display world-display--lg mb-6 sm:mb-8">
             Confident.
             <br />
             Disciplined.
@@ -263,7 +276,7 @@ function TransformationBeat() {
             <br />
             supposed to be.
           </p>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

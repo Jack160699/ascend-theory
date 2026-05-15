@@ -22,38 +22,40 @@ function PricingTierCard({
   tier: (typeof WORLD_PRICING_TIERS)[number];
   onApply: (key: (typeof WORLD_PRICING_TIERS)[number]["key"]) => void;
 }) {
-  const borderClass =
-    tier.key === "pro"
-      ? "border-white/15"
-      : tier.key === "black"
-        ? "border-white/12"
-        : "border-white/10";
+  const featured = Boolean(tier.recommended);
 
   return (
     <motion.article
-      className={cn("relative border-t pt-10", borderClass)}
-      initial={{ opacity: 0, y: 20 }}
+      className={cn(
+        "world-pricing-card",
+        featured && "world-pricing-card--featured",
+      )}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: tier.key === "pro" ? 0.15 : tier.key === "black" ? 0.3 : 0 }}
-      viewport={{ once: true, margin: "-50px" }}
+      transition={{
+        duration: 0.85,
+        delay: tier.key === "pro" ? 0.12 : tier.key === "black" ? 0.22 : 0,
+        ease: [0.33, 1, 0.68, 1],
+      }}
+      viewport={{ once: true, margin: "-40px" }}
     >
-      {tier.recommended ? (
-        <div className="absolute -top-3 left-0">
+      {featured ? (
+        <div className="mb-6">
           <span className="world-recommended">Recommended</span>
         </div>
       ) : null}
 
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
+      <div className="mb-7 flex flex-col gap-6 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex-1">
           <h3 className="world-tier-name mb-2">{tier.name}</h3>
-          <p className="max-w-xs text-xs font-light leading-relaxed tracking-wide text-white/45">
+          <p className="max-w-xs text-xs font-light leading-relaxed tracking-wide text-white/48">
             {tier.tagline}
           </p>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 sm:text-right">
           <p className="world-tier-price">{tier.price}</p>
           {tier.priceAlt ? (
-            <p className="mt-1 text-xs font-light tracking-wider text-white/40">
+            <p className="mt-1 text-xs font-light tracking-wider text-white/42">
               {tier.priceAlt}
             </p>
           ) : null}
@@ -61,13 +63,13 @@ function PricingTierCard({
       </div>
 
       {tier.description ? (
-        <div className="mb-8 space-y-3">
+        <div className="mb-7 sm:mb-8">
           <p className="world-body">{tier.description}</p>
         </div>
       ) : null}
 
       {tier.features.length > 0 ? (
-        <div className="mb-10 space-y-4">
+        <div className="mb-8 space-y-3.5 sm:mb-10 sm:space-y-4">
           {tier.features.map((f) => (
             <FeatureRow key={f} text={f} />
           ))}
@@ -90,7 +92,7 @@ function PricingTierCard({
       </div>
 
       {tier.footnote ? (
-        <p className="mt-6 text-[10px] font-light tracking-[0.1em] text-white/35">
+        <p className="mt-5 text-[10px] font-light tracking-[0.1em] text-white/35 sm:mt-6">
           {tier.footnote}
         </p>
       ) : null}
@@ -106,7 +108,7 @@ export function PricingSection() {
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="relative min-h-screen w-full bg-[#0d0d0d] py-32"
+      className="world-section-pricing relative min-h-screen w-full bg-[#0d0d0d]"
       aria-labelledby="pricing-heading"
     >
       <div
@@ -126,14 +128,16 @@ export function PricingSection() {
         className="relative z-10 px-5"
         initial={reduceMotion ? false : { opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.9 }}
+        transition={{ duration: 0.9, ease: [0.33, 1, 0.68, 1] }}
         viewport={{ once: true, margin: "-80px" }}
       >
-        <div className="mb-24 text-center">
-          <p className="world-eyebrow mb-5 tracking-[0.2em]">Levels of Entry</p>
+        <div className="mb-14 text-center sm:mb-20 md:mb-24">
+          <p className="world-eyebrow mb-4 tracking-[0.2em] sm:mb-5">
+            Levels of Entry
+          </p>
           <h2
             id="pricing-heading"
-            className="world-display world-display--pricing mx-auto mb-6 max-w-2xl"
+            className="world-display world-display--pricing mx-auto mb-5 max-w-2xl sm:mb-6"
           >
             Choose your
             <br />
@@ -146,7 +150,7 @@ export function PricingSection() {
           </p>
         </div>
 
-        <div className="mx-auto max-w-2xl space-y-16">
+        <div className="world-pricing-stack mx-auto flex max-w-2xl flex-col gap-12 sm:gap-16">
           {WORLD_PRICING_TIERS.map((tier) => (
             <PricingTierCard
               key={tier.key}
@@ -156,7 +160,7 @@ export function PricingSection() {
           ))}
         </div>
 
-        <p className="world-body mx-auto mt-32 max-w-lg text-center text-white/35">
+        <p className="world-body mx-auto mt-16 max-w-lg text-center text-white/35 sm:mt-24 md:mt-28">
           All tiers require application. We build environments
           <br />
           for men who are serious about transformation.
