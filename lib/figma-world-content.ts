@@ -1,5 +1,4 @@
 import type { TierKey } from "@/lib/lead-context";
-import { WORLD_CTA } from "@/lib/world-cta";
 import {
   WORLD_SCENE_MEDIA,
   type WorldSceneImageKey,
@@ -157,10 +156,7 @@ export type WorldPricingTier = {
   priceAlt?: string;
   description?: string;
   features: string[];
-  cta: string;
-  ctaVariant: "outline" | "solid";
   recommended?: boolean;
-  secondaryCta?: string;
   footnote?: string;
 };
 
@@ -173,39 +169,33 @@ export const WORLD_PRICING_TIERS: WorldPricingTier[] = [
     description:
       "Foundation systems. Daily discipline frameworks. Structured accountability to rebuild consistency.",
     features: [],
-    cta: WORLD_CTA.requestEntry,
-    ctaVariant: "outline",
   },
   {
     key: "pro",
     name: "IMMERSION",
     tagline:
-      "Build discipline, execution, communication, and consistency inside a stronger environment",
+      "Discipline, execution, and communication inside a higher-standard environment",
     price: "₹15K",
     features: [
-      "Weekly accountability calls with your group",
-      "Communication and confidence recalibration",
-      "Execution pressure and structured routines",
-      "Access to curated brotherhood environment",
+      "Weekly accountability with your cohort",
+      "Communication and presence recalibration",
+      "Execution pressure with structured routines",
+      "Access to curated operator environment",
     ],
-    cta: WORLD_CTA.beginAssessment,
-    ctaVariant: "solid",
     recommended: true,
   },
   {
     key: "black",
     name: "INNER CIRCLE",
-    tagline: "Private high-standard transformation environment",
+    tagline: "Private high-trust transformation environment",
     price: "₹35K",
     priceAlt: "or ₹55K",
     features: [
       "Everything in Immersion",
-      "Private ecosystem access with elevated standards",
-      "Identity-level environmental transformation",
-      "Selective brotherhood of serious men",
+      "Private ecosystem — elevated standards",
+      "Identity-level environmental design",
+      "Selective peer set of serious operators",
     ],
-    cta: WORLD_CTA.privateApplication,
-    ctaVariant: "outline",
     footnote: "Selective acceptance · Application required",
   },
 ];

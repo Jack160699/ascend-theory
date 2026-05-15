@@ -8,13 +8,13 @@ import { WORLD_CTA } from "@/lib/world-cta";
 import { WORLD_SCENE_MEDIA } from "@/lib/world-images";
 
 const BULLETS = [
-  "Daily structured routines",
-  "Weekly accountability calls",
-  "Private curated community",
+  "Systems-first execution architecture",
+  "Discipline calibrated for the AI-native era",
+  "Private cohort — accountable, selective",
 ] as const;
 
 /**
- * Figma final CTA — minimal layout, layered darkness + subtle brotherhood atmosphere.
+ * Final conversion beat — cinematic plate + single CTA.
  */
 export function FinalCTASection() {
   const { openAssessment } = useAssessmentModal();
@@ -24,12 +24,12 @@ export function FinalCTASection() {
     <section
       id="apply"
       data-conversion-zone="final"
-      className="world-cta-section world-atmosphere-rail world-continuum-rail relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-[#0d0d0d] px-5 py-32"
+      className="world-cta-section world-atmosphere-rail world-continuum-rail relative flex min-h-[100svh] w-full flex-col items-center justify-center overflow-hidden bg-[#0d0d0d] px-5 py-[clamp(4rem,12vh,10rem)]"
       aria-labelledby="final-cta-heading"
     >
       <div className="world-cta-backdrop absolute inset-0" aria-hidden>
         <div className="world-cta-media">
-          <WorldSceneImage media={media} />
+          <WorldSceneImage media={media} objectFit="cover" />
         </div>
         <div className="world-cta-film absolute inset-0" />
         <div className="world-cta-gradient absolute inset-0" />
@@ -37,22 +37,23 @@ export function FinalCTASection() {
 
       <WorldPanelAtmosphere grid="fine" vignette />
 
-      <div className="world-cta-panel world-copy-enter relative z-10 mx-auto max-w-lg text-center">
-        <p className="world-cta-brand mb-12">ASCEND THEORY</p>
-        <p className="world-cta-subline mb-10">A Structured Environment for Men</p>
+      <div className="world-cta-panel world-copy-enter relative z-10 mx-auto max-w-[clamp(20rem,90vw,32rem)] text-center">
+        <p className="world-cta-brand mb-[clamp(2rem,6vh,3rem)]">ASCEND THEORY</p>
+        <p className="world-cta-subline mb-[clamp(1.5rem,5vh,2.5rem)]">
+          Operating standard for serious individuals
+        </p>
 
         <h2 id="final-cta-heading" className="world-display world-display--cta mb-7">
-          Ready to
+          The ascent
           <br />
-          rebuild yourself?
+          is optional.
+          <br />
+          The standard isn&apos;t.
         </h2>
 
         <p className="world-body mx-auto mb-10 max-w-md">
-          We help ambitious men build discipline,
-          <br />
-          accountability, and confidence through
-          <br />
-          structured systems and brotherhood.
+          If you optimize for leverage, patience, and long-range execution —
+          apply. We reply to humans, not timelines.
         </p>
 
         <ul className="world-cta-list mx-auto mb-12 max-w-sm">
@@ -65,10 +66,10 @@ export function FinalCTASection() {
         </ul>
 
         <WorldButton variant="solid-cta" onClick={() => openAssessment()}>
-          {WORLD_CTA.privateApplication}
+          {WORLD_CTA.beginTheAscent}
         </WorldButton>
 
-        <p className="world-cta-footnote">Limited spaces · Application required</p>
+        <p className="world-cta-footnote">Private review · Invitation only where applicable</p>
       </div>
     </section>
   );

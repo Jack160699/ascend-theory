@@ -1,8 +1,8 @@
 /**
- * WORLD landing — exclusive CTA language (three moments only).
+ * WORLD landing — three restrained conversion moments only (Hero · Mid-scroll · Final).
  */
 export const WORLD_CTA = {
-  beginAssessment: "Begin Assessment",
-  requestEntry: "Request Entry",
-  privateApplication: "Private Application",
+  enterTheSystem: "Enter The System",
+  applyToJoin: "Apply To Join",
+  beginTheAscent: "Begin The Ascent",
 } as const;

@@ -23,7 +23,7 @@ export function HeroScene() {
       className="world-hero-rail world-atmosphere-rail world-continuum-rail relative w-full bg-[#0d0d0d]"
       style={{ height: railHeight }}
     >
-      <div className="sticky top-0 h-screen min-h-[100svh] w-full overflow-hidden bg-[#0d0d0d]">
+      <div className="world-sticky-frame sticky top-0 w-full overflow-hidden bg-[#0d0d0d]">
         <div className="world-hero-backdrop absolute inset-0" aria-hidden>
           <div className="world-hero-media">
             <WorldSceneImage media={media} priority />
@@ -42,15 +42,17 @@ export function HeroScene() {
           <p className="world-hero-brand">ASCEND THEORY</p>
           <div className="world-hero-headline pb-12">
             <h1 className="world-hero-display">
-              You know
+              Precision
               <br />
-              you&apos;re wasting
-              <br />
-              your potential.
+              over noise.
             </h1>
+            <p className="world-hero-subline mt-5 max-w-[clamp(18rem,85vw,22rem)]">
+              A private operating system for discipline, execution, and
+              next-generation focus.
+            </p>
             <div className="world-hero-cta">
               <WorldButton variant="outline" onClick={() => openAssessment()}>
-                {WORLD_CTA.beginAssessment}
+                {WORLD_CTA.enterTheSystem}
               </WorldButton>
             </div>
           </div>

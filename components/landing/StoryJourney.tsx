@@ -25,14 +25,14 @@ export function StoryJourney() {
       <StickyScene id="momentum" scene={HERO_SCENES.momentum}>
         <SceneContent placement="bottom-16" display="lg">
           <StoryHeadline display="lg">
-            You lost
+            Drift costs
             <br />
-            momentum.
+            more than mistakes.
           </StoryHeadline>
           <p className="world-body max-w-sm">
-            The days blur together.
+            Ambition without cadence quietly compounds
             <br />
-            You&apos;re inconsistent. Distracted. Alone.
+            against you — attention frays before results do.
           </p>
         </SceneContent>
       </StickyScene>
@@ -40,16 +40,14 @@ export function StoryJourney() {
       <StickyScene id="distraction" scene={HERO_SCENES.distraction}>
         <SceneContent placement="bottom-20" display="md">
           <StoryHeadline display="md">
-            You became
+            The feed
             <br />
-            addicted to
-            <br />
-            distraction.
+            is not neutral.
           </StoryHeadline>
           <p className="world-body max-w-sm">
-            Scrolling. Avoiding. Numbing.
+            Every skim trains your baseline down.
             <br />
-            The pattern keeps repeating.
+            You feel busy — nothing moves forward.
           </p>
         </SceneContent>
       </StickyScene>
@@ -57,16 +55,14 @@ export function StoryJourney() {
       <StickyScene id="environment" scene={HERO_SCENES.environment}>
         <SceneContent placement="bottom-20-left" display="env">
           <StoryHeadline display="env">
-            You become
+            Rooms set
             <br />
-            who you spend
-            <br />
-            time with.
+            your ceiling.
           </StoryHeadline>
           <p className="world-body max-w-sm">
-            Your environment is shaping you.
+            Proximity rewires norms faster than intentions.
             <br />
-            The right room changes everything.
+            The right friction becomes leverage.
           </p>
         </SceneContent>
       </StickyScene>
@@ -74,23 +70,19 @@ export function StoryJourney() {
       <StickyScene id="solution" scene={HERO_SCENES.solution}>
         <SceneContent placement="center-left" display="sm">
           <StoryEyebrow className={HERO_SCENES.solution.eyebrowMb ?? "mb-5"}>
-            The Solution
+            Operating standard
           </StoryEyebrow>
           <StoryHeadline display="sm">
             ASCEND THEORY
             <br />
-            is a structured
+            is an environment,
             <br />
-            environment
-            <br />
-            for men.
+            not content.
           </StoryHeadline>
           <p className="world-body max-w-md">
-            We rebuild discipline, confidence,
+            Systems, accountability, and a private cohort calibrated
             <br />
-            and execution through accountability
-            <br />
-            and proven systems.
+            for execution — disciplined, intelligent, restrained.
           </p>
         </SceneContent>
       </StickyScene>
@@ -98,20 +90,20 @@ export function StoryJourney() {
       <StickyScene id="how-it-works" scene={HERO_SCENES.howItWorks}>
         <SceneContent placement="center-left" display="sm" innerClassName="world-scene-copy--wide">
           <StoryEyebrow className={HERO_SCENES.howItWorks.eyebrowMb ?? "mb-5"}>
-            How It Works
+            Mechanics
           </StoryEyebrow>
           <div className="mb-8 space-y-5">
             <ItemBlock
-              title="Daily structured routines"
-              body={"Morning systems. Execution frameworks.\nHabits that compound."}
+              title="Daily operating rhythm"
+              body={"Morning stack. Decision hygiene.\nNo theater — repeatable motion."}
             />
             <ItemBlock
-              title="Weekly accountability calls"
-              body={"Check-ins with your group.\nReal-time feedback and support."}
+              title="Weekly synchronous pressure"
+              body={"Structured check-ins.\nCandor over comfort — trajectory over mood."}
             />
             <ItemBlock
-              title="Curated community access"
-              body={"Private group of ambitious men.\nNo excuses. Just execution."}
+              title="Closed operator layer"
+              body={"Signals, not spectators.\nA room that behaves like stakes exist."}
             />
           </div>
         </SceneContent>
@@ -120,24 +112,24 @@ export function StoryJourney() {
       <StickyScene id="what-you-build" scene={HERO_SCENES.whatYouBuild}>
         <SceneContent placement="center-left" display="sm" innerClassName="world-scene-copy--wide">
           <StoryEyebrow className={HERO_SCENES.whatYouBuild.eyebrowMb ?? "mb-5"}>
-            What You Build
+            Outcomes you earn
           </StoryEyebrow>
           <div className="max-w-md space-y-5">
             <ItemBlock
-              title="Discipline & execution"
-              body={"Daily routines. Consistent action.\nNo more starting and stopping."}
+              title="Execution capacity"
+              body={"Closer distance to shipped work.\nLess restart tax — higher finish rate."}
             />
             <ItemBlock
-              title="Communication & confidence"
-              body={"Express yourself clearly.\nCommand respect. Lead conversations."}
+              title="Presence & signal"
+              body={"Cleaner communication.\nConfidence that reads calm, not loud."}
             />
             <ItemBlock
-              title="Fitness & lifestyle"
-              body={"Build strength. Recalibrate your body.\nSustain high performance."}
+              title="Physical readiness"
+              body={"Consistency under load.\nEnergy as a multiplier, not an excuse."}
             />
             <ItemBlock
-              title="Emotional control"
-              body={"Master your reactions.\nStay composed under pressure."}
+              title="Temperament"
+              body={"Controlled responses under ambiguity.\nThe edge that survives scale."}
             />
           </div>
         </SceneContent>
@@ -146,19 +138,19 @@ export function StoryJourney() {
       <StickyScene id="brotherhood" scene={HERO_SCENES.brotherhood}>
         <SceneContent placement="bottom-20-left" display="md">
           <StoryEyebrow className={HERO_SCENES.brotherhood.eyebrowMb ?? "mb-4"}>
-            The Brotherhood
+            Peer layer
           </StoryEyebrow>
           <StoryHeadline display="md">
             Curated.
             <br />
-            Accountable.
+            Demand-matched.
             <br />
-            High-standard.
+            Quietly elite.
           </StoryHeadline>
           <p className="world-body max-w-sm">
-            Not a community. Not a group chat.
+            Not a feed. Not a crowd.
             <br />
-            A private brotherhood of men who execute.
+            A private set of operators who close loops.
           </p>
         </SceneContent>
       </StickyScene>
@@ -178,26 +170,24 @@ function TransformationBeat() {
       className="world-transformation-rail world-atmosphere-rail world-story-rail world-continuum-rail relative w-full"
       style={{ height }}
     >
-      <div className="sticky top-0 flex h-screen min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-[#0d0d0d]">
+      <div className="world-sticky-frame sticky top-0 flex w-full flex-col items-center justify-center overflow-hidden bg-[#0d0d0d]">
         <div className="world-transformation-glow" aria-hidden />
         <div className="world-transformation-continuity" aria-hidden />
         <div className="world-scene-handoff world-scene-handoff--top" aria-hidden />
         <div className="world-scene-handoff world-scene-handoff--bottom" aria-hidden />
         <div className="world-transformation-panel world-copy-enter world-copy-integrated">
-          <p className="world-eyebrow mb-6">The Transformation</p>
+          <p className="world-eyebrow mb-6">Recalibration</p>
           <h2 className="world-display world-display--transformation mb-8">
-            Confident.
+            Sharp.
             <br />
-            Disciplined.
+            Calm.
             <br />
-            Unstoppable.
+            Relentless.
           </h2>
           <p className="world-body mx-auto max-w-md">
-            You rebuild yourself from the ground up.
+            What changes is how you allocate attention,
             <br />
-            This is where men become who they&apos;re
-            <br />
-            supposed to be.
+            how you tolerate chaos, how you compound proof.
           </p>
         </div>
       </div>

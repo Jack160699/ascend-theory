@@ -1,6 +1,6 @@
 "use client";
 
-import type { WorldSceneMedia } from "@/lib/world-images";
+import type { WorldSceneMedia, WorldSceneObjectFit } from "@/lib/world-images";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useCallback, useState } from "react";
@@ -9,18 +9,22 @@ type WorldSceneImageProps = {
   media: WorldSceneMedia;
   priority?: boolean;
   className?: string;
+  /** Overrides `media.objectFit` (e.g. final CTA uses cover on a story asset). */
+  objectFit?: WorldSceneObjectFit;
 };
 
 /**
- * Full-bleed WORLD scene still — Figma crops via objectPosition only.
+ * WORLD scene still — Figma crops via objectPosition; storytelling uses contain where set.
  */
 export function WorldSceneImage({
   media,
   priority = false,
   className,
+  objectFit: objectFitProp,
 }: WorldSceneImageProps) {
   const [failed, setFailed] = useState(false);
   const onError = useCallback(() => setFailed(true), []);
+  const fit = objectFitProp ?? media.objectFit ?? "cover";
 
   if (failed) {
     return (
@@ -43,7 +47,10 @@ export function WorldSceneImage({
       quality={priority ? 82 : 68}
       sizes="100vw"
       decoding="async"
-      className={cn("object-cover", className)}
+      className={cn(
+        fit === "contain" ? "object-contain" : "object-cover",
+        className,
+      )}
       style={{ objectPosition: media.objectPosition }}
       onError={onError}
     />

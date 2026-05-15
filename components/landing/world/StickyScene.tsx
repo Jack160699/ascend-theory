@@ -35,9 +35,15 @@ export function StickyScene({
       className="world-scene-rail world-atmosphere-rail world-story-rail relative w-full bg-[#0d0d0d]"
       style={{ height: railHeight }}
     >
-      <div className="sticky top-0 h-screen min-h-[100svh] w-full overflow-hidden bg-[#0d0d0d]">
+      <div className="world-sticky-frame sticky top-0 w-full overflow-hidden bg-[#0d0d0d]">
         <div className="world-scene-backdrop absolute inset-0" aria-hidden>
-          <div className="world-scene-media">
+          <div
+            className={cn(
+              "world-scene-media",
+              scene.media.objectFit === "contain" &&
+                "world-scene-media--contain",
+            )}
+          >
             <WorldSceneImage media={scene.media} priority={priority} />
           </div>
 

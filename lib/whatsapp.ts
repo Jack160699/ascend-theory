@@ -9,14 +9,14 @@ export const ASCEND_WHATSAPP_ME_URL = "https://wa.me/919584735857";
 /** Display format for footer and prefill copy. */
 export const ASCEND_PHONE_DISPLAY = "9584735857";
 
-/** @deprecated Legacy sections — prefer `WORLD_CTA` on WORLD landing. */
-export const HERO_CTA_LABEL = "Begin Assessment" as const;
+/** @deprecated Legacy sections — WORLD landing uses `WORLD_CTA` (see lib/world-cta.ts). */
+export const HERO_CTA_LABEL = "Enter The System" as const;
 
 /** @deprecated Sticky bar disabled on WORLD landing. */
-export const STICKY_MOBILE_CTA_LABEL = "Begin Assessment" as const;
+export const STICKY_MOBILE_CTA_LABEL = "Enter The System" as const;
 
-/** @deprecated Legacy sections — prefer `WORLD_CTA.privateApplication`. */
-export const FINAL_SECTION_CTA_LABEL = "Private Application" as const;
+/** @deprecated Legacy sections — WORLD landing Final uses `WORLD_CTA.beginTheAscent`. */
+export const FINAL_SECTION_CTA_LABEL = "Begin The Ascent" as const;
 
 /** Post-form handoff only — not shown on page surface. */
 export const MODAL_WHATSAPP_CTA_LABEL = "Continue on WhatsApp" as const;

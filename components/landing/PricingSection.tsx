@@ -1,8 +1,6 @@
 "use client";
 
-import { WorldButton } from "@/components/landing/world/WorldButton";
 import { WorldPanelAtmosphere } from "@/components/landing/world/WorldPanelAtmosphere";
-import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { WORLD_PRICING_TIERS } from "@/lib/figma-world-content";
 import { cn } from "@/lib/utils";
 
@@ -15,13 +13,7 @@ function FeatureRow({ text }: { text: string }) {
   );
 }
 
-function PricingTierCard({
-  tier,
-  onApply,
-}: {
-  tier: (typeof WORLD_PRICING_TIERS)[number];
-  onApply: (key: (typeof WORLD_PRICING_TIERS)[number]["key"]) => void;
-}) {
+function PricingTierCard({ tier }: { tier: (typeof WORLD_PRICING_TIERS)[number] }) {
   const featured = Boolean(tier.recommended);
 
   return (
@@ -57,79 +49,59 @@ function PricingTierCard({
       ) : null}
 
       {tier.features.length > 0 ? (
-        <div className="mb-10 space-y-4">
+        <div className="space-y-4">
           {tier.features.map((f) => (
             <FeatureRow key={f} text={f} />
           ))}
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-3">
-        <WorldButton
-          variant={tier.ctaVariant === "solid" ? "solid" : "outline"}
-          className={tier.ctaVariant === "solid" ? "w-full sm:w-auto" : undefined}
-          onClick={() => onApply(tier.key)}
-        >
-          {tier.cta}
-        </WorldButton>
-        {tier.secondaryCta ? (
-          <WorldButton variant="outline" onClick={() => onApply(tier.key)}>
-            {tier.secondaryCta}
-          </WorldButton>
-        ) : null}
-      </div>
-
       {tier.footnote ? (
-        <p className="world-pricing-footnote">{tier.footnote}</p>
+        <p className="world-pricing-footnote mt-8">{tier.footnote}</p>
       ) : null}
+      <p className="world-pricing-tier-note mt-6">Application required · Tier assigned on review</p>
     </article>
   );
 }
 
 export function PricingSection() {
-  const { openAssessment } = useAssessmentModal();
-
   return (
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="world-pricing-section world-atmosphere-rail world-continuum-rail relative min-h-screen w-full bg-[#0d0d0d] py-32"
+      className="world-pricing-section world-atmosphere-rail world-continuum-rail relative min-h-[100svh] w-full bg-[#0d0d0d] py-[clamp(4rem,12vh,9rem)]"
       aria-labelledby="pricing-heading"
     >
       <WorldPanelAtmosphere grid="standard" />
 
       <div className="relative z-10 px-5">
-        <header className="world-pricing-intro world-copy-enter mb-24 text-center">
-          <p className="world-eyebrow world-eyebrow--pricing mb-5">Levels of Entry</p>
+        <header className="world-pricing-intro world-copy-enter mb-[clamp(4rem,10vh,8rem)] text-center">
+          <p className="world-eyebrow world-eyebrow--pricing mb-5">Allocation</p>
           <h2
             id="pricing-heading"
-            className="world-display world-display--pricing mx-auto mb-6 max-w-2xl"
+            className="world-display world-display--pricing mx-auto mb-6 max-w-[clamp(20rem,90vw,42rem)]"
           >
-            Choose your
+            Three depths
             <br />
-            environment.
+            of commitment.
           </h2>
           <p className="world-body mx-auto max-w-md">
-            This is not a product. This is entry into
+            Not a SKU list — structured entry points
             <br />
-            a structured transformation system.
+            into the same standard.
           </p>
         </header>
 
-        <div className="world-pricing-stack mx-auto max-w-2xl">
+        <div className="world-pricing-stack mx-auto max-w-[clamp(20rem,92vw,36rem)]">
           {WORLD_PRICING_TIERS.map((tier) => (
-            <PricingTierCard
-              key={tier.key}
-              tier={tier}
-              onApply={(key) => openAssessment(key)}
-            />
+            <PricingTierCard key={tier.key} tier={tier} />
           ))}
         </div>
 
         <p className="world-pricing-closer world-copy-enter">
-          All tiers require application.
+          Selection is intentional.
           <br />
-          Environments are built for men who are serious about transformation.
+          We work with operators, not spectators.
         </p>
       </div>
     </section>

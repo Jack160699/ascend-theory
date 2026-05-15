@@ -122,6 +122,43 @@
   z-index: 1;
 }
 
+/* Sticky story / hero — svh-first viewport (mobile toolbar-aware) */
+.world-sticky-frame {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  min-height: min(100svh, 100dvh);
+  height: min(100svh, 100dvh);
+  background-color: var(--world-black);
+  box-sizing: border-box;
+}
+
+.world-scene-media--contain {
+  background-color: var(--world-black);
+}
+
+.world-hero-subline {
+  font-size: 0.8125rem;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  line-height: 1.65;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.world-display--mid-gate {
+  font-size: clamp(2rem, 9vw, 3rem);
+}
+
+.world-pricing-tier-note {
+  font-size: 9px;
+  font-weight: 300;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+}
+
 /* --- Hero (Figma WORLD SYSTEM) — film frame --- */
 
 .world-hero-rail {
@@ -1319,19 +1356,19 @@
     opacity: 0.45;
   }
 
-  [data-beat="momentum"] .world-scene-media img {
+  [data-beat="momentum"] .world-scene-media:not(.world-scene-media--contain) img {
     object-position: center 38% !important;
   }
 
-  [data-beat="distraction"] .world-scene-media img {
+  [data-beat="distraction"] .world-scene-media:not(.world-scene-media--contain) img {
     object-position: center 42% !important;
   }
 
-  [data-beat="environment"] .world-scene-media img {
+  [data-beat="environment"] .world-scene-media:not(.world-scene-media--contain) img {
     object-position: center 44% !important;
   }
 
-  [data-beat="brotherhood"] .world-scene-media img {
+  [data-beat="brotherhood"] .world-scene-media:not(.world-scene-media--contain) img {
     object-position: center 40% !important;
   }
 
