@@ -2,18 +2,21 @@
  * Canonical WhatsApp entry for Ascend Theory apply flow.
  * E.164 digits without + prefix.
  */
-export const ASCEND_WHATSAPP_DIGITS = "917777812777";
+export const ASCEND_WHATSAPP_DIGITS = "919584735857";
 
-export const ASCEND_WHATSAPP_ME_URL = "https://wa.me/917777812777";
+export const ASCEND_WHATSAPP_ME_URL = "https://wa.me/919584735857";
+
+/** Display format for footer and prefill copy. */
+export const ASCEND_PHONE_DISPLAY = "9584735857";
 
 /** Hero — primary conversion (modal). */
-export const HERO_CTA_LABEL = "Apply privately" as const;
+export const HERO_CTA_LABEL = "Apply Now" as const;
 
 /** Mobile sticky bar — opens modal after scroll threshold. */
-export const STICKY_MOBILE_CTA_LABEL = "Request private entry" as const;
+export const STICKY_MOBILE_CTA_LABEL = "Apply Now" as const;
 
 /** Final section — opens modal. */
-export const FINAL_SECTION_CTA_LABEL = "Apply privately" as const;
+export const FINAL_SECTION_CTA_LABEL = "Apply Now" as const;
 
 /** Application modal — WhatsApp handoff. */
 export const MODAL_WHATSAPP_CTA_LABEL = "Open WhatsApp" as const;
@@ -61,7 +64,7 @@ export function formatWebsiteApplicationWhatsAppBody(
     "— Sent from Ascend Theory",
     "",
     "Phone number:",
-    "7777812777",
+    ASCEND_PHONE_DISPLAY,
   ].join("\n");
 }
 

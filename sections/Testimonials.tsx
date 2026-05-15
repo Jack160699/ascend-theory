@@ -6,11 +6,11 @@ import {
   useIsMobileConversion,
   useRevealViewport,
 } from "@/contexts/mobile-conversion";
-import { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
+import { ASCEND_IMAGES } from "@/lib/cinematic-assets";
 import {
-  CINEMATIC_IMAGE_CLASS,
-  cinematicThumbClassForSrc,
-  type CinematicAssetKey,
+  ASCEND_IMAGE_CLASS,
+  ascendThumbClassForSrc,
+  type AscendImageKey,
 } from "@/lib/cinematic-composition";
 import {
   DURATION_REVEAL,
@@ -39,7 +39,7 @@ const quotes = [
 ] as const;
 
 const fieldStills: readonly {
-  assetKey: CinematicAssetKey;
+  assetKey: AscendImageKey;
   src: string;
   label: string;
   sub: string;
@@ -47,26 +47,26 @@ const fieldStills: readonly {
   aspect: string;
 }[] = [
   {
-    assetKey: "leadershipLounge",
-    src: CINEMATIC_ASSETS.leadershipLounge,
-    label: "Presence",
-    sub: "Calm leadership in conversation",
+    assetKey: "lifestyleGolf",
+    src: ASCEND_IMAGES.lifestyleGolf,
+    label: "Field",
+    sub: "Private club · shared standard",
     span: "lg:col-span-2 lg:row-span-2",
     aspect: "aspect-[4/3] lg:aspect-auto lg:min-h-[14rem]",
   },
   {
-    assetKey: "systemsPlanningWall",
-    src: CINEMATIC_ASSETS.systemsPlanningWall,
+    assetKey: "teamStudio",
+    src: ASCEND_IMAGES.teamStudio,
     label: "Systems",
-    sub: "The week made legible on the wall",
+    sub: "Structure made legible in the room",
     span: "",
     aspect: "aspect-[5/4]",
   },
   {
-    assetKey: "brotherhoodWalk",
-    src: CINEMATIC_ASSETS.brotherhoodWalk,
-    label: "Field",
-    sub: "Shared standard, private pace",
+    assetKey: "lifestyleAirport",
+    src: ASCEND_IMAGES.lifestyleAirport,
+    label: "Presence",
+    sub: "Composed when the stakes show up",
     span: "",
     aspect: "aspect-[5/4]",
   },
@@ -101,7 +101,7 @@ function FieldStillsFigure({
           alt={label}
           fill
           className={cn(
-            CINEMATIC_IMAGE_CLASS[assetKey],
+            ASCEND_IMAGE_CLASS[assetKey],
             "transition-transform duration-[680ms] ease-[var(--ascend-hover-ease)] group-hover:scale-[1.004]",
           )}
           sizes="(max-width:1024px) 100vw, 40vw"
@@ -189,10 +189,10 @@ export function Testimonials() {
           <div className="grid lg:grid-cols-2">
             <div className="relative aspect-[5/4] min-h-[12rem] border-b border-white/[0.06] lg:aspect-auto lg:min-h-[17rem] lg:border-b-0 lg:border-r">
               <AscendImage
-                src={CINEMATIC_ASSETS.lifestyleRooftopStanding}
-                alt="Rooftop at dawn — solitude, clarity, quiet confidence"
+                src={ASCEND_IMAGES.lifestyleCoastal}
+                alt="Ascend Theory — coastal promenade at golden hour"
                 fill
-                className={CINEMATIC_IMAGE_CLASS.lifestyleRooftopStanding}
+                className={ASCEND_IMAGE_CLASS.lifestyleCoastal}
                 sizes="(max-width:1024px) 100vw, 50vw"
                 loading="lazy"
               />
@@ -216,11 +216,11 @@ export function Testimonials() {
               <div className="mt-5 flex gap-2">
                 <div className="relative h-16 w-[28%] overflow-hidden rounded-md border border-white/[0.08] bg-zinc-950 sm:h-20">
                   <AscendImage
-                    src={CINEMATIC_ASSETS.philosophyLibrary}
-                    alt="Depth and study — weekly private work"
+                    src={ASCEND_IMAGES.editorialArchitecture}
+                    alt="Ascend Theory — editorial architectural space"
                     fill
-                    className={cinematicThumbClassForSrc(
-                      CINEMATIC_ASSETS.philosophyLibrary,
+                    className={ascendThumbClassForSrc(
+                      ASCEND_IMAGES.editorialArchitecture,
                     )}
                     sizes="120px"
                     loading="lazy"
@@ -228,12 +228,10 @@ export function Testimonials() {
                 </div>
                 <div className="relative h-16 flex-1 overflow-hidden rounded-md border border-white/[0.08] bg-zinc-950 sm:h-20">
                   <AscendImage
-                    src={CINEMATIC_ASSETS.systemsPlanningWall}
-                    alt="Planning wall — structure and consistency"
+                    src={ASCEND_IMAGES.teamStudio}
+                    alt="Ascend Theory — team studio and systems"
                     fill
-                    className={cinematicThumbClassForSrc(
-                      CINEMATIC_ASSETS.systemsPlanningWall,
-                    )}
+                    className={ascendThumbClassForSrc(ASCEND_IMAGES.teamStudio)}
                     sizes="240px"
                     loading="lazy"
                   />

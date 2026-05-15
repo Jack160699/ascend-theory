@@ -1,20 +1,14 @@
-/**
- * @deprecated Prefer `CINEMATIC_ASSETS` from `@/lib/cinematic-assets` for new work.
- * Aliases preserved for incremental refactors.
- */
-import { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
+import { ASCEND_IMAGES } from "@/lib/cinematic-assets";
 
-export { CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
+export { ASCEND_IMAGES, CINEMATIC_ASSETS } from "@/lib/cinematic-assets";
 
-/** Legacy keys → new cinematic stills */
+/** Editorial section stills mapped to brand photography. */
 export const EDITORIAL_ASSETS = {
-  communication: CINEMATIC_ASSETS.brotherhoodWalk,
-  structureRoutine: CINEMATIC_ASSETS.systemsPlanningWall,
-  presenceComposed: CINEMATIC_ASSETS.leadershipLounge,
-  identityReflection: CINEMATIC_ASSETS.philosophyLibrary,
-  deepWork: CINEMATIC_ASSETS.systemsPlanningWall,
-  accountabilityReview: CINEMATIC_ASSETS.leadershipLounge,
-  physiqueAnchor: CINEMATIC_ASSETS.lifestyleRooftopStanding,
+  communication: ASCEND_IMAGES.brotherhoodDining,
+  structureRoutine: ASCEND_IMAGES.teamStudio,
+  presenceComposed: ASCEND_IMAGES.lifestyleAirport,
+  identityReflection: ASCEND_IMAGES.editorialArchitecture,
+  deepWork: ASCEND_IMAGES.teamStudio,
+  accountabilityReview: ASCEND_IMAGES.teamStudio,
+  physiqueAnchor: ASCEND_IMAGES.heroStorefront,
 } as const;
-
-export type EditorialAssetKey = keyof typeof EDITORIAL_ASSETS;

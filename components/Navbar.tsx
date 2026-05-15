@@ -20,11 +20,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 const links = [
-  { href: "/#mirror", label: "Mirror" },
-  { href: "/#brotherhood", label: "Brotherhood" },
+  { href: "/#philosophy", label: "Philosophy" },
   { href: "/#system", label: "System" },
+  { href: "/#brotherhood", label: "Brotherhood" },
   { href: "/#transformation", label: "Proof" },
-  { href: "/#entry", label: "Apply" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/#apply", label: "Apply" },
 ] as const;
 
 export function Navbar() {

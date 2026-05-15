@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import {
+  ASCEND_PHONE_DISPLAY,
+  ASCEND_WHATSAPP_ME_URL,
+} from "@/lib/whatsapp";
 
 const quick = [
-  { href: "/#mirror", label: "Mirror" },
-  { href: "/#brotherhood", label: "Brotherhood" },
+  { href: "/#philosophy", label: "Philosophy" },
   { href: "/#system", label: "System" },
+  { href: "/#brotherhood", label: "Brotherhood" },
   { href: "/#transformation", label: "Proof" },
-  { href: "/#entry", label: "Entry" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/#apply", label: "Apply" },
 ] as const;
 
 const legal = [
@@ -20,18 +25,24 @@ export function Footer() {
   return (
     <footer
       id="site-footer"
-      className="ascend-section-world relative overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface px-6 py-9 sm:px-10 sm:py-12 lg:pl-14 lg:pr-12 lg:py-14"
+      className="relative overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface px-6 py-9 sm:px-10 sm:py-12 lg:pl-14 lg:pr-12 lg:py-14"
     >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-ascend-canvas/35 via-transparent to-transparent"
-        aria-hidden
-      />
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between sm:gap-10 lg:gap-12">
         <div className="max-w-md">
           <p className="ascend-type-eyebrow text-zinc-600">Ascend Theory</p>
           <p className="ascend-prose-calm mt-4 text-zinc-600">
             Private mentorship — selective intake, manual review, serious room
             only.
+          </p>
+          <p className="mt-4 text-[12px] text-zinc-600">
+            <a
+              href={ASCEND_WHATSAPP_ME_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] hover:text-zinc-300"
+            >
+              WhatsApp · {ASCEND_PHONE_DISPLAY}
+            </a>
           </p>
         </div>
         <nav

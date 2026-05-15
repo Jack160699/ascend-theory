@@ -97,34 +97,26 @@ body.ascend-cookie-strip-active {
 }
 
 /* Cinematic emotional rhythm — read layer only; values track scroll (no transition choreography) */
-#ascend-cinematic-main .ascend-headline {
-  letter-spacing: calc(
-    -0.018em + var(--ascend-emotional-density, 0.5) * 0.024em +
-      var(--ascend-continuity-depth, 0) * 0.006em
-  );
+#ascend-main .ascend-headline {
+  letter-spacing: -0.02em;
 }
 
-#ascend-cinematic-main .ascend-type-hero.ascend-headline {
+#ascend-main .ascend-type-hero.ascend-headline {
   line-height: 1.05;
 }
 
-#ascend-cinematic-main .ascend-type-section-sm.ascend-headline {
+#ascend-main .ascend-type-section-sm.ascend-headline {
   line-height: 1.14;
   font-weight: 500;
 }
 
-#ascend-cinematic-main .ascend-prose-calm,
-#ascend-cinematic-main .ascend-prose-lede {
-  /* Center ~1.8 (premium calm); breath modulates ± one step invisibly */
-  line-height: calc(
-    1.72 + var(--ascend-spatial-breath, 0.5) * 0.14
-  );
+#ascend-main .ascend-prose-calm,
+#ascend-main .ascend-prose-lede {
+  line-height: 1.75;
 }
 
-#ascend-cinematic-main .ascend-prose-fragment {
-  line-height: calc(
-    1.68 + var(--ascend-spatial-breath, 0.5) * 0.12
-  );
+#ascend-main .ascend-prose-fragment {
+  line-height: 1.72;
 }
 
 /* Scene continuity rail — emotional temperature per world (background only; opacity scroll-driven) */
