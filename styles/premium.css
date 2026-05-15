@@ -22,7 +22,7 @@
 }
 
 /**
- * Global film grain — fixed over page + footer; below modals (z-index 200+).
+ * Global film grain — fixed over page + footer; below intake modal (z-index 10000+).
  * Ultra-soft fractal noise + soft-light: depth only, not “noisy UI”.
  */
 .ascend-global-grain {

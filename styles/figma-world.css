@@ -1,9 +1,15 @@
 /* ASCEND THEORY — WORLD SYSTEM (Figma Make fidelity, CSS-only motion) */
 
 .world-canvas {
+  position: relative;
+  z-index: 0;
   background-color: #0d0d0d;
   color: #fff;
   -webkit-font-smoothing: antialiased;
+}
+
+.world-canvas .sticky {
+  z-index: 1;
 }
 
 /* --- Global atmosphere (Phase 1) — continuity + cinematic black --- */
@@ -147,15 +153,8 @@
 /* Figma: full #0d0d0d film plate ~75% at rest */
 .world-hero-film {
   pointer-events: none;
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(var(--world-ink-rgb), 0.28) 0%,
-      rgba(var(--world-black-rgb), 0.58) 52%,
-      rgba(var(--world-black-rgb), 0.78) 100%
-    ),
-    var(--world-black);
-  opacity: 1;
+  background-color: var(--world-black);
+  opacity: 0.75;
 }
 
 /* Lifts top/mid architecture out of flat wash — shadow detail preserved */
@@ -362,18 +361,11 @@
   pointer-events: none;
 }
 
-/* Figma film plate — layered ink, not flat wash */
+/* Figma film plate — opacity wash; lift + gradient carry shadow detail */
 .world-scene-film {
   --world-film: 0.85;
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(var(--world-ink-rgb), calc(var(--world-film) * 0.35)) 0%,
-      rgba(var(--world-black-rgb), calc(var(--world-film) * 0.72)) 55%,
-      rgba(var(--world-black-rgb), var(--world-film)) 100%
-    ),
-    var(--world-black);
-  opacity: 1;
+  background-color: var(--world-black);
+  opacity: var(--world-film);
 }
 
 /* Preserves subject / architecture in upper frame */
@@ -401,8 +393,8 @@
   mix-blend-mode: normal;
   background: linear-gradient(
     to bottom,
-    rgba(var(--world-black-rgb), 0.7) 0%,
-    rgba(var(--world-black-rgb), 0.8) 50%,
+    rgba(var(--world-black-rgb), 0.52) 0%,
+    rgba(var(--world-black-rgb), 0.68) 50%,
     var(--world-black) 100%
   );
 }
@@ -410,8 +402,8 @@
 .world-scene-gradient--story-b-distraction {
   background: linear-gradient(
     to bottom,
-    rgba(var(--world-black-rgb), 0.75) 0%,
-    rgba(var(--world-black-rgb), 0.85) 50%,
+    rgba(var(--world-black-rgb), 0.58) 0%,
+    rgba(var(--world-black-rgb), 0.72) 50%,
     var(--world-black) 100%
   );
 }
@@ -597,7 +589,7 @@
 }
 
 .world-scene-vignette--story {
-  opacity: 0.62;
+  opacity: 0.48;
   background:
     radial-gradient(
       ellipse 110% 78% at 50% 100%,
@@ -631,7 +623,7 @@
 /* Emotional temperature — cool → warm arc across story */
 .world-scene-emotion {
   pointer-events: none;
-  opacity: 1;
+  opacity: 0.55;
   mix-blend-mode: soft-light;
   background:
     radial-gradient(
@@ -688,22 +680,22 @@
 
 .world-scene-handoff--top {
   top: 0;
-  height: 42%;
+  height: 38%;
   background: linear-gradient(
     to bottom,
-    rgba(var(--world-black-rgb), 0.72) 0%,
-    rgba(var(--world-black-rgb), 0.28) 45%,
+    rgba(var(--world-black-rgb), 0.5) 0%,
+    rgba(var(--world-black-rgb), 0.18) 45%,
     transparent 100%
   );
 }
 
 .world-scene-handoff--bottom {
   bottom: 0;
-  height: 46%;
+  height: 40%;
   background: linear-gradient(
     to top,
-    rgba(var(--world-ink-rgb), 0.55) 0%,
-    rgba(var(--world-black-rgb), 0.22) 48%,
+    rgba(var(--world-ink-rgb), 0.38) 0%,
+    rgba(var(--world-black-rgb), 0.14) 48%,
     transparent 100%
   );
 }
@@ -714,14 +706,14 @@
 
 @supports (animation-timeline: view()) {
   .world-story-rail .world-scene-handoff--top {
-    opacity: 0.92;
+    opacity: 0.75;
     animation: world-handoff-entry 1 linear both;
     animation-timeline: view();
     animation-range: entry 0% entry 28%;
   }
 
   .world-story-rail .world-scene-handoff--bottom {
-    opacity: 0.5;
+    opacity: 0.35;
     animation: world-handoff-exit 1 linear both;
     animation-timeline: view();
     animation-range: exit 0% exit 32%;
@@ -730,7 +722,7 @@
 
 @keyframes world-handoff-entry {
   from {
-    opacity: 1;
+    opacity: 0.85;
   }
   to {
     opacity: 0;
@@ -739,7 +731,7 @@
 
 @keyframes world-handoff-exit {
   to {
-    opacity: 1;
+    opacity: 0.72;
   }
 }
 
@@ -1324,7 +1316,32 @@
 
   .world-scene-emotion {
     mix-blend-mode: normal;
-    opacity: 0.85;
+    opacity: 0.45;
+  }
+
+  [data-beat="momentum"] .world-scene-media img {
+    object-position: center 38% !important;
+  }
+
+  [data-beat="distraction"] .world-scene-media img {
+    object-position: center 42% !important;
+  }
+
+  [data-beat="environment"] .world-scene-media img {
+    object-position: center 44% !important;
+  }
+
+  [data-beat="brotherhood"] .world-scene-media img {
+    object-position: center 40% !important;
+  }
+
+  .world-intake-panel {
+    max-width: min(24rem, calc(100vw - 1.5rem));
+    max-height: min(calc(100dvh - 1rem), 38rem);
+  }
+
+  .world-intake-backdrop-dim {
+    background: rgba(0, 0, 0, 0.9);
   }
 
   .world-scene-handoff--top,
@@ -1377,44 +1394,127 @@
   }
 }
 
-/* --- Private intake modal (WORLD cinematic application) --- */
+/* --- Private intake modal (isolated cinematic layer) --- */
+
+html.world-intake-open,
+html.world-intake-open body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+html.world-intake-open .world-intake-panel,
+html.world-intake-open .world-intake-body {
+  touch-action: auto;
+}
+
+html.world-intake-open #ascend-main,
+html.world-intake-open #site-footer,
+html.world-intake-open .ascend-global-grain {
+  pointer-events: none;
+}
 
 .world-intake-root {
   --world-intake-ease: cubic-bezier(0.33, 1, 0.68, 1);
+  z-index: 10000;
+  isolation: isolate;
 }
 
-.world-intake-scrim {
+.world-intake-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.world-intake-backdrop-blur {
   position: absolute;
   inset: 0;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
+}
+
+@media (min-width: 640px) {
+  .world-intake-backdrop-blur {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
+.world-intake-backdrop-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.world-intake-backdrop-vignette {
+  position: absolute;
+  inset: 0;
   background:
     radial-gradient(
-      ellipse 70% 55% at 50% 38%,
-      rgba(255, 200, 150, 0.06) 0%,
-      transparent 62%
-    ),
-    linear-gradient(
-      to bottom,
-      rgba(var(--world-black-rgb), 0.82) 0%,
-      rgba(var(--world-black-rgb), 0.94) 100%
+      ellipse 95% 85% at 50% 45%,
+      transparent 0%,
+      rgba(0, 0, 0, 0.35) 72%,
+      rgba(0, 0, 0, 0.65) 100%
     );
+}
+
+.world-intake-backdrop-warm {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 65% 50% at 50% 38%,
+    rgba(255, 200, 150, 0.08) 0%,
+    transparent 62%
+  );
+}
+
+.world-intake-backdrop-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.055;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 512px 512px;
+}
+
+.world-intake-scrim-hit {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
 }
 
 .world-intake-panel {
   position: relative;
+  z-index: 20;
   display: flex;
   width: 100%;
-  max-width: 28rem;
-  max-height: min(calc(100dvh - 2rem), 40rem);
+  max-width: min(26rem, calc(100vw - 2rem));
+  max-height: min(calc(100dvh - 1.5rem), 40rem);
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background-color: var(--world-black);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #0a0a0a;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 32px 80px -40px rgba(0, 0, 0, 0.85);
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 40px 100px -32px rgba(0, 0, 0, 0.92);
+}
+
+.world-intake-panel-base {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-color: #0a0a0a;
+}
+
+.world-intake-panel .world-panel-dot-grid,
+.world-intake-panel .world-panel-warm,
+.world-intake-panel .world-panel-film,
+.world-intake-panel .world-panel-vignette {
+  z-index: 1;
 }
 
 .world-intake-panel-edge {
@@ -1431,9 +1531,16 @@
   );
 }
 
+.world-intake-lead {
+  font-size: 0.875rem;
+  font-weight: 300;
+  line-height: 1.625;
+  color: rgba(255, 255, 255, 0.58);
+}
+
 .world-intake-header {
   position: relative;
-  z-index: 3;
+  z-index: 5;
   flex-shrink: 0;
   padding: 1.75rem 1.5rem 1.25rem;
 }
@@ -1442,7 +1549,7 @@
   position: absolute;
   top: 1.25rem;
   right: 1.25rem;
-  z-index: 4;
+  z-index: 6;
   padding: 0.35rem 0.5rem;
   font-size: 9px;
   font-weight: 300;
@@ -1478,7 +1585,7 @@
 
 .world-intake-body {
   position: relative;
-  z-index: 3;
+  z-index: 5;
   flex: 1;
   min-height: 0;
   overflow-x: hidden;
@@ -1505,7 +1612,7 @@
   font-weight: 300;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .world-intake-input {
@@ -1525,7 +1632,7 @@
 }
 
 .world-intake-input::placeholder {
-  color: rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.36);
 }
 
 .world-intake-input:focus {
@@ -1549,7 +1656,7 @@
 
 .world-intake-footer {
   position: relative;
-  z-index: 3;
+  z-index: 5;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;

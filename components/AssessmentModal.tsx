@@ -5,6 +5,7 @@ import { WorldPanelAtmosphere } from "@/components/landing/world/WorldPanelAtmos
 import { useCinematicScrollLock } from "@/contexts/cinematic-scroll";
 import { WORLD_PRICING_TIERS } from "@/lib/figma-world-content";
 import type { TierKey } from "@/lib/lead-context";
+import { lockModalScroll } from "@/lib/modal-scroll-lock";
 import { DURATION_OVERLAY_SLOW, txReveal } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/lib/whatsapp";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 type Props = {
   tier: TierKey | null;
@@ -44,23 +46,42 @@ function tierInterestLine(tier: TierKey | null): string | null {
 export function AssessmentModal({ tier, open, onClose }: Props) {
   const [fields, setFields] = useState(emptyFields);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const tierLine = useMemo(() => tierInterestLine(tier), [tier]);
 
   useCinematicScrollLock(open);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- portal requires document.body */
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
   useEffect(() => {
     if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    const prevTouchAction = document.body.style.touchAction;
-    document.body.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
+    return lockModalScroll();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const main = document.getElementById("ascend-main");
+    const footer = document.getElementById("site-footer");
+    main?.setAttribute("inert", "");
+    footer?.setAttribute("inert", "");
+    main?.setAttribute("aria-hidden", "true");
+    footer?.setAttribute("aria-hidden", "true");
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
+
     return () => {
-      document.body.style.overflow = prevOverflow;
-      document.body.style.touchAction = prevTouchAction;
+      main?.removeAttribute("inert");
+      footer?.removeAttribute("inert");
+      main?.removeAttribute("aria-hidden");
+      footer?.removeAttribute("aria-hidden");
       window.removeEventListener("keydown", onKey);
     };
   }, [open, onClose]);
@@ -93,12 +114,15 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
     window.open(url, "_blank", "noopener,noreferrer");
   }, [fields, onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open ? (
         <motion.div
           className={cn(
-            "world-intake-root fixed inset-0 z-[200] flex items-center justify-center overflow-hidden p-4 sm:p-6",
+            "world-intake-root",
+            "fixed inset-0 flex items-center justify-center overflow-hidden p-4 sm:p-6",
             "pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]",
           )}
           role="dialog"
@@ -109,25 +133,30 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
           exit={{ opacity: 0 }}
           transition={txReveal(DURATION_OVERLAY_SLOW)}
         >
+          <div className="world-intake-backdrop" aria-hidden>
+            <div className="world-intake-backdrop-blur" />
+            <div className="world-intake-backdrop-dim" />
+            <div className="world-intake-backdrop-vignette" />
+            <div className="world-intake-backdrop-warm" />
+            <div className="world-intake-backdrop-grain" />
+          </div>
+
           <motion.button
             type="button"
-            className="world-intake-scrim"
+            className="world-intake-scrim-hit"
             aria-label="Close application"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={txReveal(DURATION_OVERLAY_SLOW)}
             onClick={onClose}
           />
 
           <motion.div
-            className="world-intake-panel relative z-10"
-            initial={{ opacity: 0, y: 18 }}
+            className="world-intake-panel"
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
+            exit={{ opacity: 0, y: 10 }}
             transition={txReveal(DURATION_OVERLAY_SLOW)}
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="world-intake-panel-base" aria-hidden />
             <WorldPanelAtmosphere grid="fine" vignette />
             <div className="world-intake-panel-edge" aria-hidden />
 
@@ -146,7 +175,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
               <h2 id="assessment-modal-title" className="world-intake-display">
                 Your application
               </h2>
-              <p className="world-body mt-3 max-w-xs">
+              <p className="world-intake-lead mt-3 max-w-xs">
                 A few honest lines. We respond personally.
               </p>
               {tierLine ? <p className="world-intake-tier">{tierLine}</p> : null}
@@ -247,6 +276,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
           </motion.div>
         </motion.div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
