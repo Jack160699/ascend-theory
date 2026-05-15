@@ -34,7 +34,7 @@ export function StoryJourney() {
       </StickyScene>
 
       <StickyScene id="distraction" scene={HERO_SCENES.distraction}>
-        <SceneContent placement="bottom-16">
+        <SceneContent placement="bottom-20">
           <h2 className="world-display world-display--md mb-6">
             You became
             <br />
@@ -51,7 +51,7 @@ export function StoryJourney() {
       </StickyScene>
 
       <StickyScene id="environment" scene={HERO_SCENES.environment}>
-        <SceneContent placement="bottom-16">
+        <SceneContent placement="bottom-20-left">
           <h2 className="world-display world-display--md mb-6">
             You become
             <br />

@@ -1,6 +1,6 @@
 "use client";
 
-import { AscendImage } from "@/components/AscendImage";
+import { WorldSceneImage } from "@/components/landing/world/WorldSceneImage";
 import { useIsMobileConversion } from "@/contexts/mobile-conversion";
 import type { WorldSceneConfig } from "@/lib/figma-world-content";
 import { sceneScrollHeight } from "@/lib/world-scene-metrics";
@@ -37,17 +37,7 @@ export function StickyScene({
       <div className="sticky top-0 h-screen min-h-[100svh] w-full overflow-hidden bg-[#0d0d0d]">
         <div className="world-scene-backdrop absolute inset-0" aria-hidden>
           <div className="world-scene-media">
-            <AscendImage
-              src={scene.image}
-              alt=""
-              fill
-              priority={priority}
-              loading={priority ? "eager" : "lazy"}
-              fetchPriority={priority ? "high" : "auto"}
-              quality={priority ? 80 : 70}
-              sizes="100vw"
-              className={cn(scene.imageClass, "object-cover")}
-            />
+            <WorldSceneImage media={scene.media} priority={priority} />
           </div>
 
           <div

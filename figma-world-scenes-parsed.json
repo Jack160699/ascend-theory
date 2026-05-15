@@ -1,0 +1,103 @@
+[
+  {
+    "vh": 150,
+    "image": "https://images.unsplash.com/photo-1610899632923-3751bc4b427a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "scrim": 0.85,
+    "gradientDir": "br",
+    "headlines": [
+      "ASCEND THEORY"
+    ]
+  },
+  {
+    "vh": 130,
+    "image": "https://images.unsplash.com/photo-1633070374521-b45f91ea5cec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "scrim": 0.85,
+    "gradientDir": "b",
+    "headlines": [
+      "The Solution"
+    ]
+  },
+  {
+    "vh": 120,
+    "image": "https://images.unsplash.com/photo-1590501949668-2442efd4d3d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "scrim": 0.88,
+    "gradientDir": "b",
+    "headlines": [
+      "The Solution",
+      "How It Works",
+      "Daily structured routines"
+    ]
+  },
+  {
+    "vh": 135,
+    "image": "https://images.unsplash.com/photo-1599718100450-8c59eed42a40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "scrim": 0.8,
+    "gradientDir": "br",
+    "headlines": [
+      "The Solution",
+      "How It Works",
+      "Daily structured routines",
+      "Weekly accountability calls"
+    ]
+  },
+  {
+    "vh": 125,
+    "image": "https://images.unsplash.com/photo-1738748444676-113d30c9a25b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "scrim": 0.82,
+    "gradientDir": "br",
+    "headlines": [
+      "The Solution",
+      "How It Works",
+      "Daily structured routines",
+      "Weekly accountability calls"
+    ]
+  },
+  {
+    "vh": 120,
+    "image": "https://images.unsplash.com/photo-1699766868222-56056eb963ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "scrim": 0.82,
+    "gradientDir": "b",
+    "headlines": [
+      "How It Works",
+      "Daily structured routines",
+      "Weekly accountability calls",
+      "Curated community access"
+    ]
+  },
+  {
+    "vh": 125,
+    "image": "https://images.unsplash.com/photo-1738748444676-113d30c9a25b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "scrim": 0.78,
+    "gradientDir": "bl",
+    "headlines": [
+      "What You Build",
+      "Discipline & execution",
+      "Communication & confidence",
+      "Fitness & lifestyle"
+    ]
+  },
+  {
+    "vh": 130,
+    "image": "https://images.unsplash.com/photo-1771408662069-7a78b1942801?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "scrim": 0.76,
+    "gradientDir": "tr",
+    "headlines": [
+      "The Brotherhood",
+      "The Transformation",
+      "Levels of Entry",
+      "Reset your structure"
+    ]
+  },
+  {
+    "vh": 100,
+    "image": null,
+    "scrim": null,
+    "gradientDir": null,
+    "headlines": [
+      "The Transformation",
+      "Levels of Entry",
+      "Reset your structure",
+      "Recommended"
+    ]
+  }
+]

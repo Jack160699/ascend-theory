@@ -1,6 +1,9 @@
 import type { TierKey } from "@/lib/lead-context";
-import { ASCEND_IMAGES } from "@/lib/cinematic-assets";
-import { ASCEND_IMAGE_CLASS } from "@/lib/cinematic-composition";
+import {
+  WORLD_SCENE_MEDIA,
+  type WorldSceneImageKey,
+  type WorldSceneMedia,
+} from "@/lib/world-images";
 import { FIGMA_SCENE_SCROLL, type SceneScrollSpec } from "@/lib/world-scene-metrics";
 
 export const WORLD_BG = "#0d0d0d";
@@ -9,6 +12,7 @@ export const WORLD_BG = "#0d0d0d";
 export type CopyPlacement =
   | "hero-split"
   | "bottom-16"
+  | "bottom-20"
   | "bottom-20-left"
   | "center-left";
 
@@ -16,19 +20,25 @@ export type CopyPlacement =
 export type SceneGradient =
   | "hero-br"
   | "story-b"
+  | "story-b-distraction"
   | "story-br-env"
   | "solution-br"
   | "story-b-flat"
   | "story-bl"
   | "brotherhood-tr";
 
-export type SceneAccent = "momentum-cool" | "warm-55" | "warm-40" | "brotherhood-warm" | "none";
+export type SceneAccent =
+  | "momentum-cool"
+  | "distraction-cool"
+  | "environment-warm"
+  | "warm-55"
+  | "warm-40"
+  | "brotherhood-warm"
+  | "how-it-works-film"
+  | "none";
 
 export type WorldSceneConfig = {
-  image: string;
-  imageClass: string;
-  imageAlt: string;
-  imagePosition: string;
+  media: WorldSceneMedia;
   scroll: SceneScrollSpec;
   /** Solid scrim — Figma `bg-[#0d0d0d]/XX` */
   scrimOpacity: number;
@@ -38,100 +48,74 @@ export type WorldSceneConfig = {
   copyPlacement: CopyPlacement;
 };
 
+function scene(
+  imageKey: WorldSceneImageKey,
+  config: Omit<WorldSceneConfig, "media">,
+): WorldSceneConfig {
+  return { media: WORLD_SCENE_MEDIA[imageKey], ...config };
+}
+
 /**
- * Scene order + visuals from Figma WORLD SYSTEM bundle.
- * Images: brand WebPs mapped to Figma Unsplash sequence.
+ * Scene order + visuals from Figma WORLD SYSTEM published bundle.
  */
 export const HERO_SCENES = {
-  hero: {
-    image: ASCEND_IMAGES.editorialArchitecture,
-    imageClass: ASCEND_IMAGE_CLASS.editorialArchitecture,
-    imageAlt: "Ascend Theory — architectural editorial hero",
-    imagePosition: "center center",
+  hero: scene("hero", {
     scroll: FIGMA_SCENE_SCROLL.hero,
-    scrimOpacity: 0.72,
+    scrimOpacity: 0.78,
     gradient: "hero-br",
     accent: "none",
     warmGlow: true,
     copyPlacement: "hero-split",
-  },
-  momentum: {
-    image: ASCEND_IMAGES.lifestyleAirport,
-    imageClass: ASCEND_IMAGE_CLASS.lifestyleAirport,
-    imageAlt: "Ascend Theory — man in transit",
-    imagePosition: "center center",
+  }),
+  momentum: scene("momentum", {
     scroll: FIGMA_SCENE_SCROLL.story130,
     scrimOpacity: 0.85,
     gradient: "story-b",
     accent: "momentum-cool",
     copyPlacement: "bottom-16",
-  },
-  distraction: {
-    image: ASCEND_IMAGES.lifestyleCoastal,
-    imageClass: ASCEND_IMAGE_CLASS.lifestyleCoastal,
-    imageAlt: "Ascend Theory — coastal walk",
-    imagePosition: "center center",
+  }),
+  distraction: scene("distraction", {
     scroll: FIGMA_SCENE_SCROLL.story120,
     scrimOpacity: 0.88,
-    gradient: "story-b",
-    accent: "none",
-    copyPlacement: "bottom-16",
-  },
-  environment: {
-    image: ASCEND_IMAGES.lifestyleGolf,
-    imageClass: ASCEND_IMAGE_CLASS.lifestyleGolf,
-    imageAlt: "Ascend Theory — private environment",
-    imagePosition: "center center",
+    gradient: "story-b-distraction",
+    accent: "distraction-cool",
+    copyPlacement: "bottom-20",
+  }),
+  environment: scene("environment", {
     scroll: FIGMA_SCENE_SCROLL.story135,
     scrimOpacity: 0.8,
     gradient: "story-br-env",
-    accent: "none",
-    copyPlacement: "bottom-16",
-  },
-  solution: {
-    image: ASCEND_IMAGES.teamStudio,
-    imageClass: ASCEND_IMAGE_CLASS.teamStudio,
-    imageAlt: "Ascend Theory — structured environment",
-    imagePosition: "center center",
+    accent: "environment-warm",
+    copyPlacement: "bottom-20-left",
+  }),
+  solution: scene("solution", {
     scroll: FIGMA_SCENE_SCROLL.story125,
     scrimOpacity: 0.82,
     gradient: "solution-br",
     accent: "warm-55",
     copyPlacement: "center-left",
-  },
-  howItWorks: {
-    image: ASCEND_IMAGES.editorialArchitecture,
-    imageClass: ASCEND_IMAGE_CLASS.editorialArchitecture,
-    imageAlt: "Ascend Theory — discipline and systems",
-    imagePosition: "center center",
+  }),
+  howItWorks: scene("howItWorks", {
     scroll: FIGMA_SCENE_SCROLL.story120,
     scrimOpacity: 0.82,
     gradient: "story-b-flat",
-    accent: "none",
+    accent: "how-it-works-film",
     copyPlacement: "center-left",
-  },
-  whatYouBuild: {
-    image: ASCEND_IMAGES.teamStudio,
-    imageClass: ASCEND_IMAGE_CLASS.teamStudio,
-    imageAlt: "Ascend Theory — what you build",
-    imagePosition: "center center",
+  }),
+  whatYouBuild: scene("whatYouBuild", {
     scroll: FIGMA_SCENE_SCROLL.story125,
     scrimOpacity: 0.78,
     gradient: "story-bl",
-    accent: "warm-55",
+    accent: "warm-40",
     copyPlacement: "center-left",
-  },
-  brotherhood: {
-    image: ASCEND_IMAGES.brotherhoodDining,
-    imageClass: ASCEND_IMAGE_CLASS.brotherhoodDining,
-    imageAlt: "Ascend Theory — brotherhood",
-    imagePosition: "center center",
+  }),
+  brotherhood: scene("brotherhood", {
     scroll: FIGMA_SCENE_SCROLL.story130,
     scrimOpacity: 0.76,
     gradient: "brotherhood-tr",
     accent: "brotherhood-warm",
     copyPlacement: "bottom-20-left",
-  },
+  }),
 } as const satisfies Record<string, WorldSceneConfig>;
 
 export type WorldPricingTier = {

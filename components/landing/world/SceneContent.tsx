@@ -32,6 +32,7 @@ export function SceneContent({
       className={cn(
         "world-scene-copy world-copy-enter",
         placement === "bottom-16" && "world-copy--bottom-16",
+        placement === "bottom-20" && "world-copy--bottom-20",
         placement === "bottom-20-left" && "world-copy--bottom-20-left",
         placement === "center-left" && "world-copy--center-left",
         innerClassName,

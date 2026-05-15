@@ -1,0 +1,77 @@
+{
+  "unique": [
+    "https://images.unsplash.com/photo-1610899632923-3751bc4b427a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "https://images.unsplash.com/photo-1633070374521-b45f91ea5cec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "https://images.unsplash.com/photo-1590501949668-2442efd4d3d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "https://images.unsplash.com/photo-1599718100450-8c59eed42a40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "https://images.unsplash.com/photo-1738748444676-113d30c9a25b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "https://images.unsplash.com/photo-1699766868222-56056eb963ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+    "https://images.unsplash.com/photo-1771408662069-7a78b1942801?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080"
+  ],
+  "order": [
+    {
+      "url": "https://images.unsplash.com/photo-1610899632923-3751bc4b427a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+      "idx": 170414
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1633070374521-b45f91ea5cec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+      "idx": 172761
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1590501949668-2442efd4d3d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+      "idx": 174809
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1599718100450-8c59eed42a40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+      "idx": 176978
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1738748444676-113d30c9a25b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+      "idx": 179381
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1699766868222-56056eb963ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+      "idx": 181864
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1771408662069-7a78b1942801?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+      "idx": 189215
+    }
+  ],
+  "rails": [
+    {
+      "text": "How It Works",
+      "scrollVh": 135,
+      "image": "https://images.unsplash.com/photo-1599718100450-8c59eed42a40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+      "allImages": [
+        "https://images.unsplash.com/photo-1599718100450-8c59eed42a40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+        "https://images.unsplash.com/photo-1738748444676-113d30c9a25b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+        "https://images.unsplash.com/photo-1699766868222-56056eb963ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080"
+      ],
+      "scrim": 0.95,
+      "scale": null
+    },
+    {
+      "text": "What You Build",
+      "scrollVh": 125,
+      "image": "https://images.unsplash.com/photo-1738748444676-113d30c9a25b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+      "allImages": [
+        "https://images.unsplash.com/photo-1738748444676-113d30c9a25b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+        "https://images.unsplash.com/photo-1699766868222-56056eb963ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080"
+      ],
+      "scrim": 0.9,
+      "scale": null
+    },
+    {
+      "text": "The Brotherhood",
+      "scrollVh": 125,
+      "image": "https://images.unsplash.com/photo-1738748444676-113d30c9a25b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+      "allImages": [
+        "https://images.unsplash.com/photo-1738748444676-113d30c9a25b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
+        "https://images.unsplash.com/photo-1771408662069-7a78b1942801?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080"
+      ],
+      "scrim": 0.9,
+      "scale": null
+    }
+  ]
+}

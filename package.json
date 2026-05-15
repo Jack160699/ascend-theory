@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "optimize:images": "node scripts/optimize-cinematic-images.mjs"
+    "optimize:images": "node scripts/optimize-cinematic-images.mjs",
+    "world:images": "node scripts/download-world-images.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
