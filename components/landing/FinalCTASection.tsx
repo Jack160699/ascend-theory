@@ -16,27 +16,35 @@ export function FinalCTASection() {
     <section
       id="apply"
       data-conversion-zone="final"
-      className="world-section-pricing relative flex min-h-screen w-full flex-col items-center justify-center bg-[#0d0d0d] px-5"
+      className="relative flex min-h-screen w-full flex-col items-center justify-center bg-[#0d0d0d] px-5 py-32"
       aria-labelledby="final-cta-heading"
     >
       <div
-        className="world-dot-grid world-dot-grid--fine pointer-events-none absolute inset-0 opacity-[0.01]"
+        className="world-dot-grid world-dot-grid--fine pointer-events-none absolute inset-0 opacity-[0.015]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+        style={{
+          background:
+            "radial-gradient(ellipse 50% 40% at 50% 45%, rgba(255, 220, 180, 0.12) 0%, transparent 70%)",
+        }}
         aria-hidden
       />
 
       <div className="relative z-10 mx-auto max-w-lg text-center">
-        <p className="world-brand-mark mb-8 sm:mb-12">ASCEND THEORY</p>
-        <p className="mb-8 text-xs font-light uppercase tracking-[0.12em] text-white/55 sm:mb-10">
+        <p className="world-brand-mark mb-12">ASCEND THEORY</p>
+        <p className="mb-10 text-xs font-light uppercase tracking-[0.12em] text-white/55">
           A Structured Environment for Men
         </p>
 
-        <h2 id="final-cta-heading" className="world-display world-display--cta mb-6 sm:mb-7">
+        <h2 id="final-cta-heading" className="world-display world-display--cta mb-7">
           Ready to
           <br />
           rebuild yourself?
         </h2>
 
-        <p className="world-body mx-auto mb-8 max-w-md sm:mb-10">
+        <p className="world-body mx-auto mb-10 max-w-md">
           We help ambitious men build discipline,
           <br />
           accountability, and confidence through
@@ -44,7 +52,7 @@ export function FinalCTASection() {
           structured systems and brotherhood.
         </p>
 
-        <ul className="mx-auto mb-10 max-w-sm space-y-2.5 text-left sm:mb-12">
+        <ul className="mx-auto mb-12 max-w-sm space-y-2.5 text-left">
           {BULLETS.map((item) => (
             <li key={item} className="flex items-start gap-3">
               <span
@@ -60,13 +68,13 @@ export function FinalCTASection() {
           APPLY NOW
         </WorldButton>
 
-        <p className="mt-4 text-[10px] font-light tracking-[0.08em] text-white/35 sm:mt-5">
+        <p className="mt-5 text-[10px] font-light tracking-[0.08em] text-white/35">
           Limited spaces · Application required
         </p>
       </div>
 
       <p
-        className="absolute bottom-8 text-[7px] font-light tracking-[0.35em] text-white/12 sm:bottom-10"
+        className="absolute bottom-10 text-[7px] font-light tracking-[0.35em] text-white/12"
         suppressHydrationWarning
       >
         © {new Date().getFullYear()}

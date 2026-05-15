@@ -10,17 +10,13 @@ export function HeroSection() {
   return (
     <StickyScene
       id="hero"
-      image={scene.image}
-      imageAlt={scene.imageAlt}
-      imageClass={scene.imageClass}
-      imagePosition="center 38%"
+      scene={scene}
       priority
-      contentClassName="flex flex-col justify-between px-5 py-7 sm:py-8"
+      contentClassName="flex flex-col justify-between px-5 py-8"
     >
-      <p className="world-brand-mark world-hero-in relative z-10">ASCEND THEORY</p>
-
-      <SceneContent layout="bottom" innerClassName="pb-2 sm:pb-4">
-        <h1 className="world-display world-display--hero world-hero-in world-hero-in--delay">
+      <p className="world-brand-mark">ASCEND THEORY</p>
+      <SceneContent layout="bottom">
+        <h1 className="world-display world-display--hero">
           You know
           <br />
           you&apos;re wasting

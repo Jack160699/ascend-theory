@@ -2,7 +2,9 @@
 
 import { SceneContent } from "@/components/landing/world/SceneContent";
 import { StickyScene } from "@/components/landing/world/StickyScene";
+import { useIsMobileConversion } from "@/contexts/mobile-conversion";
 import { HERO_SCENES } from "@/lib/figma-world-content";
+import { FIGMA_SCENE_SCROLL, sceneScrollHeight } from "@/lib/world-scene-metrics";
 
 function ItemBlock({ title, body }: { title: string; body: string }) {
   return (
@@ -18,14 +20,11 @@ export function StoryJourney() {
     <>
       <StickyScene
         id="momentum"
-        image={HERO_SCENES.momentum.image}
-        imageAlt={HERO_SCENES.momentum.imageAlt}
-        imageClass={HERO_SCENES.momentum.imageClass}
-        imagePosition="center 40%"
+        scene={HERO_SCENES.momentum}
         contentClassName="flex items-end"
       >
         <SceneContent layout="bottom">
-          <h2 className="world-display world-display--lg mb-5 sm:mb-6">
+          <h2 className="world-display world-display--lg mb-6">
             You lost
             <br />
             momentum.
@@ -40,13 +39,11 @@ export function StoryJourney() {
 
       <StickyScene
         id="distraction"
-        image={HERO_SCENES.distraction.image}
-        imageAlt={HERO_SCENES.distraction.imageAlt}
-        imageClass={HERO_SCENES.distraction.imageClass}
+        scene={HERO_SCENES.distraction}
         contentClassName="flex items-end"
       >
         <SceneContent layout="bottom">
-          <h2 className="world-display world-display--md mb-5 sm:mb-6">
+          <h2 className="world-display world-display--md mb-6">
             You became
             <br />
             addicted to
@@ -63,14 +60,11 @@ export function StoryJourney() {
 
       <StickyScene
         id="environment"
-        image={HERO_SCENES.environment.image}
-        imageAlt={HERO_SCENES.environment.imageAlt}
-        imageClass={HERO_SCENES.environment.imageClass}
-        imagePosition="center 32%"
+        scene={HERO_SCENES.environment}
         contentClassName="flex items-end"
       >
         <SceneContent layout="bottom">
-          <h2 className="world-display world-display--md mb-5 sm:mb-6">
+          <h2 className="world-display world-display--md mb-6">
             You become
             <br />
             who you spend
@@ -87,14 +81,12 @@ export function StoryJourney() {
 
       <StickyScene
         id="solution"
-        image={HERO_SCENES.solution.image}
-        imageAlt={HERO_SCENES.solution.imageAlt}
-        imageClass={HERO_SCENES.solution.imageClass}
+        scene={HERO_SCENES.solution}
         contentClassName="flex items-center"
       >
         <SceneContent layout="center-left">
-          <p className="world-eyebrow mb-4 sm:mb-5">The Solution</p>
-          <h2 className="world-display world-display--sm mb-5 sm:mb-6">
+          <p className="world-eyebrow mb-5">The Solution</p>
+          <h2 className="world-display world-display--sm mb-6">
             ASCEND THEORY
             <br />
             is a structured
@@ -115,15 +107,12 @@ export function StoryJourney() {
 
       <StickyScene
         id="how-it-works"
-        image={HERO_SCENES.howItWorks.image}
-        imageAlt={HERO_SCENES.howItWorks.imageAlt}
-        imageClass={HERO_SCENES.howItWorks.imageClass}
-        imagePosition="55% 42%"
+        scene={HERO_SCENES.howItWorks}
         contentClassName="flex items-center"
       >
         <SceneContent layout="center-left" innerClassName="world-scene-copy--wide">
-          <p className="world-eyebrow mb-4 sm:mb-5">How It Works</p>
-          <div className="mb-2 space-y-4 sm:space-y-5">
+          <p className="world-eyebrow mb-5">How It Works</p>
+          <div className="mb-8 space-y-5">
             <ItemBlock
               title="Daily structured routines"
               body={"Morning systems. Execution frameworks.\nHabits that compound."}
@@ -142,15 +131,12 @@ export function StoryJourney() {
 
       <StickyScene
         id="what-you-build"
-        image={HERO_SCENES.whatYouBuild.image}
-        imageAlt={HERO_SCENES.whatYouBuild.imageAlt}
-        imageClass={HERO_SCENES.whatYouBuild.imageClass}
-        imagePosition="center 30%"
+        scene={HERO_SCENES.whatYouBuild}
         contentClassName="flex items-center"
       >
         <SceneContent layout="center-left" innerClassName="world-scene-copy--wide">
-          <p className="world-eyebrow mb-4 sm:mb-5">What You Build</p>
-          <div className="max-w-md space-y-4 sm:space-y-5">
+          <p className="world-eyebrow mb-5">What You Build</p>
+          <div className="max-w-md space-y-5">
             <ItemBlock
               title="Discipline & execution"
               body={"Daily routines. Consistent action.\nNo more starting and stopping."}
@@ -173,14 +159,12 @@ export function StoryJourney() {
 
       <StickyScene
         id="brotherhood"
-        image={HERO_SCENES.brotherhood.image}
-        imageAlt={HERO_SCENES.brotherhood.imageAlt}
-        imageClass={HERO_SCENES.brotherhood.imageClass}
+        scene={HERO_SCENES.brotherhood}
         contentClassName="flex items-end"
       >
         <SceneContent layout="bottom">
-          <p className="world-eyebrow mb-3 sm:mb-4">The Brotherhood</p>
-          <h2 className="world-display world-display--md mb-5 sm:mb-6">
+          <p className="world-eyebrow mb-4">The Brotherhood</p>
+          <h2 className="world-display world-display--md mb-6">
             Curated.
             <br />
             Accountable.
@@ -201,27 +185,33 @@ export function StoryJourney() {
 }
 
 function TransformationBeat() {
+  const isMobile = useIsMobileConversion();
+  const height = sceneScrollHeight(FIGMA_SCENE_SCROLL.transformation, isMobile);
+
   return (
     <section
       id="transformation"
-      className="flex min-h-[100svh] w-full flex-col items-center justify-center bg-[#0d0d0d] px-5"
+      className="world-transformation-rail relative w-full bg-[#0d0d0d]"
+      style={{ height }}
     >
-      <div className="world-transformation-panel max-w-lg text-center">
-        <p className="world-eyebrow mb-5 sm:mb-6">The Transformation</p>
-        <h2 className="world-display world-display--lg mb-6 sm:mb-8">
-          Confident.
-          <br />
-          Disciplined.
-          <br />
-          Unstoppable.
-        </h2>
-        <p className="world-body mx-auto max-w-md">
-          You rebuild yourself from the ground up.
-          <br />
-          This is where men become who they&apos;re
-          <br />
-          supposed to be.
-        </p>
+      <div className="sticky top-0 flex h-[100svh] flex-col items-center justify-center">
+        <div className="world-transformation-panel max-w-lg text-center">
+          <p className="world-eyebrow mb-6">The Transformation</p>
+          <h2 className="world-display world-display--transformation mb-8">
+            Confident.
+            <br />
+            Disciplined.
+            <br />
+            Unstoppable.
+          </h2>
+          <p className="world-body mx-auto max-w-md">
+            You rebuild yourself from the ground up.
+            <br />
+            This is where men become who they&apos;re
+            <br />
+            supposed to be.
+          </p>
+        </div>
       </div>
     </section>
   );
