@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Ascend Theory",
   description:
-    "A private AI-native framework for strategic execution — disciplined, cinematic, admission by review.",
+    "Discipline, focus, systems, and growth — for people who want more. Built for focused individuals.",
 };
 
 export default function RootLayout({

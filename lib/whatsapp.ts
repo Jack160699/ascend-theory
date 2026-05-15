@@ -10,13 +10,13 @@ export const ASCEND_WHATSAPP_ME_URL = "https://wa.me/447577300441";
 export const ASCEND_PHONE_DISPLAY = "+44 7577 300441";
 
 /** @deprecated Legacy sections — WORLD landing uses `WORLD_CTA` (see lib/world-cta.ts). */
-export const HERO_CTA_LABEL = "Enter The System" as const;
+export const HERO_CTA_LABEL = "Enter Now" as const;
 
 /** @deprecated Sticky bar disabled on WORLD landing. */
-export const STICKY_MOBILE_CTA_LABEL = "Enter The System" as const;
+export const STICKY_MOBILE_CTA_LABEL = "Enter Now" as const;
 
 /** @deprecated Legacy sections — WORLD landing Final uses `WORLD_CTA.beginTheAscent`. */
-export const FINAL_SECTION_CTA_LABEL = "Proceed To Review" as const;
+export const FINAL_SECTION_CTA_LABEL = "Begin Application" as const;
 
 /** Post-form handoff only — not shown on page surface. */
 export const MODAL_WHATSAPP_CTA_LABEL = "Continue on WhatsApp" as const;

@@ -7,12 +7,6 @@ import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { WORLD_CTA } from "@/lib/world-cta";
 import { WORLD_SCENE_MEDIA } from "@/lib/world-images";
 
-const BULLETS = [
-  "Doctrine-first execution architecture",
-  "AI-era intelligence married to discipline",
-  "Private surface — scarce, accountable, exacting",
-] as const;
-
 /**
  * Final conversion beat — cinematic plate + single CTA.
  */
@@ -38,39 +32,18 @@ export function FinalCTASection() {
       <WorldPanelAtmosphere grid="fine" vignette />
 
       <div className="world-cta-panel world-copy-enter relative z-10 mx-auto max-w-[clamp(20rem,90vw,32rem)] text-center">
-        <p className="world-cta-brand mb-[clamp(2rem,6vh,3rem)]">ASCEND THEORY</p>
-        <p className="world-cta-subline mb-[clamp(1.5rem,5vh,2.5rem)]">
-          Operating system for the relentlessly serious
-        </p>
+        <p className="world-cta-brand mb-[clamp(1.75rem,5vh,2.75rem)]">ASCEND THEORY</p>
 
-        <h2 id="final-cta-heading" className="world-display world-display--cta mb-7">
-          The ascent
-          <br />
-          is earned.
-          <br />
-          Admission is rare.
+        <h2 id="final-cta-heading" className="world-display world-display--cta mb-10 text-balance">
+          Ready To Ascend?
         </h2>
-
-        <p className="world-body mx-auto mb-10 max-w-md">
-          If you trade in leverage, patience, and long-range outcomes — step
-          forward. Humans read signal — not vanity metrics.
-        </p>
-
-        <ul className="world-cta-list mx-auto mb-12 max-w-sm">
-          {BULLETS.map((item) => (
-            <li key={item} className="world-cta-list-item">
-              <span className="world-cta-bullet" aria-hidden />
-              <span className="world-body--muted">{item}</span>
-            </li>
-          ))}
-        </ul>
 
         <WorldButton variant="solid-cta" onClick={() => openAssessment()}>
           {WORLD_CTA.beginTheAscent}
         </WorldButton>
 
-        <p className="world-cta-footnote">
-          Manual review · Silence is also information
+        <p className="world-cta-final-line text-balance">
+          In a distracted world, focus becomes power.
         </p>
       </div>
     </section>

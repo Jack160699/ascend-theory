@@ -24,16 +24,15 @@ export function MidAscentGate() {
         <p className="world-eyebrow mb-6">Admission</p>
         <h2
           id="mid-ascent-heading"
-          className="world-display world-display--mid-gate mb-8"
+          className="world-display world-display--mid-gate mb-8 text-balance"
         >
-          Built for people
+          The next step
           <br />
-          who finish.
+          is deliberate.
         </h2>
-        <p className="world-body mx-auto mb-12 max-w-md">
-          No spectacle. No mass-market kindness.
-          <br />
-          If your standard sounds like ours — request access.
+        <p className="world-body mx-auto mb-12 max-w-md text-pretty">
+          If you&apos;re aligned with what you read, tell us plainly. We respond
+          in order.
         </p>
         <WorldButton variant="outline" onClick={() => openAssessment()}>
           {WORLD_CTA.applyToJoin}

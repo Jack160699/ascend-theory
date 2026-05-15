@@ -2,7 +2,6 @@
 
 import {
   SceneContent,
-  StoryEyebrow,
   StoryHeadline,
 } from "@/components/landing/world/SceneContent";
 import { StickyScene } from "@/components/landing/world/StickyScene";
@@ -10,29 +9,22 @@ import { useIsMobileConversion } from "@/contexts/mobile-conversion";
 import { HERO_SCENES } from "@/lib/figma-world-content";
 import { FIGMA_SCENE_SCROLL, sceneScrollHeight } from "@/lib/world-scene-metrics";
 
-function ItemBlock({ title, body }: { title: string; body: string }) {
-  return (
-    <div>
-      <h3 className="world-story-item-title mb-1.5 tracking-tight">{title}</h3>
-      <p className="world-body--muted whitespace-pre-line">{body}</p>
-    </div>
-  );
-}
-
 export function StoryJourney() {
   return (
     <div className="world-story-flow world-continuum-narrative">
       <StickyScene id="momentum" scene={HERO_SCENES.momentum}>
         <SceneContent placement="bottom-16" display="lg">
           <StoryHeadline display="lg">
-            Drift compounds
+            Most People
             <br />
-            against you.
+            Stay Stuck
           </StoryHeadline>
-          <p className="world-body max-w-sm">
-            Ambition without cadence silently taxes
-            <br />
-            your attention — long before it taxes your results.
+          <p className="world-body max-w-xs whitespace-pre-line sm:max-w-sm">
+            {`Too distracted.
+Too comfortable.
+No direction.
+
+That’s why most people never grow.`}
           </p>
         </SceneContent>
       </StickyScene>
@@ -40,14 +32,15 @@ export function StoryJourney() {
       <StickyScene id="distraction" scene={HERO_SCENES.distraction}>
         <SceneContent placement="bottom-20" display="md">
           <StoryHeadline display="md">
-            Noise is
+            Everything Changes
             <br />
-            a design choice.
+            With Discipline
           </StoryHeadline>
-          <p className="world-body max-w-sm">
-            Each cheap input trains range downward.
-            <br />
-            Busy is not motion. Motion is not proof.
+          <p className="world-body max-w-xs whitespace-pre-line sm:max-w-sm">
+            {`Clear mind.
+Better decisions.
+Better execution.
+Better life.`}
           </p>
         </SceneContent>
       </StickyScene>
@@ -55,102 +48,70 @@ export function StoryJourney() {
       <StickyScene id="environment" scene={HERO_SCENES.environment}>
         <SceneContent placement="bottom-20-left" display="env">
           <StoryHeadline display="env">
-            Context
+            Built For The
             <br />
-            rewires the bar.
+            Modern World
           </StoryHeadline>
-          <p className="world-body max-w-sm">
-            Exposure sets your default faster than motivation.
-            <br />
-            Proximity is leverage — or liability.
+          <p className="world-body max-w-[min(20rem,100%)] whitespace-pre-line">
+            {`AI.
+Markets.
+Digital systems.
+Modern skills.
+
+The world is changing fast.
+You either adapt or stay behind.`}
           </p>
         </SceneContent>
       </StickyScene>
 
       <StickyScene id="solution" scene={HERO_SCENES.solution}>
         <SceneContent placement="center-left" display="sm">
-          <StoryEyebrow className={HERO_SCENES.solution.eyebrowMb ?? "mb-5"}>
-            Doctrine
-          </StoryEyebrow>
           <StoryHeadline display="sm">
-            ASCEND THEORY
+            This Is Not
             <br />
-            is operational
-            <br />
-            intelligence.
+            Motivation
           </StoryHeadline>
-          <p className="world-body max-w-md">
-            Not an audience. Not a curriculum. A disciplined standard for how
-            <br />
-            you think, commit, and execute when the price of softness is real.
+          <p className="world-body max-w-md whitespace-pre-line">
+            {`Motivation comes and goes.
+
+Systems stay.
+Discipline stays.
+Execution stays.`}
           </p>
         </SceneContent>
       </StickyScene>
 
       <StickyScene id="how-it-works" scene={HERO_SCENES.howItWorks}>
-        <SceneContent placement="center-left" display="sm" innerClassName="world-scene-copy--wide">
-          <StoryEyebrow className={HERO_SCENES.howItWorks.eyebrowMb ?? "mb-5"}>
-            Architecture
-          </StoryEyebrow>
-          <div className="mb-8 space-y-5">
-            <ItemBlock
-              title="Daily cadence stack"
-              body={"Morning protocol. Decision hygiene.\nRipple-free motion — no performance."}
-            />
-            <ItemBlock
-              title="Weekly pressure loop"
-              body={"Structured review.\nComfort is not currency — trajectory is."}
-            />
-            <ItemBlock
-              title="Closed operator surface"
-              body={"Signals, never spectators.\nThe room behaves like outcomes matter."}
-            />
-          </div>
-        </SceneContent>
-      </StickyScene>
-
-      <StickyScene id="what-you-build" scene={HERO_SCENES.whatYouBuild}>
-        <SceneContent placement="center-left" display="sm" innerClassName="world-scene-copy--wide">
-          <StoryEyebrow className={HERO_SCENES.whatYouBuild.eyebrowMb ?? "mb-5"}>
-            What compounds
-          </StoryEyebrow>
-          <div className="max-w-md space-y-5">
-            <ItemBlock
-              title="Execution distance"
-              body={"Shorter path to finished work.\nLess reset cost — higher terminal quality."}
-            />
-            <ItemBlock
-              title="Signal & composure"
-              body={"Language that stays clean under load.\nAuthority without volume."}
-            />
-            <ItemBlock
-              title="Capacity under load"
-              body={"Consistency when demand spikes.\nEnergy as infrastructure — not an alibi."}
-            />
-            <ItemBlock
-              title="Emotional range control"
-              body={"Measured responses in ambiguity.\nTemperament that survives scale."}
-            />
-          </div>
+        <SceneContent placement="center-left" display="sm">
+          <StoryHeadline display="sm">
+            For Serious
+            <br />
+            People Only
+          </StoryHeadline>
+          <p className="world-body max-w-md whitespace-pre-line">
+            {`People who want real growth.
+Real focus.
+Real direction.`}
+          </p>
         </SceneContent>
       </StickyScene>
 
       <StickyScene id="brotherhood" scene={HERO_SCENES.brotherhood}>
         <SceneContent placement="bottom-20-left" display="md">
-          <StoryEyebrow className={HERO_SCENES.brotherhood.eyebrowMb ?? "mb-4"}>
-            Alliance
-          </StoryEyebrow>
           <StoryHeadline display="md">
-            Small.
+            Built For Focused
             <br />
-            Serious.
-            <br />
-            Unavailable by default.
+            Individuals
           </StoryHeadline>
           <p className="world-body max-w-sm">
-            Calibrated proximity — operators who finish,
-            <br />
-            listen cold, and protect the standard.
+            Ascend Theory is designed for people serious about growth,
+            discipline, and modern execution.
+          </p>
+          <p
+            className="world-trust-keywords mt-8 max-w-sm"
+            aria-label="Focus areas"
+          >
+            AI • Markets • Systems • Execution
           </p>
         </SceneContent>
       </StickyScene>
@@ -176,18 +137,13 @@ function TransformationBeat() {
         <div className="world-scene-handoff world-scene-handoff--top" aria-hidden />
         <div className="world-scene-handoff world-scene-handoff--bottom" aria-hidden />
         <div className="world-transformation-panel world-copy-enter world-copy-integrated">
-          <p className="world-eyebrow mb-6">Recalibration</p>
-          <h2 className="world-display world-display--transformation mb-8">
-            Still.
+          <h2 className="world-display world-display--transformation mb-8 text-balance">
+            Stay clear.
             <br />
-            Directed.
-            <br />
-            Proof-weighted.
+            Stay moving.
           </h2>
-          <p className="world-body mx-auto max-w-md">
-            The shift lives in allocation — where focus goes,
-            <br />
-            what you refuse, and how quietly you compound evidence.
+          <p className="world-body mx-auto max-w-md text-pretty">
+            Same world. Fewer distractions. Cleaner choices.
           </p>
         </div>
       </div>
