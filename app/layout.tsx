@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { AscendFilmGrain } from "@/components/AscendFilmGrain";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
 import { CookieNotice } from "@/components/CookieNotice";
+import {
+  clarityBootstrapScript,
+  shouldLoadMicrosoftClarity,
+} from "@/lib/clarity";
 import { Footer } from "@/sections/Footer";
 import "./globals.css";
 
@@ -35,6 +40,14 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-black text-white">
         {/* Meta Pixel: single global injection + route-bound PageViews (production or DEBUG). */}
         <MetaPixel />
+        {/* Microsoft Clarity: production only — see lib/clarity.ts */}
+        {shouldLoadMicrosoftClarity() ? (
+          <Script
+            id="microsoft-clarity"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{ __html: clarityBootstrapScript() }}
+          />
+        ) : null}
         <div className="flex min-h-full flex-1 flex-col">{children}</div>
         <Footer />
         <CookieNotice />
