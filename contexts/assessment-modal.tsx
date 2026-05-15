@@ -1,6 +1,7 @@
 "use client";
 
 import { AssessmentModal } from "@/components/AssessmentModal";
+import { event } from "@/lib/fpixel";
 import type { TierKey } from "@/lib/lead-context";
 import {
   createContext,
@@ -28,6 +29,11 @@ export function AssessmentModalProvider({ children }: { children: ReactNode }) {
   const [tier, setTier] = useState<TierKey | null>(null);
 
   const openAssessment = useCallback((key?: TierKey) => {
+    /* Meta Pixel — high-intent CTA toward intake (hero, mid-scroll, pricing context, legacy buttons). */
+    event("InitiateCheckout", {
+      content_name: "open_application",
+      ...(key ? { content_category: key } : {}),
+    });
     setTier(key ?? null);
     setOpen(true);
   }, []);

@@ -5,6 +5,7 @@ import { WorldPanelAtmosphere } from "@/components/landing/world/WorldPanelAtmos
 import { useCinematicScrollLock } from "@/contexts/cinematic-scroll";
 import { WORLD_PRICING_TIERS } from "@/lib/figma-world-content";
 import type { TierKey } from "@/lib/lead-context";
+import { event } from "@/lib/fpixel";
 import { lockModalScroll } from "@/lib/modal-scroll-lock";
 import { DURATION_OVERLAY_SLOW, txReveal } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -108,6 +109,10 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
       goal: fields.goal.trim(),
       challenge: fields.challenge.trim(),
     };
+
+    /* Meta Pixel — qualified lead captured; WhatsApp is the exit contact surface. */
+    event("Lead", { content_name: "website_application_submitted" });
+    event("Contact", { content_name: "whatsapp_handoff_clicked" });
 
     const url = buildWebsiteApplicationWhatsAppUrl(payload);
     onClose();
