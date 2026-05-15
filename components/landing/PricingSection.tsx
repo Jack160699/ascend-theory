@@ -93,7 +93,7 @@ export function PricingSection() {
     <section
       id="pricing"
       data-conversion-zone="pricing"
-      className="world-pricing-section world-atmosphere-rail relative min-h-screen w-full bg-[#0d0d0d] py-32"
+      className="world-pricing-section world-atmosphere-rail world-continuum-rail relative min-h-screen w-full bg-[#0d0d0d] py-32"
       aria-labelledby="pricing-heading"
     >
       <WorldPanelAtmosphere grid="standard" />
@@ -127,9 +127,9 @@ export function PricingSection() {
         </div>
 
         <p className="world-pricing-closer world-copy-enter">
-          All tiers require application. We build environments
+          All tiers require application.
           <br />
-          for men who are serious about transformation.
+          Environments are built for men who are serious about transformation.
         </p>
       </div>
     </section>

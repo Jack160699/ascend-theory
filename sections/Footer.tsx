@@ -1,10 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ASCEND_PHONE_DISPLAY,
-  ASCEND_WHATSAPP_ME_URL,
-} from "@/lib/whatsapp";
+import { usePathname } from "next/navigation";
 
 const legal = [
   { href: "/privacy", label: "Privacy" },
@@ -13,6 +10,9 @@ const legal = [
 ] as const;
 
 export function Footer() {
+  const pathname = usePathname();
+  const isWorldHome = pathname === "/";
+
   return (
     <footer
       id="site-footer"
@@ -21,16 +21,11 @@ export function Footer() {
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
         <div>
           <p className="world-brand-mark text-white/40">ASCEND THEORY</p>
-          <p className="mt-3 text-[11px] font-light text-white/35">
-            <a
-              href={ASCEND_WHATSAPP_ME_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/45 transition-colors hover:text-white/70"
-            >
-              WhatsApp · {ASCEND_PHONE_DISPLAY}
-            </a>
-          </p>
+          {!isWorldHome ? (
+            <p className="mt-3 text-[11px] font-light leading-relaxed text-white/35">
+              Private transformation architecture.
+            </p>
+          ) : null}
         </div>
         <nav
           aria-label="Legal"

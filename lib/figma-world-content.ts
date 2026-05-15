@@ -1,4 +1,5 @@
 import type { TierKey } from "@/lib/lead-context";
+import { WORLD_CTA } from "@/lib/world-cta";
 import {
   WORLD_SCENE_MEDIA,
   type WorldSceneImageKey,
@@ -172,7 +173,7 @@ export const WORLD_PRICING_TIERS: WorldPricingTier[] = [
     description:
       "Foundation systems. Daily discipline frameworks. Structured accountability to rebuild consistency.",
     features: [],
-    cta: "BEGIN",
+    cta: WORLD_CTA.requestEntry,
     ctaVariant: "outline",
   },
   {
@@ -187,7 +188,7 @@ export const WORLD_PRICING_TIERS: WorldPricingTier[] = [
       "Execution pressure and structured routines",
       "Access to curated brotherhood environment",
     ],
-    cta: "ENTER",
+    cta: WORLD_CTA.beginAssessment,
     ctaVariant: "solid",
     recommended: true,
   },
@@ -203,9 +204,8 @@ export const WORLD_PRICING_TIERS: WorldPricingTier[] = [
       "Identity-level environmental transformation",
       "Selective brotherhood of serious men",
     ],
-    cta: "APPLY FOR ₹35K",
+    cta: WORLD_CTA.privateApplication,
     ctaVariant: "outline",
-    secondaryCta: "APPLY FOR ₹55K",
     footnote: "Selective acceptance · Application required",
   },
 ];

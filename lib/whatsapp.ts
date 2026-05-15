@@ -9,17 +9,17 @@ export const ASCEND_WHATSAPP_ME_URL = "https://wa.me/919584735857";
 /** Display format for footer and prefill copy. */
 export const ASCEND_PHONE_DISPLAY = "9584735857";
 
-/** Hero — primary conversion (modal). */
-export const HERO_CTA_LABEL = "Apply Now" as const;
+/** @deprecated Legacy sections — prefer `WORLD_CTA` on WORLD landing. */
+export const HERO_CTA_LABEL = "Begin Assessment" as const;
 
-/** Mobile sticky bar — opens modal after scroll threshold. */
-export const STICKY_MOBILE_CTA_LABEL = "Apply Now" as const;
+/** @deprecated Sticky bar disabled on WORLD landing. */
+export const STICKY_MOBILE_CTA_LABEL = "Begin Assessment" as const;
 
-/** Final section — opens modal. */
-export const FINAL_SECTION_CTA_LABEL = "Apply Now" as const;
+/** @deprecated Legacy sections — prefer `WORLD_CTA.privateApplication`. */
+export const FINAL_SECTION_CTA_LABEL = "Private Application" as const;
 
-/** Application modal — WhatsApp handoff. */
-export const MODAL_WHATSAPP_CTA_LABEL = "Open WhatsApp" as const;
+/** Post-form handoff only — not shown on page surface. */
+export const MODAL_WHATSAPP_CTA_LABEL = "Continue on WhatsApp" as const;
 
 /** Same wa.me target; optional prefill for handoff messages. */
 export function ascendWhatsAppUrl(prefill?: string): string {
@@ -62,9 +62,6 @@ export function formatWebsiteApplicationWhatsAppBody(
     "I came through the website application.",
     "",
     "— Sent from Ascend Theory",
-    "",
-    "Phone number:",
-    ASCEND_PHONE_DISPLAY,
   ].join("\n");
 }
 

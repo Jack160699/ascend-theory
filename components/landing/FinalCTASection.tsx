@@ -4,6 +4,7 @@ import { WorldButton } from "@/components/landing/world/WorldButton";
 import { WorldPanelAtmosphere } from "@/components/landing/world/WorldPanelAtmosphere";
 import { WorldSceneImage } from "@/components/landing/world/WorldSceneImage";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
+import { WORLD_CTA } from "@/lib/world-cta";
 import { WORLD_SCENE_MEDIA } from "@/lib/world-images";
 
 const BULLETS = [
@@ -23,7 +24,7 @@ export function FinalCTASection() {
     <section
       id="apply"
       data-conversion-zone="final"
-      className="world-cta-section world-atmosphere-rail relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-[#0d0d0d] px-5 py-32"
+      className="world-cta-section world-atmosphere-rail world-continuum-rail relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-[#0d0d0d] px-5 py-32"
       aria-labelledby="final-cta-heading"
     >
       <div className="world-cta-backdrop absolute inset-0" aria-hidden>
@@ -64,15 +65,11 @@ export function FinalCTASection() {
         </ul>
 
         <WorldButton variant="solid-cta" onClick={() => openAssessment()}>
-          APPLY NOW
+          {WORLD_CTA.privateApplication}
         </WorldButton>
 
         <p className="world-cta-footnote">Limited spaces · Application required</p>
       </div>
-
-      <p className="world-cta-copyright" suppressHydrationWarning>
-        © {new Date().getFullYear()}
-      </p>
     </section>
   );
 }

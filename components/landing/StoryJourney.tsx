@@ -21,7 +21,7 @@ function ItemBlock({ title, body }: { title: string; body: string }) {
 
 export function StoryJourney() {
   return (
-    <div className="world-story-flow">
+    <div className="world-story-flow world-continuum-narrative">
       <StickyScene id="momentum" scene={HERO_SCENES.momentum}>
         <SceneContent placement="bottom-16" display="lg">
           <StoryHeadline display="lg">
@@ -175,12 +175,15 @@ function TransformationBeat() {
   return (
     <section
       id="transformation"
-      className="world-transformation-rail world-atmosphere-rail world-story-rail relative w-full"
+      className="world-transformation-rail world-atmosphere-rail world-story-rail world-continuum-rail relative w-full"
       style={{ height }}
     >
       <div className="sticky top-0 flex h-screen min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-[#0d0d0d]">
         <div className="world-transformation-glow" aria-hidden />
-        <div className="world-transformation-panel world-copy-enter">
+        <div className="world-transformation-continuity" aria-hidden />
+        <div className="world-scene-handoff world-scene-handoff--top" aria-hidden />
+        <div className="world-scene-handoff world-scene-handoff--bottom" aria-hidden />
+        <div className="world-transformation-panel world-copy-enter world-copy-integrated">
           <p className="world-eyebrow mb-6">The Transformation</p>
           <h2 className="world-display world-display--transformation mb-8">
             Confident.

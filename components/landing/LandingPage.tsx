@@ -7,7 +7,7 @@ import { StoryJourney } from "./StoryJourney";
 
 export function LandingPage() {
   return (
-    <div className="world-canvas world-atmosphere">
+    <div className="world-canvas world-atmosphere world-continuum">
       <HeroSection />
       <StoryJourney />
       <PricingSection />

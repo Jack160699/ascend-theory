@@ -29,7 +29,7 @@ export function SceneContent({
   if (placement === "hero-split") {
     return (
       <div className={cn("world-hero-copy pb-12", className)}>
-        <div className={cn("world-scene-copy world-copy-enter", innerClassName)}>
+        <div className={cn("world-scene-copy world-copy-enter world-copy-integrated", innerClassName)}>
           {children}
         </div>
       </div>
@@ -64,7 +64,13 @@ export function StoryHeadline({
   children: ReactNode;
 }) {
   return (
-    <h2 className={cn("world-display world-story-headline mb-6", DISPLAY_CLASS[display], className)}>
+    <h2
+      className={cn(
+        "world-display world-story-headline world-copy-anchor mb-7",
+        DISPLAY_CLASS[display],
+        className,
+      )}
+    >
       {children}
     </h2>
   );

@@ -31,6 +31,7 @@ export function StickyScene({
   return (
     <section
       id={id}
+      data-beat={id}
       className="world-scene-rail world-atmosphere-rail world-story-rail relative w-full bg-[#0d0d0d]"
       style={{ height: railHeight }}
     >
@@ -70,6 +71,9 @@ export function StickyScene({
           ) : null}
           <div className="world-scene-vignette world-scene-vignette--story absolute inset-0" />
           <div className="world-scene-continuity absolute inset-0" />
+          <div className="world-scene-emotion absolute inset-0" aria-hidden />
+          <div className="world-scene-handoff world-scene-handoff--top" aria-hidden />
+          <div className="world-scene-handoff world-scene-handoff--bottom" aria-hidden />
         </div>
 
         <div
