@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../styles/premium.css";
+@import "../styles/figma-world.css";
 
 :root {
   /* Cinematic V2 — scroll progression (set by MasterSceneOrchestrator; defaults for SSR) */

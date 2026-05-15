@@ -1,23 +1,17 @@
 "use client";
 
-import { BrotherhoodSection } from "./BrotherhoodSection";
 import { FinalCTASection } from "./FinalCTASection";
 import { HeroSection } from "./HeroSection";
-import { PhilosophySection } from "./PhilosophySection";
 import { PricingSection } from "./PricingSection";
-import { SystemSection } from "./SystemSection";
-import { TransformationSection } from "./TransformationSection";
+import { StoryJourney } from "./StoryJourney";
 
 export function LandingPage() {
   return (
-    <>
+    <div className="world-canvas">
       <HeroSection />
-      <PhilosophySection />
-      <SystemSection />
-      <BrotherhoodSection />
-      <TransformationSection />
+      <StoryJourney />
       <PricingSection />
       <FinalCTASection />
-    </>
+    </div>
   );
 }

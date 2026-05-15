@@ -6,15 +6,6 @@ import {
   ASCEND_WHATSAPP_ME_URL,
 } from "@/lib/whatsapp";
 
-const quick = [
-  { href: "/#philosophy", label: "Philosophy" },
-  { href: "/#system", label: "System" },
-  { href: "/#brotherhood", label: "Brotherhood" },
-  { href: "/#transformation", label: "Proof" },
-  { href: "/#pricing", label: "Pricing" },
-  { href: "/#apply", label: "Apply" },
-] as const;
-
 const legal = [
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
@@ -25,72 +16,43 @@ export function Footer() {
   return (
     <footer
       id="site-footer"
-      className="relative overflow-hidden border-t border-[color:var(--ascend-border)] bg-ascend-surface px-6 py-9 sm:px-10 sm:py-12 lg:pl-14 lg:pr-12 lg:py-14"
+      className="border-t border-white/[0.06] bg-[#0d0d0d] px-5 py-10"
     >
-      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between sm:gap-10 lg:gap-12">
-        <div className="max-w-md">
-          <p className="ascend-type-eyebrow text-zinc-600">Ascend Theory</p>
-          <p className="ascend-prose-calm mt-4 text-zinc-600">
-            Private mentorship — selective intake, manual review, serious room
-            only.
-          </p>
-          <p className="mt-4 text-[12px] text-zinc-600">
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
+        <div>
+          <p className="world-brand-mark text-white/40">ASCEND THEORY</p>
+          <p className="mt-3 text-[11px] font-light text-white/35">
             <a
               href={ASCEND_WHATSAPP_ME_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-zinc-500 transition-colors duration-[var(--ascend-hover-duration)] hover:text-zinc-300"
+              className="text-white/45 transition-colors hover:text-white/70"
             >
               WhatsApp · {ASCEND_PHONE_DISPLAY}
             </a>
           </p>
         </div>
         <nav
-          aria-label="Footer"
-          className="flex flex-wrap gap-x-8 gap-y-3 sm:justify-end"
+          aria-label="Legal"
+          className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] font-light tracking-wide text-white/40"
         >
-          {quick.map((l) => (
+          {legal.map((item) => (
             <Link
-              key={l.href}
-              href={l.href}
-              className="text-[12px] font-medium tracking-[0.02em] text-zinc-600 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:text-zinc-300"
+              key={item.href}
+              href={item.href}
+              className="transition-colors hover:text-white/65"
             >
-              {l.label}
+              {item.label}
             </Link>
           ))}
         </nav>
       </div>
-      <div className="relative z-10 mx-auto mt-10 max-w-6xl border-t border-[color:var(--ascend-border)] pt-6 sm:mt-12">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8">
-          <p
-            className="text-left text-[11px] leading-relaxed text-zinc-700"
-            suppressHydrationWarning
-          >
-            © {new Date().getFullYear()} Ascend Theory. Mentor capacity intentionally
-            limited.
-          </p>
-          <nav
-            aria-label="Legal and policies"
-            className="flex flex-wrap items-center gap-x-1 gap-y-1.5 text-[11px] tracking-[0.02em] text-zinc-700"
-          >
-            {legal.map((item, i) => (
-              <span key={item.href} className="inline-flex items-center">
-                {i > 0 ? (
-                  <span className="px-1.5 text-zinc-800 select-none" aria-hidden>
-                    ·
-                  </span>
-                ) : null}
-                <Link
-                  href={item.href}
-                  className="text-zinc-600 transition-colors duration-[var(--ascend-hover-duration)] ease-[var(--ascend-hover-ease)] hover:text-zinc-400"
-                >
-                  {item.label}
-                </Link>
-              </span>
-            ))}
-          </nav>
-        </div>
-      </div>
+      <p
+        className="mx-auto mt-8 max-w-2xl text-center text-[10px] font-light tracking-[0.08em] text-white/25"
+        suppressHydrationWarning
+      >
+        © {new Date().getFullYear()} Ascend Theory
+      </p>
     </footer>
   );
 }

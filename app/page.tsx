@@ -10,7 +10,7 @@ export default function Home() {
         <MobileConversionProvider>
           <main
             id="ascend-main"
-            className="min-h-screen overflow-x-clip bg-ascend-canvas pb-[max(3.25rem,env(safe-area-inset-bottom)+2.75rem)] text-white antialiased sm:pb-16 lg:pb-20"
+            className="min-h-screen overflow-x-clip bg-[#0d0d0d] text-white antialiased"
           >
             <LandingPage />
           </main>

@@ -1,0 +1,177 @@
+/* ASCEND THEORY — WORLD SYSTEM (Figma site parity) */
+
+.world-canvas {
+  background-color: #0d0d0d;
+  color: #fff;
+}
+
+.world-dot-grid {
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 255, 255, 0.8) 1px,
+    transparent 1px
+  );
+  background-size: 56px 56px;
+}
+
+.world-dot-grid--fine {
+  background-size: 48px 48px;
+}
+
+.world-warm-glow {
+  background: radial-gradient(
+    ellipse 60% 50% at 70% 30%,
+    rgba(255, 220, 180, 0.25) 0%,
+    transparent 60%
+  );
+}
+
+.world-warm-glow--center {
+  background: radial-gradient(
+    ellipse 50% 40% at 50% 45%,
+    rgba(255, 220, 180, 0.12) 0%,
+    transparent 70%
+  );
+}
+
+.world-brand-mark {
+  font-size: 7px;
+  font-weight: 300;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.world-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 300;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.world-display {
+  font-weight: 300;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.world-display--hero {
+  font-size: clamp(3.2rem, 15vw, 6rem);
+}
+
+.world-display--lg {
+  font-size: clamp(2.8rem, 13.5vw, 5.8rem);
+}
+
+.world-display--md {
+  font-size: clamp(2.5rem, 12.5vw, 5.5rem);
+}
+
+.world-display--sm {
+  font-size: clamp(2.4rem, 12vw, 5.2rem);
+}
+
+.world-display--pricing {
+  font-size: clamp(2.2rem, 11vw, 4.5rem);
+}
+
+.world-display--cta {
+  font-size: clamp(2.8rem, 14vw, 6rem);
+}
+
+.world-body {
+  font-size: 0.875rem;
+  font-weight: 300;
+  line-height: 1.625;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.world-body--muted {
+  font-size: 0.75rem;
+  font-weight: 300;
+  line-height: 1.625;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.world-tier-name {
+  font-size: clamp(0.7rem, 3vw, 0.85rem);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+
+.world-tier-price {
+  font-size: clamp(1.8rem, 8vw, 2.5rem);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.world-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 3rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.75rem;
+  font-weight: 300;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #fff;
+  transition: background-color 300ms ease, transform 150ms ease;
+}
+
+.world-btn-outline:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.world-btn-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 4rem;
+  background: #fff;
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  transition: transform 150ms ease, opacity 150ms ease;
+}
+
+.world-btn-solid:hover {
+  opacity: 0.95;
+}
+
+.world-btn-solid--cta {
+  padding: 1.5rem 6rem;
+}
+
+.world-recommended {
+  font-size: 9px;
+  font-weight: 300;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.25rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.world-bullet {
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-btn-outline,
+  .world-btn-solid {
+    transition: none;
+  }
+}
