@@ -40,8 +40,9 @@ export function WorldSceneImage({
       priority={priority}
       loading={priority ? "eager" : "lazy"}
       fetchPriority={priority ? "high" : "auto"}
-      quality={priority ? 82 : 72}
+      quality={priority ? 82 : 68}
       sizes="100vw"
+      decoding="async"
       className={cn("object-cover", className)}
       style={{ objectPosition: media.objectPosition }}
       onError={onError}

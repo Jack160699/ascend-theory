@@ -6,14 +6,234 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* --- Image drift (1 → 1.04) --- */
+/* --- Global atmosphere (Phase 1) — continuity + cinematic black --- */
+
+.world-atmosphere {
+  --world-black: #0d0d0d;
+  --world-black-rgb: 13, 13, 13;
+  background-color: var(--world-black);
+}
+
+.world-atmosphere-rail {
+  position: relative;
+  background-color: var(--world-black);
+}
+
+/* Soft bleed between sticky scenes — hero → story → story */
+.world-hero-rail::after,
+.world-atmosphere-rail:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 12;
+  height: min(22vh, 180px);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(var(--world-black-rgb), 0.28) 50%,
+    rgba(var(--world-black-rgb), 0.55) 78%,
+    var(--world-black) 100%
+  );
+}
+
+.world-atmosphere-rail:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 12;
+  height: min(20vh, 160px);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--world-black) 0%,
+    rgba(var(--world-black-rgb), 0.5) 30%,
+    rgba(var(--world-black-rgb), 0.15) 65%,
+    transparent 100%
+  );
+}
+
+.world-story-flow {
+  position: relative;
+}
+
+/* --- Hero (Figma WORLD SYSTEM) — film frame --- */
+
+.world-hero-rail {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100svh;
+}
+
+.world-hero-backdrop {
+  isolation: isolate;
+}
+
+.world-hero-media {
+  position: absolute;
+  inset: -3%;
+  transform: scale(1);
+  transform-origin: center center;
+  will-change: transform;
+  animation: world-hero-drift 48s ease-in-out infinite alternate;
+}
+
+@keyframes world-hero-drift {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.03);
+  }
+}
+
+/* Figma: full #0d0d0d film plate ~75% at rest */
+.world-hero-film {
+  pointer-events: none;
+  background-color: var(--world-black);
+  opacity: 0.75;
+}
+
+/* Lifts top/mid architecture out of flat wash — shadow detail preserved */
+.world-hero-arch-lift {
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 32%,
+    rgba(var(--world-black-rgb), 0.12) 62%,
+    rgba(var(--world-black-rgb), 0.28) 100%
+  );
+}
+
+.world-hero-gradient {
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom right,
+    transparent 0%,
+    rgba(var(--world-black-rgb), 0.6) 50%,
+    rgba(var(--world-black-rgb), 0.9) 100%
+  );
+}
+
+.world-hero-warm {
+  pointer-events: none;
+  opacity: 0.2;
+  background: radial-gradient(
+    ellipse 60% 50% at 70% 30%,
+    rgba(255, 220, 180, 0.25) 0%,
+    transparent 60%
+  );
+}
+
+.world-hero-vignette {
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 95% 75% at 50% 100%,
+      rgba(var(--world-black-rgb), 0.38) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 50% 38% at 0% 45%,
+      rgba(var(--world-black-rgb), 0.28) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse 42% 32% at 100% 8%,
+      rgba(var(--world-black-rgb), 0.18) 0%,
+      transparent 48%
+    );
+}
+
+.world-hero-brand {
+  font-size: 7px;
+  font-weight: 300;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  opacity: 0;
+  animation: world-hero-brand-in 1.5s ease forwards;
+  animation-delay: 0.5s;
+}
+
+.world-hero-headline {
+  width: 100%;
+  opacity: 0;
+  animation: world-hero-headline-in 1.2s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+  animation-delay: 1s;
+}
+
+.world-hero-display {
+  margin: 0;
+  font-weight: 300;
+  font-size: clamp(3.2rem, 15vw, 6rem);
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+@keyframes world-hero-brand-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes world-hero-headline-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 639px) {
+  .world-hero-media {
+    inset: -2%;
+    animation-duration: 56s;
+  }
+
+  .world-hero-film {
+    opacity: 0.78;
+  }
+
+  .world-hero-display {
+    font-size: clamp(2.85rem, 14vw, 5.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-hero-media {
+    animation: none;
+    transform: scale(1.015);
+  }
+
+  .world-hero-brand,
+  .world-hero-headline {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+}
+
+/* --- Image drift (1 → 1.03) — story scenes --- */
 
 .world-scene-media {
   position: absolute;
-  inset: -4%;
+  inset: -3%;
   transform: scale(1);
   transform-origin: center center;
-  animation: world-scene-drift 40s ease-in-out infinite alternate;
+  will-change: transform;
+  animation: world-scene-drift 48s ease-in-out infinite alternate;
 }
 
 @keyframes world-scene-drift {
@@ -21,16 +241,7 @@
     transform: scale(1);
   }
   to {
-    transform: scale(1.04);
-  }
-}
-
-@keyframes world-scene-drift-subtle {
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.025);
+    transform: scale(1.03);
   }
 }
 
@@ -40,13 +251,30 @@
   isolation: isolate;
 }
 
-.world-scene-scrim,
+.world-scene-film,
+.world-scene-lift,
 .world-scene-gradient,
 .world-scene-accent,
-.world-scene-warm,
 .world-scene-vignette,
 .world-scene-continuity {
   pointer-events: none;
+}
+
+/* Figma film plate — exact /XX opacity, not stacked flat black */
+.world-scene-film {
+  --world-film: 0.85;
+  background-color: var(--world-black);
+  opacity: var(--world-film);
+}
+
+/* Preserves subject / architecture in upper frame */
+.world-scene-lift {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 40%,
+    rgba(var(--world-black-rgb), 0.05) 100%
+  );
 }
 
 /* Exact Figma gradient classes */
@@ -60,65 +288,66 @@
 }
 
 .world-scene-gradient--story-b {
+  mix-blend-mode: normal;
   background: linear-gradient(
     to bottom,
-    rgba(13, 13, 13, 0.7) 0%,
-    rgba(13, 13, 13, 0.8) 50%,
-    #0d0d0d 100%
+    rgba(var(--world-black-rgb), 0.7) 0%,
+    rgba(var(--world-black-rgb), 0.8) 50%,
+    var(--world-black) 100%
   );
 }
 
 .world-scene-gradient--story-b-distraction {
   background: linear-gradient(
     to bottom,
-    rgba(13, 13, 13, 0.75) 0%,
-    rgba(13, 13, 13, 0.85) 50%,
-    #0d0d0d 100%
+    rgba(var(--world-black-rgb), 0.75) 0%,
+    rgba(var(--world-black-rgb), 0.85) 50%,
+    var(--world-black) 100%
   );
 }
 
 .world-scene-gradient--story-br-env {
   background: linear-gradient(
     to bottom right,
-    rgba(13, 13, 13, 0.6) 0%,
-    rgba(13, 13, 13, 0.75) 50%,
-    rgba(13, 13, 13, 0.95) 100%
+    rgba(var(--world-black-rgb), 0.6) 0%,
+    rgba(var(--world-black-rgb), 0.75) 50%,
+    rgba(var(--world-black-rgb), 0.95) 100%
   );
 }
 
 .world-scene-gradient--solution-br {
   background: linear-gradient(
     to bottom right,
-    rgba(13, 13, 13, 0.7) 0%,
-    rgba(13, 13, 13, 0.8) 50%,
-    rgba(13, 13, 13, 0.9) 100%
+    rgba(var(--world-black-rgb), 0.7) 0%,
+    rgba(var(--world-black-rgb), 0.8) 50%,
+    rgba(var(--world-black-rgb), 0.9) 100%
   );
 }
 
 .world-scene-gradient--story-b-flat {
   background: linear-gradient(
     to bottom,
-    rgba(13, 13, 13, 0.7) 0%,
-    rgba(13, 13, 13, 0.8) 50%,
-    rgba(13, 13, 13, 0.9) 100%
+    rgba(var(--world-black-rgb), 0.7) 0%,
+    rgba(var(--world-black-rgb), 0.8) 50%,
+    rgba(var(--world-black-rgb), 0.9) 100%
   );
 }
 
 .world-scene-gradient--story-bl {
   background: linear-gradient(
     to bottom left,
-    rgba(13, 13, 13, 0.65) 0%,
-    rgba(13, 13, 13, 0.8) 50%,
-    rgba(13, 13, 13, 0.9) 100%
+    rgba(var(--world-black-rgb), 0.65) 0%,
+    rgba(var(--world-black-rgb), 0.8) 50%,
+    rgba(var(--world-black-rgb), 0.9) 100%
   );
 }
 
 .world-scene-gradient--brotherhood-tr {
   background: linear-gradient(
     to top right,
-    rgba(13, 13, 13, 0.85) 0%,
-    rgba(13, 13, 13, 0.7) 50%,
-    rgba(13, 13, 13, 0.85) 100%
+    rgba(var(--world-black-rgb), 0.85) 0%,
+    rgba(var(--world-black-rgb), 0.7) 50%,
+    rgba(var(--world-black-rgb), 0.85) 100%
   );
 }
 
@@ -129,7 +358,6 @@
     rgba(140, 170, 200, 0.3) 0%,
     transparent 50%
   );
-  animation: world-accent-breathe 14s ease-in-out infinite alternate;
 }
 
 .world-scene-accent--distraction-cool {
@@ -142,14 +370,21 @@
 }
 
 .world-scene-accent--environment-warm {
-  opacity: 0.22;
-  background:
-    radial-gradient(
-      ellipse 50% 60% at 50% 40%,
-      rgba(250, 215, 180, 0.3) 0%,
-      transparent 60%
-    ),
-    linear-gradient(to top, rgba(40, 40, 42, 0.4) 0%, transparent 50%);
+  opacity: 0.25;
+  background: radial-gradient(
+    ellipse 50% 60% at 50% 40%,
+    rgba(250, 215, 180, 0.3) 0%,
+    transparent 60%
+  );
+}
+
+.world-scene-accent--environment-lift {
+  opacity: 0.2;
+  background: linear-gradient(
+    to top,
+    rgba(40, 40, 42, 0.4) 0%,
+    transparent 50%
+  );
 }
 
 .world-scene-accent--how-it-works-film {
@@ -169,7 +404,6 @@
     rgba(245, 210, 170, 0.25) 0%,
     transparent 65%
   );
-  animation: world-accent-breathe 16s ease-in-out infinite alternate;
 }
 
 .world-scene-accent--warm-40 {
@@ -179,74 +413,103 @@
     rgba(245, 210, 170, 0.28) 0%,
     transparent 65%
   );
-  animation: world-accent-breathe 16s ease-in-out infinite alternate;
 }
 
 .world-scene-accent--brotherhood-warm {
-  opacity: 1;
-  background:
-    radial-gradient(
-      ellipse 65% 55% at 40% 50%,
-      rgba(255, 200, 150, 0.25) 0%,
-      transparent 65%
-    ),
-    linear-gradient(to bottom, rgba(35, 35, 37, 0.3) 0%, transparent 60%);
-  animation: world-accent-breathe 18s ease-in-out infinite alternate;
+  opacity: 0.22;
+  background: radial-gradient(
+    ellipse 65% 55% at 40% 50%,
+    rgba(255, 200, 150, 0.25) 0%,
+    transparent 65%
+  );
 }
 
-.world-scene-warm {
-  opacity: 0.2;
-  background: radial-gradient(
-    ellipse 60% 50% at 70% 30%,
-    rgba(255, 220, 180, 0.25) 0%,
+.world-scene-accent--brotherhood-fade {
+  opacity: 0.15;
+  background: linear-gradient(
+    to bottom,
+    rgba(35, 35, 37, 0.3) 0%,
     transparent 60%
   );
-  animation: world-accent-breathe 20s ease-in-out infinite alternate;
 }
 
-@keyframes world-accent-breathe {
+.world-scene-accent--momentum-cool.world-scene-accent--breath {
+  animation: world-momentum-breath 18s ease-in-out infinite alternate;
+}
+
+.world-scene-accent--distraction-cool.world-scene-accent--breath {
+  animation: world-distraction-breath 20s ease-in-out infinite alternate;
+}
+
+.world-scene-accent--warm-55.world-scene-accent--breath,
+.world-scene-accent--warm-40.world-scene-accent--breath {
+  animation: world-warm-breath 22s ease-in-out infinite alternate;
+}
+
+.world-scene-accent--brotherhood-warm.world-scene-accent--breath {
+  animation: world-brotherhood-breath 24s ease-in-out infinite alternate;
+}
+
+@keyframes world-momentum-breath {
   from {
-    opacity: 0.12;
+    opacity: 0.13;
   }
   to {
-    opacity: 0.22;
+    opacity: 0.17;
   }
 }
 
-.world-scene-vignette {
+@keyframes world-distraction-breath {
+  from {
+    opacity: 0.1;
+  }
+  to {
+    opacity: 0.14;
+  }
+}
+
+@keyframes world-warm-breath {
+  from {
+    opacity: 0.16;
+  }
+  to {
+    opacity: 0.2;
+  }
+}
+
+@keyframes world-brotherhood-breath {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 0.24;
+  }
+}
+
+.world-scene-vignette--story {
+  opacity: 0.55;
   background:
     radial-gradient(
-      ellipse 120% 85% at 50% 100%,
-      rgba(13, 13, 13, 0.65) 0%,
-      transparent 55%
+      ellipse 100% 72% at 50% 100%,
+      rgba(var(--world-black-rgb), 0.32) 0%,
+      transparent 60%
     ),
     radial-gradient(
-      ellipse 70% 50% at 50% 0%,
-      rgba(13, 13, 13, 0.4) 0%,
+      ellipse 55% 38% at 50% 0%,
+      rgba(var(--world-black-rgb), 0.15) 0%,
       transparent 50%
     );
 }
 
 .world-scene-continuity {
+  opacity: 1;
   background: linear-gradient(
     to bottom,
-    rgba(13, 13, 13, 0.5) 0%,
-    transparent 10%,
-    transparent 90%,
-    rgba(13, 13, 13, 0.55) 100%
+    rgba(var(--world-black-rgb), 0.18) 0%,
+    transparent 16%,
+    transparent 84%,
+    rgba(var(--world-black-rgb), 0.22) 100%
   );
-}
-
-.world-scene-rail:not(:first-of-type)::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 8;
-  height: min(12vh, 100px);
-  pointer-events: none;
-  background: linear-gradient(to bottom, #0d0d0d 0%, transparent 100%);
 }
 
 /* Soft enter — view timeline with static fallback */
@@ -261,20 +524,16 @@
 @supports (animation-timeline: view()) {
   .world-copy-enter {
     opacity: 0;
-    animation: world-copy-enter 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+    animation: world-copy-enter 1s cubic-bezier(0.33, 1, 0.68, 1) forwards;
     animation-timeline: view();
-    animation-range: entry 0% entry 30%;
+    animation-range: entry 8% entry 32%;
   }
 
   .world-scene-layer-enter {
-    opacity: 0.85;
-    animation: world-layer-enter 1.1s ease forwards;
+    opacity: 0.92;
+    animation: world-layer-enter 1.2s ease forwards;
     animation-timeline: view();
-    animation-range: entry 0% entry 25%;
-  }
-
-  .world-scene-layer-enter--delay {
-    animation-delay: 0.05s;
+    animation-range: entry 0% entry 22%;
   }
 }
 
@@ -317,7 +576,11 @@
   bottom: 5rem;
   left: 0;
   padding-inline: 1.25rem;
-  max-width: 36rem;
+  max-width: 32rem;
+}
+
+.world-story-headline {
+  margin: 0;
 }
 
 .world-copy--center-left {
@@ -367,6 +630,10 @@
 
 .world-display--md {
   font-size: clamp(2.5rem, 12.5vw, 5.5rem);
+}
+
+.world-display--env {
+  font-size: clamp(2.6rem, 13vw, 5.5rem);
 }
 
 .world-display--sm {
@@ -459,9 +726,11 @@
 
 .world-btn-solid--cta {
   padding: 1.5rem 6rem;
+  letter-spacing: 0.28em;
 }
 
 .world-recommended {
+  display: inline-block;
   font-size: 9px;
   font-weight: 300;
   letter-spacing: 0.25em;
@@ -481,7 +750,10 @@
   margin-top: 0.5rem;
 }
 
-.world-dot-grid {
+/* --- Shared panel atmosphere (pricing, CTA, transformation) --- */
+
+.world-panel-dot-grid {
+  opacity: 0.012;
   background-image: radial-gradient(
     circle at 50% 50%,
     rgba(255, 255, 255, 0.8) 1px,
@@ -490,11 +762,54 @@
   background-size: 56px 56px;
 }
 
-.world-dot-grid--fine {
+.world-panel-dot-grid--fine {
+  opacity: 0.015;
   background-size: 48px 48px;
 }
 
-.world-section-pricing {
+.world-panel-warm {
+  opacity: 0.06;
+  background: radial-gradient(
+    ellipse 50% 35% at 50% 40%,
+    rgba(255, 215, 170, 0.15) 0%,
+    transparent 75%
+  );
+}
+
+.world-panel-film {
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--world-black-rgb), 0.35) 0%,
+    transparent 18%,
+    transparent 82%,
+    rgba(var(--world-black-rgb), 0.45) 100%
+  );
+}
+
+.world-panel-vignette {
+  opacity: 1;
+  background:
+    radial-gradient(
+      ellipse 90% 70% at 50% 100%,
+      rgba(var(--world-black-rgb), 0.35) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 50% 0%,
+      rgba(var(--world-black-rgb), 0.2) 0%,
+      transparent 50%
+    );
+}
+
+.world-eyebrow--pricing {
+  letter-spacing: 0.2em;
+}
+
+/* --- Pricing (Figma hh) --- */
+
+.world-pricing-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100vh;
   padding-block: 8rem;
 }
 
@@ -508,14 +823,170 @@
   border-top-color: rgba(255, 255, 255, 0.15);
 }
 
+.world-pricing-card--featured::after {
+  content: "";
+  position: absolute;
+  inset: -1.5rem -0.5rem auto;
+  height: 12rem;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 75% 55% at 50% 0%,
+    rgba(255, 215, 170, 0.07) 0%,
+    transparent 70%
+  );
+}
+
 .world-pricing-stack {
   display: flex;
   flex-direction: column;
   gap: 4rem;
 }
 
+.world-tier-tagline {
+  max-width: 20rem;
+  font-size: 0.75rem;
+  font-weight: 300;
+  line-height: 1.625;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.world-tier-price-alt {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.world-pricing-footnote {
+  margin-top: 1.5rem;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.world-pricing-closer {
+  margin-top: 8rem;
+  max-width: 32rem;
+  margin-inline: auto;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 300;
+  line-height: 1.625;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* --- Final CTA (Figma dh) --- */
+
+.world-cta-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100vh;
+}
+
+.world-cta-backdrop {
+  isolation: isolate;
+}
+
+.world-cta-media {
+  position: absolute;
+  inset: -3%;
+  opacity: 0.2;
+  transform: scale(1);
+  transform-origin: center center;
+  animation: world-cta-drift 52s ease-in-out infinite alternate;
+}
+
+@keyframes world-cta-drift {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.03);
+  }
+}
+
+.world-cta-film {
+  pointer-events: none;
+  background-color: var(--world-black);
+  opacity: 0.9;
+}
+
+.world-cta-gradient {
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--world-black-rgb), 0.55) 0%,
+    rgba(var(--world-black-rgb), 0.82) 45%,
+    rgba(var(--world-black-rgb), 0.94) 100%
+  );
+}
+
+.world-cta-brand {
+  font-size: 7px;
+  font-weight: 300;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.world-cta-subline {
+  font-size: 0.75rem;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.world-cta-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.world-cta-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.world-cta-list-item + .world-cta-list-item {
+  margin-top: 0.625rem;
+}
+
+.world-cta-bullet {
+  width: 4px;
+  height: 4px;
+  margin-top: 0.375rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.world-cta-footnote {
+  margin-top: 1.25rem;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.world-cta-copyright {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  font-weight: 300;
+  letter-spacing: 0.35em;
+  color: rgba(255, 255, 255, 0.12);
+}
+
 .world-transformation-rail {
-  background: #0d0d0d;
+  background: var(--world-black);
 }
 
 .world-transformation-glow {
@@ -532,7 +1003,10 @@
 .world-transformation-panel {
   position: relative;
   z-index: 1;
+  max-width: 32rem;
+  margin-inline: auto;
   padding-inline: 1.25rem;
+  text-align: center;
 }
 
 .world-scene-rail {
@@ -542,9 +1016,17 @@
 
 @media (max-width: 639px) {
   .world-scene-media {
-    animation-name: world-scene-drift-subtle;
-    animation-duration: 48s;
     inset: -2%;
+    animation-duration: 56s;
+  }
+
+  .world-hero-rail::after,
+  .world-atmosphere-rail:not(:last-child)::after {
+    height: min(16vh, 120px);
+  }
+
+  .world-atmosphere-rail:not(:first-child)::before {
+    height: min(14vh, 100px);
   }
 
   .world-copy--bottom-16 {
@@ -559,8 +1041,21 @@
     bottom: 4rem;
   }
 
-  .world-section-pricing {
+  .world-pricing-section {
     padding-block: 5rem;
+  }
+
+  .world-pricing-closer {
+    margin-top: 5rem;
+  }
+
+  .world-cta-media {
+    inset: -2%;
+    opacity: 0.16;
+  }
+
+  .world-cta-film {
+    opacity: 0.92;
   }
 
   .world-btn-solid--cta {
@@ -572,12 +1067,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .world-scene-media,
-  .world-scene-accent,
-  .world-scene-warm {
+  .world-cta-media,
+  .world-scene-accent--breath {
     animation: none;
   }
 
-  .world-scene-media {
+  .world-scene-media,
+  .world-cta-media {
     transform: scale(1.01);
   }
 

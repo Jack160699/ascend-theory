@@ -16,6 +16,9 @@ export type CopyPlacement =
   | "bottom-20-left"
   | "center-left";
 
+/** Figma headline scale per scene */
+export type StoryDisplayScale = "lg" | "md" | "env" | "sm";
+
 /** Overlay stack keys — see `.world-scene-gradient--*` in figma-world.css */
 export type SceneGradient =
   | "hero-br"
@@ -31,21 +34,29 @@ export type SceneAccent =
   | "momentum-cool"
   | "distraction-cool"
   | "environment-warm"
+  | "environment-lift"
   | "warm-55"
   | "warm-40"
   | "brotherhood-warm"
+  | "brotherhood-fade"
   | "how-it-works-film"
   | "none";
 
 export type WorldSceneConfig = {
   media: WorldSceneMedia;
   scroll: SceneScrollSpec;
-  /** Solid scrim — Figma `bg-[#0d0d0d]/XX` */
-  scrimOpacity: number;
+  /** Figma `bg-[#0d0d0d]/XX` film plate */
+  filmOpacity: number;
   gradient: SceneGradient;
   accent: SceneAccent;
-  warmGlow?: boolean;
+  /** Second atmospheric layer (environment / brotherhood) */
+  accent2?: SceneAccent;
+  /** Gentle opacity breathing on accent only */
+  accentBreath?: boolean;
   copyPlacement: CopyPlacement;
+  display: StoryDisplayScale;
+  /** Eyebrow margin — Figma mb-4 / mb-5 / mb-6 */
+  eyebrowMb?: "mb-4" | "mb-5" | "mb-6";
 };
 
 function scene(
@@ -56,65 +67,84 @@ function scene(
 }
 
 /**
- * Scene order + visuals from Figma WORLD SYSTEM published bundle.
+ * Story scene visuals — published Figma WORLD SYSTEM bundle.
  */
 export const HERO_SCENES = {
   hero: scene("hero", {
     scroll: FIGMA_SCENE_SCROLL.hero,
-    scrimOpacity: 0.78,
+    filmOpacity: 0.78,
     gradient: "hero-br",
     accent: "none",
-    warmGlow: true,
     copyPlacement: "hero-split",
+    display: "lg",
   }),
   momentum: scene("momentum", {
     scroll: FIGMA_SCENE_SCROLL.story130,
-    scrimOpacity: 0.85,
+    filmOpacity: 0.85,
     gradient: "story-b",
     accent: "momentum-cool",
+    accentBreath: true,
     copyPlacement: "bottom-16",
+    display: "lg",
   }),
   distraction: scene("distraction", {
     scroll: FIGMA_SCENE_SCROLL.story120,
-    scrimOpacity: 0.88,
+    filmOpacity: 0.88,
     gradient: "story-b-distraction",
     accent: "distraction-cool",
+    accentBreath: true,
     copyPlacement: "bottom-20",
+    display: "md",
   }),
   environment: scene("environment", {
     scroll: FIGMA_SCENE_SCROLL.story135,
-    scrimOpacity: 0.8,
+    filmOpacity: 0.8,
     gradient: "story-br-env",
     accent: "environment-warm",
+    accent2: "environment-lift",
+    accentBreath: true,
     copyPlacement: "bottom-20-left",
+    display: "env",
   }),
   solution: scene("solution", {
     scroll: FIGMA_SCENE_SCROLL.story125,
-    scrimOpacity: 0.82,
+    filmOpacity: 0.82,
     gradient: "solution-br",
     accent: "warm-55",
+    accentBreath: true,
     copyPlacement: "center-left",
+    display: "sm",
+    eyebrowMb: "mb-5",
   }),
   howItWorks: scene("howItWorks", {
     scroll: FIGMA_SCENE_SCROLL.story120,
-    scrimOpacity: 0.82,
+    filmOpacity: 0.82,
     gradient: "story-b-flat",
     accent: "how-it-works-film",
     copyPlacement: "center-left",
+    display: "sm",
+    eyebrowMb: "mb-5",
   }),
   whatYouBuild: scene("whatYouBuild", {
     scroll: FIGMA_SCENE_SCROLL.story125,
-    scrimOpacity: 0.78,
+    filmOpacity: 0.78,
     gradient: "story-bl",
     accent: "warm-40",
+    accentBreath: true,
     copyPlacement: "center-left",
+    display: "sm",
+    eyebrowMb: "mb-5",
   }),
   brotherhood: scene("brotherhood", {
     scroll: FIGMA_SCENE_SCROLL.story130,
-    scrimOpacity: 0.76,
+    filmOpacity: 0.76,
     gradient: "brotherhood-tr",
     accent: "brotherhood-warm",
+    accent2: "brotherhood-fade",
+    accentBreath: true,
     copyPlacement: "bottom-20-left",
+    display: "md",
+    eyebrowMb: "mb-4",
   }),
 } as const satisfies Record<string, WorldSceneConfig>;
 

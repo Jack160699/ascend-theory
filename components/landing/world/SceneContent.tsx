@@ -1,12 +1,20 @@
 "use client";
 
-import type { CopyPlacement } from "@/lib/figma-world-content";
+import type { CopyPlacement, StoryDisplayScale } from "@/lib/figma-world-content";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+
+const DISPLAY_CLASS: Record<StoryDisplayScale, string> = {
+  lg: "world-display--lg",
+  md: "world-display--md",
+  env: "world-display--env",
+  sm: "world-display--sm",
+};
 
 type SceneContentProps = {
   children: ReactNode;
   placement: CopyPlacement;
+  display?: StoryDisplayScale;
   className?: string;
   innerClassName?: string;
 };
@@ -14,6 +22,7 @@ type SceneContentProps = {
 export function SceneContent({
   children,
   placement,
+  display,
   className,
   innerClassName,
 }: SceneContentProps) {
@@ -38,8 +47,35 @@ export function SceneContent({
         innerClassName,
         className,
       )}
+      data-display={display}
     >
       {children}
     </div>
   );
+}
+
+export function StoryHeadline({
+  display,
+  className,
+  children,
+}: {
+  display: StoryDisplayScale;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <h2 className={cn("world-display world-story-headline mb-6", DISPLAY_CLASS[display], className)}>
+      {children}
+    </h2>
+  );
+}
+
+export function StoryEyebrow({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return <p className={cn("world-eyebrow", className)}>{children}</p>;
 }

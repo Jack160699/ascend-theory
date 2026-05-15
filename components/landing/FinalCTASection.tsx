@@ -1,7 +1,10 @@
 "use client";
 
 import { WorldButton } from "@/components/landing/world/WorldButton";
+import { WorldPanelAtmosphere } from "@/components/landing/world/WorldPanelAtmosphere";
+import { WorldSceneImage } from "@/components/landing/world/WorldSceneImage";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
+import { WORLD_SCENE_MEDIA } from "@/lib/world-images";
 
 const BULLETS = [
   "Daily structured routines",
@@ -9,34 +12,33 @@ const BULLETS = [
   "Private curated community",
 ] as const;
 
+/**
+ * Figma final CTA — minimal layout, layered darkness + subtle brotherhood atmosphere.
+ */
 export function FinalCTASection() {
   const { openAssessment } = useAssessmentModal();
+  const media = WORLD_SCENE_MEDIA.brotherhood;
 
   return (
     <section
       id="apply"
       data-conversion-zone="final"
-      className="relative flex min-h-screen w-full flex-col items-center justify-center bg-[#0d0d0d] px-5 py-32"
+      className="world-cta-section world-atmosphere-rail relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-[#0d0d0d] px-5 py-32"
       aria-labelledby="final-cta-heading"
     >
-      <div
-        className="world-dot-grid world-dot-grid--fine pointer-events-none absolute inset-0 opacity-[0.015]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.08]"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 40% at 50% 45%, rgba(255, 220, 180, 0.12) 0%, transparent 70%)",
-        }}
-        aria-hidden
-      />
+      <div className="world-cta-backdrop absolute inset-0" aria-hidden>
+        <div className="world-cta-media">
+          <WorldSceneImage media={media} />
+        </div>
+        <div className="world-cta-film absolute inset-0" />
+        <div className="world-cta-gradient absolute inset-0" />
+      </div>
 
-      <div className="relative z-10 mx-auto max-w-lg text-center">
-        <p className="world-brand-mark mb-12">ASCEND THEORY</p>
-        <p className="mb-10 text-xs font-light uppercase tracking-[0.12em] text-white/55">
-          A Structured Environment for Men
-        </p>
+      <WorldPanelAtmosphere grid="fine" vignette />
+
+      <div className="world-cta-panel world-copy-enter relative z-10 mx-auto max-w-lg text-center">
+        <p className="world-cta-brand mb-12">ASCEND THEORY</p>
+        <p className="world-cta-subline mb-10">A Structured Environment for Men</p>
 
         <h2 id="final-cta-heading" className="world-display world-display--cta mb-7">
           Ready to
@@ -52,13 +54,10 @@ export function FinalCTASection() {
           structured systems and brotherhood.
         </p>
 
-        <ul className="mx-auto mb-12 max-w-sm space-y-2.5 text-left">
+        <ul className="world-cta-list mx-auto mb-12 max-w-sm">
           {BULLETS.map((item) => (
-            <li key={item} className="flex items-start gap-3">
-              <span
-                className="mt-1.5 size-1 shrink-0 rounded-full bg-white/40"
-                aria-hidden
-              />
+            <li key={item} className="world-cta-list-item">
+              <span className="world-cta-bullet" aria-hidden />
               <span className="world-body--muted">{item}</span>
             </li>
           ))}
@@ -68,15 +67,10 @@ export function FinalCTASection() {
           APPLY NOW
         </WorldButton>
 
-        <p className="mt-5 text-[10px] font-light tracking-[0.08em] text-white/35">
-          Limited spaces · Application required
-        </p>
+        <p className="world-cta-footnote">Limited spaces · Application required</p>
       </div>
 
-      <p
-        className="absolute bottom-10 text-[7px] font-light tracking-[0.35em] text-white/12"
-        suppressHydrationWarning
-      >
+      <p className="world-cta-copyright" suppressHydrationWarning>
         © {new Date().getFullYear()}
       </p>
     </section>
