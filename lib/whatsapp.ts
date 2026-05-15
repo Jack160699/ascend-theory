@@ -1,13 +1,13 @@
 /**
  * Canonical WhatsApp entry for Ascend Theory apply flow.
- * E.164 digits without + prefix.
+ * E.164 digits without + prefix — used for `https://wa.me/{digits}` (mobile, desktop & WhatsApp Web).
  */
-export const ASCEND_WHATSAPP_DIGITS = "919584735857";
+export const ASCEND_WHATSAPP_DIGITS = "447577300441";
 
-export const ASCEND_WHATSAPP_ME_URL = "https://wa.me/919584735857";
+export const ASCEND_WHATSAPP_ME_URL = "https://wa.me/447577300441";
 
-/** Display format for footer and prefill copy. */
-export const ASCEND_PHONE_DISPLAY = "9584735857";
+/** Display format where a phone line is shown (readable international). */
+export const ASCEND_PHONE_DISPLAY = "+44 7577 300441";
 
 /** @deprecated Legacy sections — WORLD landing uses `WORLD_CTA` (see lib/world-cta.ts). */
 export const HERO_CTA_LABEL = "Enter The System" as const;
@@ -16,7 +16,7 @@ export const HERO_CTA_LABEL = "Enter The System" as const;
 export const STICKY_MOBILE_CTA_LABEL = "Enter The System" as const;
 
 /** @deprecated Legacy sections — WORLD landing Final uses `WORLD_CTA.beginTheAscent`. */
-export const FINAL_SECTION_CTA_LABEL = "Begin The Ascent" as const;
+export const FINAL_SECTION_CTA_LABEL = "Proceed To Review" as const;
 
 /** Post-form handoff only — not shown on page surface. */
 export const MODAL_WHATSAPP_CTA_LABEL = "Continue on WhatsApp" as const;

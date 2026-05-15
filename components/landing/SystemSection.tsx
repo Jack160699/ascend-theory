@@ -16,7 +16,7 @@ const pillars = [
   {
     title: "Environment",
     description:
-      "A room that does not negotiate with drift — composed peers, direct language, emotional literacy.",
+      "A room that does not negotiate with drift — composed peers, precision in language, control under pressure.",
   },
   {
     title: "Brotherhood",

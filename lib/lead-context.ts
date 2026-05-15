@@ -199,7 +199,7 @@ export function toTierLeadPayload(
 
 /**
  * Business WhatsApp number (country code + number, digits only).
- * Set `NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER` in `.env.local` (e.g. 919584735857).
+ * Set `NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER` in `.env.local` / Vercel (digits only, e.g. 447577300441).
  */
 export function getWhatsAppBusinessDigits(): string {
   const fromEnv = normalizeWhatsAppDigits(

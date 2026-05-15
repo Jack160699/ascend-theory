@@ -180,9 +180,9 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
               <h2 id="assessment-modal-title" className="world-intake-display">
                 Your application
               </h2>
-              <p className="world-intake-lead mt-3 max-w-xs">
-                A few honest lines. We respond personally.
-              </p>
+            <p className="world-intake-lead mt-3 max-w-xs">
+              Sparse fields — maximum signal. Answers read before any reply.
+            </p>
               {tierLine ? <p className="world-intake-tier">{tierLine}</p> : null}
             </header>
 
@@ -275,7 +275,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                 </button>
               </div>
               <p className="world-intake-footnote">
-                Responses are reviewed manually · No obligation
+                Manual review · No obligation to respond if misaligned
               </p>
             </footer>
           </motion.div>

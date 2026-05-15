@@ -3,6 +3,6 @@
  */
 export const WORLD_CTA = {
   enterTheSystem: "Enter The System",
-  applyToJoin: "Apply To Join",
-  beginTheAscent: "Begin The Ascent",
+  applyToJoin: "Request Access",
+  beginTheAscent: "Proceed To Review",
 } as const;

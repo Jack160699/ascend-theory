@@ -28,12 +28,12 @@ export function MidAscentGate() {
         >
           Built for people
           <br />
-          who execute.
+          who finish.
         </h2>
         <p className="world-body mx-auto mb-12 max-w-md">
-          No hype. No audience theater.
+          No spectacle. No mass-market kindness.
           <br />
-          If this is your standard, request access.
+          If your standard sounds like ours — request access.
         </p>
         <WorldButton variant="outline" onClick={() => openAssessment()}>
           {WORLD_CTA.applyToJoin}

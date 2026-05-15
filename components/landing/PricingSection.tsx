@@ -81,14 +81,12 @@ export function PricingSection() {
             id="pricing-heading"
             className="world-display world-display--pricing mx-auto mb-6 max-w-[clamp(20rem,90vw,42rem)]"
           >
-            Three depths
+            Three thresholds
             <br />
-            of commitment.
+            of access.
           </h2>
           <p className="world-body mx-auto max-w-md">
-            Not a SKU list — structured entry points
-            <br />
-            into the same standard.
+            Doctrine held constant — depth scales with proximity and discretion.
           </p>
         </header>
 
@@ -99,9 +97,9 @@ export function PricingSection() {
         </div>
 
         <p className="world-pricing-closer world-copy-enter">
-          Selection is intentional.
+          Selection is deliberate.
           <br />
-          We work with operators, not spectators.
+          We work with intent — never indifference.
         </p>
       </div>
     </section>

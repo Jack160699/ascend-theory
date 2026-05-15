@@ -8,9 +8,9 @@ import { WORLD_CTA } from "@/lib/world-cta";
 import { WORLD_SCENE_MEDIA } from "@/lib/world-images";
 
 const BULLETS = [
-  "Systems-first execution architecture",
-  "Discipline calibrated for the AI-native era",
-  "Private cohort — accountable, selective",
+  "Doctrine-first execution architecture",
+  "AI-era intelligence married to discipline",
+  "Private surface — scarce, accountable, exacting",
 ] as const;
 
 /**
@@ -40,20 +40,20 @@ export function FinalCTASection() {
       <div className="world-cta-panel world-copy-enter relative z-10 mx-auto max-w-[clamp(20rem,90vw,32rem)] text-center">
         <p className="world-cta-brand mb-[clamp(2rem,6vh,3rem)]">ASCEND THEORY</p>
         <p className="world-cta-subline mb-[clamp(1.5rem,5vh,2.5rem)]">
-          Operating standard for serious individuals
+          Operating system for the relentlessly serious
         </p>
 
         <h2 id="final-cta-heading" className="world-display world-display--cta mb-7">
           The ascent
           <br />
-          is optional.
+          is earned.
           <br />
-          The standard isn&apos;t.
+          Admission is rare.
         </h2>
 
         <p className="world-body mx-auto mb-10 max-w-md">
-          If you optimize for leverage, patience, and long-range execution —
-          apply. We reply to humans, not timelines.
+          If you trade in leverage, patience, and long-range outcomes — step
+          forward. Humans read signal — not vanity metrics.
         </p>
 
         <ul className="world-cta-list mx-auto mb-12 max-w-sm">
@@ -69,7 +69,9 @@ export function FinalCTASection() {
           {WORLD_CTA.beginTheAscent}
         </WorldButton>
 
-        <p className="world-cta-footnote">Private review · Invitation only where applicable</p>
+        <p className="world-cta-footnote">
+          Manual review · Silence is also information
+        </p>
       </div>
     </section>
   );

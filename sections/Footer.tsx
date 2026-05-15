@@ -23,7 +23,7 @@ export function Footer() {
           <p className="world-brand-mark text-white/40">ASCEND THEORY</p>
           {!isWorldHome ? (
             <p className="mt-3 text-[11px] font-light leading-relaxed text-white/35">
-              Private transformation architecture.
+              Private doctrine — execution architecture.
             </p>
           ) : null}
         </div>

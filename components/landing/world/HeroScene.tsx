@@ -42,13 +42,13 @@ export function HeroScene() {
           <p className="world-hero-brand">ASCEND THEORY</p>
           <div className="world-hero-headline pb-12">
             <h1 className="world-hero-display">
-              Precision
+              Silence
               <br />
-              over noise.
+              is leverage.
             </h1>
             <p className="world-hero-subline mt-5 max-w-[clamp(18rem,85vw,22rem)]">
-              A private operating system for discipline, execution, and
-              next-generation focus.
+              A cinematic framework for disciplined execution — AI-native
+              intelligence, systems thinking, and composure under pressure.
             </p>
             <div className="world-hero-cta">
               <WorldButton variant="outline" onClick={() => openAssessment()}>
