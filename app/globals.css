@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "../styles/premium.css";
-@import "../styles/figma-world.css";
+@import "../styles/brand-luxury.css";
 
 :root {
   /* Cinematic V2 — scroll progression (set by MasterSceneOrchestrator; defaults for SSR) */
@@ -75,16 +75,17 @@ body.ascend-cookie-strip-active {
 /* GSAP scroll layers — GPU hints only where parallax runs */
 [data-cinematic-parallax],
 [data-cinematic-fog],
-[data-cinematic-atmos-depth] {
+[data-cinematic-atmos-depth],
+[data-brand-depth] {
   transform: translateZ(0);
-  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
   [data-cinematic-parallax],
   [data-cinematic-fog],
-  [data-cinematic-atmos-depth] {
-    will-change: auto;
+  [data-cinematic-atmos-depth],
+  [data-brand-depth] {
+    transform: none;
   }
 }
 

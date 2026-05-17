@@ -22,9 +22,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ascend Theory",
+  title: "Ascend Theory — Luxury In Motion",
   description:
-    "Discipline, focus, systems, and growth — for people who want more. Built for focused individuals.",
+    "A futuristic luxury lifestyle and philosophy brand — discipline, ambition, modern performance, and cinematic identity.",
 };
 
 export default function RootLayout({

@@ -1,0 +1,178 @@
+/* ASCEND THEORY — luxury lifestyle brand layer */
+
+/* Pre-GSAP: prevent flash; removed when hero timeline completes */
+.brand-motion-pending .hero-line,
+.brand-motion-pending [data-brand-hero-sub],
+.brand-motion-pending [data-brand-hero-scroll] {
+  opacity: 0;
+}
+
+.brand-motion-pending [data-brand-reveal] {
+  opacity: 0;
+}
+
+.brand-motion-pending [data-brand-section]:not([data-brand-hero]) {
+  opacity: 0;
+}
+
+.brand-canvas {
+  --brand-black: #0a0a0a;
+  --brand-ink: #0d0d0d;
+  --brand-surface: #111111;
+  --brand-muted: rgba(255, 255, 255, 0.42);
+  --brand-faint: rgba(255, 255, 255, 0.22);
+  --brand-hairline: rgba(255, 255, 255, 0.07);
+  --brand-accent: rgba(255, 255, 255, 0.88);
+  background-color: var(--brand-black);
+  color: #fafafa;
+}
+
+.brand-section {
+  position: relative;
+  min-height: 100dvh;
+  min-height: 100svh;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.brand-section--compact {
+  min-height: auto;
+  padding-block: clamp(5rem, 14vh, 9rem);
+}
+
+.brand-mark {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--brand-faint);
+}
+
+.brand-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--brand-muted);
+}
+
+.brand-display {
+  font-size: clamp(2.5rem, 6.5vw + 0.5rem, 4.75rem);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  color: var(--brand-accent);
+}
+
+.brand-headline {
+  font-size: clamp(1.75rem, 3.2vw + 0.5rem, 3rem);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.032em;
+  text-wrap: balance;
+  color: rgba(250, 250, 249, 0.94);
+}
+
+.brand-body {
+  font-size: clamp(0.9375rem, 1.1vw, 1.0625rem);
+  line-height: 1.78;
+  letter-spacing: 0.01em;
+  color: var(--brand-muted);
+}
+
+.brand-prose-tight {
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  letter-spacing: 0.04em;
+  color: var(--brand-faint);
+}
+
+.brand-shell {
+  position: relative;
+  z-index: 10;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 76rem;
+  padding-inline: clamp(1.25rem, 4vw, 2.75rem);
+}
+
+.brand-vignette {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 45%,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+.brand-depth-fade {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 10, 0.35) 0%,
+    transparent 28%,
+    transparent 62%,
+    rgba(10, 10, 10, 0.92) 100%
+  );
+}
+
+.brand-rail-bottom {
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 4;
+  height: min(12rem, 24dvh);
+  background: linear-gradient(to top, #0a0a0a 0%, transparent 100%);
+}
+
+.brand-editorial-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--brand-hairline);
+  background: var(--brand-surface);
+  transition:
+    border-color 0.55s cubic-bezier(0.33, 1, 0.68, 1),
+    transform 0.55s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+@media (hover: hover) {
+  .brand-editorial-card:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+    transform: translateY(-2px);
+    transition-duration: 0.5s;
+  }
+}
+
+.brand-scroll-line {
+  width: 1px;
+  height: 2.5rem;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.35));
+  transform-origin: top;
+  animation: brand-scroll-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes brand-scroll-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.55);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-scroll-line {
+    animation: none;
+    opacity: 0.5;
+  }
+}

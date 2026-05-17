@@ -9,13 +9,11 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
 
 type CinematicScrollContextValue = {
-  /** Active Lenis instance, or null when reduced-motion / unsupported. */
   lenis: Lenis | null;
 };
 
@@ -27,7 +25,6 @@ export function useCinematicScroll(): CinematicScrollContextValue {
   return useContext(CinematicScrollContext);
 }
 
-/** Pause smooth scroll while modals / gates lock the body. */
 export function useCinematicScrollLock(locked: boolean) {
   const { lenis } = useCinematicScroll();
   useEffect(() => {
@@ -39,30 +36,23 @@ export function useCinematicScrollLock(locked: boolean) {
 
 export function CinematicScrollProvider({ children }: { children: ReactNode }) {
   const [lenis, setLenis] = useState<Lenis | null>(null);
-  const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
-      setLenis(null);
-      return;
-    }
+    if (reduce) return;
 
     gsap.registerPlugin(ScrollTrigger);
 
     const instance = new Lenis({
-      duration: 1.2,
+      duration: 1.25,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      wheelMultiplier: 0.92,
-      touchMultiplier: 1.05,
+      wheelMultiplier: 0.9,
+      touchMultiplier: 1,
       smoothWheel: true,
       syncTouch: false,
     });
-
-    lenisRef.current = instance;
-    setLenis(instance);
 
     const onLenisScroll = () => {
       ScrollTrigger.update();
@@ -81,12 +71,16 @@ export function CinematicScrollProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener("resize", onResize);
 
+    const frame = requestAnimationFrame(() => {
+      setLenis(instance);
+    });
+
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener("resize", onResize);
       gsap.ticker.remove(onRaf);
       instance.off("scroll", onLenisScroll);
       instance.destroy();
-      lenisRef.current = null;
       setLenis(null);
     };
   }, []);

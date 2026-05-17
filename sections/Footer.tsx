@@ -1,5 +1,6 @@
 "use client";
 
+import { BRAND_NAV } from "@/lib/brand/sections";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,43 +12,62 @@ const legal = [
 
 export function Footer() {
   const pathname = usePathname();
-  const isWorldHome = pathname === "/";
+  const isHome = pathname === "/";
 
   return (
     <footer
       id="site-footer"
-      className="border-t border-white/[0.06] bg-[#0d0d0d] px-5 py-10"
+      className="border-t border-white/[0.06] bg-[#0a0a0a] px-5 py-12 sm:py-14"
     >
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
+      <div className="mx-auto flex max-w-6xl flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="world-brand-mark text-white/40">ASCEND THEORY</p>
-          {!isWorldHome ? (
-            <p className="mt-3 text-[11px] font-light leading-relaxed text-white/35">
-              Private doctrine — execution architecture.
-            </p>
-          ) : null}
+          <p className="brand-mark text-white/45">ASCEND THEORY</p>
+          <p className="brand-prose-tight mt-4 max-w-xs normal-case tracking-normal text-white/35">
+            Luxury in motion. A movement for discipline, identity, and modern
+            performance life.
+          </p>
         </div>
+
+        {isHome ? (
+          <nav
+            aria-label="Site"
+            className="flex flex-wrap gap-x-8 gap-y-3 text-[12px] font-medium tracking-[0.04em] text-white/40"
+          >
+            {BRAND_NAV.map((item) => (
+              <Link
+                key={item.id}
+                href={`/#${item.id}`}
+                className="transition-colors hover:text-white/75"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+      </div>
+
+      <div className="mx-auto mt-10 flex max-w-6xl flex-col gap-4 border-t border-white/[0.06] pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <p
+          className="text-[10px] font-light tracking-[0.08em] text-white/28"
+          suppressHydrationWarning
+        >
+          © {new Date().getFullYear()} Ascend Theory
+        </p>
         <nav
           aria-label="Legal"
-          className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] font-light tracking-wide text-white/40"
+          className="flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-white/35"
         >
           {legal.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="transition-colors hover:text-white/65"
+              className="transition-colors hover:text-white/60"
             >
               {item.label}
             </Link>
           ))}
         </nav>
       </div>
-      <p
-        className="mx-auto mt-8 max-w-2xl text-center text-[10px] font-light tracking-[0.08em] text-white/25"
-        suppressHydrationWarning
-      >
-        © {new Date().getFullYear()} Ascend Theory
-      </p>
     </footer>
   );
 }
