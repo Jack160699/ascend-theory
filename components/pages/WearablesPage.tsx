@@ -5,8 +5,8 @@ import { BrandSiteLayout } from "@/components/brand/layout/BrandSiteLayout";
 import { BrandWearables } from "@/components/brand/sections/BrandWearables";
 import { BRAND_ROUTES } from "@/lib/brand/routes";
 import { WEARABLES_INDEX } from "@/lib/data/wearables";
-import { STOCK_IMAGES } from "@/lib/stock-media";
-import Image from "next/image";
+import { AscendImage } from "@/components/AscendImage";
+import { ASCEND_PRODUCT_IMAGES } from "@/lib/product-images";
 import Link from "next/link";
 
 export function WearablesPage() {
@@ -14,13 +14,13 @@ export function WearablesPage() {
     <BrandSiteLayout className="page-wearables">
       <header className="wearables-page-hero">
         <div className="wearables-page-hero__media" aria-hidden>
-          <Image
-            src={STOCK_IMAGES.lifestyleAirport}
-            alt=""
+          <AscendImage
+            src={ASCEND_PRODUCT_IMAGES.lifestyleAirport}
+            alt="Ascend Theory wearables"
             fill
             priority
-            className="object-cover object-center"
             sizes="100vw"
+            className="object-cover object-center"
           />
           <div className="wearables-page-hero__overlay" />
         </div>

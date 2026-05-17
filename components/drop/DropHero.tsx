@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { AscendImage } from "@/components/AscendImage";
 import { DropCartButton } from "./DropCartButton";
 import { useDropProduct } from "./DropProductContext";
 
@@ -9,13 +9,13 @@ export function DropHero() {
   return (
     <section id="drop-hero" className="drop-hero" aria-labelledby="drop-product-title">
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <Image
+        <AscendImage
           src={product.hero.image}
           alt={product.hero.alt}
           fill
           priority
-          className="object-cover object-center"
           sizes="100vw"
+          className="object-cover object-center"
         />
         <div className="absolute inset-0 bg-black/50" />
         <div className="brand-vignette" />

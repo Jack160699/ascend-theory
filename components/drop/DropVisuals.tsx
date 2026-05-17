@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { AscendImage } from "@/components/AscendImage";
 import { cn } from "@/lib/utils";
 import { DropFade } from "./DropFade";
 import { useDropProduct } from "./DropProductContext";
@@ -20,12 +20,12 @@ export function DropVisuals() {
                     index === 1 && "drop-visual__frame--tall",
                   )}
                 >
-                  <Image
+                  <AscendImage
                     src={visual.src}
                     alt={visual.alt}
                     fill
-                    className="object-cover object-center"
                     sizes="100vw"
+                    className="object-cover object-center"
                   />
                   <figcaption className="drop-visual__caption">
                     {visual.caption}

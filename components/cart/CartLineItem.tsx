@@ -3,7 +3,7 @@
 import { formatMoney, lineTotal } from "@/lib/cart/format";
 import type { CartLine, CartProduct } from "@/lib/cart/types";
 import { BRAND_ROUTES } from "@/lib/brand/routes";
-import Image from "next/image";
+import { AscendImage } from "@/components/AscendImage";
 import Link from "next/link";
 
 type CartLineItemProps = {
@@ -26,12 +26,12 @@ export function CartLineItem({
         className="cart-line__media"
         aria-label={`View ${product.name}`}
       >
-        <Image
+        <AscendImage
           src={product.image}
           alt={product.imageAlt}
           fill
-          className="object-cover object-center"
           sizes="96px"
+          className="object-cover object-center"
         />
       </Link>
 

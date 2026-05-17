@@ -6,7 +6,7 @@ import { formatMoney, formatOrderWhatsAppBody } from "@/lib/cart/format";
 import { ascendWhatsAppUrl } from "@/lib/whatsapp";
 import { event } from "@/lib/fpixel";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
+import { AscendImage } from "@/components/AscendImage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -206,12 +206,12 @@ export function CheckoutExperience() {
             {resolvedLines.map(({ line, product }) => (
               <li key={line.slug} className="checkout-summary__line">
                 <div className="checkout-summary__thumb">
-                  <Image
+                  <AscendImage
                     src={product.image}
-                    alt=""
+                    alt={product.name}
                     fill
-                    className="object-cover"
                     sizes="72px"
+                    className="object-cover"
                   />
                 </div>
                 <div className="checkout-summary__meta">

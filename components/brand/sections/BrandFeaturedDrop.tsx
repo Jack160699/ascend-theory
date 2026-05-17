@@ -2,7 +2,7 @@ import { brandMotionAttr } from "@/lib/brand/motion";
 import { BRAND_SECTION_IDS } from "@/lib/brand/sections";
 import { getFeaturedDrop } from "@/lib/data/drops";
 import { BRAND_ROUTES } from "@/lib/brand/routes";
-import Image from "next/image";
+import { AscendImage } from "@/components/AscendImage";
 import Link from "next/link";
 
 const featured = getFeaturedDrop();
@@ -21,12 +21,12 @@ export function BrandFeaturedDrop() {
         aria-hidden
         data-brand-depth-active
       >
-        <Image
+        <AscendImage
           src={featured.hero.image}
           alt={featured.hero.alt}
           fill
-          className="object-cover object-center opacity-55"
           sizes="100vw"
+          className="object-cover object-center opacity-55"
         />
         <div className="absolute inset-0 bg-[#0a0a0a]/75" />
         <div className="brand-vignette" />

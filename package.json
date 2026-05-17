@@ -9,7 +9,8 @@
     "lint": "eslint",
     "optimize:images": "node scripts/optimize-cinematic-images.mjs",
     "world:images": "node scripts/download-world-images.mjs",
-    "download:hero-video": "node scripts/download-hero-video.mjs"
+    "download:hero-video": "node scripts/download-hero-video.mjs",
+    "download:product-images": "node scripts/download-product-images.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

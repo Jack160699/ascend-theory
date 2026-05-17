@@ -1,19 +1,50 @@
 "use client";
 
+import {
+  PRODUCT_IMAGE_FALLBACK,
+  getProductImageFallback,
+  normalizeProductImagePath,
+} from "@/lib/product-images";
 import { cn } from "@/lib/utils";
 import Image, { type ImageProps } from "next/image";
 import { useCallback, useState } from "react";
 
-type AscendImageProps = Omit<ImageProps, "onError">;
+type AscendImageProps = Omit<ImageProps, "onError" | "src"> & {
+  src: string;
+  /** Override default `/images/fallback.webp` */
+  fallbackSrc?: string;
+};
 
 /**
- * Next/Image with graceful failure: keeps layout, no empty holes.
+ * Next/Image with graceful failure: local → remote CDN → fallback file → placeholder.
  */
-export function AscendImage({ className, alt, ...rest }: AscendImageProps) {
-  const [failed, setFailed] = useState(false);
-  const onError = useCallback(() => setFailed(true), []);
+export function AscendImage(props: AscendImageProps) {
+  return <AscendImageInner key={props.src} {...props} />;
+}
 
-  if (failed) {
+function AscendImageInner({
+  className,
+  alt,
+  src,
+  fallbackSrc = PRODUCT_IMAGE_FALLBACK,
+  ...rest
+}: AscendImageProps) {
+  const primary = normalizeProductImagePath(src);
+  const [currentSrc, setCurrentSrc] = useState(primary);
+  const [exhausted, setExhausted] = useState(false);
+
+  const onError = useCallback(() => {
+    setCurrentSrc((prev) => {
+      const next = getProductImageFallback(prev, normalizeProductImagePath(fallbackSrc));
+      if (next === prev) {
+        setExhausted(true);
+        return prev;
+      }
+      return next;
+    });
+  }, [fallbackSrc]);
+
+  if (exhausted) {
     const label = typeof alt === "string" ? alt : "Image unavailable";
     return (
       <div
@@ -29,7 +60,16 @@ export function AscendImage({ className, alt, ...rest }: AscendImageProps) {
     );
   }
 
+  const isRemote = currentSrc.startsWith("http");
+
   return (
-    <Image {...rest} alt={alt} className={className} onError={onError} />
+    <Image
+      {...rest}
+      src={currentSrc}
+      alt={alt}
+      className={className}
+      onError={onError}
+      unoptimized={isRemote}
+    />
   );
 }

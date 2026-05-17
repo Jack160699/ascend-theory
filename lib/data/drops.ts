@@ -1,3 +1,5 @@
+import { ASCEND_PRODUCT_IMAGES } from "@/lib/product-images";
+
 export type DropCategory = "apparel" | "eyewear" | "accessories";
 
 export type DropPrice = {
@@ -38,12 +40,12 @@ export type Drop = {
 };
 
 const DROP_IMAGES = {
-  jacket: "/images/ascend/team-studio.webp",
-  vest: "/images/ascend/lifestyle-golf.webp",
-  optics: "/images/ascend/lifestyle-airport.webp",
-  carry: "/images/ascend/lifestyle-coastal.webp",
-  architecture: "/images/ascend/editorial-architecture.webp",
-  dining: "/images/ascend/brotherhood-dining.webp",
+  jacket: ASCEND_PRODUCT_IMAGES.teamStudio,
+  vest: ASCEND_PRODUCT_IMAGES.lifestyleGolf,
+  optics: ASCEND_PRODUCT_IMAGES.lifestyleAirport,
+  carry: ASCEND_PRODUCT_IMAGES.lifestyleCoastal,
+  architecture: ASCEND_PRODUCT_IMAGES.editorialArchitecture,
+  dining: ASCEND_PRODUCT_IMAGES.brotherhoodDining,
 } as const;
 
 function formatPrice(amount: number, currency = "USD"): DropPrice {

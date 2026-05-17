@@ -4,7 +4,7 @@ import { PageExploreLinks } from "@/components/brand/PageExploreLinks";
 import { BrandSiteLayout } from "@/components/brand/layout/BrandSiteLayout";
 import { DROPS } from "@/lib/data/drops";
 import { BRAND_ROUTES } from "@/lib/brand/routes";
-import Image from "next/image";
+import { AscendImage } from "@/components/AscendImage";
 import Link from "next/link";
 
 export function DropsPage() {
@@ -27,12 +27,12 @@ export function DropsPage() {
             <li key={drop.slug}>
               <Link href={BRAND_ROUTES.drop(drop.slug)} className="drops-card group">
                 <div className="drops-card__media">
-                  <Image
+                  <AscendImage
                     src={drop.image}
                     alt={drop.imageAlt}
                     fill
-                    className="object-cover object-center transition-transform duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, 50vw"
+                    className="object-cover object-center transition-transform duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] group-hover:scale-105"
                   />
                   <div className="drops-card__shade" />
                 </div>
