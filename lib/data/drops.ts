@@ -105,17 +105,16 @@ export const DROPS: readonly Drop[] = [
     slug: "ascend-jacket",
     name: "The Ascend Jacket",
     price: 480,
-    description:
-      "Matte shell. Structured silhouette. Built for presence.",
+    description: "Matte shell. Structured silhouette.",
     image: DROP_IMAGES.jacket,
     category: "apparel",
     dropName: "Ascend / 01",
-    tagline: "Identity you wear before you speak.",
+    tagline: "Built for presence.",
     story: {
       headline: "Not outerwear. A standard.",
       body: [
-        "Cut for people who already live with intention — founders, creators, operators who move through cities and silence with the same discipline.",
-        "Matte black. No logo theatre. A silhouette that reads before you introduce yourself.",
+        "Designed for those who move in silence.",
+        "A silhouette that reads before you speak.",
       ],
     },
     visuals: [
@@ -136,11 +135,10 @@ export const DROPS: readonly Drop[] = [
       },
     ],
     details: [
-      "Water-resistant matte shell",
-      "Hidden interior pocket system",
-      "Editorial cut — relaxed shoulder",
-      "Unisex sizing · XS–XL",
-      "Made in limited run · numbered interior",
+      "Matte shell",
+      "Hidden carry",
+      "Editorial cut",
+      "Numbered run",
     ],
     scarcity: {
       labels: ["Limited Release", "No Restock"],
@@ -152,17 +150,16 @@ export const DROPS: readonly Drop[] = [
     slug: "ascend-shell-vest",
     name: "The Shell Vest",
     price: 340,
-    description:
-      "Lightweight layer. Clean lines. Built for transit and focus.",
+    description: "Light layer. Clean lines.",
     image: DROP_IMAGES.vest,
     category: "apparel",
     dropName: "Ascend / 04",
-    tagline: "Structure without weight.",
+    tagline: "Engineered for discipline.",
     story: {
-      headline: "A layer that disappears until it defines you.",
+      headline: "Structure without weight.",
       body: [
-        "The Shell Vest is cut for movement between studio, street, and travel — a matte layer that holds posture without bulk.",
-        "Interior carry. Minimal hardware. Designed to read sharp under low light.",
+        "Between studio and street — posture without bulk.",
+        "Matte. Minimal. Sharp under low light.",
       ],
     },
     visuals: [
@@ -178,11 +175,10 @@ export const DROPS: readonly Drop[] = [
       },
     ],
     details: [
-      "Matte ripstop shell",
-      "Zip interior pocket",
-      "Relaxed athletic fit",
-      "Unisex sizing · XS–XL",
-      "Limited numbered run",
+      "Ripstop shell",
+      "Interior pocket",
+      "Relaxed fit",
+      "Limited run",
     ],
     scarcity: {
       labels: ["Limited Release", "No Restock"],
@@ -194,17 +190,16 @@ export const DROPS: readonly Drop[] = [
     slug: "ascend-optics",
     name: "Ascend Optics I",
     price: 320,
-    description:
-      "Hand-finished acetate. No branding on the lens. Built for focus in motion.",
+    description: "Hand-finished acetate. No lens theatre.",
     image: DROP_IMAGES.optics,
     category: "eyewear",
     dropName: "Ascend / 02",
-    tagline: "Sharp lines. Low light. City and coast.",
+    tagline: "See the room first.",
     story: {
-      headline: "See the room before you enter it.",
+      headline: "Posture, not accessory.",
       body: [
-        "Eyewear as posture — not accessory theatre. Ascend Optics I is cut for low light, long days, and the quiet confidence of people who do not need to announce themselves.",
-        "Matte temple. Hidden hinge. A frame that disappears until someone asks where you got it.",
+        "Cut for low light and long days.",
+        "A frame that disappears until it is noticed.",
       ],
     },
     visuals: [
@@ -220,11 +215,10 @@ export const DROPS: readonly Drop[] = [
       },
     ],
     details: [
-      "Hand-polished acetate frame",
-      "UV400 lenses · anti-glare coat",
-      "Low-profile hinge system",
-      "Includes matte hard case",
-      "Limited numbered run",
+      "Acetate frame",
+      "UV400 lenses",
+      "Hidden hinge",
+      "Matte case",
     ],
     scarcity: {
       labels: ["Limited Release", "No Restock"],
@@ -236,17 +230,16 @@ export const DROPS: readonly Drop[] = [
     slug: "ascend-carry",
     name: "The Carry System",
     price: 260,
-    description:
-      "Modular interior. Matte hardware. Designed to disappear against black.",
+    description: "Modular interior. Matte hardware.",
     image: DROP_IMAGES.carry,
     category: "accessories",
     dropName: "Ascend / 03",
-    tagline: "Restraint as luxury. Details that stay close.",
+    tagline: "What you carry defines you.",
     story: {
-      headline: "What you carry is what you protect.",
+      headline: "A mobile discipline kit.",
       body: [
-        "The Carry System is not a bag — it is a mobile discipline kit. Laptop sleeve, document pocket, and a hidden compartment for the things you do not display.",
-        "Built for operators who move between studio, street, and silence without repacking their identity.",
+        "Not a bag — a system for what you protect.",
+        "Built to disappear against black.",
       ],
     },
     visuals: [
@@ -262,11 +255,10 @@ export const DROPS: readonly Drop[] = [
       },
     ],
     details: [
-      "Water-resistant matte exterior",
-      "Modular interior dividers",
-      "Reinforced carry strap",
-      'Fits 16" laptop + tablet',
-      "Limited run · embossed serial",
+      "Matte exterior",
+      "Modular interior",
+      "Reinforced strap",
+      "Embossed serial",
     ],
     scarcity: {
       labels: ["Limited Release", "No Restock"],

@@ -67,7 +67,7 @@ function AscendImageInner({
       {...rest}
       src={currentSrc}
       alt={alt}
-      className={className}
+      className={cn("ascend-media", className)}
       onError={onError}
       unoptimized={isRemote}
     />

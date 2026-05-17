@@ -1,28 +1,20 @@
-import {
-  DROPS,
-  getDropsByCategory,
-  type Drop,
-  type DropCategory,
-} from "./drops";
+import { getDropsByCategory, type Drop, type DropCategory } from "./drops";
 
 const CATEGORY_META: Record<
   DropCategory,
-  { title: string; line: string; cta: string }
+  { title: string; line: string }
 > = {
   apparel: {
     title: "Apparel",
-    line: "Matte silhouettes. Editorial cuts. No logos shouting.",
-    cta: "View Drop →",
+    line: "Matte silhouettes. No logo theatre.",
   },
   eyewear: {
     title: "Eyewear",
-    line: "Sharp lines. Low light. City and coast.",
-    cta: "View Drop →",
+    line: "Low light. Sharp lines.",
   },
   accessories: {
     title: "Accessories",
-    line: "Restraint as luxury. Details that stay close.",
-    cta: "View Drop →",
+    line: "Restraint, carried close.",
   },
 };
 
@@ -30,7 +22,6 @@ export type WearableCollection = {
   id: DropCategory;
   title: string;
   line: string;
-  cta: string;
   image: string;
   products: readonly Drop[];
 };
@@ -49,7 +40,6 @@ export const WEARABLE_COLLECTIONS: readonly WearableCollection[] =
       id,
       title: meta.title,
       line: meta.line,
-      cta: meta.cta,
       image: products[0]?.image ?? "",
       products,
     };
@@ -58,5 +48,5 @@ export const WEARABLE_COLLECTIONS: readonly WearableCollection[] =
 export const WEARABLES_INDEX = {
   eyebrow: "Wearables",
   headline: "Objects for the focused life.",
-  description: `${DROPS.length} limited drops across three collections. One visual language — not a catalog.`,
+  description: "Limited drops. One language. Enter by collection.",
 } as const;

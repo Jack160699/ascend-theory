@@ -203,15 +203,20 @@
   max-width: 38rem;
 }
 
-.philosophy-page__paragraph {
-  font-size: clamp(1.0625rem, 1.4vw, 1.25rem);
-  line-height: 1.85;
-  letter-spacing: 0.01em;
-  color: rgba(255, 255, 255, 0.55);
+.philosophy-page__line {
+  margin-top: clamp(1.5rem, 3vh, 2.25rem);
 }
 
-.philosophy-page__paragraph + .philosophy-page__paragraph {
-  margin-top: 1.75rem;
+.philosophy-page__line:first-child {
+  margin-top: 0;
+}
+
+.page-philosophy--calm .philosophy-page {
+  padding-bottom: clamp(5rem, 12vh, 8rem);
+}
+
+.page-philosophy--calm .brand-canvas {
+  background: #0a0a0a;
 }
 
 .philosophy-page__pillars {
@@ -401,11 +406,43 @@
   color: rgba(255, 255, 255, 0.92);
 }
 
+.drops-card__tagline {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
 .drops-card__price {
   font-size: 0.8125rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.55);
+}
+
+.page-drops--index .drops-page__header {
+  max-width: 24rem;
+}
+
+.page-drops--index .drops-grid {
+  gap: clamp(2.5rem, 5vw, 4rem);
+}
+
+.page-journal--editorial .journal-page {
+  max-width: 52rem;
+}
+
+.page-journal--editorial .journal-list__item {
+  padding-block: 1.25rem;
+}
+
+.page-wearables--visual .wearables-page-hero__overlay {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.35) 45%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
 }
 
 .drops-card__cta {

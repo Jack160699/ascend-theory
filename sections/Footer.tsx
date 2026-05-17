@@ -26,8 +26,7 @@ export function Footer() {
             ASCEND THEORY
           </Link>
           <p className="brand-prose-tight mt-4 max-w-xs normal-case tracking-normal text-white/35">
-            Luxury in motion. A movement for discipline, identity, and modern
-            performance life.
+            Luxury in motion. Built for the focused.
           </p>
         </div>
 

@@ -15,7 +15,7 @@ export function DropStory() {
           </h2>
           <div className="mt-10 space-y-6">
             {product.story.body.map((paragraph) => (
-              <p key={paragraph} className="brand-body max-w-xl text-pretty">
+              <p key={paragraph} className="brand-voice max-w-xl text-pretty">
                 {paragraph}
               </p>
             ))}

@@ -1,9 +1,14 @@
-"use client";
+﻿"use client";
 
 import { useCart } from "@/contexts/cart";
+import { submitCreateOrder } from "@/lib/checkout/client";
 import { BRAND_ROUTES } from "@/lib/brand/routes";
-import { formatMoney, formatOrderWhatsAppBody } from "@/lib/cart/format";
-import { ascendWhatsAppUrl } from "@/lib/whatsapp";
+import { formatMoney } from "@/lib/cart/format";
+import {
+  isOnlinePaymentAvailableClient,
+  isRazorpayEnabledClient,
+  isStripeEnabledClient,
+} from "@/lib/payments/config";
 import { event } from "@/lib/fpixel";
 import { cn } from "@/lib/utils";
 import { AscendImage } from "@/components/AscendImage";
@@ -11,18 +16,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { CartTrust } from "./CartTrust";
-import { CartUrgency } from "./CartUrgency";
 
 export function CheckoutExperience() {
   const router = useRouter();
   const { resolvedLines, subtotal, currency, hydrated, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const checkoutTracked = useRef(false);
+
+  const onlineAvailable = isOnlinePaymentAvailableClient();
 
   useEffect(() => {
     if (!hydrated) return;
     if (resolvedLines.length === 0) {
-      router.replace("/drops");
+      router.replace(BRAND_ROUTES.drops);
     }
   }, [hydrated, resolvedLines.length, router]);
 
@@ -37,12 +44,15 @@ export function CheckoutExperience() {
     });
   }, [hydrated, resolvedLines, subtotal, currency]);
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (submitting || resolvedLines.length === 0) return;
 
     const form = e.currentTarget;
     const data = new FormData(form);
+    const paymentMethod =
+      data.get("payment") === "online" && onlineAvailable ? "online" : "cod";
+
     const customer = {
       fullName: String(data.get("fullName") ?? "").trim(),
       email: String(data.get("email") ?? "").trim(),
@@ -52,29 +62,53 @@ export function CheckoutExperience() {
       postalCode: String(data.get("postalCode") ?? "").trim(),
       country: String(data.get("country") ?? "").trim(),
     };
-    const payment = data.get("payment") === "online" ? "online" : "cod";
 
     setSubmitting(true);
+    setError(null);
 
-    const body = formatOrderWhatsAppBody({
-      lines: resolvedLines.map(({ line, product }) => ({
-        product,
-        quantity: line.quantity,
-      })),
-      subtotal,
-      currency,
-      customer,
-      payment,
-    });
+    try {
+      const result = await submitCreateOrder({
+        items: resolvedLines.map(({ line }) => ({
+          slug: line.slug,
+          quantity: line.quantity,
+        })),
+        customer,
+        paymentMethod,
+        paymentProvider:
+          paymentMethod === "online"
+            ? isStripeEnabledClient()
+              ? "stripe"
+              : "razorpay"
+            : undefined,
+      });
 
-    clear();
-    window.location.href = ascendWhatsAppUrl(body);
+      event("Purchase", {
+        content_ids: result.order.items.map((i) => i.slug),
+        value: result.order.subtotal,
+        currency: result.order.currency,
+        num_items: result.order.items.reduce((n, i) => n + i.quantity, 0),
+      });
+
+      clear();
+
+      if (result.paymentUrl) {
+        window.location.href = result.paymentUrl;
+        return;
+      }
+
+      router.push(
+        `/checkout/confirmation?orderId=${encodeURIComponent(result.order.id)}`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setSubmitting(false);
+    }
   };
 
   if (!hydrated || resolvedLines.length === 0) {
     return (
       <div className="drop-shell py-32">
-        <p className="brand-body text-white/50">Loading checkout…</p>
+        <p className="brand-body text-white/50">Loading checkoutâ€¦</p>
       </div>
     );
   }
@@ -83,10 +117,10 @@ export function CheckoutExperience() {
     <div className="drop-shell checkout-layout py-28 sm:py-32">
       <header className="checkout-header">
         <Link href={BRAND_ROUTES.drops} className="checkout-back">
-          ← Back to drops
+          â† Back to drops
         </Link>
         <h1 className="brand-headline mt-8">Checkout</h1>
-        <CartUrgency />
+        <p className="brand-voice mt-4">Secure order Â· limited allocation</p>
       </header>
 
       <div className="checkout-grid">
@@ -176,19 +210,24 @@ export function CheckoutExperience() {
           <fieldset className="checkout-fieldset">
             <legend className="checkout-legend">Payment</legend>
             <label className="checkout-radio">
-              <input
-                type="radio"
-                name="payment"
-                value="cod"
-                defaultChecked
-              />
+              <input type="radio" name="payment" value="cod" defaultChecked />
               <span>Cash on Delivery</span>
             </label>
-            <label className="checkout-radio">
-              <input type="radio" name="payment" value="online" />
-              <span>Pay online (link on confirmation)</span>
-            </label>
+            {onlineAvailable ? (
+              <label className="checkout-radio">
+                <input type="radio" name="payment" value="online" />
+                <span>
+                  Pay online
+                  {isStripeEnabledClient() ? " (Stripe)" : ""}
+                  {isRazorpayEnabledClient() && !isStripeEnabledClient()
+                    ? " (Razorpay)"
+                    : ""}
+                </span>
+              </label>
+            ) : null}
           </fieldset>
+
+          {error ? <p className="checkout-error">{error}</p> : null}
 
           <CartTrust />
           <button
@@ -196,7 +235,7 @@ export function CheckoutExperience() {
             className={cn("drop-cta checkout-submit", submitting && "is-pending")}
             disabled={submitting}
           >
-            {submitting ? "Opening…" : "Complete Order"}
+            {submitting ? "Processingâ€¦" : "Place order"}
           </button>
         </form>
 
@@ -238,3 +277,4 @@ export function CheckoutExperience() {
     </div>
   );
 }
+

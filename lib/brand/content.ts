@@ -17,79 +17,19 @@ export const PHILOSOPHY = {
   headline: "A standard you carry before you wear it.",
   body: [
     "Ambition without architecture becomes noise.",
-    "We design for focus, identity, and the quiet discipline of people building in public — and in private.",
+    "We design for focus — not attention.",
+    "Identity is what remains when the room goes quiet.",
   ],
   pillars: [
     { title: "Discipline", line: "Structure before spectacle." },
-    { title: "Identity", line: "How you move is who you are." },
-    { title: "Creator life", line: "Performance as a daily practice." },
-  ],
-} as const;
-
-export const WEARABLES = {
-  eyebrow: "Wearables",
-  headline: "Objects for the focused life.",
-  categories: [
-    {
-      id: "apparel",
-      title: "Apparel",
-      line: "Matte silhouettes. Editorial cuts. No logos shouting.",
-      cta: "View Collection →",
-      imageKey: "lifestyleGolf" as const,
-    },
-    {
-      id: "eyewear",
-      title: "Eyewear",
-      line: "Sharp lines. Low light. City and coast.",
-      cta: "Explore Eyewear →",
-      imageKey: "lifestyleAirport" as const,
-    },
-    {
-      id: "accessories",
-      title: "Accessories",
-      line: "Restraint as luxury. Details that stay close.",
-      cta: "View Collection →",
-      imageKey: "lifestyleCoastal" as const,
-    },
-  ],
-} as const;
-
-export const FEATURED_DROP = {
-  eyebrow: "Featured drop",
-  name: "Ascend / 01",
-  headline: "Limited. Intentional. Gone when it closes.",
-  body: "A single release — not a catalog. Each piece is cut for people who already live the standard.",
-  status: "Allocation open",
-} as const;
-
-export const JOURNAL = {
-  eyebrow: "Journal",
-  headline: "Notes from the ascent.",
-  entries: [
-    {
-      title: "On discipline as aesthetics",
-      date: "Field note · 04",
-      read: "4 min",
-      imageKey: "editorialArchitecture" as const,
-    },
-    {
-      title: "The quiet cost of focus",
-      date: "Essay · 03",
-      read: "6 min",
-      imageKey: "teamStudio" as const,
-    },
-    {
-      title: "Modern masculinity, without theatre",
-      date: "Editorial · 02",
-      read: "5 min",
-      imageKey: "lifestyleAirport" as const,
-    },
+    { title: "Identity", line: "Presence before performance." },
+    { title: "Ascent", line: "Standards held in private." },
   ],
 } as const;
 
 export const MENTORSHIP = {
   eyebrow: "Private sessions",
   headline: "Not coaching. A room.",
-  body: "High-value private sessions for founders, creators, and operators who want clarity — not another framework deck.",
+  body: "For founders and operators who want clarity — not another deck.",
   note: "Selective intake · manual review",
 } as const;

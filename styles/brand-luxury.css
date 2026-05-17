@@ -224,9 +224,45 @@
 
 .brand-body {
   font-size: clamp(0.9375rem, 1.1vw, 1.0625rem);
-  line-height: 1.78;
-  letter-spacing: 0.01em;
+  line-height: 1.85;
+  letter-spacing: 0.02em;
   color: var(--brand-muted);
+}
+
+.brand-voice {
+  font-size: clamp(1rem, 1.2vw, 1.125rem);
+  line-height: 1.9;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.58);
+  max-width: 28ch;
+}
+
+.brand-voice strong,
+.brand-emphasis {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* Cinematic grade — consistent dark tone across product/editorial stills */
+.ascend-media {
+  filter: brightness(0.78) contrast(1.06) saturate(0.82);
+}
+
+.ascend-media-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.ascend-media-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.12) 0%,
+    rgba(0, 0, 0, 0.42) 100%
+  );
 }
 
 .brand-prose-tight {

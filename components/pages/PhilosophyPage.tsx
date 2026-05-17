@@ -1,23 +1,21 @@
 "use client";
 
-import { PageExploreLinks } from "@/components/brand/PageExploreLinks";
 import { BrandSiteLayout } from "@/components/brand/layout/BrandSiteLayout";
 import { PHILOSOPHY } from "@/lib/brand/content";
-import { BRAND_ROUTES } from "@/lib/brand/routes";
 
 export function PhilosophyPage() {
   return (
-    <BrandSiteLayout orchestrate className="page-philosophy">
+    <BrandSiteLayout className="page-philosophy page-philosophy--calm">
       <article className="philosophy-page">
         <div className="brand-shell philosophy-page__intro">
           <p className="brand-eyebrow">{PHILOSOPHY.eyebrow}</p>
           <h1 className="philosophy-page__title mt-8">{PHILOSOPHY.headline}</h1>
         </div>
 
-        <div className="brand-shell philosophy-page__body" data-brand-fade>
-          {PHILOSOPHY.body.map((paragraph) => (
-            <p key={paragraph} className="philosophy-page__paragraph">
-              {paragraph}
+        <div className="brand-shell philosophy-page__body">
+          {PHILOSOPHY.body.map((line) => (
+            <p key={line} className="philosophy-page__line brand-voice">
+              {line}
             </p>
           ))}
         </div>
@@ -36,10 +34,6 @@ export function PhilosophyPage() {
               </li>
             ))}
           </ul>
-        </div>
-
-        <div className="brand-shell philosophy-page__explore">
-          <PageExploreLinks excludeHref={BRAND_ROUTES.philosophy} />
         </div>
       </article>
     </BrandSiteLayout>

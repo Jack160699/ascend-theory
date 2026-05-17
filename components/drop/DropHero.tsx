@@ -8,7 +8,7 @@ export function DropHero() {
   const product = useDropProduct();
   return (
     <section id="drop-hero" className="drop-hero" aria-labelledby="drop-product-title">
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 ascend-media-wrap" aria-hidden>
         <AscendImage
           src={product.hero.image}
           alt={product.hero.alt}

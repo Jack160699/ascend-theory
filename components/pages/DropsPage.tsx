@@ -1,32 +1,26 @@
-"use client";
+﻿"use client";
 
-import { PageExploreLinks } from "@/components/brand/PageExploreLinks";
 import { BrandSiteLayout } from "@/components/brand/layout/BrandSiteLayout";
+import { AscendImage } from "@/components/AscendImage";
 import { DROPS } from "@/lib/data/drops";
 import { BRAND_ROUTES } from "@/lib/brand/routes";
-import { AscendImage } from "@/components/AscendImage";
 import Link from "next/link";
 
 export function DropsPage() {
   return (
-    <BrandSiteLayout className="page-drops">
+    <BrandSiteLayout className="page-drops page-drops--index">
       <div className="brand-shell drops-page">
         <header className="drops-page__header">
           <p className="brand-eyebrow">Drops</p>
-          <h1 className="brand-display mt-6 max-w-[16ch]">
-            Limited releases. No restock.
-          </h1>
-          <p className="brand-body mt-6 max-w-lg">
-            Each drop is intentional — a single run, then closed. Select a release
-            to enter.
-          </p>
+          <h1 className="brand-display mt-6 max-w-[12ch]">No restock.</h1>
+          <p className="brand-voice mt-8">One run per release. Then closed.</p>
         </header>
 
         <ul className="drops-grid">
           {DROPS.map((drop) => (
             <li key={drop.slug}>
               <Link href={BRAND_ROUTES.drop(drop.slug)} className="drops-card group">
-                <div className="drops-card__media">
+                <div className="drops-card__media ascend-media-wrap">
                   <AscendImage
                     src={drop.image}
                     alt={drop.imageAlt}
@@ -39,17 +33,16 @@ export function DropsPage() {
                 <div className="drops-card__copy">
                   <p className="brand-eyebrow">{drop.dropName}</p>
                   <h2 className="drops-card__title">{drop.name}</h2>
-                  <p className="brand-body mt-3 line-clamp-2">{drop.description}</p>
-                  <p className="drops-card__price mt-4">{drop.price.display}</p>
-                  <span className="drops-card__cta">Enter drop →</span>
+                  <p className="brand-voice mt-3">{drop.description}</p>
+                  <p className="drops-card__tagline mt-2">{drop.tagline}</p>
+                  <p className="drops-card__price mt-5">{drop.price.display}</p>
                 </div>
               </Link>
             </li>
           ))}
         </ul>
-
-        <PageExploreLinks excludeHref={BRAND_ROUTES.drops} />
       </div>
     </BrandSiteLayout>
   );
 }
+

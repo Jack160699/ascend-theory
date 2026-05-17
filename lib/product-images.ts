@@ -19,12 +19,12 @@ export const ASCEND_PRODUCT_IMAGES_REMOTE: Record<
   keyof typeof ASCEND_PRODUCT_IMAGES,
   string
 > = {
-  teamStudio: stockPhoto("photo-1556905054-24bf8fbf6460"),
-  lifestyleGolf: stockPhoto("photo-1592919670787-64ace577ec67"),
-  lifestyleAirport: stockPhoto("photo-1436491865332-7a61a109cc05"),
+  teamStudio: stockPhoto("photo-1483985988352-763728e3685b"),
+  lifestyleGolf: stockPhoto("photo-1738748444676-113d30c9a25b"),
+  lifestyleAirport: stockPhoto("photo-1514565130933-ff0f825377de"),
   lifestyleCoastal: stockPhoto("photo-1505142468610-359e7caed608"),
   editorialArchitecture: stockPhoto("photo-1486406146926-c627a92ad1ab"),
-  brotherhoodDining: stockPhoto("photo-1414235077428-338989a2e8d0"),
+  brotherhoodDining: stockPhoto("photo-1610899632923-3751bc4b427a"),
   heroStorefront: stockPhoto("photo-1514565130933-ff0f825377de"),
 };
 

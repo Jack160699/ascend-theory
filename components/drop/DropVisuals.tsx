@@ -16,7 +16,7 @@ export function DropVisuals() {
               <figure className="drop-visual">
                 <div
                   className={cn(
-                    "drop-visual__frame",
+                    "drop-visual__frame ascend-media-wrap",
                     index === 1 && "drop-visual__frame--tall",
                   )}
                 >

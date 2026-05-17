@@ -1,5 +1,14 @@
 /* ASCEND THEORY — Drop / limited-release product experience */
 
+.drop-canvas--focused .drop-section {
+  padding-block: clamp(3.5rem, 9vh, 6.5rem);
+}
+
+.drop-canvas--focused .brand-display,
+.drop-canvas--focused .brand-headline {
+  letter-spacing: -0.035em;
+}
+
 .drop-canvas {
   --drop-black: #0a0a0a;
   --drop-ink: #0d0d0d;
@@ -699,6 +708,60 @@
 
 .checkout-submit.is-pending {
   opacity: 0.7;
+}
+
+.checkout-error {
+  font-size: 0.8125rem;
+  color: rgba(248, 113, 113, 0.9);
+}
+
+.order-confirmation__id {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.order-confirmation__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--drop-hairline);
+}
+
+.order-confirmation__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--drop-hairline);
+}
+
+.order-confirmation__name {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.order-confirmation__price {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.65);
+  flex-shrink: 0;
+}
+
+.order-confirmation__total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.order-confirmation__cta {
+  width: 100%;
+  justify-content: center;
 }
 
 .checkout-summary {

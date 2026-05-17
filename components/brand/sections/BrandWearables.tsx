@@ -24,7 +24,7 @@ function WearableEditorialRow({
       <article className="brand-wearables-row__inner">
         <Link
           href={BRAND_ROUTES.drop(collection.products[0]!.slug)}
-          className="brand-wearables-row__media block"
+          className="brand-wearables-row__media ascend-media-wrap block"
         >
           <AscendImage
             src={collection.image}

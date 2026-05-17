@@ -14,7 +14,7 @@ import { DropVisuals } from "./DropVisuals";
 export function DropExperience({ product }: { product: Drop }) {
   return (
     <DropProductProvider product={product}>
-      <div className="drop-canvas min-h-screen overflow-x-clip pb-24 antialiased">
+      <div className="drop-canvas drop-canvas--focused min-h-screen overflow-x-clip pb-24 antialiased">
         <BrandNav />
         <DropHero />
         <DropStory />
