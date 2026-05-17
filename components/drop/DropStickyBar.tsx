@@ -30,7 +30,7 @@ export function DropStickyBar() {
     >
       <div className="drop-sticky__inner">
         <div className="drop-sticky__meta">
-          <p className="drop-sticky__name">{product.productName}</p>
+          <p className="drop-sticky__name">{product.name}</p>
           <p className="drop-sticky__drop">{product.dropName}</p>
         </div>
         <div className="flex items-center gap-4">

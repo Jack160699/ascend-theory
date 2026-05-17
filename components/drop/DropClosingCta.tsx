@@ -15,7 +15,7 @@ export function DropClosingCta() {
         <div className="drop-shell flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="brand-eyebrow">{product.dropName}</p>
-            <p className="brand-headline mt-4">{product.productName}</p>
+            <p className="brand-headline mt-4">{product.name}</p>
             <p className="drop-price mt-3">{product.price.display}</p>
           </div>
           <DropCartButton />

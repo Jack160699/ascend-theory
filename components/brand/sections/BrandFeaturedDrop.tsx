@@ -36,7 +36,7 @@ export function BrandFeaturedDrop() {
         <div data-brand-cinematic className="max-w-xl">
           <p className="brand-eyebrow">{featured.dropName}</p>
           <p className="mt-4 text-[11px] font-medium uppercase tracking-[0.32em] text-white/40">
-            {featured.productName}
+            {featured.name}
           </p>
           <h2 id="brand-drop-heading" className="brand-display mt-8">
             {featured.tagline}

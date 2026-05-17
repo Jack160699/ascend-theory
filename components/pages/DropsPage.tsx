@@ -38,7 +38,7 @@ export function DropsPage() {
                 </div>
                 <div className="drops-card__copy">
                   <p className="brand-eyebrow">{drop.dropName}</p>
-                  <h2 className="drops-card__title">{drop.productName}</h2>
+                  <h2 className="drops-card__title">{drop.name}</h2>
                   <p className="brand-body mt-3 line-clamp-2">{drop.description}</p>
                   <p className="drops-card__price mt-4">{drop.price.display}</p>
                   <span className="drops-card__cta">Enter drop →</span>

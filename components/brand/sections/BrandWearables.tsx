@@ -23,12 +23,12 @@ function WearableEditorialRow({
     >
       <article className="brand-wearables-row__inner">
         <Link
-          href={BRAND_ROUTES.drop(collection.dropSlug)}
+          href={BRAND_ROUTES.drop(collection.products[0]!.slug)}
           className="brand-wearables-row__media block"
         >
           <Image
             src={collection.image}
-            alt={collection.title}
+            alt={collection.products[0]?.name ?? collection.title}
             fill
             className="brand-wearables-row__image object-cover object-center"
             sizes="(max-width: 1023px) 100vw, 48vw"
@@ -42,20 +42,24 @@ function WearableEditorialRow({
         <div className="brand-wearables-row__copy">
           <p className="brand-eyebrow text-white/50">Collection</p>
           <h3 className="brand-headline mt-5 max-w-[12ch]">
-            <Link
-              href={BRAND_ROUTES.drop(collection.dropSlug)}
-              className="hover:text-white transition-colors"
-            >
-              {collection.title}
-            </Link>
+            {collection.title}
           </h3>
           <p className="brand-body mt-6 max-w-md text-pretty">{collection.line}</p>
-          <Link
-            href={BRAND_ROUTES.drop(collection.dropSlug)}
-            className="brand-wearables-cta"
-          >
-            {collection.cta}
-          </Link>
+          <ul className="brand-wearables-row__products mt-6 space-y-2">
+            {collection.products.map((product) => (
+              <li key={product.slug}>
+                <Link
+                  href={BRAND_ROUTES.drop(product.slug)}
+                  className="brand-wearables-row__product-link"
+                >
+                  <span>{product.name}</span>
+                  <span className="brand-wearables-row__product-price">
+                    {product.price.display}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </article>
     </li>

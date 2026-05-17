@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Drop | Ascend Theory" };
   }
   return {
-    title: `${product.productName} — ${product.dropName} | Ascend Theory`,
+    title: `${product.name} — ${product.dropName} | Ascend Theory`,
     description: product.description,
   };
 }

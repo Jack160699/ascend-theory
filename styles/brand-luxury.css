@@ -99,6 +99,36 @@
   display: inline-flex w-fit items-center text-[12px] font-medium tracking-[0.12em] text-white/70 transition-[color,transform] duration-500 ease-[cubic-bezier(0.33,1,0.68,1)];
 }
 
+.brand-wearables-row__products {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.brand-wearables-row__product-link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.62);
+  transition: color 0.35s ease;
+}
+
+.brand-wearables-row__product-link:hover {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.brand-wearables-row__product-price {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
 @media (hover: hover) {
   .brand-wearables-row__inner {
     transition-duration: 0.55s;

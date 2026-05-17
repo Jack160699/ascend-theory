@@ -1,28 +1,28 @@
-import { STOCK_IMAGES } from "@/lib/stock-media";
-
 export type DropCategory = "apparel" | "eyewear" | "accessories";
+
+export type DropPrice = {
+  amount: number;
+  currency: string;
+  display: string;
+};
 
 export type Drop = {
   slug: string;
-  dropName: string;
-  productName: string;
-  tagline: string;
+  name: string;
+  price: DropPrice;
   description: string;
-  category: DropCategory;
-  price: {
-    display: string;
-    currency: string;
-    amount: number;
-  };
   image: string;
   imageAlt: string;
+  category: DropCategory;
+  dropName: string;
+  tagline: string;
   hero: {
     image: string;
     alt: string;
   };
   story: {
     headline: string;
-    body: string[];
+    body: readonly string[];
   };
   visuals: readonly {
     src: string;
@@ -37,22 +37,78 @@ export type Drop = {
   };
 };
 
-export const DROPS: readonly Drop[] = [
-  {
-    slug: "ascend-jacket",
-    dropName: "Ascend / 01",
-    productName: "The Ascend Jacket",
-    tagline: "Identity you wear before you speak.",
-    description:
-      "Matte shell. Editorial cut. A limited run for people who already live the standard.",
-    category: "apparel",
-    price: { display: "$480", currency: "USD", amount: 480 },
-    image: STOCK_IMAGES.teamStudio,
-    imageAlt: "The Ascend Jacket — Ascend / 01",
+const DROP_IMAGES = {
+  jacket: "/images/ascend/team-studio.webp",
+  vest: "/images/ascend/lifestyle-golf.webp",
+  optics: "/images/ascend/lifestyle-airport.webp",
+  carry: "/images/ascend/lifestyle-coastal.webp",
+  architecture: "/images/ascend/editorial-architecture.webp",
+  dining: "/images/ascend/brotherhood-dining.webp",
+} as const;
+
+function formatPrice(amount: number, currency = "USD"): DropPrice {
+  return {
+    amount,
+    currency,
+    display: new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(amount),
+  };
+}
+
+function buildDrop(
+  core: {
+    slug: string;
+    name: string;
+    price: number;
+    description: string;
+    image: string;
+    category: DropCategory;
+    dropName: string;
+    tagline: string;
+    story: Drop["story"];
+    visuals: Drop["visuals"];
+    details: readonly string[];
+    scarcity: Drop["scarcity"];
+    heroImage?: string;
+    gallery?: readonly { src: string; alt: string; caption: string }[];
+  },
+): Drop {
+  const heroImage = core.heroImage ?? core.image;
+  return {
+    slug: core.slug,
+    name: core.name,
+    price: formatPrice(core.price),
+    description: core.description,
+    image: core.image,
+    imageAlt: `${core.name} — ${core.dropName}`,
+    category: core.category,
+    dropName: core.dropName,
+    tagline: core.tagline,
     hero: {
-      image: STOCK_IMAGES.teamStudio,
-      alt: "The Ascend Jacket — Ascend / 01 limited release",
+      image: heroImage,
+      alt: `${core.name} — ${core.dropName} limited release`,
     },
+    story: core.story,
+    visuals: core.gallery ?? core.visuals,
+    details: core.details,
+    scarcity: core.scarcity,
+  };
+}
+
+export const DROPS: readonly Drop[] = [
+  buildDrop({
+    slug: "ascend-jacket",
+    name: "The Ascend Jacket",
+    price: 480,
+    description:
+      "Matte shell. Structured silhouette. Built for presence.",
+    image: DROP_IMAGES.jacket,
+    category: "apparel",
+    dropName: "Ascend / 01",
+    tagline: "Identity you wear before you speak.",
     story: {
       headline: "Not outerwear. A standard.",
       body: [
@@ -62,18 +118,18 @@ export const DROPS: readonly Drop[] = [
     },
     visuals: [
       {
-        src: STOCK_IMAGES.teamStudio,
-        alt: "Editorial studio portrait — Ascend / 01",
+        src: DROP_IMAGES.jacket,
+        alt: "The Ascend Jacket — studio",
         caption: "Studio · 01",
       },
       {
-        src: STOCK_IMAGES.lifestyleGolf,
-        alt: "Field movement — Ascend / 01",
+        src: DROP_IMAGES.vest,
+        alt: "The Ascend Jacket — field",
         caption: "Field · 02",
       },
       {
-        src: STOCK_IMAGES.editorialArchitecture,
-        alt: "Architectural lines — Ascend / 01",
+        src: DROP_IMAGES.architecture,
+        alt: "The Ascend Jacket — structure",
         caption: "Structure · 03",
       },
     ],
@@ -89,22 +145,59 @@ export const DROPS: readonly Drop[] = [
       stockRemaining: 47,
       totalAllocation: 120,
     },
-  },
-  {
+  }),
+  buildDrop({
+    slug: "ascend-shell-vest",
+    name: "The Shell Vest",
+    price: 340,
+    description:
+      "Lightweight layer. Clean lines. Built for transit and focus.",
+    image: DROP_IMAGES.vest,
+    category: "apparel",
+    dropName: "Ascend / 04",
+    tagline: "Structure without weight.",
+    story: {
+      headline: "A layer that disappears until it defines you.",
+      body: [
+        "The Shell Vest is cut for movement between studio, street, and travel — a matte layer that holds posture without bulk.",
+        "Interior carry. Minimal hardware. Designed to read sharp under low light.",
+      ],
+    },
+    visuals: [
+      {
+        src: DROP_IMAGES.vest,
+        alt: "The Shell Vest — field",
+        caption: "Field · 01",
+      },
+      {
+        src: DROP_IMAGES.jacket,
+        alt: "The Shell Vest — studio",
+        caption: "Studio · 02",
+      },
+    ],
+    details: [
+      "Matte ripstop shell",
+      "Zip interior pocket",
+      "Relaxed athletic fit",
+      "Unisex sizing · XS–XL",
+      "Limited numbered run",
+    ],
+    scarcity: {
+      labels: ["Limited Release", "No Restock"],
+      stockRemaining: 38,
+      totalAllocation: 90,
+    },
+  }),
+  buildDrop({
     slug: "ascend-optics",
-    dropName: "Ascend / 02",
-    productName: "Ascend Optics I",
-    tagline: "Sharp lines. Low light. City and coast.",
+    name: "Ascend Optics I",
+    price: 320,
     description:
       "Hand-finished acetate. No branding on the lens. Built for focus in motion.",
+    image: DROP_IMAGES.optics,
     category: "eyewear",
-    price: { display: "$320", currency: "USD", amount: 320 },
-    image: STOCK_IMAGES.lifestyleAirport,
-    imageAlt: "Ascend Optics I — Ascend / 02",
-    hero: {
-      image: STOCK_IMAGES.lifestyleAirport,
-      alt: "Ascend Optics I — limited release",
-    },
+    dropName: "Ascend / 02",
+    tagline: "Sharp lines. Low light. City and coast.",
     story: {
       headline: "See the room before you enter it.",
       body: [
@@ -114,12 +207,12 @@ export const DROPS: readonly Drop[] = [
     },
     visuals: [
       {
-        src: STOCK_IMAGES.lifestyleAirport,
+        src: DROP_IMAGES.optics,
         alt: "Ascend Optics — transit",
         caption: "Transit · 01",
       },
       {
-        src: STOCK_IMAGES.editorialArchitecture,
+        src: DROP_IMAGES.architecture,
         alt: "Ascend Optics — structure",
         caption: "Lines · 02",
       },
@@ -136,22 +229,17 @@ export const DROPS: readonly Drop[] = [
       stockRemaining: 31,
       totalAllocation: 80,
     },
-  },
-  {
+  }),
+  buildDrop({
     slug: "ascend-carry",
-    dropName: "Ascend / 03",
-    productName: "The Carry System",
-    tagline: "Restraint as luxury. Details that stay close.",
+    name: "The Carry System",
+    price: 260,
     description:
       "Modular interior. Matte hardware. Designed to disappear against black.",
+    image: DROP_IMAGES.carry,
     category: "accessories",
-    price: { display: "$260", currency: "USD", amount: 260 },
-    image: STOCK_IMAGES.lifestyleCoastal,
-    imageAlt: "The Carry System — Ascend / 03",
-    hero: {
-      image: STOCK_IMAGES.lifestyleCoastal,
-      alt: "The Carry System — limited release",
-    },
+    dropName: "Ascend / 03",
+    tagline: "Restraint as luxury. Details that stay close.",
     story: {
       headline: "What you carry is what you protect.",
       body: [
@@ -161,12 +249,12 @@ export const DROPS: readonly Drop[] = [
     },
     visuals: [
       {
-        src: STOCK_IMAGES.lifestyleCoastal,
+        src: DROP_IMAGES.carry,
         alt: "The Carry System — coastal",
         caption: "Coast · 01",
       },
       {
-        src: STOCK_IMAGES.brotherhoodDining,
+        src: DROP_IMAGES.dining,
         alt: "The Carry System — interior",
         caption: "Interior · 02",
       },
@@ -175,7 +263,7 @@ export const DROPS: readonly Drop[] = [
       "Water-resistant matte exterior",
       "Modular interior dividers",
       "Reinforced carry strap",
-      "Fits 16\" laptop + tablet",
+      'Fits 16" laptop + tablet',
       "Limited run · embossed serial",
     ],
     scarcity: {
@@ -183,7 +271,7 @@ export const DROPS: readonly Drop[] = [
       stockRemaining: 22,
       totalAllocation: 60,
     },
-  },
+  }),
 ] as const;
 
 const dropMap = new Map(DROPS.map((d) => [d.slug, d]));

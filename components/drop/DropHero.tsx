@@ -25,9 +25,9 @@ export function DropHero() {
       <div className="drop-shell drop-hero__content">
         <p className="brand-eyebrow">{product.dropName}</p>
         <h1 id="drop-product-title" className="drop-hero__title mt-6">
-          {product.productName}
+          {product.name}
         </h1>
-        <p className="brand-body mt-6 max-w-md text-pretty">{product.tagline}</p>
+        <p className="brand-body mt-6 max-w-md text-pretty">{product.description}</p>
         <div className="drop-hero__actions">
           <span className="drop-price">{product.price.display}</span>
           <DropCartButton />

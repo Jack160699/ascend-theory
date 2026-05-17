@@ -6,7 +6,7 @@ const CATALOG: Record<string, CartProduct> = Object.fromEntries(
     drop.slug,
     {
       slug: drop.slug,
-      name: drop.productName,
+      name: drop.name,
       dropName: drop.dropName,
       image: drop.hero.image,
       imageAlt: drop.hero.alt,
