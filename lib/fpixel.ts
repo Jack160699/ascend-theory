@@ -107,6 +107,7 @@ export function event(
     "Purchase",
     "Search",
     "ViewContent",
+    "AddToCart",
   ]);
 
   if (standard.has(name)) {

@@ -7,12 +7,129 @@
   opacity: 0;
 }
 
-.brand-motion-pending [data-brand-reveal] {
+.brand-motion-pending [data-brand-cinematic] {
   opacity: 0;
 }
 
-.brand-motion-pending [data-brand-section]:not([data-brand-hero]) {
+.brand-motion-pending [data-brand-fade] {
   opacity: 0;
+}
+
+/* ── Wearables: editorial rows (CSS-only interaction, no ScrollTrigger) ── */
+
+.brand-wearables-section {
+  padding-block: clamp(5rem, 12vh, 8.5rem);
+}
+
+.brand-wearables-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4rem, 9vh, 7rem);
+}
+
+.brand-wearables-row__inner {
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2rem);
+  transform: translateZ(0);
+  transition: transform 0.55s cubic-bezier(0.33, 1, 0.68, 1);
+  transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+@media (min-width: 1024px) {
+  .brand-wearables-row__inner {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    align-items: stretch;
+    gap: clamp(2.5rem, 4vw, 4rem);
+    min-height: min(32rem, 72vh);
+  }
+
+  .brand-wearables-row--reverse .brand-wearables-row__media {
+    order: 2;
+  }
+
+  .brand-wearables-row--reverse .brand-wearables-row__copy {
+    order: 1;
+    padding-inline: 0 clamp(1rem, 3vw, 2.5rem) 0;
+  }
+
+  .brand-wearables-row:not(.brand-wearables-row--reverse) .brand-wearables-row__copy {
+    padding-inline: clamp(1rem, 3vw, 2.5rem) 0 0;
+  }
+}
+
+.brand-wearables-row__media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-hairline);
+}
+
+@media (min-width: 640px) {
+  .brand-wearables-row__media {
+    aspect-ratio: 16 / 11;
+  }
+}
+
+@media (min-width: 1024px) {
+  .brand-wearables-row__media {
+    aspect-ratio: auto;
+    min-height: 100%;
+  }
+}
+
+.brand-wearables-row__image {
+  transform: scale(1) translateZ(0);
+  transition: transform 0.55s cubic-bezier(0.33, 1, 0.68, 1);
+  will-change: transform;
+}
+
+.brand-wearables-row__copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(1.25rem, 3vw, 2rem) 0;
+}
+
+.brand-wearables-cta {
+  margin-top: clamp(2rem, 4vh, 2.75rem);
+  display: inline-flex w-fit items-center text-[12px] font-medium tracking-[0.12em] text-white/70 transition-[color,transform] duration-500 ease-[cubic-bezier(0.33,1,0.68,1)];
+}
+
+@media (hover: hover) {
+  .brand-wearables-row__inner {
+    transition-duration: 0.55s;
+    transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  .brand-wearables-row:hover .brand-wearables-row__inner {
+    transform: scale(1.04) translateZ(0);
+  }
+
+  .brand-wearables-row:hover .brand-wearables-row__image {
+    transform: scale(1.08) translateZ(0);
+  }
+
+  .brand-wearables-cta:hover {
+    color: rgba(255, 255, 255, 0.95);
+    transform: translateX(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-wearables-row__inner,
+  .brand-wearables-row__image,
+  .brand-wearables-cta {
+    transition: none;
+  }
+
+  .brand-wearables-row:hover .brand-wearables-row__inner,
+  .brand-wearables-row:hover .brand-wearables-row__image {
+    transform: none;
+  }
 }
 
 .brand-canvas {
@@ -98,10 +215,25 @@
   padding-inline: clamp(1.25rem, 4vw, 2.75rem);
 }
 
+/* Hero cinematic stack */
+.brand-hero-overlay {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.brand-hero-media {
+  object-fit: cover;
+  object-position: center;
+}
+
 .brand-vignette {
   pointer-events: none;
   position: absolute;
   inset: 0;
+  z-index: 3;
   background: radial-gradient(
     ellipse 80% 70% at 50% 45%,
     transparent 0%,
@@ -113,6 +245,7 @@
   pointer-events: none;
   position: absolute;
   inset: 0;
+  z-index: 4;
   background: linear-gradient(
     180deg,
     rgba(10, 10, 10, 0.35) 0%,

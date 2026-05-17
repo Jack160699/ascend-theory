@@ -2,6 +2,7 @@
 
 import { useAssessmentModal } from "@/contexts/assessment-modal";
 import { MENTORSHIP } from "@/lib/brand/content";
+import { brandMotionAttr } from "@/lib/brand/motion";
 import { BRAND_SECTION_IDS } from "@/lib/brand/sections";
 import { BRAND_IMAGES } from "@/lib/brand/images";
 import { HERO_CTA_LABEL } from "@/lib/whatsapp";
@@ -13,6 +14,7 @@ export function BrandMentorship() {
   return (
     <section
       id={BRAND_SECTION_IDS.mentorship}
+      {...brandMotionAttr("fade")}
       data-brand-section
       className="brand-section brand-section--compact"
       aria-labelledby="brand-mentorship-heading"
@@ -20,7 +22,6 @@ export function BrandMentorship() {
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
-        data-brand-depth
       >
         <Image
           src={BRAND_IMAGES.mentorship}
@@ -32,8 +33,11 @@ export function BrandMentorship() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/92 to-[#0a0a0a]/70" />
       </div>
 
-      <div className="brand-shell relative z-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-16">
-        <div data-brand-reveal>
+      <div
+        data-brand-fade
+        className="brand-shell relative z-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-16"
+      >
+        <div>
           <p className="brand-eyebrow">{MENTORSHIP.eyebrow}</p>
           <h2 id="brand-mentorship-heading" className="brand-headline mt-6">
             {MENTORSHIP.headline}
@@ -43,7 +47,7 @@ export function BrandMentorship() {
             {MENTORSHIP.note}
           </p>
         </div>
-        <div data-brand-reveal data-brand-reveal-delay="1">
+        <div>
           <button
             type="button"
             onClick={() => openAssessment()}

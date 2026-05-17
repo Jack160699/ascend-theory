@@ -34,14 +34,14 @@ export function lockModalScroll(): () => void {
   const blockBackgroundTouch = (event: TouchEvent) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
-    if (target.closest(".world-intake-panel")) return;
+    if (target.closest(".world-intake-panel, .drop-cart-panel")) return;
     event.preventDefault();
   };
 
   const blockBackgroundWheel = (event: WheelEvent) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
-    if (target.closest(".world-intake-panel")) return;
+    if (target.closest(".world-intake-panel, .drop-cart-panel")) return;
     event.preventDefault();
   };
 

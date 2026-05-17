@@ -1,11 +1,13 @@
 /**
  * ASCEND THEORY — global motion rhythm (luxury / cinematic).
- * Transform + opacity only. Durations ≥ 0.6s.
+ * Section-specific profiles override generic reveal timing.
  */
 
 export const BRAND_TIMING = {
   hero: {
-    lineDuration: 1.25,
+    lineDuration: 1.2,
+    bgZoomDuration: 7,
+    bgZoomScale: 1.05,
     lineStagger: 0.2,
     pauseAfterLines: 0.2,
     subDuration: 1.05,
@@ -14,24 +16,24 @@ export const BRAND_TIMING = {
     ease: "power3.out" as const,
     delay: 0.15,
   },
-  reveal: {
-    duration: 1,
-    durationMobile: 0.9,
-    yHigh: 60,
-    yLow: 40,
-    yHighMobile: 44,
-    yLowMobile: 32,
-    ease: "power2.out" as const,
-    staggerDelay: 0.2,
-    start: "top 85%",
+  philosophy: {
+    duration: 0.85,
+    ease: "power1.out" as const,
+    start: "top 88%",
     toggleActions: "play none none none" as const,
   },
-  section: {
-    duration: 1,
-    y: 20,
-    yMobile: 14,
+  cinematic: {
+    duration: 1.2,
+    scale: 0.96,
     ease: "power2.out" as const,
-    start: "top 92%",
+    start: "top 78%",
+    toggleActions: "play none none none" as const,
+  },
+  fade: {
+    duration: 0.9,
+    durationMobile: 0.75,
+    ease: "power1.out" as const,
+    start: "top 90%",
     toggleActions: "play none none none" as const,
   },
   depth: {
@@ -39,7 +41,8 @@ export const BRAND_TIMING = {
     range: 20,
     ease: "power1.out" as const,
   },
-  hover: {
-    duration: 0.5,
+  wearables: {
+    hoverScale: 1.015,
+    hoverDuration: 0.55,
   },
 } as const;
