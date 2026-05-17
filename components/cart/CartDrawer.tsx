@@ -108,7 +108,7 @@ export function CartDrawer() {
 
           {empty ? (
             <Link
-              href="/drop/ascend-01"
+              href="/drops"
               className="drop-cta cart-drawer__checkout"
               onClick={closeDrawer}
             >

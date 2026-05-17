@@ -2,7 +2,7 @@
 
 import { HeroCinematicBackground } from "@/components/brand/hero/HeroCinematicBackground";
 import { BrandSiteLayout } from "@/components/brand/layout/BrandSiteLayout";
-import { HERO_LINES } from "@/lib/brand/content";
+import { BRAND, HERO_LINES } from "@/lib/brand/content";
 import { PORTAL_LINKS } from "@/lib/brand/routes";
 import Link from "next/link";
 
@@ -13,6 +13,7 @@ export function GatewayHome() {
         <HeroCinematicBackground />
 
         <div className="portal-screen__content brand-shell">
+          <p className="portal-screen__mark brand-mark">{BRAND.mark}</p>
           <div className="portal-screen__intro">
             <h1 className="portal-screen__title">
               <span className="hero-line block">{HERO_LINES[0]}</span>

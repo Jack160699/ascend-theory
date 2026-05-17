@@ -9,22 +9,26 @@ import { useEffect, useState } from "react";
 
 function isActive(pathname: string, href: string): boolean {
   if (href === BRAND_ROUTES.home) return pathname === "/";
-  if (href.startsWith("/drop/")) return pathname.startsWith("/drop/");
+  if (href === BRAND_ROUTES.drops) {
+    return pathname === href || pathname.startsWith("/drop/");
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function BrandNav() {
   const pathname = usePathname();
+  const isPortalHome = pathname === BRAND_ROUTES.home;
   const { openAssessment } = useAssessmentModal();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    if (isPortalHome) return;
     const onScroll = () => setScrolled(window.scrollY > 32);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [isPortalHome]);
 
   useEffect(() => {
     if (!open) return;
@@ -34,6 +38,10 @@ export function BrandNav() {
       document.body.style.overflow = prev;
     };
   }, [open]);
+
+  if (isPortalHome) {
+    return null;
+  }
 
   return (
     <>

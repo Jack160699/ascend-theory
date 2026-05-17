@@ -29,7 +29,11 @@
   height: 100%;
   flex-direction: column;
   justify-content: space-between;
-  padding-block: clamp(5.25rem, 11vh, 6.5rem) clamp(2rem, 5vh, 3.25rem);
+  padding-block: clamp(2rem, 5vh, 3rem) clamp(2rem, 5vh, 3.25rem);
+}
+
+.portal-screen__mark {
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .portal-screen__title {
@@ -338,8 +342,279 @@
   color: rgba(255, 255, 255, 0.38);
 }
 
+/* ── Drops listing ── */
+.drops-page {
+  padding-block: clamp(6rem, 14vh, 9rem) clamp(4rem, 10vh, 7rem);
+}
+
+.drops-grid {
+  list-style: none;
+  margin: clamp(3rem, 7vh, 4.5rem) 0 0;
+  padding: 0;
+  display: grid;
+  gap: clamp(2rem, 4vw, 3rem);
+}
+
+@media (min-width: 768px) {
+  .drops-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.drops-card {
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+  transition: border-color 0.35s ease;
+}
+
+.drops-card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.drops-card__media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+
+.drops-card__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.75) 0%,
+    transparent 55%
+  );
+  pointer-events: none;
+}
+
+.drops-card__copy {
+  padding: 1.5rem 1.25rem 1.75rem;
+}
+
+.drops-card__title {
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-top: 0.5rem;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.drops-card__price {
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.drops-card__cta {
+  display: inline-block;
+  margin-top: 1rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  transition: color 0.3s ease;
+}
+
+.drops-card:hover .drops-card__cta {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ── Journal article ── */
+.journal-article {
+  padding-block: clamp(6rem, 14vh, 9rem) clamp(4rem, 10vh, 7rem);
+}
+
+.journal-article__back {
+  display: inline-block;
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+  transition: color 0.3s ease;
+}
+
+.journal-article__back:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.journal-article__header {
+  margin-top: 2rem;
+  max-width: 20ch;
+}
+
+.journal-article__title {
+  font-size: clamp(2rem, 4vw + 0.5rem, 3.25rem);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin-top: 1rem;
+}
+
+.journal-article__hero {
+  position: relative;
+  margin-top: clamp(2.5rem, 6vh, 4rem);
+  aspect-ratio: 21 / 9;
+  min-height: 14rem;
+  overflow: hidden;
+  border-block: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.journal-article__hero-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 40%,
+    rgba(10, 10, 10, 0.85) 100%
+  );
+  pointer-events: none;
+}
+
+.journal-article__body {
+  max-width: 42rem;
+  margin-top: clamp(2.5rem, 6vh, 4rem);
+}
+
+.journal-article__excerpt {
+  font-size: 1.125rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 2rem;
+}
+
+.journal-article__paragraph {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.55);
+  margin-top: 1.25rem;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   @view-transition {
     navigation: auto;
   }
+}
+
+/* ── Apply modal (full-screen) ── */
+.apply-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+}
+
+.apply-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.9);
+  cursor: pointer;
+}
+
+.apply-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 28rem;
+  max-height: min(92dvh, 100%);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0d0d0d;
+}
+
+.apply-modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  border: 0;
+  background: transparent;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+
+.apply-modal__close:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.apply-modal__content {
+  padding: clamp(2rem, 5vh, 2.75rem) clamp(1.5rem, 4vw, 2rem);
+}
+
+.apply-modal__fields {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.apply-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.apply-modal__label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.apply-modal__input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
+.apply-modal__input:focus {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.apply-modal__input--area {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.apply-modal__error {
+  font-size: 0.8125rem;
+  color: rgba(248, 113, 113, 0.9);
+}
+
+.apply-modal__footer {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.apply-modal__dismiss {
+  border: 0;
+  background: transparent;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+}
+
+.apply-modal__dismiss:hover {
+  color: rgba(255, 255, 255, 0.7);
 }

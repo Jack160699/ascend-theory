@@ -27,6 +27,7 @@ const AssessmentModalContext = createContext<AssessmentModalValue | null>(
 export function AssessmentModalProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [tier, setTier] = useState<TierKey | null>(null);
+  const [session, setSession] = useState(0);
 
   const openAssessment = useCallback((key?: TierKey) => {
     /* Meta Pixel — high-intent CTA toward intake (hero, mid-scroll, pricing context, legacy buttons). */
@@ -35,6 +36,7 @@ export function AssessmentModalProvider({ children }: { children: ReactNode }) {
       ...(key ? { content_category: key } : {}),
     });
     setTier(key ?? null);
+    setSession((n) => n + 1);
     setOpen(true);
   }, []);
 
@@ -50,7 +52,12 @@ export function AssessmentModalProvider({ children }: { children: ReactNode }) {
   return (
     <AssessmentModalContext.Provider value={value}>
       {children}
-      <AssessmentModal tier={tier} open={open} onClose={closeAssessment} />
+      <AssessmentModal
+        key={session}
+        tier={tier}
+        open={open}
+        onClose={closeAssessment}
+      />
     </AssessmentModalContext.Provider>
   );
 }

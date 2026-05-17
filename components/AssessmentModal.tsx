@@ -1,13 +1,10 @@
 "use client";
 
-import { WorldButton } from "@/components/landing/world/WorldButton";
-import { WorldPanelAtmosphere } from "@/components/landing/world/WorldPanelAtmosphere";
 import { useCinematicScrollLock } from "@/contexts/cinematic-scroll";
 import { WORLD_PRICING_TIERS } from "@/lib/figma-world-content";
 import type { TierKey } from "@/lib/lead-context";
 import { event } from "@/lib/fpixel";
 import { lockModalScroll } from "@/lib/modal-scroll-lock";
-import { DURATION_OVERLAY_SLOW, txReveal } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import {
   buildWebsiteApplicationWhatsAppUrl,
@@ -49,14 +46,12 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const tierLine = useMemo(() => tierInterestLine(tier), [tier]);
-
   useCinematicScrollLock(open);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- portal requires document.body */
   useEffect(() => {
-    setMounted(true);
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
   }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!open) return;
@@ -66,34 +61,15 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
   useEffect(() => {
     if (!open) return;
 
-    const main = document.getElementById("ascend-main");
-    const footer = document.getElementById("site-footer");
-    main?.setAttribute("inert", "");
-    footer?.setAttribute("inert", "");
-    main?.setAttribute("aria-hidden", "true");
-    footer?.setAttribute("aria-hidden", "true");
-
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
 
     return () => {
-      main?.removeAttribute("inert");
-      footer?.removeAttribute("inert");
-      main?.removeAttribute("aria-hidden");
-      footer?.removeAttribute("aria-hidden");
       window.removeEventListener("keydown", onKey);
     };
   }, [open, onClose]);
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (!open) return;
-    setFields(emptyFields);
-    setError(null);
-  }, [open, tier]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const submitForm = useCallback(() => {
     const err = validate(fields);
@@ -110,7 +86,6 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
       challenge: fields.challenge.trim(),
     };
 
-    /* Meta Pixel — qualified lead captured; WhatsApp is the exit contact surface. */
     event("Lead", { content_name: "website_application_submitted" });
     event("Contact", { content_name: "whatsapp_handoff_clicked" });
 
@@ -125,76 +100,55 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
     <AnimatePresence>
       {open ? (
         <motion.div
-          className={cn(
-            "world-intake-root",
-            "fixed inset-0 flex items-center justify-center overflow-hidden p-4 sm:p-6",
-            "pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]",
-          )}
+          className="apply-modal"
           role="dialog"
           aria-modal="true"
           aria-labelledby="assessment-modal-title"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={txReveal(DURATION_OVERLAY_SLOW)}
+          transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
         >
-          <div className="world-intake-backdrop" aria-hidden>
-            <div className="world-intake-backdrop-blur" />
-            <div className="world-intake-backdrop-dim" />
-            <div className="world-intake-backdrop-vignette" />
-            <div className="world-intake-backdrop-warm" />
-            <div className="world-intake-backdrop-grain" />
-          </div>
-
-          <motion.button
+          <button
             type="button"
-            className="world-intake-scrim-hit"
+            className="apply-modal__backdrop"
             aria-label="Close application"
             onClick={onClose}
           />
 
-          <motion.div
-            className="world-intake-panel"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={txReveal(DURATION_OVERLAY_SLOW)}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="world-intake-panel-base" aria-hidden />
-            <WorldPanelAtmosphere grid="fine" vignette />
-            <div className="world-intake-panel-edge" aria-hidden />
-
+          <div className="apply-modal__panel">
             <button
               type="button"
-              className="world-intake-close"
+              className="apply-modal__close"
               onClick={onClose}
               aria-label="Close"
             >
               Close
             </button>
 
-            <header className="world-intake-header">
-              <p className="world-brand-mark">ASCEND THEORY</p>
-              <p className="world-eyebrow mt-4">Private screening</p>
-              <h2 id="assessment-modal-title" className="world-intake-display">
-                Your application
-              </h2>
-            <p className="world-intake-lead mt-3 max-w-xs">
-              Sparse fields — maximum signal. Answers read before any reply.
-            </p>
-              {tierLine ? <p className="world-intake-tier">{tierLine}</p> : null}
-            </header>
+            <div className="apply-modal__content">
+              <header className="apply-modal__header">
+                <p className="brand-mark text-white/45">ASCEND THEORY</p>
+                <p className="brand-eyebrow mt-4">Private screening</p>
+                <h2 id="assessment-modal-title" className="brand-headline mt-6">
+                  Your application
+                </h2>
+                <p className="brand-body mt-4 max-w-md">
+                  Sparse fields — maximum signal. Answers read before any reply.
+                </p>
+                {tierLine ? (
+                  <p className="brand-prose-tight mt-3 uppercase tracking-[0.18em]">
+                    {tierLine}
+                  </p>
+                ) : null}
+              </header>
 
-            <div className="world-intake-body">
-              <div className="world-intake-fields">
-                <div className="world-intake-field">
-                  <label htmlFor="app-name" className="world-intake-label">
-                    Name
-                  </label>
+              <div className="apply-modal__fields">
+                <label className="apply-modal__field" htmlFor="app-name">
+                  <span className="apply-modal__label">Name</span>
                   <input
                     id="app-name"
-                    className="world-intake-input"
+                    className="apply-modal__input"
                     placeholder="Your name"
                     value={fields.fullName}
                     onChange={(e) =>
@@ -202,14 +156,12 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                     }
                     autoComplete="name"
                   />
-                </div>
-                <div className="world-intake-field">
-                  <label htmlFor="app-ig" className="world-intake-label">
-                    Instagram
-                  </label>
+                </label>
+                <label className="apply-modal__field" htmlFor="app-ig">
+                  <span className="apply-modal__label">Instagram</span>
                   <input
                     id="app-ig"
-                    className="world-intake-input"
+                    className="apply-modal__input"
                     placeholder="Optional"
                     value={fields.instagram}
                     onChange={(e) =>
@@ -217,68 +169,55 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                     }
                     autoComplete="username"
                   />
-                </div>
-                <div className="world-intake-field">
-                  <label htmlFor="app-goal" className="world-intake-label">
-                    Direction
-                  </label>
+                </label>
+                <label className="apply-modal__field" htmlFor="app-goal">
+                  <span className="apply-modal__label">Direction</span>
                   <textarea
                     id="app-goal"
                     rows={3}
-                    className={cn("world-intake-input", "world-intake-input--area")}
+                    className={cn("apply-modal__input", "apply-modal__input--area")}
                     placeholder="What are you trying to change?"
                     value={fields.goal}
                     onChange={(e) =>
                       setFields((s) => ({ ...s, goal: e.target.value }))
                     }
                   />
-                </div>
-                <div className="world-intake-field">
-                  <label htmlFor="app-challenge" className="world-intake-label">
-                    Pattern
-                  </label>
+                </label>
+                <label className="apply-modal__field" htmlFor="app-challenge">
+                  <span className="apply-modal__label">Pattern</span>
                   <textarea
                     id="app-challenge"
                     rows={3}
-                    className={cn("world-intake-input", "world-intake-input--area")}
+                    className={cn("apply-modal__input", "apply-modal__input--area")}
                     placeholder="What keeps repeating?"
                     value={fields.challenge}
                     onChange={(e) =>
                       setFields((s) => ({ ...s, challenge: e.target.value }))
                     }
                   />
-                </div>
+                </label>
+
+                {error ? (
+                  <p className="apply-modal__error" role="alert">
+                    {error}
+                  </p>
+                ) : null}
               </div>
 
-              {error ? (
-                <p className="world-intake-error" role="alert">
-                  {error}
-                </p>
-              ) : null}
-            </div>
-
-            <footer className="world-intake-footer">
-              <div className="world-intake-footer-actions">
-                <WorldButton
-                  variant="solid"
-                  className="world-btn-solid--intake"
-                  onClick={submitForm}
-                >
+              <footer className="apply-modal__footer">
+                <button type="button" className="drop-cta w-full" onClick={submitForm}>
                   {MODAL_WHATSAPP_CTA_LABEL}
-                </WorldButton>
+                </button>
                 <button
                   type="button"
-                  className="world-intake-dismiss"
+                  className="apply-modal__dismiss"
                   onClick={onClose}
                 >
-                  Return to experience
+                  Return
                 </button>
-              </div>
-              <p className="world-intake-footnote">
-                Manual review · No obligation to respond if misaligned
-              </p>
-            </footer>
-          </motion.div>
+              </footer>
+            </div>
+          </div>
         </motion.div>
       ) : null}
     </AnimatePresence>,

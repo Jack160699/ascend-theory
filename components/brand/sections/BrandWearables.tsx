@@ -1,29 +1,19 @@
-import { WEARABLES } from "@/lib/brand/content";
-import { brandMotionAttr } from "@/lib/brand/motion";
+import { WEARABLE_COLLECTIONS } from "@/lib/data/wearables";
 import { BRAND_ROUTES } from "@/lib/brand/routes";
-import { BRAND_SECTION_IDS } from "@/lib/brand/sections";
-import { BRAND_IMAGES } from "@/lib/brand/images";
+import { brandMotionAttr } from "@/lib/brand/motion";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 
-const imageMap = {
-  lifestyleGolf: BRAND_IMAGES.apparel,
-  lifestyleAirport: BRAND_IMAGES.eyewear,
-  lifestyleCoastal: BRAND_IMAGES.accessories,
-} as const;
-
-type Category = (typeof WEARABLES.categories)[number];
+import type { WearableCollection } from "@/lib/data/wearables";
 
 function WearableEditorialRow({
-  category,
+  collection,
   reverse,
 }: {
-  category: Category;
+  collection: WearableCollection;
   reverse: boolean;
 }) {
-  const src = imageMap[category.imageKey];
-
   return (
     <li
       className={cn(
@@ -32,10 +22,13 @@ function WearableEditorialRow({
       )}
     >
       <article className="brand-wearables-row__inner">
-        <div className="brand-wearables-row__media">
+        <Link
+          href={BRAND_ROUTES.drop(collection.dropSlug)}
+          className="brand-wearables-row__media block"
+        >
           <Image
-            src={src}
-            alt={category.title}
+            src={collection.image}
+            alt={collection.title}
             fill
             className="brand-wearables-row__image object-cover object-center"
             sizes="(max-width: 1023px) 100vw, 48vw"
@@ -44,14 +37,24 @@ function WearableEditorialRow({
             className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent lg:bg-gradient-to-r lg:from-black/45 lg:via-transparent lg:to-transparent"
             aria-hidden
           />
-        </div>
+        </Link>
 
         <div className="brand-wearables-row__copy">
           <p className="brand-eyebrow text-white/50">Collection</p>
-          <h3 className="brand-headline mt-5 max-w-[12ch]">{category.title}</h3>
-          <p className="brand-body mt-6 max-w-md text-pretty">{category.line}</p>
-          <Link href={BRAND_ROUTES.wearables} className="brand-wearables-cta">
-            {category.cta}
+          <h3 className="brand-headline mt-5 max-w-[12ch]">
+            <Link
+              href={BRAND_ROUTES.drop(collection.dropSlug)}
+              className="hover:text-white transition-colors"
+            >
+              {collection.title}
+            </Link>
+          </h3>
+          <p className="brand-body mt-6 max-w-md text-pretty">{collection.line}</p>
+          <Link
+            href={BRAND_ROUTES.drop(collection.dropSlug)}
+            className="brand-wearables-cta"
+          >
+            {collection.cta}
           </Link>
         </div>
       </article>
@@ -62,7 +65,6 @@ function WearableEditorialRow({
 export function BrandWearables() {
   return (
     <section
-      id={BRAND_SECTION_IDS.wearables}
       {...brandMotionAttr("wearables")}
       data-brand-section
       className="brand-section--compact brand-wearables-section border-t border-white/[0.06] py-0"
@@ -70,10 +72,10 @@ export function BrandWearables() {
     >
       <div className="brand-shell relative z-10">
         <ul className="brand-wearables-list mt-0 sm:mt-4">
-          {WEARABLES.categories.map((cat, i) => (
+          {WEARABLE_COLLECTIONS.map((collection, i) => (
             <WearableEditorialRow
-              key={cat.id}
-              category={cat}
+              key={collection.id}
+              collection={collection}
               reverse={i % 2 === 1}
             />
           ))}

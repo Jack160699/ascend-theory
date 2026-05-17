@@ -1,15 +1,15 @@
 "use client";
 
-import type { DropProduct } from "@/lib/brand/drop-product";
+import type { Drop } from "@/lib/data/drops";
 import { createContext, useContext, type ReactNode } from "react";
 
-const DropProductContext = createContext<DropProduct | null>(null);
+const DropProductContext = createContext<Drop | null>(null);
 
 export function DropProductProvider({
   product,
   children,
 }: {
-  product: DropProduct;
+  product: Drop;
   children: ReactNode;
 }) {
   return (
@@ -19,7 +19,7 @@ export function DropProductProvider({
   );
 }
 
-export function useDropProduct(): DropProduct {
+export function useDropProduct(): Drop {
   const ctx = useContext(DropProductContext);
   if (!ctx) {
     throw new Error("useDropProduct requires DropProductProvider");

@@ -1,9 +1,16 @@
 # Hero background video
 
-Hero media is loaded from **remote stock** (see `lib/stock-media.ts` → `STOCK_HERO_VIDEO`).
+Place optimized loops here (target **under 2MB each**, no audio):
 
-- WebM — Coverr night city loop
-- MP4 — Pexels fallback (1920×1080)
-- Poster — Unsplash still via `next/image`
+| File | Format |
+|------|--------|
+| `hero-intro.webm` | VP9 WebM (primary) |
+| `hero-intro.mp4` | H.264 MP4 (fallback) |
 
-No local video files required. To self-host, replace URLs in `lib/stock-media.ts` and add files here if preferred.
+## Download
+
+```bash
+npm run download:hero-video
+```
+
+Or add your own dark cinematic loop (urban night, matte tones). The hero falls back to a still poster if files are missing.

@@ -1,5 +1,6 @@
 "use client";
 
+import { useDropProduct } from "@/components/drop/DropProductContext";
 import { useCart } from "@/contexts/cart";
 import { cn } from "@/lib/utils";
 import { useCallback, useState } from "react";
@@ -15,15 +16,16 @@ export function DropCartButton({
   variant = "primary",
   label = "Add to Cart",
 }: DropCartButtonProps) {
-  const { addDefaultProduct } = useCart();
+  const product = useDropProduct();
+  const { addProduct } = useCart();
   const [pending, setPending] = useState(false);
 
   const handleClick = useCallback(() => {
     if (pending) return;
     setPending(true);
-    addDefaultProduct();
+    addProduct(product.slug);
     window.setTimeout(() => setPending(false), 400);
-  }, [addDefaultProduct, pending]);
+  }, [addProduct, pending, product.slug]);
 
   return (
     <button

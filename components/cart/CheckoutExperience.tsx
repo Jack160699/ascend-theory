@@ -21,7 +21,7 @@ export function CheckoutExperience() {
   useEffect(() => {
     if (!hydrated) return;
     if (resolvedLines.length === 0) {
-      router.replace("/drop/ascend-01");
+      router.replace("/drops");
     }
   }, [hydrated, resolvedLines.length, router]);
 
@@ -81,8 +81,8 @@ export function CheckoutExperience() {
   return (
     <div className="drop-shell checkout-layout py-28 sm:py-32">
       <header className="checkout-header">
-        <Link href="/drop" className="checkout-back">
-          ← Back to drop
+        <Link href="/drops" className="checkout-back">
+          ← Back to drops
         </Link>
         <h1 className="brand-headline mt-8">Checkout</h1>
         <CartUrgency />

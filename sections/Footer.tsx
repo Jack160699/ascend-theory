@@ -14,7 +14,9 @@ export function Footer() {
   const pathname = usePathname();
   const isPortalHome = pathname === "/";
   const isCommerce =
-    pathname.startsWith("/drop") || pathname.startsWith("/checkout");
+    pathname.startsWith("/drop") ||
+    pathname.startsWith("/drops") ||
+    pathname.startsWith("/checkout");
 
   if (isPortalHome) return null;
 

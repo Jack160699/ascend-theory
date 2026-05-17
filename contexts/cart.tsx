@@ -28,6 +28,7 @@ type CartContextValue = {
   openDrawer: () => void;
   closeDrawer: () => void;
   addDefaultProduct: () => void;
+  addProduct: (slug: string) => void;
   setQuantity: (slug: string, quantity: number) => void;
   removeLine: (slug: string) => void;
   clear: () => void;
@@ -87,8 +88,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
-  const addDefaultProduct = useCallback(() => {
-    const product = getDefaultCartProduct();
+  const addProduct = useCallback((slug: string) => {
+    const product = getCartProduct(slug);
+    if (!product) return;
+
     setLines((prev) => {
       const existing = prev.find((l) => l.slug === product.slug);
       const nextQty = existing
@@ -113,6 +116,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     setDrawerOpen(true);
   }, []);
+
+  const addDefaultProduct = useCallback(() => {
+    addProduct(getDefaultCartProduct().slug);
+  }, [addProduct]);
 
   const setQuantity = useCallback((slug: string, quantity: number) => {
     const product = getCartProduct(slug);
@@ -148,6 +155,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       openDrawer,
       closeDrawer,
       addDefaultProduct,
+      addProduct,
       setQuantity,
       removeLine,
       clear,
@@ -163,6 +171,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       openDrawer,
       closeDrawer,
       addDefaultProduct,
+      addProduct,
       setQuantity,
       removeLine,
       clear,
