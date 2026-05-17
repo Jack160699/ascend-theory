@@ -1,5 +1,5 @@
 import { BRAND_IMAGES } from "@/lib/brand/images";
-import { ASCEND_IMAGES } from "@/lib/cinematic-assets";
+import { STOCK_IMAGES } from "@/lib/stock-media";
 
 /** Ascend / 01 — limited release product experience. */
 export const DROP_PRODUCT = {
@@ -25,17 +25,17 @@ export const DROP_PRODUCT = {
   },
   visuals: [
     {
-      src: ASCEND_IMAGES.teamStudio,
+      src: STOCK_IMAGES.teamStudio,
       alt: "Editorial studio portrait — Ascend / 01",
       caption: "Studio · 01",
     },
     {
-      src: ASCEND_IMAGES.lifestyleGolf,
+      src: STOCK_IMAGES.lifestyleGolf,
       alt: "Field movement — Ascend / 01",
       caption: "Field · 02",
     },
     {
-      src: ASCEND_IMAGES.editorialArchitecture,
+      src: STOCK_IMAGES.editorialArchitecture,
       alt: "Architectural lines — Ascend / 01",
       caption: "Structure · 03",
     },

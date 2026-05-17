@@ -1,8 +1,11 @@
-import { DROP_PRODUCT } from "@/lib/brand/drop-product";
+"use client";
+
 import { DropFade } from "./DropFade";
+import { useDropProduct } from "./DropProductContext";
 
 export function DropScarcity() {
-  const { scarcity } = DROP_PRODUCT;
+  const product = useDropProduct();
+  const { scarcity } = product;
   const pct = Math.round(
     (scarcity.stockRemaining / scarcity.totalAllocation) * 100,
   );

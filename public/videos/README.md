@@ -1,8 +1,9 @@
 # Hero background video
 
-Add optimized intro loops here (target **under 2MB** each):
+Hero media is loaded from **remote stock** (see `lib/stock-media.ts` → `STOCK_HERO_VIDEO`).
 
-- `hero-intro.webm` — primary (VP9, no audio)
-- `hero-intro.mp4` — fallback (H.264, no audio)
+- WebM — Coverr night city loop
+- MP4 — Pexels fallback (1920×1080)
+- Poster — Unsplash still via `next/image`
 
-Until these files exist, the hero uses the WebP poster from `/images/ascend/hero-storefront.webp`.
+No local video files required. To self-host, replace URLs in `lib/stock-media.ts` and add files here if preferred.

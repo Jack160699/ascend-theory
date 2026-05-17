@@ -1,8 +1,11 @@
-import { DROP_PRODUCT } from "@/lib/brand/drop-product";
+"use client";
+
 import { DropCartButton } from "./DropCartButton";
 import { DropFade } from "./DropFade";
+import { useDropProduct } from "./DropProductContext";
 
 export function DropClosingCta() {
+  const product = useDropProduct();
   return (
     <DropFade>
       <section
@@ -11,9 +14,9 @@ export function DropClosingCta() {
       >
         <div className="drop-shell flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="brand-eyebrow">{DROP_PRODUCT.dropName}</p>
-            <p className="brand-headline mt-4">{DROP_PRODUCT.productName}</p>
-            <p className="drop-price mt-3">{DROP_PRODUCT.price.display}</p>
+            <p className="brand-eyebrow">{product.dropName}</p>
+            <p className="brand-headline mt-4">{product.productName}</p>
+            <p className="drop-price mt-3">{product.price.display}</p>
           </div>
           <DropCartButton />
         </div>

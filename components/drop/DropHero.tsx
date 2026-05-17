@@ -1,14 +1,17 @@
-import { DROP_PRODUCT } from "@/lib/brand/drop-product";
+"use client";
+
 import Image from "next/image";
 import { DropCartButton } from "./DropCartButton";
+import { useDropProduct } from "./DropProductContext";
 
 export function DropHero() {
+  const product = useDropProduct();
   return (
     <section id="drop-hero" className="drop-hero" aria-labelledby="drop-product-title">
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <Image
-          src={DROP_PRODUCT.hero.image}
-          alt={DROP_PRODUCT.hero.alt}
+          src={product.hero.image}
+          alt={product.hero.alt}
           fill
           priority
           className="object-cover object-center"
@@ -20,13 +23,13 @@ export function DropHero() {
       </div>
 
       <div className="drop-shell drop-hero__content">
-        <p className="brand-eyebrow">{DROP_PRODUCT.dropName}</p>
+        <p className="brand-eyebrow">{product.dropName}</p>
         <h1 id="drop-product-title" className="drop-hero__title mt-6">
-          {DROP_PRODUCT.productName}
+          {product.productName}
         </h1>
-        <p className="brand-body mt-6 max-w-md text-pretty">{DROP_PRODUCT.tagline}</p>
+        <p className="brand-body mt-6 max-w-md text-pretty">{product.tagline}</p>
         <div className="drop-hero__actions">
-          <span className="drop-price">{DROP_PRODUCT.price.display}</span>
+          <span className="drop-price">{product.price.display}</span>
           <DropCartButton />
         </div>
       </div>

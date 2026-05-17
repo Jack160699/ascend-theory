@@ -1,5 +1,6 @@
 import { WEARABLES } from "@/lib/brand/content";
 import { brandMotionAttr } from "@/lib/brand/motion";
+import { BRAND_ROUTES } from "@/lib/brand/routes";
 import { BRAND_SECTION_IDS } from "@/lib/brand/sections";
 import { BRAND_IMAGES } from "@/lib/brand/images";
 import { cn } from "@/lib/utils";
@@ -49,7 +50,7 @@ function WearableEditorialRow({
           <p className="brand-eyebrow text-white/50">Collection</p>
           <h3 className="brand-headline mt-5 max-w-[12ch]">{category.title}</h3>
           <p className="brand-body mt-6 max-w-md text-pretty">{category.line}</p>
-          <Link href={`#${category.id}`} className="brand-wearables-cta">
+          <Link href={BRAND_ROUTES.wearables} className="brand-wearables-cta">
             {category.cta}
           </Link>
         </div>
@@ -64,18 +65,11 @@ export function BrandWearables() {
       id={BRAND_SECTION_IDS.wearables}
       {...brandMotionAttr("wearables")}
       data-brand-section
-      className="brand-section brand-section--compact brand-wearables-section"
-      aria-labelledby="brand-wearables-heading"
+      className="brand-section--compact brand-wearables-section border-t border-white/[0.06] py-0"
+      aria-label="Wearable collections"
     >
       <div className="brand-shell relative z-10">
-        <header className="brand-wearables-header max-w-2xl border-b border-white/[0.07] pb-10 sm:pb-12">
-          <p className="brand-eyebrow">{WEARABLES.eyebrow}</p>
-          <h2 id="brand-wearables-heading" className="brand-headline mt-6">
-            {WEARABLES.headline}
-          </h2>
-        </header>
-
-        <ul className="brand-wearables-list mt-14 sm:mt-20 lg:mt-24">
+        <ul className="brand-wearables-list mt-0 sm:mt-4">
           {WEARABLES.categories.map((cat, i) => (
             <WearableEditorialRow
               key={cat.id}

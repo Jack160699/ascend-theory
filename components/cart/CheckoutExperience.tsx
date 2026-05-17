@@ -21,7 +21,7 @@ export function CheckoutExperience() {
   useEffect(() => {
     if (!hydrated) return;
     if (resolvedLines.length === 0) {
-      router.replace("/drop");
+      router.replace("/drop/ascend-01");
     }
   }, [hydrated, resolvedLines.length, router]);
 

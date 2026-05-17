@@ -1,11 +1,8 @@
-import { BRAND_IMAGES } from "@/lib/brand/images";
+import { STOCK_HERO_VIDEO } from "@/lib/stock-media";
 
-/**
- * Hero cinematic background — keep each file under ~2MB.
- * Place assets in `public/videos/` (see README in that folder).
- */
+/** Hero cinematic background — remote stock loop (WebM + MP4), poster still. */
 export const HERO_VIDEO = {
-  webm: "/videos/hero-intro.webm",
-  mp4: "/videos/hero-intro.mp4",
-  poster: BRAND_IMAGES.hero,
+  webm: STOCK_HERO_VIDEO.webm,
+  mp4: STOCK_HERO_VIDEO.mp4,
+  poster: STOCK_HERO_VIDEO.poster,
 } as const;

@@ -1,6 +1,6 @@
 "use client";
 
-import { BRAND_NAV } from "@/lib/brand/sections";
+import { BRAND_NAV, BRAND_ROUTES } from "@/lib/brand/routes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,7 +12,11 @@ const legal = [
 
 export function Footer() {
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const isPortalHome = pathname === "/";
+  const isCommerce =
+    pathname.startsWith("/drop") || pathname.startsWith("/checkout");
+
+  if (isPortalHome) return null;
 
   return (
     <footer
@@ -21,22 +25,24 @@ export function Footer() {
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="brand-mark text-white/45">ASCEND THEORY</p>
+          <Link href={BRAND_ROUTES.home} className="brand-mark text-white/45 hover:text-white/70">
+            ASCEND THEORY
+          </Link>
           <p className="brand-prose-tight mt-4 max-w-xs normal-case tracking-normal text-white/35">
             Luxury in motion. A movement for discipline, identity, and modern
             performance life.
           </p>
         </div>
 
-        {isHome ? (
+        {!isCommerce ? (
           <nav
             aria-label="Site"
             className="flex flex-wrap gap-x-8 gap-y-3 text-[12px] font-medium tracking-[0.04em] text-white/40"
           >
             {BRAND_NAV.map((item) => (
               <Link
-                key={item.id}
-                href={`/#${item.id}`}
+                key={item.href}
+                href={item.href}
                 className="transition-colors hover:text-white/75"
               >
                 {item.label}

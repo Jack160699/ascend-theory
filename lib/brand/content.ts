@@ -70,16 +70,19 @@ export const JOURNAL = {
       title: "On discipline as aesthetics",
       date: "Field note · 04",
       read: "4 min",
+      imageKey: "editorialArchitecture" as const,
     },
     {
       title: "The quiet cost of focus",
       date: "Essay · 03",
       read: "6 min",
+      imageKey: "teamStudio" as const,
     },
     {
       title: "Modern masculinity, without theatre",
       date: "Editorial · 02",
       read: "5 min",
+      imageKey: "lifestyleAirport" as const,
     },
   ],
 } as const;

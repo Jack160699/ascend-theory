@@ -2,6 +2,7 @@
 @import "../styles/premium.css";
 @import "../styles/brand-luxury.css";
 @import "../styles/drop-luxury.css";
+@import "../styles/brand-pages.css";
 
 :root {
   /* Cinematic V2 — scroll progression (set by MasterSceneOrchestrator; defaults for SSR) */

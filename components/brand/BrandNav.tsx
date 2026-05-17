@@ -1,12 +1,20 @@
 "use client";
 
 import { useAssessmentModal } from "@/contexts/assessment-modal";
-import { BRAND_NAV } from "@/lib/brand/sections";
+import { BRAND_NAV, BRAND_ROUTES } from "@/lib/brand/routes";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+function isActive(pathname: string, href: string): boolean {
+  if (href === BRAND_ROUTES.home) return pathname === "/";
+  if (href.startsWith("/drop/")) return pathname.startsWith("/drop/");
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function BrandNav() {
+  const pathname = usePathname();
   const { openAssessment } = useAssessmentModal();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -41,16 +49,21 @@ export function BrandNav() {
           className="brand-shell flex h-[4.25rem] items-center justify-between sm:h-[4.5rem]"
           aria-label="Primary"
         >
-          <Link href="/" className="brand-mark text-white/50 hover:text-white/80">
+          <Link href={BRAND_ROUTES.home} className="brand-mark text-white/50 hover:text-white/80">
             ASCEND THEORY
           </Link>
 
           <div className="hidden items-center gap-8 lg:flex">
             {BRAND_NAV.map((item) => (
               <Link
-                key={item.id}
-                href={`#${item.id}`}
-                className="text-[12px] font-medium tracking-[0.06em] text-white/45 transition-colors hover:text-white/85"
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "text-[12px] font-medium tracking-[0.06em] transition-colors",
+                  isActive(pathname, item.href)
+                    ? "text-white/90"
+                    : "text-white/45 hover:text-white/85",
+                )}
               >
                 {item.label}
               </Link>
@@ -84,10 +97,13 @@ export function BrandNav() {
           <div className="flex min-h-full flex-col justify-center gap-6 px-8">
             {BRAND_NAV.map((item) => (
               <Link
-                key={item.id}
-                href={`#${item.id}`}
+                key={item.href}
+                href={item.href}
                 onClick={() => setOpen(false)}
-                className="text-2xl font-medium tracking-tight text-white/90"
+                className={cn(
+                  "text-2xl font-medium tracking-tight",
+                  isActive(pathname, item.href) ? "text-white" : "text-white/90",
+                )}
               >
                 {item.label}
               </Link>

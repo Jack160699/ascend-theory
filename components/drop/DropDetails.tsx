@@ -1,7 +1,10 @@
-import { DROP_PRODUCT } from "@/lib/brand/drop-product";
+"use client";
+
 import { DropFade } from "./DropFade";
+import { useDropProduct } from "./DropProductContext";
 
 export function DropDetails() {
+  const product = useDropProduct();
   return (
     <DropFade>
       <section className="drop-section" aria-labelledby="drop-details-heading">
@@ -13,7 +16,7 @@ export function DropDetails() {
             </h2>
           </div>
           <ul className="drop-details-list">
-            {DROP_PRODUCT.details.map((item) => (
+            {product.details.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>

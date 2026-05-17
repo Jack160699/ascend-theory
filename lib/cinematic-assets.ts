@@ -1,15 +1,9 @@
 /**
- * Ascend Theory — brand lifestyle stills (`public/images/ascend/`).
+ * Ascend Theory — brand lifestyle stills (remote stock, optimized via next/image).
  */
-export const ASCEND_IMAGES = {
-  heroStorefront: "/images/ascend/hero-storefront.webp",
-  editorialArchitecture: "/images/ascend/editorial-architecture.webp",
-  brotherhoodDining: "/images/ascend/brotherhood-dining.webp",
-  teamStudio: "/images/ascend/team-studio.webp",
-  lifestyleGolf: "/images/ascend/lifestyle-golf.webp",
-  lifestyleAirport: "/images/ascend/lifestyle-airport.webp",
-  lifestyleCoastal: "/images/ascend/lifestyle-coastal.webp",
-} as const;
+import { STOCK_IMAGES } from "@/lib/stock-media";
+
+export const ASCEND_IMAGES = { ...STOCK_IMAGES } as const;
 
 /** @deprecated Use `ASCEND_IMAGES` — aliases for legacy section imports. */
 export const CINEMATIC_ASSETS = {

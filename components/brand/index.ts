@@ -1,1 +1,1 @@
-export { BrandExperience } from "./BrandExperience";
+export { BrandSiteLayout } from "./layout/BrandSiteLayout";
