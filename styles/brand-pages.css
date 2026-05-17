@@ -492,6 +492,70 @@
   margin-top: 1.25rem;
 }
 
+.philosophy-page__explore {
+  margin-top: clamp(3rem, 8vh, 5rem);
+  padding-bottom: clamp(2rem, 6vh, 4rem);
+}
+
+/* ── Cross-page explore links ── */
+.page-explore {
+  margin-top: clamp(3rem, 8vh, 5rem);
+  padding-top: clamp(2rem, 5vh, 3rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.page-explore__list {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+@media (min-width: 640px) {
+  .page-explore__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+.page-explore__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.88);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  transition: color 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  .page-explore__link {
+    padding: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+}
+
+.page-explore__link:hover {
+  color: #fff;
+}
+
+.page-explore__arrow {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.38);
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.page-explore__link:hover .page-explore__arrow {
+  color: rgba(255, 255, 255, 0.75);
+  transform: translateX(2px);
+}
+
 @media (prefers-reduced-motion: no-preference) {
   @view-transition {
     navigation: auto;

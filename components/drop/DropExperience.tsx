@@ -4,7 +4,7 @@ import type { Drop } from "@/lib/data/drops";
 import { DropClosingCta } from "./DropClosingCta";
 import { DropDetails } from "./DropDetails";
 import { DropHero } from "./DropHero";
-import { DropNav } from "./DropNav";
+import { BrandNav } from "@/components/brand/BrandNav";
 import { DropProductProvider } from "./DropProductContext";
 import { DropScarcity } from "./DropScarcity";
 import { DropStickyBar } from "./DropStickyBar";
@@ -15,7 +15,7 @@ export function DropExperience({ product }: { product: Drop }) {
   return (
     <DropProductProvider product={product}>
       <div className="drop-canvas min-h-screen overflow-x-clip pb-24 antialiased">
-        <DropNav />
+        <BrandNav />
         <DropHero />
         <DropStory />
         <DropVisuals />

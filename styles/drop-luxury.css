@@ -459,10 +459,20 @@
 }
 
 .cart-line__name {
+  display: inline-block;
   margin-top: 0.2rem;
   font-size: 0.875rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
+  transition: color 0.25s ease;
+}
+
+.cart-line__name:hover {
+  color: #fff;
+}
+
+.cart-line__media {
+  display: block;
 }
 
 .cart-line__unit {
@@ -721,9 +731,15 @@
 }
 
 .checkout-summary__name {
+  display: inline-block;
   font-size: 0.8125rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.88);
+  transition: color 0.25s ease;
+}
+
+.checkout-summary__name:hover {
+  color: #fff;
 }
 
 .checkout-summary__qty {

@@ -1,5 +1,7 @@
+import { BrandNav } from "@/components/brand/BrandNav";
 import { CommerceShell } from "@/components/cart/CommerceShell";
 import { CheckoutExperience } from "@/components/cart/CheckoutExperience";
+import { AssessmentModalProvider } from "@/contexts/assessment-modal";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,10 +11,13 @@ export const metadata: Metadata = {
 
 export default function CheckoutPage() {
   return (
-    <CommerceShell>
-      <main className="drop-canvas min-h-screen overflow-x-clip antialiased">
-        <CheckoutExperience />
-      </main>
-    </CommerceShell>
+    <AssessmentModalProvider>
+      <CommerceShell>
+        <main className="drop-canvas min-h-screen overflow-x-clip antialiased">
+          <BrandNav />
+          <CheckoutExperience />
+        </main>
+      </CommerceShell>
+    </AssessmentModalProvider>
   );
 }

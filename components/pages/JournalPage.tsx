@@ -1,5 +1,6 @@
 "use client";
 
+import { PageExploreLinks } from "@/components/brand/PageExploreLinks";
 import { BrandSiteLayout } from "@/components/brand/layout/BrandSiteLayout";
 import { JOURNAL_ARTICLES, JOURNAL_INDEX } from "@/lib/data/journal";
 import { BRAND_ROUTES } from "@/lib/brand/routes";
@@ -74,6 +75,8 @@ export function JournalPage() {
             </li>
           ))}
         </ul>
+
+        <PageExploreLinks excludeHref={BRAND_ROUTES.journal} />
       </div>
     </BrandSiteLayout>
   );

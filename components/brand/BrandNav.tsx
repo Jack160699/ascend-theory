@@ -1,23 +1,22 @@
-"use client";
+﻿"use client";
 
+import { CartNavButton } from "@/components/cart/CartNavButton";
 import { useAssessmentModal } from "@/contexts/assessment-modal";
-import { BRAND_NAV, BRAND_ROUTES } from "@/lib/brand/routes";
+import {
+  BRAND_NAV,
+  BRAND_ROUTES,
+  isActiveBrandRoute,
+  isCommercePath,
+} from "@/lib/brand/routes";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-function isActive(pathname: string, href: string): boolean {
-  if (href === BRAND_ROUTES.home) return pathname === "/";
-  if (href === BRAND_ROUTES.drops) {
-    return pathname === href || pathname.startsWith("/drop/");
-  }
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
 export function BrandNav() {
   const pathname = usePathname();
   const isPortalHome = pathname === BRAND_ROUTES.home;
+  const showCart = isCommercePath(pathname);
   const { openAssessment } = useAssessmentModal();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -68,7 +67,7 @@ export function BrandNav() {
                 href={item.href}
                 className={cn(
                   "text-[12px] font-medium tracking-[0.06em] transition-colors",
-                  isActive(pathname, item.href)
+                  isActiveBrandRoute(pathname, item.href)
                     ? "text-white/90"
                     : "text-white/45 hover:text-white/85",
                 )}
@@ -83,16 +82,20 @@ export function BrandNav() {
             >
               Apply
             </button>
+            {showCart ? <CartNavButton /> : null}
           </div>
 
-          <button
-            type="button"
-            className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/55 lg:hidden"
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
-            {open ? "Close" : "Menu"}
-          </button>
+          <div className="flex items-center gap-4 lg:hidden">
+            {showCart ? <CartNavButton /> : null}
+            <button
+              type="button"
+              className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/55"
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+            >
+              {open ? "Close" : "Menu"}
+            </button>
+          </div>
         </nav>
       </header>
 
@@ -110,7 +113,7 @@ export function BrandNav() {
                 onClick={() => setOpen(false)}
                 className={cn(
                   "text-2xl font-medium tracking-tight",
-                  isActive(pathname, item.href) ? "text-white" : "text-white/90",
+                  isActiveBrandRoute(pathname, item.href) ? "text-white" : "text-white/90",
                 )}
               >
                 {item.label}
@@ -132,3 +135,4 @@ export function BrandNav() {
     </>
   );
 }
+

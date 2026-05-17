@@ -13,11 +13,6 @@ const legal = [
 export function Footer() {
   const pathname = usePathname();
   const isPortalHome = pathname === "/";
-  const isCommerce =
-    pathname.startsWith("/drop") ||
-    pathname.startsWith("/drops") ||
-    pathname.startsWith("/checkout");
-
   if (isPortalHome) return null;
 
   return (
@@ -36,22 +31,20 @@ export function Footer() {
           </p>
         </div>
 
-        {!isCommerce ? (
-          <nav
-            aria-label="Site"
-            className="flex flex-wrap gap-x-8 gap-y-3 text-[12px] font-medium tracking-[0.04em] text-white/40"
-          >
-            {BRAND_NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="transition-colors hover:text-white/75"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        ) : null}
+        <nav
+          aria-label="Site"
+          className="flex flex-wrap gap-x-8 gap-y-3 text-[12px] font-medium tracking-[0.04em] text-white/40"
+        >
+          {BRAND_NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="transition-colors hover:text-white/75"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </div>
 
       <div className="mx-auto mt-10 flex max-w-6xl flex-col gap-4 border-t border-white/[0.06] pt-8 sm:flex-row sm:items-center sm:justify-between">

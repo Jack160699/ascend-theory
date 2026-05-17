@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "@/contexts/cart";
+import { BRAND_ROUTES } from "@/lib/brand/routes";
 import { formatMoney, formatOrderWhatsAppBody } from "@/lib/cart/format";
 import { ascendWhatsAppUrl } from "@/lib/whatsapp";
 import { event } from "@/lib/fpixel";
@@ -81,7 +82,7 @@ export function CheckoutExperience() {
   return (
     <div className="drop-shell checkout-layout py-28 sm:py-32">
       <header className="checkout-header">
-        <Link href="/drops" className="checkout-back">
+        <Link href={BRAND_ROUTES.drops} className="checkout-back">
           ← Back to drops
         </Link>
         <h1 className="brand-headline mt-8">Checkout</h1>
@@ -214,7 +215,12 @@ export function CheckoutExperience() {
                   />
                 </div>
                 <div className="checkout-summary__meta">
-                  <p className="checkout-summary__name">{product.name}</p>
+                  <Link
+                    href={BRAND_ROUTES.drop(line.slug)}
+                    className="checkout-summary__name"
+                  >
+                    {product.name}
+                  </Link>
                   <p className="checkout-summary__qty">Qty {line.quantity}</p>
                 </div>
                 <p className="checkout-summary__price">

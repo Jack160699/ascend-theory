@@ -1,3 +1,4 @@
+import { PageExploreLinks } from "@/components/brand/PageExploreLinks";
 import { BrandSiteLayout } from "@/components/brand/layout/BrandSiteLayout";
 import type { JournalArticle } from "@/lib/data/journal";
 import { BRAND_ROUTES } from "@/lib/brand/routes";
@@ -45,6 +46,7 @@ export function JournalArticlePage({ article }: JournalArticlePageProps) {
               {paragraph}
             </p>
           ))}
+          <PageExploreLinks excludeHref={BRAND_ROUTES.journal} />
         </div>
       </article>
     </BrandSiteLayout>

@@ -1,5 +1,6 @@
 "use client";
 
+import { PageExploreLinks } from "@/components/brand/PageExploreLinks";
 import { BrandSiteLayout } from "@/components/brand/layout/BrandSiteLayout";
 import { DROPS } from "@/lib/data/drops";
 import { BRAND_ROUTES } from "@/lib/brand/routes";
@@ -46,6 +47,8 @@ export function DropsPage() {
             </li>
           ))}
         </ul>
+
+        <PageExploreLinks excludeHref={BRAND_ROUTES.drops} />
       </div>
     </BrandSiteLayout>
   );

@@ -34,3 +34,19 @@ export const PORTAL_LINKS = [
   { href: BRAND_ROUTES.journal, label: "Journal" },
   { href: BRAND_ROUTES.philosophy, label: "Philosophy" },
 ] as const;
+
+export function isCommercePath(pathname: string): boolean {
+  return (
+    pathname === BRAND_ROUTES.checkout ||
+    pathname === BRAND_ROUTES.drops ||
+    pathname.startsWith("/drop/")
+  );
+}
+
+export function isActiveBrandRoute(pathname: string, href: string): boolean {
+  if (href === BRAND_ROUTES.home) return pathname === "/";
+  if (href === BRAND_ROUTES.drops) {
+    return pathname === href || pathname.startsWith("/drop/");
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}

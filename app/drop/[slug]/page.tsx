@@ -1,5 +1,6 @@
 import { CommerceShell } from "@/components/cart/CommerceShell";
 import { DropExperience } from "@/components/drop";
+import { AssessmentModalProvider } from "@/contexts/assessment-modal";
 import { getAllDropSlugs, getDropBySlug } from "@/lib/data/drops";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -30,8 +31,10 @@ export default async function DropProductPage({ params }: PageProps) {
   if (!product) notFound();
 
   return (
-    <CommerceShell>
-      <DropExperience product={product} />
-    </CommerceShell>
+    <AssessmentModalProvider>
+      <CommerceShell>
+        <DropExperience product={product} />
+      </CommerceShell>
+    </AssessmentModalProvider>
   );
 }

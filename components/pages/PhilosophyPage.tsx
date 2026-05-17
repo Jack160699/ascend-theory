@@ -1,7 +1,9 @@
 "use client";
 
+import { PageExploreLinks } from "@/components/brand/PageExploreLinks";
 import { BrandSiteLayout } from "@/components/brand/layout/BrandSiteLayout";
 import { PHILOSOPHY } from "@/lib/brand/content";
+import { BRAND_ROUTES } from "@/lib/brand/routes";
 
 export function PhilosophyPage() {
   return (
@@ -34,6 +36,10 @@ export function PhilosophyPage() {
               </li>
             ))}
           </ul>
+        </div>
+
+        <div className="brand-shell philosophy-page__explore">
+          <PageExploreLinks excludeHref={BRAND_ROUTES.philosophy} />
         </div>
       </article>
     </BrandSiteLayout>

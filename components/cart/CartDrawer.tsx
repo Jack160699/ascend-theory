@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "@/contexts/cart";
+import { BRAND_ROUTES } from "@/lib/brand/routes";
 import { formatMoney } from "@/lib/cart/format";
 import { lockModalScroll } from "@/lib/modal-scroll-lock";
 import { cn } from "@/lib/utils";
@@ -108,15 +109,15 @@ export function CartDrawer() {
 
           {empty ? (
             <Link
-              href="/drops"
+              href={BRAND_ROUTES.drops}
               className="drop-cta cart-drawer__checkout"
               onClick={closeDrawer}
             >
-              View Drop
+              View drops
             </Link>
           ) : (
             <Link
-              href="/checkout"
+              href={BRAND_ROUTES.checkout}
               className="drop-cta cart-drawer__checkout"
               onClick={closeDrawer}
             >

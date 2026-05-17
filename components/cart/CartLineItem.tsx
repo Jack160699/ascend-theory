@@ -2,7 +2,9 @@
 
 import { formatMoney, lineTotal } from "@/lib/cart/format";
 import type { CartLine, CartProduct } from "@/lib/cart/types";
+import { BRAND_ROUTES } from "@/lib/brand/routes";
 import Image from "next/image";
+import Link from "next/link";
 
 type CartLineItemProps = {
   line: CartLine;
@@ -19,7 +21,11 @@ export function CartLineItem({
 
   return (
     <li className="cart-line">
-      <div className="cart-line__media">
+      <Link
+        href={BRAND_ROUTES.drop(line.slug)}
+        className="cart-line__media"
+        aria-label={`View ${product.name}`}
+      >
         <Image
           src={product.image}
           alt={product.imageAlt}
@@ -27,11 +33,13 @@ export function CartLineItem({
           className="object-cover object-center"
           sizes="96px"
         />
-      </div>
+      </Link>
 
       <div className="cart-line__body">
         <p className="cart-line__drop">{product.dropName}</p>
-        <p className="cart-line__name">{product.name}</p>
+        <Link href={BRAND_ROUTES.drop(line.slug)} className="cart-line__name">
+          {product.name}
+        </Link>
         <p className="cart-line__unit">{product.priceDisplay}</p>
 
         <div className="cart-line__qty">
