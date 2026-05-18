@@ -13,8 +13,10 @@ const DIRECTIONS_DELAY_MS = 3000;
 const NAVIGATE_DELAY_MS = 800;
 
 /** Shared editorial grid + type rhythm */
-const GRID_LEFT = "left-[8%]";
-const GRID_RIGHT = "right-[8%]";
+const GRID_LEFT = "left-[6%] md:left-[8%]";
+const GRID_RIGHT = "right-[6%] md:right-[8%]";
+const LOGO_TOP = "top-[5%] md:top-[6%]";
+const MENU_TOP = "top-[42%] md:top-[38%]";
 const ANCHOR_TOP = "top-[45%]";
 const TRACKING = "tracking-[0.25em]";
 
@@ -102,8 +104,9 @@ export function CinematicPortalHero() {
       <div className="relative h-full w-full overflow-hidden px-6 py-6 md:px-12 md:py-10">
         <p
           className={cn(
-            "absolute top-0 z-20 text-xs font-light text-white/80 md:text-sm",
+            "absolute z-20 text-xs font-light text-white/80 md:text-sm",
             GRID_LEFT,
+            LOGO_TOP,
             TRACKING,
           )}
           aria-hidden={hideText && showDirections}
@@ -144,9 +147,9 @@ export function CinematicPortalHero() {
 
         <nav
           className={cn(
-            "absolute z-[12] flex max-h-[min(52vh,28rem)] flex-col items-end space-y-8 overflow-hidden text-right leading-[1.6] md:space-y-10",
+            "absolute z-[12] flex max-h-[70vh] flex-col items-end space-y-7 text-right leading-[1.6] md:space-y-8",
             GRID_RIGHT,
-            ANCHOR_TOP,
+            MENU_TOP,
             showDirections ? "pointer-events-auto" : "pointer-events-none",
           )}
           aria-label="Enter the brand"
