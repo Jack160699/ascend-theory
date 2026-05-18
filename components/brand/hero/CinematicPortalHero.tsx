@@ -94,80 +94,82 @@ export function CinematicPortalHero() {
 
   return (
     <section
-      className="portal-screen portal-screen--editorial min-h-[120vh]"
+      className="portal-screen portal-screen--locked fixed inset-0 z-0 h-screen w-screen overflow-hidden overscroll-none touch-none"
       aria-label="Ascend Theory entry"
     >
       <HeroCinematicBackground variant="editorial" />
 
-      <p
-        className={cn(
-          "absolute top-6 z-20 text-xs font-light text-white/80 md:text-sm",
-          GRID_LEFT,
-          TRACKING,
-        )}
-        aria-hidden={hideText && showDirections}
-      >
-        {BRAND.mark}
-      </p>
-
-      <div
-        className={cn(
-          "pointer-events-none absolute z-10 text-left transition-[opacity,transform] duration-[850ms] ease-[cubic-bezier(0.33,1,0.68,1)]",
-          GRID_LEFT,
-          ANCHOR_TOP,
-          hideText && "-translate-y-2.5 opacity-0",
-        )}
-        aria-hidden={hideText && showDirections}
-      >
-        <h1
-          className={cn(
-            "m-0 whitespace-nowrap font-light leading-[1.4] text-white",
-            "text-[clamp(1.5rem,4vw,2.75rem)]",
-            TRACKING,
-          )}
-        >
-          {BRAND.mark}
-        </h1>
+      <div className="relative h-full w-full overflow-hidden px-6 py-6 md:px-12 md:py-10">
         <p
           className={cn(
-            "m-0 mt-6 font-light uppercase leading-[1.6] text-white/60",
-            "text-[clamp(0.65rem,1.2vw,0.85rem)]",
+            "absolute top-0 z-20 text-xs font-light text-white/80 md:text-sm",
+            GRID_LEFT,
             TRACKING,
-            "transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.33,1,0.68,1)]",
-            showSubtext ? "translate-y-0 opacity-100" : "translate-y-3.5 opacity-0",
           )}
+          aria-hidden={hideText && showDirections}
         >
-          {HERO_PORTAL_SUBLINE}
+          {BRAND.mark}
         </p>
-      </div>
 
-      <nav
-        className={cn(
-          "absolute z-[12] flex flex-col items-end space-y-8 text-right leading-[1.6] md:space-y-10",
-          GRID_RIGHT,
-          ANCHOR_TOP,
-          showDirections ? "pointer-events-auto" : "pointer-events-none",
-        )}
-        aria-label="Enter the brand"
-        aria-hidden={!showDirections}
-      >
-        {PORTAL_DIRECTIONS.map((item) => (
-          <button
-            key={item.href}
-            type="button"
-            disabled={!showDirections || isTransitioning}
+        <div
+          className={cn(
+            "pointer-events-none absolute z-10 text-left transition-[opacity,transform] duration-[850ms] ease-[cubic-bezier(0.33,1,0.68,1)]",
+            GRID_LEFT,
+            ANCHOR_TOP,
+            hideText && "-translate-y-2.5 opacity-0",
+          )}
+          aria-hidden={hideText && showDirections}
+        >
+          <h1
             className={cn(
-              MENU_ITEM_CLASS,
-              "origin-right disabled:cursor-default",
-              showDirections && "animate-rise",
+              "m-0 whitespace-nowrap font-light leading-[1.4] text-white",
+              "text-[clamp(1.5rem,4vw,2.75rem)]",
+              TRACKING,
             )}
-            style={{ animationDelay: item.stagger }}
-            onClick={() => handleDirectionClick(item.href)}
           >
-            {item.label}
-          </button>
-        ))}
-      </nav>
+            {BRAND.mark}
+          </h1>
+          <p
+            className={cn(
+              "m-0 mt-6 font-light uppercase leading-[1.6] text-white/60",
+              "text-[clamp(0.65rem,1.2vw,0.85rem)]",
+              TRACKING,
+              "transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.33,1,0.68,1)]",
+              showSubtext ? "translate-y-0 opacity-100" : "translate-y-3.5 opacity-0",
+            )}
+          >
+            {HERO_PORTAL_SUBLINE}
+          </p>
+        </div>
+
+        <nav
+          className={cn(
+            "absolute z-[12] flex max-h-[min(52vh,28rem)] flex-col items-end space-y-8 overflow-hidden text-right leading-[1.6] md:space-y-10",
+            GRID_RIGHT,
+            ANCHOR_TOP,
+            showDirections ? "pointer-events-auto" : "pointer-events-none",
+          )}
+          aria-label="Enter the brand"
+          aria-hidden={!showDirections}
+        >
+          {PORTAL_DIRECTIONS.map((item) => (
+            <button
+              key={item.href}
+              type="button"
+              disabled={!showDirections || isTransitioning}
+              className={cn(
+                MENU_ITEM_CLASS,
+                "shrink-0 origin-right disabled:cursor-default",
+                showDirections && "animate-rise",
+              )}
+              style={{ animationDelay: item.stagger }}
+              onClick={() => handleDirectionClick(item.href)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
       <div
         className={cn(

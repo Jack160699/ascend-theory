@@ -1,26 +1,52 @@
 /* Multi-page brand layouts */
 
-/* ── Homepage portal (single screen, no scroll) ── */
+/* ── Homepage portal (fixed cinematic, zero scroll) ── */
+html.portal-scroll-lock,
+body.portal-scroll-lock {
+  overflow: hidden !important;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
 .gateway-page--portal {
-  min-height: 120vh;
-  min-height: 120dvh;
-  overflow-x: hidden;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 .gateway-page--portal main {
-  min-height: 120vh;
-  min-height: 120dvh;
+  height: 100%;
+  overflow: hidden;
+}
+
+.gateway-page--portal .brand-canvas {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .portal-screen {
-  position: relative;
   isolation: isolate;
   overflow: hidden;
 }
 
-.portal-screen--editorial {
-  min-height: 120vh;
-  min-height: 120dvh;
+.portal-screen--locked {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 /* ── Cinematic portal (timed intro + spatial directions) ── */
