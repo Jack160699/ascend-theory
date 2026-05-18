@@ -1,9 +1,9 @@
 /** Lenis profiles — editorial heaviness for Journal */
 
 export const LENIS_EDITORIAL = {
-  duration: 1.72,
-  wheelMultiplier: 0.68,
-  touchMultiplier: 0.82,
+  duration: 1.95,
+  wheelMultiplier: 0.58,
+  touchMultiplier: 0.72,
   smoothWheel: true,
   syncTouch: false,
 } as const;

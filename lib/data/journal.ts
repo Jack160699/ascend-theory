@@ -6,11 +6,15 @@ export type JournalSceneType =
   | "typography"
   | "text"
   | "media"
+  | "byline"
+  | "signature"
   | "outro";
 
 export type JournalScene = {
   id: string;
   type: JournalSceneType;
+  /** One iconic beat per issue — larger type, contrast, pacing */
+  peak?: boolean;
   /** Oversized intro lines */
   lines?: readonly string[];
   kicker?: string;
@@ -23,9 +27,15 @@ export type JournalScene = {
   caption?: string;
   /** Outro */
   closing?: string;
+  /** Paused line-by-line rhythm (preferred over single closing) */
+  closingLines?: readonly string[];
   subclosing?: string;
   outroLine?: string;
+  /** Second emotional beat — split for pause */
+  outroLineParts?: readonly string[];
   ctaLabel?: string;
+  /** Byline scene — editorial credit */
+  publishedDisplay?: string;
 };
 
 export type JournalIssue = {
@@ -48,6 +58,10 @@ export type JournalArticle = {
   image: string;
   imageAlt: string;
   content: readonly string[];
+  /** Display date under byline (e.g. May 2026) */
+  publishedDisplay: string;
+  /** ISO-8601 for schema.org */
+  publishedISO: string;
   scenes: readonly JournalScene[];
 };
 
@@ -89,6 +103,8 @@ const ARTICLE_CORE = [
     excerpt: "Structure is the frame that makes expression legible.",
     date: "Issue 01 · Field note",
     readTime: "4",
+    publishedDisplay: "May 2026",
+    publishedISO: "2026-05-01",
     image: ASCEND_PRODUCT_IMAGES.editorialArchitecture,
     imageAlt: "Architectural lines — discipline as aesthetics",
     content: [
@@ -104,6 +120,8 @@ const ARTICLE_CORE = [
     excerpt: "Focus charges interest in sleep, spontaneity, and noise.",
     date: "Issue 02 · Essay",
     readTime: "6",
+    publishedDisplay: "May 2026",
+    publishedISO: "2026-05-15",
     image: ASCEND_PRODUCT_IMAGES.teamStudio,
     imageAlt: "Studio portrait — the quiet cost of focus",
     content: [
@@ -119,6 +137,8 @@ const ARTICLE_CORE = [
     excerpt: "Strength without performance. Presence without posturing.",
     date: "Issue 03 · Editorial",
     readTime: "5",
+    publishedDisplay: "May 2026",
+    publishedISO: "2026-05-18",
     image: ASCEND_PRODUCT_IMAGES.heroStorefront,
     imageAlt: "City night — modern masculinity editorial",
     content: [
@@ -133,6 +153,10 @@ function buildScenes(
   issue: JournalIssue,
   article: (typeof ARTICLE_CORE)[number],
 ): JournalScene[] {
+  /** One peak scene per issue */
+  const peakTypography = issue.slug === "discipline" || issue.slug === "presence";
+  const peakMedia = issue.slug === "silence";
+
   return [
     {
       id: "intro",
@@ -150,6 +174,7 @@ function buildScenes(
     {
       id: "typography",
       type: "typography",
+      peak: peakTypography,
       statement: article.content[0],
     },
     {
@@ -161,15 +186,25 @@ function buildScenes(
     {
       id: "media",
       type: "media",
+      peak: peakMedia,
       image: article.image,
       imageAlt: article.imageAlt,
       statement: article.content[article.content.length - 1],
     },
     {
+      id: "byline",
+      type: "byline",
+      publishedDisplay: article.publishedDisplay,
+    },
+    {
+      id: "signature",
+      type: "signature",
+    },
+    {
       id: "outro",
       type: "outro",
-      closing: "Not everyone enters.",
-      outroLine: "Those who do — build differently.",
+      closingLines: ["Not everyone enters."],
+      outroLineParts: ["Those who do—", "build differently."],
       subclosing: issue.theme,
       ctaLabel: "Return to Journal",
     },
