@@ -28,7 +28,7 @@ const VIDEO_PROPS = {
 };
 
 type HeroCinematicBackgroundProps = {
-  /** Portal: de-emphasized texture. Default: standard cinematic hero. */
+  /** Portal: atmospheric texture with depth. Default: standard cinematic hero. */
   variant?: "default" | "editorial";
 };
 
@@ -63,7 +63,7 @@ export function HeroCinematicBackground({
         data-hero-bg-zoom
         className={cn(
           "absolute inset-0 overflow-hidden [transform-origin:center_center]",
-          isEditorial && "scale-105 blur-[2px] opacity-30",
+          isEditorial && "scale-105 opacity-50 brightness-[0.75]",
         )}
       >
         {!reduceMotion ? (
@@ -84,9 +84,26 @@ export function HeroCinematicBackground({
         ) : null}
       </div>
 
-      <div className="brand-hero-overlay bg-black/60" />
-      <div className="brand-vignette" />
-      <div className="brand-depth-fade" />
+      {isEditorial ? (
+        <>
+          <div className="absolute inset-0 z-[2] bg-black/40" />
+          <div className="absolute inset-0 z-[2] bg-gradient-to-b from-black/20 via-transparent to-black/50" />
+          <div
+            className="absolute inset-0 z-[3]"
+            style={{
+              background:
+                "radial-gradient(ellipse 75% 65% at 50% 42%, transparent 0%, rgba(0,0,0,0.35) 100%)",
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <div className="brand-hero-overlay bg-black/60" />
+          <div className="brand-vignette" />
+          <div className="brand-depth-fade" />
+        </>
+      )}
+
       {isEditorial ? <div className="portal-editorial-grain" aria-hidden /> : null}
     </div>
   );

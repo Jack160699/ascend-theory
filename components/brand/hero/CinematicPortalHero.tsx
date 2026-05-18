@@ -98,20 +98,18 @@ export function CinematicPortalHero() {
 
       <div
         className={cn(
-          "portal-cinematic__intro",
-          hideText && "portal-cinematic__intro--out",
+          "pointer-events-none absolute left-[8%] top-[45%] z-10 text-left transition-[opacity,transform] duration-[850ms] ease-[cubic-bezier(0.33,1,0.68,1)] md:left-[10%]",
+          hideText && "-translate-y-2.5 opacity-0",
         )}
         aria-hidden={hideText && showDirections}
       >
-        <div className="mx-auto max-w-[90%]">
-          <h1 className="whitespace-nowrap text-2xl font-light tracking-[0.3em] text-white/90 sm:text-3xl md:text-4xl">
-            {BRAND.mark}
-          </h1>
-        </div>
+        <h1 className="m-0 whitespace-nowrap text-[clamp(1.5rem,4vw,2.75rem)] font-light leading-[1.1] tracking-[0.2em] text-white">
+          {BRAND.mark}
+        </h1>
         <p
           className={cn(
-            "portal-cinematic__sub",
-            showSubtext && "portal-cinematic__sub--in",
+            "m-0 mt-6 text-[clamp(0.65rem,1.2vw,0.85rem)] font-light uppercase tracking-[0.35em] text-white/60 transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.33,1,0.68,1)]",
+            showSubtext ? "translate-y-0 opacity-100" : "translate-y-3.5 opacity-0",
           )}
         >
           {HERO_PORTAL_SUBLINE}
@@ -120,7 +118,7 @@ export function CinematicPortalHero() {
 
       <nav
         className={cn(
-          "absolute right-6 top-[40%] z-[12] flex flex-col items-end space-y-8 text-right md:right-[8%] md:top-[35%] md:space-y-10",
+          "absolute right-6 top-[42%] z-[12] flex flex-col items-end space-y-8 text-right md:right-[8%] md:top-[38%] md:space-y-10",
           showDirections ? "pointer-events-auto" : "pointer-events-none",
         )}
         aria-label="Enter the brand"
