@@ -27,13 +27,18 @@ const VIDEO_PROPS = {
   preload: "auto" as const,
 };
 
-const VIDEO_FADE_CLASS =
-  "absolute inset-0 z-[1] h-full w-full object-cover object-center transition-opacity duration-700 ease-out";
+type HeroCinematicBackgroundProps = {
+  /** Portal: de-emphasized texture. Default: standard cinematic hero. */
+  variant?: "default" | "editorial";
+};
 
 /**
- * Full-bleed hero: responsive MP4 loops, opacity fade-in on load (no poster).
+ * Full-bleed hero video with optional editorial (atmospheric) treatment.
  */
-export function HeroCinematicBackground() {
+export function HeroCinematicBackground({
+  variant = "default",
+}: HeroCinematicBackgroundProps) {
+  const isEditorial = variant === "editorial";
   const reduceMotion = useSyncExternalStore(
     subscribeReduce,
     getReduceSnapshot,
@@ -43,6 +48,12 @@ export function HeroCinematicBackground() {
   const [mobileLoaded, setMobileLoaded] = useState(false);
   const [desktopLoaded, setDesktopLoaded] = useState(false);
 
+  const videoFadeIn = (loaded: boolean) =>
+    cn(
+      "absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-out",
+      loaded ? "opacity-100" : "opacity-0",
+    );
+
   return (
     <div
       className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -50,27 +61,22 @@ export function HeroCinematicBackground() {
     >
       <div
         data-hero-bg-zoom
-        className="absolute inset-0 overflow-hidden [transform-origin:center_center]"
+        className={cn(
+          "absolute inset-0 overflow-hidden [transform-origin:center_center]",
+          isEditorial && "scale-105 blur-[2px] opacity-30",
+        )}
       >
         {!reduceMotion ? (
           <>
             <video
               {...VIDEO_PROPS}
-              className={cn(
-                VIDEO_FADE_CLASS,
-                "md:hidden",
-                mobileLoaded ? "opacity-100" : "opacity-0",
-              )}
+              className={cn(videoFadeIn(mobileLoaded), "md:hidden")}
               src={HERO_VIDEO.mobile}
               onLoadedData={() => setMobileLoaded(true)}
             />
             <video
               {...VIDEO_PROPS}
-              className={cn(
-                VIDEO_FADE_CLASS,
-                "hidden md:block",
-                desktopLoaded ? "opacity-100" : "opacity-0",
-              )}
+              className={cn(videoFadeIn(desktopLoaded), "hidden md:block")}
               src={HERO_VIDEO.desktop}
               onLoadedData={() => setDesktopLoaded(true)}
             />
@@ -81,6 +87,7 @@ export function HeroCinematicBackground() {
       <div className="brand-hero-overlay bg-black/60" />
       <div className="brand-vignette" />
       <div className="brand-depth-fade" />
+      {isEditorial ? <div className="portal-editorial-grain" aria-hidden /> : null}
     </div>
   );
 }

@@ -2,24 +2,25 @@
 
 /* ── Homepage portal (single screen, no scroll) ── */
 .gateway-page--portal {
-  height: 100dvh;
-  height: 100svh;
-  overflow: hidden;
+  min-height: 120vh;
+  min-height: 120dvh;
+  overflow-x: hidden;
 }
 
 .gateway-page--portal main {
-  height: 100%;
-  min-height: 100dvh;
-  min-height: 100svh;
+  min-height: 120vh;
+  min-height: 120dvh;
 }
 
 .portal-screen {
   position: relative;
-  height: 100dvh;
-  height: 100svh;
-  min-height: 100dvh;
   isolation: isolate;
   overflow: hidden;
+}
+
+.portal-screen--editorial {
+  min-height: 120vh;
+  min-height: 120dvh;
 }
 
 /* ── Cinematic portal (timed intro + spatial directions) ── */
@@ -83,6 +84,17 @@
 .animate-rise {
   opacity: 0;
   animation: riseIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.portal-editorial-grain {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
 }
 
 .portal-cinematic__transition {

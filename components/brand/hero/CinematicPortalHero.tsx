@@ -12,6 +12,9 @@ const HIDE_TEXT_DELAY_MS = 2500;
 const DIRECTIONS_DELAY_MS = 3000;
 const NAVIGATE_DELAY_MS = 800;
 
+const MENU_ITEM_CLASS =
+  "m-0 cursor-pointer border-0 bg-transparent p-0 text-right font-light uppercase whitespace-nowrap text-[clamp(20px,4vw,48px)] tracking-[0.25em] text-white/70 opacity-0 transition-[color,transform,opacity] duration-300 hover:scale-105 hover:text-white md:tracking-[0.35em]";
+
 function subscribeReduce(onStoreChange: () => void) {
   if (typeof window === "undefined") return () => {};
   const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -28,7 +31,7 @@ function getReduceServerSnapshot() {
 }
 
 /**
- * Timed gateway: brand intro → bottom-up direction stack → fade-to-black navigation.
+ * Luxury editorial portal — typography-led menu over atmospheric video.
  */
 export function CinematicPortalHero() {
   const router = useRouter();
@@ -80,11 +83,14 @@ export function CinematicPortalHero() {
   );
 
   return (
-    <section className="portal-screen" aria-label="Ascend Theory entry">
-      <HeroCinematicBackground />
+    <section
+      className="portal-screen portal-screen--editorial min-h-[120vh]"
+      aria-label="Ascend Theory entry"
+    >
+      <HeroCinematicBackground variant="editorial" />
 
       <p
-        className="absolute left-6 top-6 z-20 text-sm tracking-[0.3em] text-white/80"
+        className="absolute left-6 top-6 z-20 text-xs font-light tracking-[0.4em] text-white/80 md:text-sm"
         aria-hidden={hideText && showDirections}
       >
         {BRAND.mark}
@@ -98,7 +104,7 @@ export function CinematicPortalHero() {
         aria-hidden={hideText && showDirections}
       >
         <div className="mx-auto max-w-[90%]">
-          <h1 className="whitespace-nowrap text-2xl font-semibold tracking-[0.25em] text-white sm:text-3xl md:text-5xl">
+          <h1 className="whitespace-nowrap text-2xl font-light tracking-[0.3em] text-white/90 sm:text-3xl md:text-4xl">
             {BRAND.mark}
           </h1>
         </div>
@@ -114,29 +120,20 @@ export function CinematicPortalHero() {
 
       <nav
         className={cn(
-          "absolute bottom-16 right-6 z-[12] w-[25%] min-w-0 md:right-16 md:w-[16%]",
-          "flex flex-col items-end space-y-6 text-right md:space-y-8",
+          "absolute right-6 top-[40%] z-[12] flex flex-col items-end space-y-8 text-right md:right-[8%] md:top-[35%] md:space-y-10",
           showDirections ? "pointer-events-auto" : "pointer-events-none",
         )}
         aria-label="Enter the brand"
         aria-hidden={!showDirections}
       >
-        <span
-          className="absolute right-full top-1/2 mr-4 h-[100px] w-px -translate-y-1/2 bg-white/20 md:mr-6 md:h-[140px]"
-          aria-hidden
-        />
         {PORTAL_DIRECTIONS.map((item) => (
           <button
             key={item.href}
             type="button"
             disabled={!showDirections || isTransitioning}
             className={cn(
-              "m-0 w-full min-w-0 max-w-full origin-right cursor-pointer border-0 bg-transparent p-0 text-right",
-              "whitespace-normal break-words leading-tight",
-              "text-lg font-light uppercase tracking-widest text-white/70 opacity-0",
-              "transition-[color,transform] duration-300",
-              "hover:scale-105 hover:text-white md:text-2xl",
-              "disabled:cursor-default",
+              MENU_ITEM_CLASS,
+              "origin-right disabled:cursor-default",
               showDirections && "animate-rise",
             )}
             style={{ animationDelay: item.stagger }}

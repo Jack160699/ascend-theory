@@ -34,22 +34,22 @@ export const BRAND_NAV: readonly BrandNavItem[] = [
 export const PORTAL_DIRECTIONS = [
   {
     href: BRAND_ROUTES.drops,
-    label: "Drops",
+    label: "DROPS",
     stagger: "0.8s",
   },
   {
     href: BRAND_ROUTES.journal,
-    label: "Journal",
+    label: "JOURNAL",
     stagger: "0.6s",
   },
   {
     href: BRAND_ROUTES.wearables,
-    label: "Wearables",
+    label: "WEARABLES",
     stagger: "0.4s",
   },
   {
     href: BRAND_ROUTES.philosophy,
-    label: "Philosophy",
+    label: "PHILOSOPHY",
     stagger: "0.2s",
   },
 ] as const;
