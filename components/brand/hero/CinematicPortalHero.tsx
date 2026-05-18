@@ -110,7 +110,8 @@ export function CinematicPortalHero() {
 
       <nav
         className={cn(
-          "absolute bottom-16 right-16 z-[12] flex flex-col items-end space-y-3 text-right",
+          "absolute bottom-16 right-16 z-[12] w-[16%] max-w-[220px] min-w-[10rem]",
+          "flex flex-col items-end space-y-5 border-l border-white/10 pl-6 text-right",
           showDirections ? "pointer-events-auto" : "pointer-events-none",
         )}
         aria-label="Enter the brand"
@@ -122,9 +123,10 @@ export function CinematicPortalHero() {
             type="button"
             disabled={!showDirections || isTransitioning}
             className={cn(
-              "m-0 origin-right cursor-pointer border-0 bg-transparent p-0 text-right font-medium uppercase",
-              "text-base tracking-widest text-white/60 opacity-0 transition-colors duration-300",
-              "hover:text-white md:text-lg",
+              "m-0 w-full origin-right cursor-pointer border-0 bg-transparent p-0 text-right",
+              "font-light uppercase text-xl tracking-widest text-white/70 opacity-0",
+              "transition-[color,transform] duration-300",
+              "hover:scale-105 hover:text-white md:text-2xl",
               "disabled:cursor-default",
               showDirections && "animate-rise",
             )}
