@@ -5,6 +5,11 @@ import "lenis/dist/lenis.css";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
+  LENIS_DEFAULT,
+  LENIS_EDITORIAL,
+  LENIS_EASING,
+} from "@/lib/motion/journal-scroll";
+import {
   createContext,
   useContext,
   useEffect,
@@ -12,6 +17,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+
+export type ScrollVariant = "default" | "editorial";
 
 type CinematicScrollContextValue = {
   lenis: Lenis | null;
@@ -34,8 +41,17 @@ export function useCinematicScrollLock(locked: boolean) {
   }, [locked, lenis]);
 }
 
-export function CinematicScrollProvider({ children }: { children: ReactNode }) {
+type CinematicScrollProviderProps = {
+  children: ReactNode;
+  variant?: ScrollVariant;
+};
+
+export function CinematicScrollProvider({
+  children,
+  variant = "default",
+}: CinematicScrollProviderProps) {
   const [lenis, setLenis] = useState<Lenis | null>(null);
+  const profile = variant === "editorial" ? LENIS_EDITORIAL : LENIS_DEFAULT;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -46,12 +62,8 @@ export function CinematicScrollProvider({ children }: { children: ReactNode }) {
     gsap.registerPlugin(ScrollTrigger);
 
     const instance = new Lenis({
-      duration: 1.25,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      wheelMultiplier: 0.9,
-      touchMultiplier: 1,
-      smoothWheel: true,
-      syncTouch: false,
+      ...profile,
+      easing: LENIS_EASING,
     });
 
     const onLenisScroll = () => {
@@ -83,7 +95,7 @@ export function CinematicScrollProvider({ children }: { children: ReactNode }) {
       instance.destroy();
       setLenis(null);
     };
-  }, []);
+  }, [variant]);
 
   const value = useMemo(() => ({ lenis }), [lenis]);
 

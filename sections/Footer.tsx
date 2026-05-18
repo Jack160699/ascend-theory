@@ -14,6 +14,7 @@ const legal = [
 export function Footer() {
   const pathname = usePathname();
   if (pathname === BRAND_ROUTES.home) return null;
+  if (pathname.startsWith(`${BRAND_ROUTES.journal}/`)) return null;
 
   return (
     <footer id="site-footer" className="site-footer">

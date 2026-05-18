@@ -2,7 +2,10 @@
 
 import { BrandNav } from "@/components/brand/BrandNav";
 import { BrandOrchestrator } from "@/components/brand/BrandOrchestrator";
-import { CinematicScrollProvider } from "@/contexts/cinematic-scroll";
+import {
+  CinematicScrollProvider,
+  type ScrollVariant,
+} from "@/contexts/cinematic-scroll";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -10,6 +13,8 @@ type BrandSiteLayoutProps = {
   children: ReactNode;
   /** Enable GSAP scroll motion on this page */
   orchestrate?: boolean;
+  /** Heavier Lenis curve for editorial pages */
+  scrollVariant?: ScrollVariant;
   className?: string;
   canvasClassName?: string;
 };
@@ -17,11 +22,12 @@ type BrandSiteLayoutProps = {
 export function BrandSiteLayout({
   children,
   orchestrate = false,
+  scrollVariant = "default",
   className,
   canvasClassName,
 }: BrandSiteLayoutProps) {
   return (
-    <CinematicScrollProvider>
+    <CinematicScrollProvider variant={scrollVariant}>
       {orchestrate ? <BrandOrchestrator /> : null}
       <BrandNav />
       <div

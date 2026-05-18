@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Journal | Ascend Theory",
-  description: "Notes from the ascent — field notes and editorials.",
+  description:
+    "A luxury interactive publication — issue-based editorials with cinematic pacing.",
 };
 
 export default function JournalRoute() {
