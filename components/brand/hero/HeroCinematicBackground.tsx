@@ -27,10 +27,17 @@ const VIDEO_PROPS = {
   preload: "auto" as const,
 };
 
+type HeroCinematicBackgroundProps = {
+  /** 0–1 black overlay strength (default 0.4) */
+  overlayOpacity?: number;
+};
+
 /**
  * Full-bleed hero: responsive desktop/mobile MP4 loops with poster fallback.
  */
-export function HeroCinematicBackground() {
+export function HeroCinematicBackground({
+  overlayOpacity = 0.4,
+}: HeroCinematicBackgroundProps) {
   const reduceMotion = useSyncExternalStore(
     subscribeReduce,
     getReduceSnapshot,
@@ -72,7 +79,10 @@ export function HeroCinematicBackground() {
         ) : null}
       </div>
 
-      <div className="brand-hero-overlay" />
+      <div
+        className="brand-hero-overlay"
+        style={{ background: `rgba(0, 0, 0, ${overlayOpacity})` }}
+      />
       <div className="brand-vignette" />
       <div className="brand-depth-fade" />
     </div>

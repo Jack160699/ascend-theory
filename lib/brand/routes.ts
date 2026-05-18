@@ -27,13 +27,36 @@ export const BRAND_NAV: readonly BrandNavItem[] = [
   { href: BRAND_ROUTES.journal, label: "Journal" },
 ] as const;
 
-/** Homepage portal — large typographic entry links only */
-export const PORTAL_LINKS = [
-  { href: BRAND_ROUTES.wearables, label: "Wearables" },
-  { href: BRAND_ROUTES.drops, label: "Drops" },
-  { href: BRAND_ROUTES.journal, label: "Journal" },
-  { href: BRAND_ROUTES.philosophy, label: "Philosophy" },
+/** Homepage portal — spatial cinematic directions */
+export const PORTAL_DIRECTIONS = [
+  {
+    href: BRAND_ROUTES.wearables,
+    label: "Wearables",
+    placement: "top",
+    stagger: "0.2s",
+  },
+  {
+    href: BRAND_ROUTES.journal,
+    label: "Journal",
+    placement: "left",
+    stagger: "0.4s",
+  },
+  {
+    href: BRAND_ROUTES.drops,
+    label: "Drops",
+    placement: "right",
+    stagger: "0.6s",
+  },
+  {
+    href: BRAND_ROUTES.philosophy,
+    label: "Philosophy",
+    placement: "bottom",
+    stagger: "0.8s",
+  },
 ] as const;
+
+/** @deprecated Use PORTAL_DIRECTIONS */
+export const PORTAL_LINKS = PORTAL_DIRECTIONS;
 
 export function isCommercePath(pathname: string): boolean {
   return (

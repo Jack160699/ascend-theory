@@ -6,6 +6,8 @@ export const BRAND = {
   tagline: "Luxury in motion.",
 } as const;
 
+export const HERO_PORTAL_SUBLINE = "Elevate Your Presence" as const;
+
 export const HERO_LINES = [
   "Built Through Discipline.",
   "Luxury In Motion.",
