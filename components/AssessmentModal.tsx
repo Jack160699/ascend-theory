@@ -1,8 +1,7 @@
 "use client";
 
 import { useCinematicScrollLock } from "@/contexts/cinematic-scroll";
-import { WORLD_PRICING_TIERS } from "@/lib/figma-world-content";
-import type { TierKey } from "@/lib/lead-context";
+import { BRAND } from "@/lib/brand/content";
 import { event } from "@/lib/fpixel";
 import { lockModalScroll } from "@/lib/modal-scroll-lock";
 import { cn } from "@/lib/utils";
@@ -12,40 +11,34 @@ import {
   type WebsiteApplicationFields,
 } from "@/lib/whatsapp";
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 type Props = {
-  tier: TierKey | null;
   open: boolean;
   onClose: () => void;
 };
 
 const emptyFields = {
-  fullName: "",
+  name: "",
+  age: "",
   instagram: "",
-  goal: "",
-  challenge: "",
+  needsChange: "",
 };
 
 function validate(fields: typeof emptyFields): string | null {
-  if (!fields.fullName.trim()) return "Add your name.";
-  if (!fields.goal.trim()) return "Share what you are trying to change.";
-  if (!fields.challenge.trim()) return "Name what keeps repeating.";
+  if (!fields.name.trim()) return "Add your name.";
+  if (!fields.age.trim()) return "Add your age.";
+  if (!/^\d{1,3}$/.test(fields.age.trim())) return "Enter a valid age.";
+  if (!fields.instagram.trim()) return "Add your Instagram.";
+  if (!fields.needsChange.trim()) return "Tell us what needs to change.";
   return null;
 }
 
-function tierInterestLine(tier: TierKey | null): string | null {
-  if (!tier) return null;
-  const match = WORLD_PRICING_TIERS.find((t) => t.key === tier);
-  return match ? `Interest · ${match.name}` : null;
-}
-
-export function AssessmentModal({ tier, open, onClose }: Props) {
+export function AssessmentModal({ open, onClose }: Props) {
   const [fields, setFields] = useState(emptyFields);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const tierLine = useMemo(() => tierInterestLine(tier), [tier]);
   useCinematicScrollLock(open);
 
   useEffect(() => {
@@ -59,16 +52,22 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
   }, [open]);
 
   useEffect(() => {
+    if (open) return;
+    const resetTimer = window.setTimeout(() => {
+      setFields(emptyFields);
+      setError(null);
+    }, 0);
+    return () => window.clearTimeout(resetTimer);
+  }, [open]);
+
+  useEffect(() => {
     if (!open) return;
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-
-    return () => {
-      window.removeEventListener("keydown", onKey);
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   const submitForm = useCallback(() => {
@@ -80,10 +79,10 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
     setError(null);
 
     const payload: WebsiteApplicationFields = {
-      name: fields.fullName.trim(),
+      name: fields.name.trim(),
+      age: fields.age.trim(),
       instagram: fields.instagram.trim(),
-      goal: fields.goal.trim(),
-      challenge: fields.challenge.trim(),
+      needsChange: fields.needsChange.trim(),
     };
 
     event("Lead", { content_name: "website_application_submitted" });
@@ -107,12 +106,12 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
+          transition={{ duration: 0.3, ease: [0.33, 1, 0.68, 1] }}
         >
           <button
             type="button"
             className="apply-modal__backdrop"
-            aria-label="Close application"
+            aria-label="Close screening"
             onClick={onClose}
           />
 
@@ -126,35 +125,37 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
               Close
             </button>
 
-            <div className="apply-modal__content">
+            <div className="apply-modal__frame">
               <header className="apply-modal__header">
-                <p className="brand-mark text-white/45">ASCEND THEORY</p>
-                <p className="brand-eyebrow mt-4">Private screening</p>
-                <h2 id="assessment-modal-title" className="brand-headline mt-6">
-                  Your application
+                <p className="apply-modal__eyebrow">Private screening</p>
+                <h2 id="assessment-modal-title" className="apply-modal__title">
+                  Apply
                 </h2>
-                <p className="brand-body mt-4 max-w-md">
-                  Sparse fields — maximum signal. Answers read before any reply.
-                </p>
-                {tierLine ? (
-                  <p className="brand-prose-tight mt-3 uppercase tracking-[0.18em]">
-                    {tierLine}
-                  </p>
-                ) : null}
               </header>
 
-              <div className="apply-modal__fields">
+              <div className="apply-modal__fields space-y-5">
                 <label className="apply-modal__field" htmlFor="app-name">
                   <span className="apply-modal__label">Name</span>
                   <input
                     id="app-name"
                     className="apply-modal__input"
-                    placeholder="Your name"
-                    value={fields.fullName}
+                    value={fields.name}
                     onChange={(e) =>
-                      setFields((s) => ({ ...s, fullName: e.target.value }))
+                      setFields((s) => ({ ...s, name: e.target.value }))
                     }
                     autoComplete="name"
+                  />
+                </label>
+                <label className="apply-modal__field" htmlFor="app-age">
+                  <span className="apply-modal__label">Age</span>
+                  <input
+                    id="app-age"
+                    className="apply-modal__input"
+                    inputMode="numeric"
+                    value={fields.age}
+                    onChange={(e) =>
+                      setFields((s) => ({ ...s, age: e.target.value }))
+                    }
                   />
                 </label>
                 <label className="apply-modal__field" htmlFor="app-ig">
@@ -162,7 +163,7 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                   <input
                     id="app-ig"
                     className="apply-modal__input"
-                    placeholder="Optional"
+                    placeholder="@username"
                     value={fields.instagram}
                     onChange={(e) =>
                       setFields((s) => ({ ...s, instagram: e.target.value }))
@@ -170,29 +171,15 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
                     autoComplete="username"
                   />
                 </label>
-                <label className="apply-modal__field" htmlFor="app-goal">
-                  <span className="apply-modal__label">Direction</span>
+                <label className="apply-modal__field" htmlFor="app-change">
+                  <span className="apply-modal__label">What needs to change?</span>
                   <textarea
-                    id="app-goal"
-                    rows={3}
+                    id="app-change"
+                    rows={2}
                     className={cn("apply-modal__input", "apply-modal__input--area")}
-                    placeholder="What are you trying to change?"
-                    value={fields.goal}
+                    value={fields.needsChange}
                     onChange={(e) =>
-                      setFields((s) => ({ ...s, goal: e.target.value }))
-                    }
-                  />
-                </label>
-                <label className="apply-modal__field" htmlFor="app-challenge">
-                  <span className="apply-modal__label">Pattern</span>
-                  <textarea
-                    id="app-challenge"
-                    rows={3}
-                    className={cn("apply-modal__input", "apply-modal__input--area")}
-                    placeholder="What keeps repeating?"
-                    value={fields.challenge}
-                    onChange={(e) =>
-                      setFields((s) => ({ ...s, challenge: e.target.value }))
+                      setFields((s) => ({ ...s, needsChange: e.target.value }))
                     }
                   />
                 </label>
@@ -205,16 +192,17 @@ export function AssessmentModal({ tier, open, onClose }: Props) {
               </div>
 
               <footer className="apply-modal__footer">
-                <button type="button" className="drop-cta w-full" onClick={submitForm}>
-                  {MODAL_WHATSAPP_CTA_LABEL}
-                </button>
                 <button
                   type="button"
-                  className="apply-modal__dismiss"
-                  onClick={onClose}
+                  className="apply-modal__cta drop-cta w-full"
+                  onClick={submitForm}
                 >
-                  Return
+                  {MODAL_WHATSAPP_CTA_LABEL}
                 </button>
+                <div className="apply-modal__brand">
+                  <p className="apply-modal__mark">{BRAND.mark}</p>
+                  <p className="apply-modal__tagline">{BRAND.tagline}</p>
+                </div>
               </footer>
             </div>
           </div>

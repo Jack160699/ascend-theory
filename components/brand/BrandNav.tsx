@@ -78,7 +78,7 @@ export function BrandNav() {
             <button
               type="button"
               onClick={() => openAssessment()}
-              className="text-[12px] font-medium tracking-[0.06em] text-white/75 transition-opacity hover:opacity-80"
+              className="text-[12px] font-medium tracking-[0.06em] text-white transition-opacity hover:opacity-85"
             >
               Apply
             </button>
@@ -125,9 +125,9 @@ export function BrandNav() {
                 setOpen(false);
                 openAssessment();
               }}
-              className="mt-4 text-left text-sm font-medium tracking-wide text-white/55"
+              className="text-2xl font-medium tracking-tight text-white"
             >
-              Private application
+              Apply
             </button>
           </div>
         </div>

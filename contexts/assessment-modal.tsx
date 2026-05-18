@@ -52,12 +52,7 @@ export function AssessmentModalProvider({ children }: { children: ReactNode }) {
   return (
     <AssessmentModalContext.Provider value={value}>
       {children}
-      <AssessmentModal
-        key={session}
-        tier={tier}
-        open={open}
-        onClose={closeAssessment}
-      />
+      <AssessmentModal key={session} open={open} onClose={closeAssessment} />
     </AssessmentModalContext.Provider>
   );
 }

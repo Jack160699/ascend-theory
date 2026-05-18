@@ -18,7 +18,7 @@ export const STICKY_MOBILE_CTA_LABEL = "Enter Now" as const;
 /** @deprecated Legacy sections — WORLD landing Final uses `WORLD_CTA.beginTheAscent`. */
 export const FINAL_SECTION_CTA_LABEL = "Begin Application" as const;
 
-/** Post-form handoff only — not shown on page surface. */
+/** Apply modal primary action */
 export const MODAL_WHATSAPP_CTA_LABEL = "Continue on WhatsApp" as const;
 
 /** Same wa.me target; optional prefill for handoff messages. */
@@ -30,9 +30,9 @@ export function ascendWhatsAppUrl(prefill?: string): string {
 
 export type WebsiteApplicationFields = {
   name: string;
+  age: string;
   instagram: string;
-  goal: string;
-  challenge: string;
+  needsChange: string;
 };
 
 export function formatWebsiteApplicationWhatsAppBody(
@@ -46,22 +46,14 @@ export function formatWebsiteApplicationWhatsAppBody(
     : "—";
 
   return [
-    "Hi Ascend Theory,",
+    `Name: ${p.name.trim()}`,
+    `Age: ${p.age.trim()}`,
+    `Instagram: ${igLine}`,
     "",
-    `My name is ${p.name.trim()}.`,
+    "What needs to change:",
+    p.needsChange.trim(),
     "",
-    "Instagram:",
-    igLine,
-    "",
-    "Current goal:",
-    p.goal.trim(),
-    "",
-    "Biggest challenge:",
-    p.challenge.trim(),
-    "",
-    "I came through the website application.",
-    "",
-    "— Sent from Ascend Theory",
+    "Requesting entry into Ascend Theory.",
   ].join("\n");
 }
 
