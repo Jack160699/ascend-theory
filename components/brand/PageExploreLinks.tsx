@@ -1,4 +1,4 @@
-import { PORTAL_LINKS } from "@/lib/brand/routes";
+import { BRAND_NAV } from "@/lib/brand/routes";
 import Link from "next/link";
 
 type PageExploreLinksProps = {
@@ -8,8 +8,8 @@ type PageExploreLinksProps = {
 
 export function PageExploreLinks({ excludeHref }: PageExploreLinksProps) {
   const links = excludeHref
-    ? PORTAL_LINKS.filter((item) => item.href !== excludeHref)
-    : PORTAL_LINKS;
+    ? BRAND_NAV.filter((item) => item.href !== excludeHref)
+    : BRAND_NAV;
 
   return (
     <nav className="page-explore" aria-label="Explore the brand">

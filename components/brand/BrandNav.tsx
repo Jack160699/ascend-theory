@@ -80,7 +80,7 @@ export function BrandNav() {
               onClick={() => openAssessment()}
               className="text-[12px] font-medium tracking-[0.06em] text-white transition-opacity hover:opacity-85"
             >
-              Apply
+              APPLY
             </button>
             {showCart ? <CartNavButton /> : null}
           </div>
@@ -127,7 +127,7 @@ export function BrandNav() {
               }}
               className="text-2xl font-medium tracking-tight text-white"
             >
-              Apply
+              APPLY
             </button>
           </div>
         </div>

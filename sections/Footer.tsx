@@ -32,7 +32,7 @@ export function Footer() {
 
         <nav
           aria-label="Site"
-          className="flex flex-wrap gap-x-8 gap-y-3 text-[12px] font-medium tracking-[0.04em] text-white/40"
+          className="flex flex-wrap items-center gap-8 text-[12px] font-medium tracking-[0.06em] text-white/40"
         >
           {BRAND_NAV.map((item) => (
             <Link

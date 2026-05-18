@@ -20,42 +20,27 @@ export type BrandNavItem = {
   label: string;
 };
 
+/** Global nav order — header, footer, and in-page explore links. */
 export const BRAND_NAV: readonly BrandNavItem[] = [
-  { href: BRAND_ROUTES.philosophy, label: "Philosophy" },
-  { href: BRAND_ROUTES.wearables, label: "Wearables" },
-  { href: BRAND_ROUTES.drops, label: "Drops" },
-  { href: BRAND_ROUTES.journal, label: "Journal" },
+  { href: BRAND_ROUTES.drops, label: "DROPS" },
+  { href: BRAND_ROUTES.journal, label: "JOURNAL" },
+  { href: BRAND_ROUTES.wearables, label: "WEARABLES" },
+  { href: BRAND_ROUTES.philosophy, label: "PHILOSOPHY" },
 ] as const;
 
 /**
  * Homepage portal — bottom-right stack (top → bottom visually).
- * Animation order is reversed: Philosophy rises first, Drops last.
+ * Same sequence as BRAND_NAV; stagger runs Philosophy → Drops (bottom-up reveal).
  */
 export const PORTAL_DIRECTIONS = [
-  {
-    href: BRAND_ROUTES.drops,
-    label: "DROPS",
-    stagger: "0.8s",
-  },
-  {
-    href: BRAND_ROUTES.journal,
-    label: "JOURNAL",
-    stagger: "0.6s",
-  },
-  {
-    href: BRAND_ROUTES.wearables,
-    label: "WEARABLES",
-    stagger: "0.4s",
-  },
-  {
-    href: BRAND_ROUTES.philosophy,
-    label: "PHILOSOPHY",
-    stagger: "0.2s",
-  },
+  { ...BRAND_NAV[0], stagger: "0.8s" },
+  { ...BRAND_NAV[1], stagger: "0.6s" },
+  { ...BRAND_NAV[2], stagger: "0.4s" },
+  { ...BRAND_NAV[3], stagger: "0.2s" },
 ] as const;
 
-/** @deprecated Use PORTAL_DIRECTIONS */
-export const PORTAL_LINKS = PORTAL_DIRECTIONS;
+/** @deprecated Use BRAND_NAV or PORTAL_DIRECTIONS */
+export const PORTAL_LINKS = BRAND_NAV;
 
 export function isCommercePath(pathname: string): boolean {
   return (
