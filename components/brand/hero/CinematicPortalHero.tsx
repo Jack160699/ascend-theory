@@ -97,7 +97,11 @@ export function CinematicPortalHero() {
         )}
         aria-hidden={hideText && showDirections}
       >
-        <h1 className="portal-cinematic__title">{BRAND.mark}</h1>
+        <div className="mx-auto max-w-[90%]">
+          <h1 className="whitespace-nowrap text-2xl font-semibold tracking-[0.25em] text-white sm:text-3xl md:text-5xl">
+            {BRAND.mark}
+          </h1>
+        </div>
         <p
           className={cn(
             "portal-cinematic__sub",
