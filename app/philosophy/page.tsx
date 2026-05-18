@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Philosophy | Ascend Theory",
-  description: "A standard you carry before you wear it.",
+  description:
+    "Most people want to change. They never do. Apply for Ascend — limited intake, selection based.",
 };
 
 export default function PhilosophyRoute() {
