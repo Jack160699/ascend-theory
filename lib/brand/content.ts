@@ -6,6 +6,11 @@ export const BRAND = {
   tagline: "Luxury in motion.",
 } as const;
 
+export const FOOTER = {
+  tagline: "A system for those who refuse to stay the same.",
+  closing: "Not everyone enters. Not everyone stays.",
+} as const;
+
 export const HERO_PORTAL_SUBLINE = "Elevate Your Presence" as const;
 
 export const HERO_LINES = [
