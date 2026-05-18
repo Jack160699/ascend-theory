@@ -35,25 +35,21 @@ export const PORTAL_DIRECTIONS = [
   {
     href: BRAND_ROUTES.drops,
     label: "Drops",
-    tier: "drops",
     stagger: "0.8s",
   },
   {
     href: BRAND_ROUTES.journal,
     label: "Journal",
-    tier: "journal",
     stagger: "0.6s",
   },
   {
     href: BRAND_ROUTES.wearables,
     label: "Wearables",
-    tier: "wearables",
     stagger: "0.4s",
   },
   {
     href: BRAND_ROUTES.philosophy,
     label: "Philosophy",
-    tier: "philosophy",
     stagger: "0.2s",
   },
 ] as const;

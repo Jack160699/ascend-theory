@@ -1,8 +1,8 @@
 "use client";
 
 import { HERO_VIDEO } from "@/lib/brand/hero-media";
-import Image from "next/image";
-import { useSyncExternalStore } from "react";
+import { cn } from "@/lib/utils";
+import { useState, useSyncExternalStore } from "react";
 
 function subscribeReduce(onStoreChange: () => void) {
   if (typeof window === "undefined") return () => {};
@@ -27,22 +27,21 @@ const VIDEO_PROPS = {
   preload: "auto" as const,
 };
 
-type HeroCinematicBackgroundProps = {
-  /** 0–1 black overlay strength (default 0.4) */
-  overlayOpacity?: number;
-};
+const VIDEO_FADE_CLASS =
+  "absolute inset-0 z-[1] h-full w-full object-cover object-center transition-opacity duration-700 ease-out";
 
 /**
- * Full-bleed hero: responsive desktop/mobile MP4 loops with poster fallback.
+ * Full-bleed hero: responsive MP4 loops, opacity fade-in on load (no poster).
  */
-export function HeroCinematicBackground({
-  overlayOpacity = 0.4,
-}: HeroCinematicBackgroundProps) {
+export function HeroCinematicBackground() {
   const reduceMotion = useSyncExternalStore(
     subscribeReduce,
     getReduceSnapshot,
     getReduceServerSnapshot,
   );
+
+  const [mobileLoaded, setMobileLoaded] = useState(false);
+  const [desktopLoaded, setDesktopLoaded] = useState(false);
 
   return (
     <div
@@ -51,38 +50,35 @@ export function HeroCinematicBackground({
     >
       <div
         data-hero-bg-zoom
-        className="absolute inset-0 [transform-origin:center_center]"
+        className="absolute inset-0 overflow-hidden [transform-origin:center_center]"
       >
-        <Image
-          src={HERO_VIDEO.poster}
-          alt=""
-          fill
-          priority
-          className="object-cover object-center"
-          sizes="100vw"
-        />
         {!reduceMotion ? (
           <>
             <video
               {...VIDEO_PROPS}
-              className="brand-hero-media absolute inset-0 z-[1] h-full w-full object-cover object-center md:hidden"
+              className={cn(
+                VIDEO_FADE_CLASS,
+                "md:hidden",
+                mobileLoaded ? "opacity-100" : "opacity-0",
+              )}
               src={HERO_VIDEO.mobile}
-              poster={HERO_VIDEO.poster}
+              onLoadedData={() => setMobileLoaded(true)}
             />
             <video
               {...VIDEO_PROPS}
-              className="brand-hero-media absolute inset-0 z-[1] hidden h-full w-full object-cover object-center md:block"
+              className={cn(
+                VIDEO_FADE_CLASS,
+                "hidden md:block",
+                desktopLoaded ? "opacity-100" : "opacity-0",
+              )}
               src={HERO_VIDEO.desktop}
-              poster={HERO_VIDEO.poster}
+              onLoadedData={() => setDesktopLoaded(true)}
             />
           </>
         ) : null}
       </div>
 
-      <div
-        className="brand-hero-overlay"
-        style={{ background: `rgba(0, 0, 0, ${overlayOpacity})` }}
-      />
+      <div className="brand-hero-overlay bg-black/60" />
       <div className="brand-vignette" />
       <div className="brand-depth-fade" />
     </div>

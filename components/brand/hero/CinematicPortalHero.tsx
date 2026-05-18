@@ -81,7 +81,14 @@ export function CinematicPortalHero() {
 
   return (
     <section className="portal-screen" aria-label="Ascend Theory entry">
-      <HeroCinematicBackground overlayOpacity={0.6} />
+      <HeroCinematicBackground />
+
+      <p
+        className="absolute left-6 top-6 z-20 text-sm tracking-[0.3em] text-white/80"
+        aria-hidden={hideText && showDirections}
+      >
+        {BRAND.mark}
+      </p>
 
       <div
         className={cn(
@@ -103,8 +110,8 @@ export function CinematicPortalHero() {
 
       <nav
         className={cn(
-          "portal-cinematic__directions",
-          showDirections && "portal-cinematic__directions--visible",
+          "absolute bottom-16 right-16 z-[12] flex flex-col items-end space-y-3 text-right",
+          showDirections ? "pointer-events-auto" : "pointer-events-none",
         )}
         aria-label="Enter the brand"
         aria-hidden={!showDirections}
@@ -115,8 +122,10 @@ export function CinematicPortalHero() {
             type="button"
             disabled={!showDirections || isTransitioning}
             className={cn(
-              "portal-cinematic__direction",
-              `portal-cinematic__direction--${item.tier}`,
+              "m-0 origin-right cursor-pointer border-0 bg-transparent p-0 text-right font-medium uppercase",
+              "text-base tracking-widest text-white/60 opacity-0 transition-colors duration-300",
+              "hover:text-white md:text-lg",
+              "disabled:cursor-default",
               showDirections && "animate-rise",
             )}
             style={{ animationDelay: item.stagger }}
