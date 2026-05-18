@@ -301,18 +301,53 @@ body.portal-scroll-lock {
 }
 
 /* ── Philosophy page (conversion narrative) ── */
-.philosophy-page {
-  padding-block: clamp(6rem, 14vh, 9rem) clamp(6rem, 14vh, 10rem);
-}
-
 .page-philosophy .brand-canvas {
   background: #0a0a0a;
+}
+
+.philosophy-page {
+  position: relative;
+  isolation: isolate;
+  padding-block: clamp(5rem, 12vh, 7.5rem) clamp(5rem, 12vh, 8rem);
+}
+
+.philosophy-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 75% 45% at 18% 12%,
+      rgba(184, 175, 164, 0.07),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 55% 50% at 88% 72%,
+      rgba(255, 255, 255, 0.035),
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 90% 60% at 50% 100%,
+      rgba(0, 0, 0, 0.55),
+      transparent 70%
+    );
+}
+
+.philosophy-page > * {
+  position: relative;
+  z-index: 1;
+}
+
+.philosophy-page__accent {
+  color: #b8afa4;
 }
 
 .philosophy-page__hook-title {
   display: flex;
   flex-direction: column;
-  gap: 0.12em;
+  gap: 0.08em;
   font-size: clamp(2.25rem, 5vw + 0.5rem, 4rem);
   font-weight: 500;
   line-height: 1.02;
@@ -321,17 +356,20 @@ body.portal-scroll-lock {
   color: rgba(250, 250, 249, 0.98);
 }
 
-.philosophy-page__hook-line:last-child {
-  color: rgba(250, 250, 249, 0.72);
+.philosophy-page__hook-line--echo {
+  font-size: clamp(2.5rem, 5.6vw + 0.5rem, 4.35rem);
+  font-weight: 500;
+  letter-spacing: -0.038em;
+  color: rgba(250, 250, 249, 0.34);
 }
 
 .philosophy-page__tension {
-  margin-top: clamp(4rem, 11vh, 7rem);
+  margin-top: clamp(3rem, 8vh, 5rem);
   max-width: 36rem;
 }
 
 .philosophy-page__tension-line {
-  margin-top: clamp(1.25rem, 2.5vh, 1.75rem);
+  margin-top: clamp(1rem, 2vh, 1.35rem);
   font-size: clamp(1.05rem, 1.5vw + 0.5rem, 1.25rem);
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.5);
@@ -341,17 +379,26 @@ body.portal-scroll-lock {
   margin-top: 0;
 }
 
+.philosophy-page__tension-line--offset {
+  margin-left: 10%;
+}
+
+@media (min-width: 768px) {
+  .philosophy-page__tension-line--offset {
+    margin-left: 15%;
+  }
+}
+
 .philosophy-page__tension-line--emphasis {
   font-size: clamp(1.2rem, 1.8vw + 0.5rem, 1.45rem);
   font-weight: 500;
   letter-spacing: -0.02em;
-  color: rgba(255, 255, 255, 0.88);
 }
 
 .philosophy-page__authority {
-  margin-top: clamp(4.5rem, 12vh, 8rem);
+  margin-top: clamp(3.25rem, 9vh, 5.5rem);
   max-width: 28rem;
-  padding-top: clamp(2.5rem, 6vh, 4rem);
+  padding-top: clamp(2rem, 5vh, 3rem);
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
@@ -369,16 +416,15 @@ body.portal-scroll-lock {
   font-weight: 500;
   letter-spacing: -0.025em;
   line-height: 1.2;
-  color: rgba(255, 255, 255, 0.45);
 }
 
 .philosophy-page__system {
-  margin-top: clamp(4.5rem, 12vh, 8rem);
+  margin-top: clamp(3.25rem, 9vh, 5.5rem);
 }
 
 .philosophy-page__pillars {
   list-style: none;
-  margin: clamp(2.5rem, 6vh, 4rem) 0 0;
+  margin: clamp(2rem, 5vh, 3rem) 0 0;
   padding: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
@@ -386,47 +432,86 @@ body.portal-scroll-lock {
 .philosophy-pillar {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 2rem;
-  padding-block: clamp(2.5rem, 5vh, 3.5rem);
+  gap: 1.5rem;
+  padding-block: clamp(2rem, 4vh, 2.75rem);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .philosophy-pillar__index {
-  font-size: 0.6875rem;
   font-weight: 500;
   letter-spacing: 0.2em;
-  color: rgba(255, 255, 255, 0.28);
-}
-
-.philosophy-pillar__dash {
-  color: rgba(255, 255, 255, 0.22);
-  font-weight: 400;
 }
 
 .philosophy-pillar__title {
-  font-size: clamp(1.35rem, 2vw, 1.75rem);
   font-weight: 500;
   letter-spacing: -0.02em;
-  color: rgba(255, 255, 255, 0.9);
 }
 
 .philosophy-pillar__line {
-  margin-top: 0.65rem;
+  margin-top: 0.55rem;
   max-width: 34rem;
+  line-height: 1.65;
+}
+
+/* 01 — small + faint */
+.philosophy-pillar--01 .philosophy-pillar__index {
+  font-size: 0.625rem;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.philosophy-pillar--01 .philosophy-pillar__title {
+  font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.philosophy-pillar--01 .philosophy-pillar__line {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+/* 02 — normal */
+.philosophy-pillar--02 .philosophy-pillar__index {
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.philosophy-pillar--02 .philosophy-pillar__title {
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.philosophy-pillar--02 .philosophy-pillar__line {
   font-size: clamp(0.9375rem, 1vw + 0.5rem, 1.0625rem);
-  line-height: 1.7;
   color: rgba(255, 255, 255, 0.48);
 }
 
+/* 03 — largest + strongest */
+.philosophy-pillar--03 .philosophy-pillar__index {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.philosophy-pillar--03 .philosophy-pillar__title {
+  font-size: clamp(1.65rem, 2.8vw, 2.15rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.philosophy-pillar--03 .philosophy-pillar__line {
+  font-size: clamp(1rem, 1.2vw + 0.5rem, 1.125rem);
+  color: rgba(255, 255, 255, 0.58);
+}
+
 .philosophy-page__filter {
-  margin-top: clamp(4.5rem, 12vh, 8rem);
+  margin-top: clamp(3.25rem, 9vh, 5.5rem);
   max-width: 22rem;
-  padding-top: clamp(2.5rem, 6vh, 4rem);
+  padding-top: clamp(2rem, 5vh, 3rem);
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .philosophy-page__filter-line {
-  margin-top: clamp(0.85rem, 1.5vh, 1.1rem);
+  margin-top: clamp(0.7rem, 1.2vh, 0.95rem);
   font-size: clamp(0.9375rem, 1vw + 0.4rem, 1.0625rem);
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.38);
@@ -441,19 +526,40 @@ body.portal-scroll-lock {
 }
 
 .philosophy-page__convert {
-  margin-top: clamp(4rem, 11vh, 7rem);
+  margin-top: clamp(3rem, 8vh, 5rem);
   max-width: 28rem;
-  padding: clamp(2.5rem, 6vh, 3.5rem) 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: clamp(2rem, 5vh, 2.75rem) 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .philosophy-page__cta {
-  width: 100%;
-  max-width: 20rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.philosophy-page__cta:hover {
+  color: rgba(255, 255, 255, 1);
+  border-color: rgba(184, 175, 164, 0.45);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .philosophy-page__cta-sub {
-  margin-top: 1rem;
+  margin-top: 0.85rem;
   font-size: 0.6875rem;
   font-weight: 500;
   letter-spacing: 0.18em;
@@ -462,8 +568,8 @@ body.portal-scroll-lock {
 }
 
 .philosophy-page__support {
-  margin-top: clamp(2rem, 4vh, 2.75rem);
-  padding-top: clamp(1.5rem, 3vh, 2rem);
+  margin-top: clamp(1.5rem, 3vh, 2rem);
+  padding-top: clamp(1.25rem, 2.5vh, 1.5rem);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 0.8125rem;
   line-height: 1.65;
