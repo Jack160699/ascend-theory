@@ -27,31 +27,34 @@ export const BRAND_NAV: readonly BrandNavItem[] = [
   { href: BRAND_ROUTES.journal, label: "Journal" },
 ] as const;
 
-/** Homepage portal — spatial cinematic directions */
+/**
+ * Homepage portal — bottom-right stack (top → bottom visually).
+ * Animation order is reversed: Philosophy rises first, Drops last.
+ */
 export const PORTAL_DIRECTIONS = [
   {
-    href: BRAND_ROUTES.wearables,
-    label: "Wearables",
-    placement: "top",
-    stagger: "0.2s",
+    href: BRAND_ROUTES.drops,
+    label: "Drops",
+    tier: "drops",
+    stagger: "0.8s",
   },
   {
     href: BRAND_ROUTES.journal,
     label: "Journal",
-    placement: "left",
-    stagger: "0.4s",
+    tier: "journal",
+    stagger: "0.6s",
   },
   {
-    href: BRAND_ROUTES.drops,
-    label: "Drops",
-    placement: "right",
-    stagger: "0.6s",
+    href: BRAND_ROUTES.wearables,
+    label: "Wearables",
+    tier: "wearables",
+    stagger: "0.4s",
   },
   {
     href: BRAND_ROUTES.philosophy,
     label: "Philosophy",
-    placement: "bottom",
-    stagger: "0.8s",
+    tier: "philosophy",
+    stagger: "0.2s",
   },
 ] as const;
 

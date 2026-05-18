@@ -75,10 +75,36 @@
   transform: translateY(0);
 }
 
+@keyframes riseIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  opacity: 0;
+  animation: riseIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 .portal-cinematic__directions {
   position: absolute;
-  inset: 0;
+  right: clamp(1.25rem, 4vw, 3.5rem);
+  bottom: clamp(2rem, 8vh, 5rem);
   z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: clamp(0.2rem, 0.9vh, 0.55rem);
+  text-align: right;
   pointer-events: none;
 }
 
@@ -87,18 +113,19 @@
 }
 
 .portal-cinematic__direction {
-  position: absolute;
   margin: 0;
-  padding: 0.5rem 0.75rem;
+  padding: 0.15rem 0;
   border: none;
   background: transparent;
   cursor: pointer;
   font: inherit;
-  font-size: clamp(0.8rem, 1vw + 0.45rem, 1rem);
   font-weight: 500;
-  letter-spacing: 0.22em;
+  line-height: 1.1;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  text-align: right;
+  opacity: 0;
+  transform-origin: right center;
   transition:
     color 0.45s cubic-bezier(0.33, 1, 0.68, 1),
     transform 0.45s cubic-bezier(0.33, 1, 0.68, 1);
@@ -108,70 +135,34 @@
   cursor: default;
 }
 
-.portal-cinematic__direction-label {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(10px);
+.portal-cinematic__direction--philosophy {
+  font-size: clamp(1.35rem, 2.8vw + 0.35rem, 2.1rem);
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 1);
 }
 
-.portal-cinematic__directions--visible .portal-cinematic__direction-label {
-  animation: portal-direction-in 0.95s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+.portal-cinematic__direction--wearables {
+  font-size: clamp(1.1rem, 2.2vw + 0.3rem, 1.65rem);
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-@keyframes portal-direction-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.portal-cinematic__direction--journal {
+  font-size: clamp(0.95rem, 1.6vw + 0.28rem, 1.35rem);
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.portal-cinematic__direction--top {
-  top: clamp(2rem, 8vh, 5rem);
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.portal-cinematic__direction--left {
-  left: clamp(1rem, 4vw, 3.5rem);
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.portal-cinematic__direction--right {
-  right: clamp(1rem, 4vw, 3.5rem);
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.portal-cinematic__direction--bottom {
-  bottom: clamp(2rem, 8vh, 5rem);
-  left: 50%;
-  transform: translateX(-50%);
+.portal-cinematic__direction--drops {
+  font-size: clamp(0.82rem, 1.2vw + 0.22rem, 1.05rem);
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 @media (hover: hover) {
   .portal-cinematic__direction:not(:disabled):hover {
     color: rgba(255, 255, 255, 1);
-  }
-
-  .portal-cinematic__direction--top:not(:disabled):hover {
-    transform: translateX(-50%) scale(1.05);
-  }
-
-  .portal-cinematic__direction--left:not(:disabled):hover {
-    transform: translateY(-50%) scale(1.05);
-  }
-
-  .portal-cinematic__direction--right:not(:disabled):hover {
-    transform: translateY(-50%) scale(1.05);
-  }
-
-  .portal-cinematic__direction--bottom:not(:disabled):hover {
-    transform: translateX(-50%) scale(1.05);
+    transform: scale(1.05);
   }
 }
 

@@ -28,7 +28,7 @@ function getReduceServerSnapshot() {
 }
 
 /**
- * Timed gateway: brand intro → spatial directions → fade-to-black navigation.
+ * Timed gateway: brand intro → bottom-up direction stack → fade-to-black navigation.
  */
 export function CinematicPortalHero() {
   const router = useRouter();
@@ -116,16 +116,13 @@ export function CinematicPortalHero() {
             disabled={!showDirections || isTransitioning}
             className={cn(
               "portal-cinematic__direction",
-              `portal-cinematic__direction--${item.placement}`,
+              `portal-cinematic__direction--${item.tier}`,
+              showDirections && "animate-rise",
             )}
+            style={{ animationDelay: item.stagger }}
             onClick={() => handleDirectionClick(item.href)}
           >
-            <span
-              className="portal-cinematic__direction-label"
-              style={{ animationDelay: item.stagger }}
-            >
-              {item.label}
-            </span>
+            {item.label}
           </button>
         ))}
       </nav>
