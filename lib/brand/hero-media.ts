@@ -1,18 +1,11 @@
-import { STOCK_HERO_VIDEO, STOCK_IMAGES } from "@/lib/stock-media";
+import { STOCK_IMAGES } from "@/lib/stock-media";
 
-/**
- * Hero cinematic background — self-hosted in `public/videos/`.
- * Run `npm run download:hero-video` if files are missing.
- * Target: each file under ~2MB (see public/videos/README.md).
- */
+/** Self-hosted hero loops in `public/videos/`. */
+export const HERO_VIDEO_DESKTOP = "/videos/hero-desktop.mp4" as const;
+export const HERO_VIDEO_MOBILE = "/videos/hero-mobile.mp4" as const;
+
 export const HERO_VIDEO = {
-  webm: "/videos/hero-intro.webm",
-  mp4: "/videos/hero-intro.mp4",
+  desktop: HERO_VIDEO_DESKTOP,
+  mobile: HERO_VIDEO_MOBILE,
   poster: STOCK_IMAGES.heroStorefront,
-} as const;
-
-/** Used only when local /public files are missing (see HeroCinematicBackground). */
-export const HERO_VIDEO_REMOTE_FALLBACK = {
-  webm: STOCK_HERO_VIDEO.webm,
-  mp4: STOCK_HERO_VIDEO.mp4,
 } as const;

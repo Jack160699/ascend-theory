@@ -1,8 +1,8 @@
 "use client";
 
-import { HERO_VIDEO, HERO_VIDEO_REMOTE_FALLBACK } from "@/lib/brand/hero-media";
+import { HERO_VIDEO } from "@/lib/brand/hero-media";
 import Image from "next/image";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 
 function subscribeReduce(onStoreChange: () => void) {
   if (typeof window === "undefined") return () => {};
@@ -19,16 +19,16 @@ function getReduceServerSnapshot() {
   return false;
 }
 
-const VIDEO_SOURCES = [
-  { webm: HERO_VIDEO.webm, mp4: HERO_VIDEO.mp4 },
-  {
-    webm: HERO_VIDEO_REMOTE_FALLBACK.webm,
-    mp4: HERO_VIDEO_REMOTE_FALLBACK.mp4,
-  },
-] as const;
+const VIDEO_PROPS = {
+  autoPlay: true,
+  muted: true,
+  loop: true,
+  playsInline: true,
+  preload: "auto" as const,
+};
 
 /**
- * Full-bleed hero: local WebM + MP4 from /public/videos/, poster + remote fallback.
+ * Full-bleed hero: responsive desktop/mobile MP4 loops with poster fallback.
  */
 export function HeroCinematicBackground() {
   const reduceMotion = useSyncExternalStore(
@@ -36,12 +36,6 @@ export function HeroCinematicBackground() {
     getReduceSnapshot,
     getReduceServerSnapshot,
   );
-  const [sourceIndex, setSourceIndex] = useState(0);
-  const sources = VIDEO_SOURCES[sourceIndex] ?? VIDEO_SOURCES[0];
-
-  const onVideoError = useCallback(() => {
-    setSourceIndex((i) => (i < VIDEO_SOURCES.length - 1 ? i + 1 : i));
-  }, []);
 
   return (
     <div
@@ -60,21 +54,21 @@ export function HeroCinematicBackground() {
           className="object-cover object-center"
           sizes="100vw"
         />
-        {!reduceMotion && sourceIndex < VIDEO_SOURCES.length ? (
-          <video
-            key={sourceIndex}
-            className="brand-hero-media absolute inset-0 z-[1] h-full w-full object-cover object-center"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            poster={HERO_VIDEO.poster}
-            onError={onVideoError}
-          >
-            <source src={sources.webm} type="video/webm" />
-            <source src={sources.mp4} type="video/mp4" />
-          </video>
+        {!reduceMotion ? (
+          <>
+            <video
+              {...VIDEO_PROPS}
+              className="brand-hero-media absolute inset-0 z-[1] h-full w-full object-cover object-center md:hidden"
+              src={HERO_VIDEO.mobile}
+              poster={HERO_VIDEO.poster}
+            />
+            <video
+              {...VIDEO_PROPS}
+              className="brand-hero-media absolute inset-0 z-[1] hidden h-full w-full object-cover object-center md:block"
+              src={HERO_VIDEO.desktop}
+              poster={HERO_VIDEO.poster}
+            />
+          </>
         ) : null}
       </div>
 
