@@ -108,42 +108,40 @@ export function CinematicPortalHero() {
         </p>
       </div>
 
-      <div
+      <nav
         className={cn(
-          "absolute bottom-16 right-16 z-[12] w-[22%] md:w-[18%]",
+          "absolute bottom-16 right-6 z-[12] w-[25%] min-w-0 md:right-16 md:w-[16%]",
+          "flex flex-col items-end space-y-6 text-right md:space-y-8",
           showDirections ? "pointer-events-auto" : "pointer-events-none",
         )}
+        aria-label="Enter the brand"
+        aria-hidden={!showDirections}
       >
-        <nav
-          className="relative flex flex-col items-end space-y-6 text-right md:space-y-8"
-          aria-label="Enter the brand"
-          aria-hidden={!showDirections}
-        >
-          <span
-            className="absolute right-full top-1/2 mr-6 h-[120px] w-px -translate-y-1/2 bg-white/20"
-            aria-hidden
-          />
-          {PORTAL_DIRECTIONS.map((item) => (
-            <button
-              key={item.href}
-              type="button"
-              disabled={!showDirections || isTransitioning}
-              className={cn(
-                "m-0 w-full origin-right cursor-pointer border-0 bg-transparent p-0 text-right",
-                "font-light uppercase text-2xl tracking-widest text-white/70 opacity-0",
-                "transition-[color,transform] duration-300",
-                "hover:scale-105 hover:text-white md:text-3xl",
-                "disabled:cursor-default",
-                showDirections && "animate-rise",
-              )}
-              style={{ animationDelay: item.stagger }}
-              onClick={() => handleDirectionClick(item.href)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+        <span
+          className="absolute right-full top-1/2 mr-4 h-[100px] w-px -translate-y-1/2 bg-white/20 md:mr-6 md:h-[140px]"
+          aria-hidden
+        />
+        {PORTAL_DIRECTIONS.map((item) => (
+          <button
+            key={item.href}
+            type="button"
+            disabled={!showDirections || isTransitioning}
+            className={cn(
+              "m-0 w-full min-w-0 max-w-full origin-right cursor-pointer border-0 bg-transparent p-0 text-right",
+              "whitespace-normal break-words leading-tight",
+              "text-lg font-light uppercase tracking-widest text-white/70 opacity-0",
+              "transition-[color,transform] duration-300",
+              "hover:scale-105 hover:text-white md:text-2xl",
+              "disabled:cursor-default",
+              showDirections && "animate-rise",
+            )}
+            style={{ animationDelay: item.stagger }}
+            onClick={() => handleDirectionClick(item.href)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
 
       <div
         className={cn(
