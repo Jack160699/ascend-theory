@@ -67,6 +67,29 @@ describe("Phase 2 Security & Auth Tests", () => {
     assert.strictEqual(hasPermission("support", "system", "read"), false);
   });
 
+  it("strictly enforces READ-ONLY access for support role on commerce/orders", () => {
+    // 1. Support role MUST BE ALLOWED to read orders
+    assert.strictEqual(hasPermission("support", "commerce", "read"), true);
+    assert.strictEqual(hasPermission("support", "fulfilment", "read"), true);
+
+    // 2. Support role MUST BE DENIED write, delete, and admin actions on orders/commerce
+    assert.strictEqual(hasPermission("support", "commerce", "write"), false);
+    assert.strictEqual(hasPermission("support", "commerce", "delete"), false);
+    assert.strictEqual(hasPermission("support", "commerce", "admin"), false);
+    assert.strictEqual(hasPermission("support", "fulfilment", "write"), false);
+    assert.strictEqual(hasPermission("support", "fulfilment", "delete"), false);
+
+    // 3. Owner and Admin roles MUST BE ALLOWED order writes
+    assert.strictEqual(hasPermission("owner", "commerce", "write"), true);
+    assert.strictEqual(hasPermission("owner", "commerce", "delete"), true);
+    assert.strictEqual(hasPermission("admin", "commerce", "write"), true);
+    assert.strictEqual(hasPermission("admin", "commerce", "delete"), true);
+
+    // 4. Editor role gets NO order mutation access
+    assert.strictEqual(hasPermission("editor", "commerce", "read"), false);
+    assert.strictEqual(hasPermission("editor", "commerce", "write"), false);
+  });
+
   it("strictly enforces RLS privilege boundaries for admin profile management", () => {
     // 1. Admin promoting user to 'owner' MUST BE DENIED
     assert.strictEqual(canManageAdminProfile("admin", "editor", "owner", "update"), false);

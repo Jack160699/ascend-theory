@@ -102,6 +102,7 @@ export function hasPermission(
 
   if (role === "support") {
     const supportDomains = ["overview", "community", "wearables", "commerce", "fulfilment"];
+    if (action !== "read") return false;
     return supportDomains.includes(domainId);
   }
 
