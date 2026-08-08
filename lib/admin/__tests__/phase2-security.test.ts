@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { validateRedirectUrl, hasPermission, hasMinimumRole } from "../auth-shared.js";
+import { validateRedirectUrl, hasPermission, hasMinimumRole, canManageAdminProfile } from "../auth-shared.js";
 import { saveOrder } from "../../orders/store.js";
 import type { Order } from "../../orders/types.js";
 
@@ -65,6 +65,37 @@ describe("Phase 2 Security & Auth Tests", () => {
     assert.strictEqual(hasPermission("editor", "journal", "write"), true);
     assert.strictEqual(hasPermission("support", "commerce", "read"), true);
     assert.strictEqual(hasPermission("support", "system", "read"), false);
+  });
+
+  it("strictly enforces RLS privilege boundaries for admin profile management", () => {
+    // 1. Admin promoting user to 'owner' MUST BE DENIED
+    assert.strictEqual(canManageAdminProfile("admin", "editor", "owner", "update"), false);
+    assert.strictEqual(canManageAdminProfile("admin", null, "owner", "insert"), false);
+
+    // 2. Admin editing existing 'owner' profile MUST BE DENIED
+    assert.strictEqual(canManageAdminProfile("admin", "owner", "admin", "update"), false);
+    assert.strictEqual(canManageAdminProfile("admin", "owner", "editor", "update"), false);
+
+    // 3. Admin deleting existing 'owner' profile MUST BE DENIED
+    assert.strictEqual(canManageAdminProfile("admin", "owner", "support", "delete"), false);
+
+    // 4. Admin managing non-owner roles (admin, editor, support) MUST BE ALLOWED
+    assert.strictEqual(canManageAdminProfile("admin", null, "editor", "insert"), true);
+    assert.strictEqual(canManageAdminProfile("admin", null, "support", "insert"), true);
+    assert.strictEqual(canManageAdminProfile("admin", null, "admin", "insert"), true);
+    assert.strictEqual(canManageAdminProfile("admin", "editor", "support", "update"), true);
+    assert.strictEqual(canManageAdminProfile("admin", "support", "support", "delete"), true);
+
+    // 5. Owner full control over all operations MUST BE ALLOWED
+    assert.strictEqual(canManageAdminProfile("owner", "owner", "owner", "update"), true);
+    assert.strictEqual(canManageAdminProfile("owner", null, "owner", "insert"), true);
+    assert.strictEqual(canManageAdminProfile("owner", "admin", "owner", "update"), true);
+    assert.strictEqual(canManageAdminProfile("owner", "owner", "support", "delete"), true);
+
+    // 6. Non-admin actors (editor, support, unauthenticated) MUST BE DENIED
+    assert.strictEqual(canManageAdminProfile("editor", "support", "admin", "update"), false);
+    assert.strictEqual(canManageAdminProfile("support", "editor", "editor", "update"), false);
+    assert.strictEqual(canManageAdminProfile(null, null, "admin", "insert"), false);
   });
 
   it("fails closed when authenticated user has no admin profile (authenticated non-admin)", () => {

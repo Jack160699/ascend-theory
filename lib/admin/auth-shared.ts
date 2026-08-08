@@ -107,3 +107,50 @@ export function hasPermission(
 
   return false;
 }
+
+/**
+ * Strict RLS / Profile Management privilege check.
+ * Enforces that:
+ * - Only 'owner' can create, update, or delete an 'owner' profile.
+ * - 'admin' can manage only non-owner roles ('admin', 'editor', 'support').
+ * - 'admin' must NOT promote anyone to 'owner'.
+ * - 'admin' must NOT demote, modify, or delete an existing 'owner'.
+ * - Non-admin actors ('editor', 'support', or unauthenticated) are denied completely.
+ */
+export function canManageAdminProfile(
+  actorRole: AdminRole | null | undefined,
+  targetExistingRole: AdminRole | null | undefined,
+  targetNewRole: AdminRole,
+  action: "insert" | "update" | "delete"
+): boolean {
+  if (!actorRole) return false;
+
+  // Unprivileged roles cannot mutate profiles
+  if (actorRole !== "owner" && actorRole !== "admin") {
+    return false;
+  }
+
+  // Owner has full control over all roles and operations
+  if (actorRole === "owner") {
+    return true;
+  }
+
+  // Admin actor restrictions:
+  // 1. Cannot assign 'owner' role to new or existing users
+  if (targetNewRole === "owner") {
+    return false;
+  }
+
+  // 2. Cannot modify or delete an existing 'owner' profile
+  if (targetExistingRole === "owner") {
+    return false;
+  }
+
+  // 3. Admin can only manage non-owner roles ('admin', 'editor', 'support')
+  const allowedRoles: AdminRole[] = ["admin", "editor", "support"];
+  if (action === "insert" || action === "update") {
+    return allowedRoles.includes(targetNewRole);
+  }
+
+  return true;
+}
