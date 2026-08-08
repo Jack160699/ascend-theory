@@ -697,4 +697,128 @@ describe("Phase 4 — Wearables Security & Cart Integrity Tests", () => {
     const res = await getAuthoritativeVariantForCheckout({ sku: "COMPLETELY-UNKNOWN-SKU-S8" });
     assert.strictEqual(res.ok, false);
   });
+
+  // ============================================================
+  // SECTION 9: Migration 00005 RLS Scope & DropCartButton clean state
+  // ============================================================
+  it("migration 00005 exists and scopes all admin RLS policies explicitly TO authenticated", () => {
+    const sql00005 = readFileSync(
+      resolve(process.cwd(), "supabase/migrations/20260809000005_fix_wearables_rls_policy_scope.sql"),
+      "utf-8",
+    );
+
+    // Products admin policies
+    assert.strictEqual(sql00005.includes('CREATE POLICY "Admin read products" ON public.products'), true);
+    assert.strictEqual(sql00005.includes('CREATE POLICY "Admin write products" ON public.products'), true);
+    const prodReadMatch = sql00005.match(/CREATE POLICY "Admin read products"[\s\S]*?TO authenticated[\s\S]*?USING/);
+    assert.notStrictEqual(prodReadMatch, null, 'Admin read products policy must contain "TO authenticated"');
+    const prodWriteMatch = sql00005.match(/CREATE POLICY "Admin write products"[\s\S]*?TO authenticated[\s\S]*?USING/);
+    assert.notStrictEqual(prodWriteMatch, null, 'Admin write products policy must contain "TO authenticated"');
+
+    // Product variants admin policies
+    assert.strictEqual(sql00005.includes('CREATE POLICY "Admin read product variants" ON public.product_variants'), true);
+    assert.strictEqual(sql00005.includes('CREATE POLICY "Admin write product variants" ON public.product_variants'), true);
+    const varReadMatch = sql00005.match(/CREATE POLICY "Admin read product variants"[\s\S]*?TO authenticated[\s\S]*?USING/);
+    assert.notStrictEqual(varReadMatch, null, 'Admin read product variants policy must contain "TO authenticated"');
+    const varWriteMatch = sql00005.match(/CREATE POLICY "Admin write product variants"[\s\S]*?TO authenticated[\s\S]*?USING/);
+    assert.notStrictEqual(varWriteMatch, null, 'Admin write product variants policy must contain "TO authenticated"');
+
+    // Collections admin policies
+    assert.strictEqual(sql00005.includes('CREATE POLICY "Admin read collections" ON public.collections'), true);
+    assert.strictEqual(sql00005.includes('CREATE POLICY "Admin write collections" ON public.collections'), true);
+    const colReadMatch = sql00005.match(/CREATE POLICY "Admin read collections"[\s\S]*?TO authenticated[\s\S]*?USING/);
+    assert.notStrictEqual(colReadMatch, null, 'Admin read collections policy must contain "TO authenticated"');
+    const colWriteMatch = sql00005.match(/CREATE POLICY "Admin write collections"[\s\S]*?TO authenticated[\s\S]*?USING/);
+    assert.notStrictEqual(colWriteMatch, null, 'Admin write collections policy must contain "TO authenticated"');
+  });
+
+  it("public RLS policies do NOT invoke is_caller_active_admin_with_roles helper", () => {
+    const sql00004 = readFileSync(
+      resolve(process.cwd(), "supabase/migrations/20260809000004_wearables_catalogue_management.sql"),
+      "utf-8",
+    );
+    const pubProdPolicy = sql00004.match(/CREATE POLICY "Public read published active products"[\s\S]*?;/);
+    const pubVarPolicy = sql00004.match(/CREATE POLICY "Public read active variants of active products"[\s\S]*?;/);
+    const pubColPolicy = sql00004.match(/CREATE POLICY "Public read published collections"[\s\S]*?;/);
+
+    assert.notStrictEqual(pubProdPolicy, null);
+    assert.notStrictEqual(pubVarPolicy, null);
+    assert.notStrictEqual(pubColPolicy, null);
+
+    if (pubProdPolicy) assert.strictEqual(pubProdPolicy[0].includes("is_caller_active_admin_with_roles"), false);
+    if (pubVarPolicy) assert.strictEqual(pubVarPolicy[0].includes("is_caller_active_admin_with_roles"), false);
+    if (pubColPolicy) assert.strictEqual(pubColPolicy[0].includes("is_caller_active_admin_with_roles"), false);
+  });
+
+  it("anon role is NOT granted EXECUTE privilege on is_caller_active_admin_with_roles", () => {
+    const migrationFiles = [
+      "supabase/migrations/20260808000000_ascend_hq_schema.sql",
+      "supabase/migrations/20260809000000_fix_admin_profiles_rls.sql",
+      "supabase/migrations/20260809000004_wearables_catalogue_management.sql",
+      "supabase/migrations/20260809000005_fix_wearables_rls_policy_scope.sql",
+    ];
+
+    for (const file of migrationFiles) {
+      const sqlContent = readFileSync(resolve(process.cwd(), file), "utf-8");
+      const grantAnonMatch = sqlContent.match(/GRANT EXECUTE ON FUNCTION[\s\S]*?is_caller_active_admin_with_roles[\s\S]*?TO[\s\S]*?anon/i);
+      assert.strictEqual(grantAnonMatch, null, `File ${file} must NOT grant EXECUTE on is_caller_active_admin_with_roles to anon`);
+    }
+  });
+
+  it("provider_cost_paise column privacy remains intact (not granted to anon or authenticated)", () => {
+    const sql00004 = readFileSync(
+      resolve(process.cwd(), "supabase/migrations/20260809000004_wearables_catalogue_management.sql"),
+      "utf-8",
+    );
+    const sql00005 = readFileSync(
+      resolve(process.cwd(), "supabase/migrations/20260809000005_fix_wearables_rls_policy_scope.sql"),
+      "utf-8",
+    );
+
+    // 00004 revokes and grants explicit column list without provider_cost_paise
+    assert.strictEqual(sql00004.includes("REVOKE ALL ON public.product_variants FROM PUBLIC, anon, authenticated;"), true);
+    // 00005 does not alter table column grants
+    assert.strictEqual(sql00005.includes("GRANT SELECT ON public.product_variants"), false);
+  });
+
+  it("RPC privileges for save_product_with_variants and save_collection_with_audit remain service_role only", () => {
+    const sql00004 = readFileSync(
+      resolve(process.cwd(), "supabase/migrations/20260809000004_wearables_catalogue_management.sql"),
+      "utf-8",
+    );
+
+    assert.strictEqual(
+      sql00004.includes("REVOKE ALL ON FUNCTION public.save_product_with_variants(JSONB, JSONB, UUID) FROM PUBLIC, anon, authenticated;"),
+      true,
+    );
+    assert.strictEqual(
+      sql00004.includes("GRANT EXECUTE ON FUNCTION public.save_product_with_variants(JSONB, JSONB, UUID) TO service_role;"),
+      true,
+    );
+    assert.strictEqual(
+      sql00004.includes("REVOKE ALL ON FUNCTION public.save_collection_with_audit(JSONB, UUID) FROM PUBLIC, anon, authenticated;"),
+      true,
+    );
+    assert.strictEqual(
+      sql00004.includes("GRANT EXECUTE ON FUNCTION public.save_collection_with_audit(JSONB, UUID) TO service_role;"),
+      true,
+    );
+  });
+
+  it("DropCartButton component has NO render-phase setState reset logic", () => {
+    const buttonSrc = readFileSync(
+      resolve(process.cwd(), "components/drop/DropCartButton.tsx"),
+      "utf-8",
+    );
+
+    // Ensure render-phase state setters are absent
+    assert.strictEqual(buttonSrc.includes("setLastProductSlug"), false);
+    assert.strictEqual(buttonSrc.includes("setLastSizesKey"), false);
+    assert.strictEqual(buttonSrc.includes("setLastColorsKey"), false);
+
+    // Ensure component is structured with outer DropCartButton keying inner VariantSelector
+    assert.strictEqual(buttonSrc.includes("function VariantSelector"), true);
+    assert.strictEqual(buttonSrc.includes("<VariantSelector key={product.slug"), true);
+  });
 });
+

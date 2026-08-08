@@ -12,7 +12,12 @@ type DropCartButtonProps = {
   label?: string;
 };
 
-export function DropCartButton({
+/**
+ * Inner selector component keyed by product identity.
+ * Keying ensures state (selectedVariantId) initializes cleanly on mount
+ * when product changes, with zero render-phase state mutations or effects.
+ */
+function VariantSelector({
   className,
   variant = "primary",
   label = "Add to Cart",
@@ -58,9 +63,6 @@ export function DropCartButton({
    * SINGLE SOURCE OF TRUTH: selectedVariantId
    * Derived color/size are just display projections of the selected variant.
    * Eliminates render-phase setState and disjoint-selection deadlock.
-   *
-   * Initialised to the first available variant's ID (or "" if none).
-   * A useEffect handles product refresh (new variants replace old ones).
    */
   const [selectedVariantId, setSelectedVariantId] = useState<string>(
     () => availableVariants[0]?.id ?? "",
@@ -76,16 +78,6 @@ export function DropCartButton({
   // Derive current selections from the selected variant (display projections only)
   const selectedColor = selectedVariant?.color ?? "";
   const selectedSize = selectedVariant?.size ?? "";
-
-  // When the available variant list changes (e.g. parent refreshes product),
-  // reset to first available variant if the current selection is no longer valid.
-  // We do NOT use setState during render; we use a stable "last known ID" guard.
-  const [lastProductSlug, setLastProductSlug] = useState(product.slug);
-  if (product.slug !== lastProductSlug) {
-    setLastProductSlug(product.slug);
-    const firstId = availableVariants[0]?.id ?? "";
-    setSelectedVariantId(firstId);
-  }
 
   /**
    * Colors that have at least one available variant — always all colors.
@@ -108,7 +100,6 @@ export function DropCartButton({
 
   /**
    * Sizes that have at least one available variant for the CURRENT selected color.
-   * If no color selected yet, show all sizes.
    */
   const sizesForCurrentColor = useMemo<string[]>(() => {
     if (!selectedColor) return allSizes;
@@ -117,13 +108,6 @@ export function DropCartButton({
     return allSizes.filter((s) => set.has(s));
   }, [availableVariants, selectedColor, allSizes]);
 
-  /**
-   * Colors available for the current size (for disabled-state of color buttons).
-   * A color is shown as unavailable only if the CURRENTLY selected size doesn't exist for it
-   * AND selecting that color would require an auto-snap (which we now always do).
-   * Per spec: every color that has at least one sellable variant remains selectable.
-   * So: no color is ever disabled — we always show all colors as enabled.
-   */
   const selectSize = useCallback(
     (size: string) => {
       // Prefer same-color + new-size; fallback to first variant with this size
@@ -180,7 +164,7 @@ export function DropCartButton({
         {product.name} variant selector
       </span>
 
-      {/* Color Selector — every color with a sellable variant is always selectable */}
+      {/* Color Selector */}
       {allColors.length > 1 && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono uppercase text-white/50">Color:</span>
@@ -208,7 +192,7 @@ export function DropCartButton({
         </div>
       )}
 
-      {/* Size Selector — shows sizes valid for selected color */}
+      {/* Size Selector */}
       {allSizes.length > 0 && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono uppercase text-white/50">Size:</span>
@@ -254,4 +238,9 @@ export function DropCartButton({
       </button>
     </div>
   );
+}
+
+export function DropCartButton(props: DropCartButtonProps) {
+  const product = useDropProduct();
+  return <VariantSelector key={product.slug || product.name} {...props} />;
 }
