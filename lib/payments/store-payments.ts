@@ -1,14 +1,14 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getOrder, updateOrder } from "@/lib/orders/store";
 
 export type PaymentCaptureResult =
   | { ok: true; alreadyPaid: boolean; orderId: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; status?: number };
 
 /**
- * Authoritatively processes a verified payment capture.
- * Uses atomic RPC `process_successful_payment` in Supabase when available,
- * with safe fallback for dev/testing environments.
+ * Authoritatively processes a verified payment capture using database RPC.
+ * Production mode FAIL CLOSED: missing service client or RPC errors throw explicit failures.
  */
 export async function capturePaymentAuthoritatively(params: {
   ascendOrderId: string;
@@ -31,10 +31,40 @@ export async function capturePaymentAuthoritatively(params: {
     payload = {},
   } = params;
 
-  // 1. Fetch target order
+  const isProduction = process.env.NODE_ENV === "production";
+  const hasConfig = hasSupabaseConfig();
+  const serviceClient = createSupabaseServiceClient();
+
+  // Fail closed in production if Supabase service client is unconfigured
+  if (!serviceClient && (isProduction || hasConfig)) {
+    throw new Error("[PaymentCapture] Supabase service role client is unconfigured.");
+  }
+
+  // 1. Fetch target order record
   const order = await getOrder(ascendOrderId);
   if (!order) {
-    return { ok: false, error: "Order not found" };
+    return { ok: false, error: "Order not found", status: 404 };
+  }
+
+  // 2. TERMINAL STATE SAFETY: Refuse cancelled or refunded orders
+  if (order.status === "cancelled") {
+    await recordPaymentEvent({
+      orderId: ascendOrderId,
+      eventType: "terminal_state_rejected",
+      providerEventId,
+      details: { status: "cancelled" },
+    });
+    return { ok: false, error: "Cannot process payment for cancelled order", status: 400 };
+  }
+
+  if (order.status === "refunded") {
+    await recordPaymentEvent({
+      orderId: ascendOrderId,
+      eventType: "terminal_state_rejected",
+      providerEventId,
+      details: { status: "refunded" },
+    });
+    return { ok: false, error: "Cannot process payment for refunded order", status: 400 };
   }
 
   // Check if order is already paid (Idempotency)
@@ -42,7 +72,7 @@ export async function capturePaymentAuthoritatively(params: {
     return { ok: true, alreadyPaid: true, orderId: ascendOrderId };
   }
 
-  // 2. Amount and Currency validation
+  // 3. Authoritative Total & Currency Validation
   const expectedPaise = Math.round(order.subtotal * 100);
   if (expectedPaise !== amountPaise) {
     await recordPaymentEvent({
@@ -51,7 +81,7 @@ export async function capturePaymentAuthoritatively(params: {
       providerEventId,
       details: { expectedPaise, receivedPaise: amountPaise },
     });
-    return { ok: false, error: "Amount mismatch" };
+    return { ok: false, error: "Amount mismatch", status: 400 };
   }
 
   if (order.currency.toUpperCase() !== currency.toUpperCase()) {
@@ -61,49 +91,48 @@ export async function capturePaymentAuthoritatively(params: {
       providerEventId,
       details: { expectedCurrency: order.currency, receivedCurrency: currency },
     });
-    return { ok: false, error: "Currency mismatch" };
+    return { ok: false, error: "Currency mismatch", status: 400 };
   }
 
-  // 3. Attempt DB RPC execution via Supabase Service Role client
-  const serviceClient = createSupabaseServiceClient();
+  // 4. Supabase DB Execution (when serviceClient is available)
   if (serviceClient) {
-    const { data, error } = await serviceClient.rpc("process_successful_payment", {
-      p_order_id: ascendOrderId,
-      p_provider_payment_id: razorpayPaymentId,
-      p_provider_order_id: razorpayOrderId,
-      p_amount_paise: amountPaise,
-      p_currency: currency,
-      p_provider_event_id: providerEventId ?? null,
-      p_event_type: eventType,
-      p_payload: payload,
-    });
+    const { data: rpcData, error: rpcError } = await serviceClient.rpc(
+      "process_successful_payment",
+      {
+        p_order_id: ascendOrderId,
+        p_provider_payment_id: razorpayPaymentId,
+        p_provider_order_id: razorpayOrderId,
+        p_amount_paise: amountPaise,
+        p_currency: currency,
+        p_provider_event_id: providerEventId ?? null,
+        p_event_type: eventType,
+        p_payload: payload,
+      }
+    );
 
-    if (!error && data && data.ok) {
+    if (rpcError) {
+      console.error("[PaymentCapture] Supabase RPC execution error:", rpcError);
+      if (isProduction || hasConfig) {
+        throw new Error(`Payment capture database RPC failed: ${rpcError.message}`);
+      }
+    } else if (rpcData && typeof rpcData === "object") {
+      if (!(rpcData as { ok?: boolean }).ok) {
+        const errMessage = (rpcData as { error?: string })?.error || "RPC returned error response";
+        return { ok: false, error: errMessage, status: 400 };
+      }
+
       return {
         ok: true,
-        alreadyPaid: Boolean(data.already_paid),
+        alreadyPaid: Boolean((rpcData as { already_paid?: boolean }).already_paid),
         orderId: ascendOrderId,
       };
     }
   }
 
-  // 4. Fallback in-memory/store state update for local testing/dev
+  // Dev/Test-only store update
   await updateOrder(ascendOrderId, {
     status: "paid",
     paymentReference: razorpayOrderId,
-  });
-
-  await recordPaymentEvent({
-    orderId: ascendOrderId,
-    eventType,
-    providerEventId,
-    details: {
-      razorpayOrderId,
-      razorpayPaymentId,
-      amountPaise,
-      currency,
-      ...payload,
-    },
   });
 
   return { ok: true, alreadyPaid: false, orderId: ascendOrderId };
@@ -123,14 +152,18 @@ export async function recordPaymentEvent(params: {
   if (!serviceClient) return;
 
   try {
-    await serviceClient.from("payment_events").insert({
+    const { error } = await serviceClient.from("payment_events").insert({
       order_id: params.orderId ?? null,
       payment_id: params.paymentId ?? null,
       event_type: params.eventType,
       provider_event_id: params.providerEventId ?? null,
-      details_json: params.details ?? {},
+      payload_json: params.details ?? {},
     });
+
+    if (error) {
+      console.error("[payment_events] Log insert error:", error);
+    }
   } catch (err) {
-    console.error("[payment_events] Log error:", err);
+    console.error("[payment_events] Log exception:", err);
   }
 }

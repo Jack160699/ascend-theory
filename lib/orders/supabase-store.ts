@@ -1,5 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import type { Order, OrderItem } from "./types";
+import type { Order, OrderItem, OrderStatus, PaymentMethod, PaymentProvider } from "./types";
 
 /**
  * Maps an Ascend Theory Order domain entity to the Supabase database table format.
@@ -11,15 +11,33 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
   }
 
   const subtotalPaise = Math.round((order.subtotal || 0) * 100);
+  const totalPaise = subtotalPaise; // Extendable for tax/shipping when added
+
+  // Map domain status to database constraint status: ('created', 'pending', 'paid', 'fulfilled', 'cancelled', 'refunded')
+  let dbStatus = "pending";
+  if (order.status === "created") dbStatus = "created";
+  else if (order.status === "paid") dbStatus = "paid";
+  else if (order.status === "cancelled") dbStatus = "cancelled";
+  else if (order.status === "refunded") dbStatus = "refunded";
+
+  const dbPaymentStatus =
+    order.status === "paid"
+      ? "captured"
+      : order.status === "refunded"
+      ? "refunded"
+      : "unpaid";
+
+  const dbFulfillmentStatus =
+    order.status === "pending_fulfillment" ? "processing" : "unfulfilled";
 
   // Upsert master order record
   const { error: orderError } = await supabase.from("orders").upsert({
     id: order.id,
-    status: order.status,
-    payment_status: order.status === "paid" ? "captured" : "unpaid",
-    fulfillment_status: order.status === "pending_fulfillment" ? "processing" : "unfulfilled",
+    status: dbStatus,
+    payment_status: dbPaymentStatus,
+    fulfillment_status: dbFulfillmentStatus,
     subtotal_paise: subtotalPaise,
-    total_paise: subtotalPaise,
+    total_paise: totalPaise,
     currency: order.currency || "INR",
     shipping_address: order.customer as unknown as Record<string, unknown>,
     created_at: order.createdAt || new Date().toISOString(),
@@ -50,7 +68,29 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
     });
 
     if (itemsError) {
-      console.warn("[OrderStore] Order items upsert notice:", itemsError.message);
+      console.error("[OrderStore] Order items upsert error:", itemsError);
+      throw new Error(`Failed to persist order items to Supabase: ${itemsError.message}`);
+    }
+  }
+
+  // Persist payment mapping if paymentReference is present
+  if (order.paymentReference) {
+    const { error: paymentError } = await supabase.from("payments").upsert(
+      {
+        order_id: order.id,
+        provider: order.paymentProvider || "razorpay",
+        provider_order_id: order.paymentReference,
+        amount_paise: totalPaise,
+        currency: order.currency || "INR",
+        status: order.status === "paid" ? "captured" : "created",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "provider_order_id" }
+    );
+
+    if (paymentError) {
+      console.error("[OrderStore] Payment record upsert error:", paymentError);
+      throw new Error(`Failed to persist payment mapping to Supabase: ${paymentError.message}`);
     }
   }
 }
@@ -88,17 +128,46 @@ export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
     };
   });
 
+  // Query associated payments record for durable paymentReference & provider
+  const { data: paymentRow } = await supabase
+    .from("payments")
+    .select("provider_order_id, provider, status")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const customerObj = (orderRow.shipping_address || {}) as unknown as Order["customer"];
+
+  // Normalize database status to domain OrderStatus
+  let domainStatus: OrderStatus = "pending_payment";
+  if (orderRow.status === "paid" || orderRow.payment_status === "captured") {
+    domainStatus = "paid";
+  } else if (orderRow.status === "cancelled") {
+    domainStatus = "cancelled";
+  } else if (orderRow.status === "refunded" || orderRow.payment_status === "refunded") {
+    domainStatus = "refunded";
+  } else if (orderRow.status === "created") {
+    domainStatus = "created";
+  } else if (orderRow.fulfillment_status === "processing" || orderRow.fulfillment_status === "fulfilled") {
+    domainStatus = "pending_fulfillment";
+  }
+
+  const paymentMethod: PaymentMethod =
+    paymentRow?.provider === "cod" ? "cod" : "online";
+  const paymentProvider: PaymentProvider =
+    (paymentRow?.provider as PaymentProvider) || "razorpay";
 
   return {
     id: orderRow.id,
     createdAt: orderRow.created_at,
-    status: orderRow.status,
-    paymentMethod: "online",
-    paymentProvider: "razorpay",
+    status: domainStatus,
+    paymentMethod,
+    paymentProvider,
     currency: orderRow.currency || "INR",
-    subtotal: Number(orderRow.subtotal_paise || 0) / 100,
+    subtotal: Number(orderRow.subtotal_paise || orderRow.total_paise || 0) / 100,
     items,
     customer: customerObj,
+    paymentReference: paymentRow?.provider_order_id || undefined,
   };
 }
