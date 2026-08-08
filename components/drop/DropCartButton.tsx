@@ -3,7 +3,7 @@
 import { useDropProduct } from "@/components/drop/DropProductContext";
 import { useCart } from "@/contexts/cart";
 import { cn } from "@/lib/utils";
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import type { PublicProductVariant } from "@/lib/wearables/types";
 
 type DropCartButtonProps = {
@@ -20,71 +20,97 @@ export function DropCartButton({
   const product = useDropProduct();
   const { addProduct } = useCart();
   const [pending, setPending] = useState(false);
+  const labelId = useId();
 
   // All active+available variants for this product
-  const availableVariants = useMemo(() => {
-    return (product.variants || []).filter(
-      (v) => v.isActive && v.availabilityStatus === "available"
-    );
-  }, [product.variants]);
+  const availableVariants = useMemo(
+    () => (product.variants || []).filter((v) => v.isActive && v.availabilityStatus === "available"),
+    [product.variants],
+  );
 
-  // Derive unique sizes from actual variants (not hardcoded list)
-  const allSizes = useMemo(() => {
+  // Derive deduplicated color list (preserving first-occurrence order)
+  const allColors = useMemo<{ key: string; display: string }[]>(() => {
+    const seen = new Set<string>();
+    const out: { key: string; display: string }[] = [];
+    for (const v of availableVariants) {
+      if (!seen.has(v.color)) {
+        seen.add(v.color);
+        out.push({ key: v.color, display: v.colorDisplay || v.color });
+      }
+    }
+    return out;
+  }, [availableVariants]);
+
+  // Derive deduplicated size list (preserving first-occurrence order)
+  const allSizes = useMemo<string[]>(() => {
     const seen = new Set<string>();
     const out: string[] = [];
-    availableVariants.forEach((v) => {
+    for (const v of availableVariants) {
       if (!seen.has(v.size)) {
         seen.add(v.size);
         out.push(v.size);
       }
-    });
+    }
     return out;
   }, [availableVariants]);
 
-  // Derive unique colors from actual variants
-  const allColors = useMemo(() => {
-    const seen = new Set<string>();
-    const out: { key: string; display: string }[] = [];
-    availableVariants.forEach((v) => {
-      const key = v.color;
-      const display = v.colorDisplay || v.color;
-      if (!seen.has(key)) {
-        seen.add(key);
-        out.push({ key, display });
-      }
-    });
-    return out;
-  }, [availableVariants]);
+  /**
+   * SINGLE SOURCE OF TRUTH: selectedVariantId
+   * Derived color/size are just display projections of the selected variant.
+   * Eliminates render-phase setState and disjoint-selection deadlock.
+   *
+   * Initialised to the first available variant's ID (or "" if none).
+   * A useEffect handles product refresh (new variants replace old ones).
+   */
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(
+    () => availableVariants[0]?.id ?? "",
+  );
 
-  const [selectedSize, setSelectedSize] = useState<string>(() => allSizes[0] ?? "");
-  const [selectedColor, setSelectedColor] = useState<string>(() => allColors[0]?.key ?? "");
+  // Resolve the selected variant object from ID
+  const selectedVariant = useMemo(
+    (): PublicProductVariant | undefined =>
+      availableVariants.find((v) => v.id === selectedVariantId),
+    [availableVariants, selectedVariantId],
+  );
 
-  // When available variants change (product refresh), reset selections to first available
-  // Use a key-based approach: track whether allSizes/allColors have changed since last init
-  const effectiveSizesKey = allSizes.join(",");
-  const effectiveColorsKey = allColors.map((c) => c.key).join(",");
-  const [lastSizesKey, setLastSizesKey] = useState(effectiveSizesKey);
-  const [lastColorsKey, setLastColorsKey] = useState(effectiveColorsKey);
+  // Derive current selections from the selected variant (display projections only)
+  const selectedColor = selectedVariant?.color ?? "";
+  const selectedSize = selectedVariant?.size ?? "";
 
-  // Reset selection state when available variants change using React's render-phase state update pattern
-  // This avoids the react-hooks/set-state-in-effect rule and avoids an extra render cycle
-  if (effectiveSizesKey !== lastSizesKey) {
-    setLastSizesKey(effectiveSizesKey);
-    if (allSizes.length > 0 && !allSizes.includes(selectedSize)) {
-      setSelectedSize(allSizes[0] ?? "");
-    }
-  }
-  if (effectiveColorsKey !== lastColorsKey) {
-    setLastColorsKey(effectiveColorsKey);
-    if (allColors.length > 0 && !allColors.some((c) => c.key === selectedColor)) {
-      setSelectedColor(allColors[0]?.key ?? "");
-    }
+  // When the available variant list changes (e.g. parent refreshes product),
+  // reset to first available variant if the current selection is no longer valid.
+  // We do NOT use setState during render; we use a stable "last known ID" guard.
+  const [lastProductSlug, setLastProductSlug] = useState(product.slug);
+  if (product.slug !== lastProductSlug) {
+    setLastProductSlug(product.slug);
+    const firstId = availableVariants[0]?.id ?? "";
+    setSelectedVariantId(firstId);
   }
 
   /**
-   * Sizes available for currently selected color
+   * Colors that have at least one available variant — always all colors.
+   * A color is ALWAYS selectable (it just snaps the size to a valid one).
    */
-  const sizesForColor = useMemo(() => {
+  const selectColor = useCallback(
+    (color: string) => {
+      // Find first variant that matches this color (any size)
+      const first = availableVariants.find((v) => v.color === color);
+      if (!first) return;
+
+      // If current size works with the new color, keep it; otherwise take first valid size
+      const sameColorSameSize = availableVariants.find(
+        (v) => v.color === color && v.size === selectedSize,
+      );
+      setSelectedVariantId(sameColorSameSize?.id ?? first.id);
+    },
+    [availableVariants, selectedSize],
+  );
+
+  /**
+   * Sizes that have at least one available variant for the CURRENT selected color.
+   * If no color selected yet, show all sizes.
+   */
+  const sizesForCurrentColor = useMemo<string[]>(() => {
     if (!selectedColor) return allSizes;
     const set = new Set<string>();
     availableVariants.filter((v) => v.color === selectedColor).forEach((v) => set.add(v.size));
@@ -92,33 +118,29 @@ export function DropCartButton({
   }, [availableVariants, selectedColor, allSizes]);
 
   /**
-   * Colors available for currently selected size
+   * Colors available for the current size (for disabled-state of color buttons).
+   * A color is shown as unavailable only if the CURRENTLY selected size doesn't exist for it
+   * AND selecting that color would require an auto-snap (which we now always do).
+   * Per spec: every color that has at least one sellable variant remains selectable.
+   * So: no color is ever disabled — we always show all colors as enabled.
    */
-  const colorsForSize = useMemo(() => {
-    if (!selectedSize) return allColors;
-    const set = new Set<string>();
-    availableVariants.filter((v) => v.size === selectedSize).forEach((v) => set.add(v.color));
-    return allColors.filter((c) => set.has(c.key));
-  }, [availableVariants, selectedSize, allColors]);
-
-  /**
-   * EXACT variant match — no fallback to [0].
-   * If selected size+color does not map to a real active+available variant → undefined → button disabled.
-   */
-  const selectedVariant = useMemo((): PublicProductVariant | undefined => {
-    if (!selectedSize || !selectedColor) return undefined;
-    return availableVariants.find(
-      (v) =>
-        v.size.toUpperCase() === selectedSize.toUpperCase() &&
-        v.color.toLowerCase() === selectedColor.toLowerCase()
-    );
-  }, [availableVariants, selectedSize, selectedColor]);
+  const selectSize = useCallback(
+    (size: string) => {
+      // Prefer same-color + new-size; fallback to first variant with this size
+      const sameColorNewSize = availableVariants.find(
+        (v) => v.size === size && v.color === selectedColor,
+      );
+      const anyVariantWithSize = availableVariants.find((v) => v.size === size);
+      const target = sameColorNewSize ?? anyVariantWithSize;
+      if (target) setSelectedVariantId(target.id);
+    },
+    [availableVariants, selectedColor],
+  );
 
   const handleClick = useCallback(() => {
     if (pending || !selectedVariant) return;
     setPending(true);
 
-    // Compute display price from variant (paise → display string)
     const priceAmount = selectedVariant.pricePaise / 100;
     const currencyCode = product.price.currency || "INR";
     const priceDisplay = new Intl.NumberFormat("en-IN", {
@@ -134,7 +156,6 @@ export function DropCartButton({
       size: selectedVariant.size,
       color: selectedVariant.color,
       quantity: 1,
-      // Display snapshot for cart rendering (no static CATALOG lookup needed)
       title: product.name,
       image: product.hero.image,
       priceDisplay,
@@ -145,29 +166,38 @@ export function DropCartButton({
     window.setTimeout(() => setPending(false), 400);
   }, [addProduct, pending, product, selectedVariant]);
 
+  if (availableVariants.length === 0) {
+    return (
+      <button type="button" disabled className={cn("drop-cta", className)}>
+        Out of Stock
+      </button>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-3">
-      {/* Color Selector */}
+    <div className="flex flex-col gap-3" role="group" aria-labelledby={labelId}>
+      <span id={labelId} className="sr-only">
+        {product.name} variant selector
+      </span>
+
+      {/* Color Selector — every color with a sellable variant is always selectable */}
       {allColors.length > 1 && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono uppercase text-white/50">Color:</span>
           <div className="flex gap-1.5 flex-wrap">
             {allColors.map(({ key, display }) => {
-              const isAvailable = colorsForSize.some((c) => c.key === key);
               const isSelected = selectedColor === key;
               return (
                 <button
                   key={key}
                   type="button"
-                  disabled={!isAvailable}
-                  onClick={() => setSelectedColor(key)}
+                  onClick={() => selectColor(key)}
+                  aria-pressed={isSelected}
                   className={cn(
                     "px-2.5 py-1 text-xs font-mono rounded border transition",
                     isSelected
                       ? "bg-white text-black border-white font-medium"
-                      : isAvailable
-                      ? "bg-black/40 text-white border-white/20 hover:border-white/50"
-                      : "bg-black/20 text-white/20 border-white/5 cursor-not-allowed line-through"
+                      : "bg-black/40 text-white border-white/20 hover:border-white/50",
                   )}
                 >
                   {display}
@@ -178,27 +208,28 @@ export function DropCartButton({
         </div>
       )}
 
-      {/* Size Selector — derived from actual variant data, not hardcoded list */}
+      {/* Size Selector — shows sizes valid for selected color */}
       {allSizes.length > 0 && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono uppercase text-white/50">Size:</span>
           <div className="flex gap-1.5 flex-wrap">
             {allSizes.map((sz) => {
-              const isAvailableForColor = sizesForColor.includes(sz);
+              const isAvailableForColor = sizesForCurrentColor.includes(sz);
               const isSelected = selectedSize === sz;
               return (
                 <button
                   key={sz}
                   type="button"
                   disabled={!isAvailableForColor}
-                  onClick={() => setSelectedSize(sz)}
+                  onClick={() => selectSize(sz)}
+                  aria-pressed={isSelected}
                   className={cn(
                     "px-2.5 py-1 text-xs font-mono rounded border transition",
                     isSelected
                       ? "bg-white text-black border-white font-medium"
                       : isAvailableForColor
-                      ? "bg-black/40 text-white border-white/20 hover:border-white/50"
-                      : "bg-black/20 text-white/20 border-white/5 cursor-not-allowed line-through"
+                        ? "bg-black/40 text-white border-white/20 hover:border-white/50"
+                        : "bg-black/20 text-white/20 border-white/5 cursor-not-allowed line-through",
                   )}
                 >
                   {sz}

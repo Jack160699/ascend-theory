@@ -14,54 +14,18 @@ import {
   type ReactNode,
 } from "react";
 
-type ResolvedLine = { line: CartLine; product: CartProduct };
-
-/**
- * Production addProduct MUST pass exact variant identity.
- * String (slug-only) input is removed to prevent invalid production cart entries.
- */
-type AddProductInput = {
-  slug: string;
-  sku?: string;
-  variantId?: string;
-  size?: string;
-  color?: string;
-  quantity?: number;
-  // Display snapshot — for DB-backed products that may not be in static CATALOG
-  title?: string;
-  image?: string;
-  priceDisplay?: string;
-  currency?: string;
-  pricePaise?: number;
-};
-
-type CartContextValue = {
-  hydrated: boolean;
-  lines: CartLine[];
-  resolvedLines: ResolvedLine[];
-  itemCount: number;
-  subtotal: number;
-  currency: string;
-  drawerOpen: boolean;
-  openDrawer: () => void;
-  closeDrawer: () => void;
-  addDefaultProduct: () => void;
-  addProduct: (input: AddProductInput) => void;
-  setQuantity: (variantKey: string, quantity: number) => void;
-  removeLine: (variantKey: string) => void;
-  clear: () => void;
-};
-
-const CartContext = createContext<CartContextValue | null>(null);
-
-/**
- * Line identity: variantId is primary, SKU is fallback for legacy/dev compatibility.
- * Never use slug as mutation identity (multiple variants share a slug).
- */
-function getLineIdentity(l: Partial<CartLine>): string {
+/** Identity helper — exported for testing. */
+export function getLineIdentity(l: Partial<CartLine>): string {
+  // variantId is primary; SKU fallback supports legacy persisted cart records
   if (l.variantId) return l.variantId;
   if (l.sku) return l.sku;
-  return `${l.slug}-${l.size || "one-size"}-${l.color || "default"}`;
+  // Slug-only lines are surfaced as unavailable; they must not be purchasable.
+  return `__invalid__${l.slug ?? "unknown"}-${l.size ?? "nosize"}-${l.color ?? "nocolor"}`;
+}
+
+/** Returns true when a line's identity key indicates it was a slug-only entry. */
+export function isInvalidLine(l: CartLine): boolean {
+  return getLineIdentity(l).startsWith("__invalid__");
 }
 
 function matchesKey(l: CartLine, key: string): boolean {
@@ -75,6 +39,56 @@ function matchesKey(l: CartLine, key: string): boolean {
 function clampQuantity(product: CartProduct, qty: number): number {
   return Math.min(Math.max(1, qty), product.maxQuantity);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Production addProduct MUST supply exact variant identity.
+ * variantId + sku + size + color are all required for production commerce.
+ * Optional display snapshot fields allow cart rendering without static CATALOG.
+ */
+export type AddProductInput = {
+  slug: string;
+  variantId: string;   // REQUIRED — primary cart identity key
+  sku: string;          // REQUIRED — used as fallback key and checkout payload
+  size: string;         // REQUIRED — variant attribute
+  color: string;        // REQUIRED — variant attribute
+  quantity?: number;
+  // Display snapshot (for DB-backed products not in static CATALOG)
+  title?: string;
+  image?: string;
+  priceDisplay?: string;
+  currency?: string;
+  pricePaise?: number;
+};
+
+type ResolvedLine = { line: CartLine; product: CartProduct };
+
+type CartContextValue = {
+  hydrated: boolean;
+  lines: CartLine[];
+  resolvedLines: ResolvedLine[];
+  itemCount: number;
+  subtotal: number;
+  currency: string;
+  drawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
+  /** DEV ONLY — adds a default product without variant identity. Never call in production commerce. */
+  addDefaultProduct: () => void;
+  addProduct: (input: AddProductInput) => void;
+  setQuantity: (variantKey: string, quantity: number) => void;
+  removeLine: (variantKey: string) => void;
+  clear: () => void;
+};
+
+const CartContext = createContext<CartContextValue | null>(null);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Provider
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
@@ -97,6 +111,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const resolvedLines = useMemo((): ResolvedLine[] => {
     return lines
+      .filter((l) => !isInvalidLine(l)) // invalid lines not purchasable
       .map((line) => {
         const product = getCartProductFromLine(line);
         if (!product) return null;
@@ -111,7 +126,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const subtotal = useMemo(() => {
-    // Prefer pricePaise snapshot; fall back to cartSubtotal using CartProduct
     let total = 0;
     for (const { line, product } of resolvedLines) {
       if (line.pricePaise != null) {
@@ -129,14 +143,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   const addProduct = useCallback((input: AddProductInput) => {
+    // Runtime validation — TypeScript alone is not sufficient (data may come from external callers)
+    if (!input.variantId || !input.sku || !input.size || !input.color) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error(
+          "[Cart] addProduct called without required variant identity (variantId, sku, size, color). Rejected.",
+          input,
+        );
+      }
+      return; // fail-closed: do not create invalid line
+    }
+
     const lineObj: CartLine = {
       slug: input.slug,
       sku: input.sku,
       variantId: input.variantId,
       size: input.size,
       color: input.color,
-      quantity: input.quantity || 1,
-      // Carry display snapshot for DB-only products
+      quantity: Math.max(1, input.quantity || 1),
       title: input.title,
       image: input.image,
       priceDisplay: input.priceDisplay,
@@ -144,14 +168,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       pricePaise: input.pricePaise,
     };
 
-    const targetKey = getLineIdentity(lineObj);
+    // variantId is always the key for new production lines
+    const targetKey = input.variantId;
 
     setLines((prev) => {
-      const existingIndex = prev.findIndex((l) => getLineIdentity(l) === targetKey);
+      const existingIndex = prev.findIndex((l) => matchesKey(l, targetKey));
       if (existingIndex >= 0) {
         const existing = prev[existingIndex];
         const product = getCartProductFromLine(existing);
-        const addQty = lineObj.quantity || 1;
+        const addQty = lineObj.quantity;
         const nextQty = product
           ? clampQuantity(product, existing.quantity + addQty)
           : existing.quantity + addQty;
@@ -178,12 +203,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Dev-only default product add. Uses memory store default variant.
-   * In production, Add to Cart always requires explicit variant selection.
+   * DEV ONLY — adds a default product without full variant identity.
+   * This path must never be called in production commerce flows.
+   * It exists solely for local visual development of cart UI.
    */
   const addDefaultProduct = useCallback(() => {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[Cart] addDefaultProduct is not allowed in production.");
+      return;
+    }
     const def = getDefaultCartProduct();
-    addProduct({
+    // addDefaultProduct bypasses the required-field check intentionally for dev
+    const lineObj: CartLine = {
       slug: def.slug,
       title: def.name,
       image: def.image,
@@ -191,11 +222,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       currency: def.currency,
       pricePaise: Math.round(def.price * 100),
       quantity: 1,
-    });
-  }, [addProduct]);
+    };
+    setLines((prev) => [...prev, lineObj]);
+    setDrawerOpen(true);
+  }, []);
 
   /**
-   * Set quantity by variantId (primary) or SKU (fallback).
+   * Set quantity by variantId (primary) or SKU (fallback for legacy records).
    * qty < 1 removes the line.
    */
   const setQuantity = useCallback((variantKey: string, quantity: number) => {

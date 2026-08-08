@@ -577,8 +577,6 @@ export async function saveProductAdmin(
   input: Omit<Partial<Product>, "variants"> & { variants?: Partial<ProductVariant>[] },
   adminId: string
 ): Promise<{ ok: true; product: Product } | { ok: false; error: string; errors?: string[] }> {
-  const serviceClient = createSupabaseServiceClient();
-
   const title = input.title?.trim();
   const slug = input.slug?.trim().toLowerCase();
 
@@ -586,10 +584,9 @@ export async function saveProductAdmin(
     return { ok: false, error: "Title and slug are required" };
   }
 
-  const productId = input.id || (serviceClient ? crypto.randomUUID() : `prod-${slug}`);
   const inputVariants = input.variants || [];
 
-  // Validate non-negative numbers on variants
+  // Validate non-negative numbers on variants (client-side before RPC)
   for (const v of inputVariants) {
     if (v.pricePaise !== undefined && v.pricePaise < 0) {
       return { ok: false, error: `Variant price for SKU '${v.sku}' cannot be negative` };
@@ -602,58 +599,66 @@ export async function saveProductAdmin(
     }
   }
 
-  const productRecord: Product = {
-    id: productId,
-    slug,
-    title,
-    subtitle: input.subtitle,
-    description: input.description,
-    status: input.status || "draft",
-    basePricePaise: input.basePricePaise ?? 0,
-    currency: input.currency || "INR",
-    materials: input.materials,
-    category: input.category || "wearables",
-    collectionId: input.collectionId,
-    gender: input.gender || "unisex",
-    isFeatured: Boolean(input.isFeatured),
-    publishedAt: input.status === "active" ? input.publishedAt || new Date().toISOString() : null,
-    seoTitle: input.seoTitle,
-    seoDescription: input.seoDescription,
-    primaryImageUrl: input.primaryImageUrl,
-    galleryJson: input.galleryJson || [],
-    sizeChartJson: input.sizeChartJson,
-    createdAt: input.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  // Enforce publish-readiness validator if activating
-  if (input.status === "active") {
-    const fullVariants: ProductVariant[] = inputVariants.map((v, idx) => ({
-      id: v.id || `var-temp-${idx}`,
-      productId,
-      sku: v.sku || "",
-      size: v.size || "S",
-      color: v.color || "black",
-      colorDisplay: v.colorDisplay,
-      stockQuantity: v.stockQuantity ?? 0,
-      pricePaise: v.pricePaise ?? 0,
-      compareAtPricePaise: v.compareAtPricePaise ?? 0,
-      providerCostPaise: v.providerCostPaise ?? 0,
-      availabilityStatus: v.availabilityStatus || "available",
-      isActive: v.isActive ?? true,
-      sortOrder: v.sortOrder ?? idx,
-      createdAt: v.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }));
-
-    const validation = validateProductPublishReadiness(productRecord, fullVariants);
-    if (!validation.isValid) {
-      return { ok: false, error: "Product publish readiness check failed", errors: validation.errors };
+  // FAIL-CLOSED: When Supabase is configured, ONLY use the DB path.
+  // Never fall through to memory storage if Supabase is misconfigured.
+  if (hasSupabaseConfig()) {
+    const serviceClient = createSupabaseServiceClient();
+    if (!serviceClient) {
+      return { ok: false, error: "Server configuration error: Supabase service client unavailable" };
     }
-  }
 
-  // Supabase Atomic RPC Call
-  if (serviceClient) {
+    const productId = input.id || crypto.randomUUID();
+
+    const productRecord: Product = {
+      id: productId,
+      slug,
+      title,
+      subtitle: input.subtitle,
+      description: input.description,
+      status: input.status || "draft",
+      basePricePaise: input.basePricePaise ?? 0,
+      currency: input.currency || "INR",
+      materials: input.materials,
+      category: input.category || "wearables",
+      collectionId: input.collectionId,
+      gender: input.gender || "unisex",
+      isFeatured: Boolean(input.isFeatured),
+      publishedAt: input.status === "active" ? input.publishedAt || new Date().toISOString() : null,
+      seoTitle: input.seoTitle,
+      seoDescription: input.seoDescription,
+      primaryImageUrl: input.primaryImageUrl,
+      galleryJson: input.galleryJson || [],
+      sizeChartJson: input.sizeChartJson,
+      createdAt: input.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Enforce publish-readiness validator if activating
+    if (input.status === "active") {
+      const fullVariants: ProductVariant[] = inputVariants.map((v, idx) => ({
+        id: v.id || `var-temp-${idx}`,
+        productId,
+        sku: v.sku || "",
+        size: v.size || "S",
+        color: v.color || "black",
+        colorDisplay: v.colorDisplay,
+        stockQuantity: v.stockQuantity ?? 0,
+        pricePaise: v.pricePaise ?? 0,
+        compareAtPricePaise: v.compareAtPricePaise ?? 0,
+        providerCostPaise: v.providerCostPaise ?? 0,
+        availabilityStatus: v.availabilityStatus || "available",
+        isActive: v.isActive ?? true,
+        sortOrder: v.sortOrder ?? idx,
+        createdAt: v.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }));
+
+      const validation = validateProductPublishReadiness(productRecord, fullVariants);
+      if (!validation.isValid) {
+        return { ok: false, error: "Product publish readiness check failed", errors: validation.errors };
+      }
+    }
+
     const { data: rpcData, error: rpcErr } = await serviceClient.rpc("save_product_with_variants", {
       p_product: productRecord,
       p_variants: inputVariants,
@@ -675,17 +680,20 @@ export async function saveProductAdmin(
     return { ok: true, product: updated || productRecord };
   }
 
-  // Local testing memory fallback with reconciliation of removed variants
+  // LOCAL MEMORY FALLBACK — only entered when hasSupabaseConfig() === false
   seedMemoryStoreIfNeeded();
 
-  // Validate slug uniqueness in memory
+  const productId = input.id || `prod-${slug}`;
+
+  // ── MEMORY PASS 1: Validate EVERYTHING, write NOTHING ──────────────
+  // Slug uniqueness
   for (const [pId, p] of memoryProducts.entries()) {
     if (p.slug === slug && pId !== productId) {
       return { ok: false, error: `Product slug '${slug}' already exists` };
     }
   }
 
-  // Validate SKU uniqueness and non-empty size/color in memory
+  // Variant validation (all checked before any write)
   const skuSet = new Set<string>();
   for (const v of inputVariants) {
     if (!v.sku || v.sku.trim() === "") {
@@ -720,21 +728,45 @@ export async function saveProductAdmin(
     }
   }
 
+  // ── MEMORY PASS 2: All validation passed — write atomically ─────────
+  const productRecord: Product = {
+    id: productId,
+    slug,
+    title,
+    subtitle: input.subtitle,
+    description: input.description,
+    status: input.status || "draft",
+    basePricePaise: input.basePricePaise ?? 0,
+    currency: input.currency || "INR",
+    materials: input.materials,
+    category: input.category || "wearables",
+    collectionId: input.collectionId,
+    gender: input.gender || "unisex",
+    isFeatured: Boolean(input.isFeatured),
+    publishedAt: input.status === "active" ? input.publishedAt || new Date().toISOString() : null,
+    seoTitle: input.seoTitle,
+    seoDescription: input.seoDescription,
+    primaryImageUrl: input.primaryImageUrl,
+    galleryJson: input.galleryJson || [],
+    sizeChartJson: input.sizeChartJson,
+    createdAt: input.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
   memoryProducts.set(productId, productRecord);
 
   const submittedVariantIds = new Set<string>();
   const savedVariants: ProductVariant[] = [];
 
   inputVariants.forEach((v, idx) => {
-    const varId = v.id || `var-${slug}-${v.size || "S"}`;
+    const varId = v.id || `var-${slug}-${v.size}-${v.color}-${idx}`;
     submittedVariantIds.add(varId);
 
     const variantRecord: ProductVariant = {
       id: varId,
       productId,
-      sku: v.sku ? v.sku.trim().toUpperCase() : `${slug.toUpperCase()}-${v.size || "S"}`,
-      size: v.size || "S",
-      color: v.color || "black",
+      sku: v.sku!.trim().toUpperCase(),
+      size: v.size!.trim(),
+      color: v.color!.trim(),
       colorDisplay: v.colorDisplay,
       stockQuantity: v.stockQuantity ?? 0,
       pricePaise: v.pricePaise ?? 0,
@@ -768,14 +800,13 @@ export async function saveProductAdmin(
 }
 
 /**
- * Admin Mutation: Upsert Collection.
+ * Admin Mutation: Upsert Collection — uses save_collection_with_audit atomic RPC on Supabase.
+ * Fail-closed: when Supabase is configured, never falls back to memory.
  */
 export async function saveCollectionAdmin(
   input: Partial<Collection>,
   adminId: string
 ): Promise<{ ok: true; collection: Collection } | { ok: false; error: string }> {
-  const serviceClient = createSupabaseServiceClient();
-
   const name = input.name?.trim();
   const slug = input.slug?.trim().toLowerCase();
 
@@ -783,7 +814,63 @@ export async function saveCollectionAdmin(
     return { ok: false, error: "Collection name and slug are required" };
   }
 
-  const colId = input.id || (serviceClient ? crypto.randomUUID() : `col-${slug}`);
+  // FAIL-CLOSED: When Supabase is configured, ONLY use the DB path.
+  if (hasSupabaseConfig()) {
+    const serviceClient = createSupabaseServiceClient();
+    if (!serviceClient) {
+      return { ok: false, error: "Server configuration error: Supabase service client unavailable" };
+    }
+
+    const colId = input.id || crypto.randomUUID();
+    const collection: Collection = {
+      id: colId,
+      name,
+      slug,
+      description: input.description,
+      story: input.story,
+      status: input.status || "draft",
+      startDate: input.startDate,
+      endDate: input.endDate,
+      heroImageUrl: input.heroImageUrl,
+      mediaJson: input.mediaJson || [],
+      sortOrder: input.sortOrder ?? 0,
+      createdAt: input.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Use atomic RPC: collection upsert + audit in one transaction
+    const { data: rpcData, error: rpcErr } = await serviceClient.rpc("save_collection_with_audit", {
+      p_collection: {
+        id: colId,
+        name: collection.name,
+        slug: collection.slug,
+        description: collection.description ?? null,
+        story: collection.story ?? null,
+        status: collection.status,
+        startDate: collection.startDate ?? null,
+        endDate: collection.endDate ?? null,
+        heroImageUrl: collection.heroImageUrl ?? null,
+        mediaJson: collection.mediaJson,
+        sortOrder: collection.sortOrder,
+      },
+      p_admin_id: adminId,
+    });
+
+    if (rpcErr) {
+      return { ok: false, error: `Database RPC execution error: ${rpcErr.message}` };
+    }
+
+    if (!rpcData || typeof rpcData !== "object" || !(rpcData as { ok?: boolean }).ok) {
+      const errMessage = (rpcData as { error?: string })?.error || "Collection save RPC returned error";
+      return { ok: false, error: errMessage };
+    }
+
+    return { ok: true, collection };
+  }
+
+  // LOCAL MEMORY FALLBACK — only when hasSupabaseConfig() === false
+  seedMemoryStoreIfNeeded();
+  const colId = input.id || `col-${slug}`;
   const collection: Collection = {
     id: colId,
     name,
@@ -799,39 +886,6 @@ export async function saveCollectionAdmin(
     createdAt: input.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-
-  if (serviceClient) {
-    const { error } = await serviceClient.from("collections").upsert({
-      id: collection.id,
-      name: collection.name,
-      slug: collection.slug,
-      description: collection.description ?? null,
-      story: collection.story ?? null,
-      status: collection.status,
-      start_date: collection.startDate ?? null,
-      end_date: collection.endDate ?? null,
-      hero_image_url: collection.heroImageUrl ?? null,
-      media_json: collection.mediaJson,
-      sort_order: collection.sortOrder,
-      updated_at: new Date().toISOString(),
-    });
-
-    if (error) {
-      return { ok: false, error: `Failed to save collection: ${error.message}` };
-    }
-
-    await serviceClient.from("audit_logs").insert({
-      admin_id: adminId,
-      action: input.id ? "collection_updated" : "collection_created",
-      entity_type: "collection",
-      entity_id: colId,
-      details_json: { name: collection.name, slug: collection.slug, status: collection.status },
-    });
-
-    return { ok: true, collection };
-  }
-
-  seedMemoryStoreIfNeeded();
   memoryCollections.set(colId, collection);
   return { ok: true, collection };
 }
