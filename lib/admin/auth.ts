@@ -1,90 +1,74 @@
-export type AdminRole = "owner" | "admin" | "editor" | "support";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { redirect } from "next/navigation";
+import { AdminRole, AdminUser, hasMinimumRole } from "./auth-shared";
 
-export type AdminUser = {
-  id: string;
-  name: string;
-  email: string;
-  role: AdminRole;
-  avatar?: string;
-  lastActiveAt?: string;
-};
-
-export const ADMIN_ROLE_DETAILS: Record<
-  AdminRole,
-  { label: string; description: string; badgeColor: string }
-> = {
-  owner: {
-    label: "Owner",
-    description: "Unrestricted root platform administration & API key governance.",
-    badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  },
-  admin: {
-    label: "Admin",
-    description: "Full operational access to store, content, users, and fulfillment.",
-    badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  },
-  editor: {
-    label: "Editor",
-    description: "Content, journal, website pages, and community moderation rights.",
-    badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  },
-  support: {
-    label: "Support",
-    description: "Read-only orders, customer service tickets, and delivery tracking.",
-    badgeColor: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
-  },
-};
-
-export const ROLE_HIERARCHY: Record<AdminRole, number> = {
-  owner: 4,
-  admin: 3,
-  editor: 2,
-  support: 1,
-};
-
-export const DEFAULT_ADMIN_USER: AdminUser = {
-  id: "usr_apex_01",
-  name: "Apex HQ Admin",
-  email: "admin@ascendtheory.com",
-  role: "owner",
-  lastActiveAt: new Date().toISOString(),
-};
+export * from "./auth-shared";
 
 /**
- * Checks if a given role meets the required role rank or minimum permission.
+ * Retrieves the active server-side admin user & profile using Supabase SSR auth.
  */
-export function hasMinimumRole(currentRole: AdminRole, requiredRole: AdminRole): boolean {
-  return ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY[requiredRole];
+export async function getAdminSession(): Promise<AdminUser | null> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    // Fetch matching admin_profile record
+    const serviceClient = createSupabaseServiceClient();
+    if (serviceClient) {
+      const { data: profile } = await serviceClient
+        .from("admin_profiles")
+        .select("full_name, role, is_active")
+        .eq("id", user.id)
+        .single();
+
+      if (profile && profile.is_active) {
+        return {
+          id: user.id,
+          email: user.email || "",
+          name: profile.full_name,
+          role: profile.role as AdminRole,
+          lastActiveAt: new Date().toISOString(),
+        };
+      }
+    }
+
+    // Fallback if metadata contains role or in dev mode
+    const roleFromMeta = (user.user_metadata?.role as AdminRole) || "admin";
+    return {
+      id: user.id,
+      email: user.email || "admin@ascendtheory.com",
+      name: (user.user_metadata?.full_name as string) || user.email?.split("@")[0] || "Admin",
+      role: roleFromMeta,
+      lastActiveAt: new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Granular RBAC permission check for domains and sub-actions.
+ * Server guard requiring an authenticated admin session. Redirects to login if unauthenticated.
  */
-export function hasPermission(
-  role: AdminRole,
-  domainId: string,
-  action: "read" | "write" | "delete" | "admin" = "read"
-): boolean {
-  if (role === "owner") return true;
-
-  if (domainId === "system") {
-    if (action === "admin" || action === "delete") return false;
-    return role === "admin";
+export async function requireAdmin(): Promise<AdminUser> {
+  const admin = await getAdminSession();
+  if (!admin) {
+    redirect("/admin/login");
   }
-
-  if (role === "admin") return true;
-
-  if (role === "editor") {
-    const editorDomains = ["overview", "website", "journal", "community", "marketing"];
-    return editorDomains.includes(domainId);
-  }
-
-  if (role === "support") {
-    const supportDomains = ["overview", "community", "wearables", "commerce", "fulfilment"];
-    return supportDomains.includes(domainId);
-  }
-
-  return false;
+  return admin;
 }
 
-export const ADMIN_COOKIE_NAME = "ascend_hq_session";
+/**
+ * Server guard requiring a minimum role rank.
+ */
+export async function requireRole(requiredRole: AdminRole): Promise<AdminUser> {
+  const admin = await requireAdmin();
+  if (!hasMinimumRole(admin.role, requiredRole)) {
+    redirect("/admin?error=unauthorized_role");
+  }
+  return admin;
+}
