@@ -1,6 +1,6 @@
 import { submitOrderForFulfillment } from "@/lib/fulfillment";
 import { createPaymentSession, getAvailablePaymentProviders } from "@/lib/payments";
-import { buildOrderFromInput } from "./build-order";
+import { buildOrderFromInputAsync } from "./build-order";
 import { saveOrder } from "./store";
 import type { CreateOrderInput, CreateOrderResult } from "./types";
 
@@ -11,7 +11,7 @@ export async function createOrder(
   | { ok: true; data: CreateOrderResult }
   | { ok: false; error: string; status: number }
 > {
-  const built = buildOrderFromInput(input);
+  const built = await buildOrderFromInputAsync(input);
   if (!built.ok) {
     return { ok: false, error: built.error, status: 400 };
   }

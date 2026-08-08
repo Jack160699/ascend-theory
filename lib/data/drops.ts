@@ -268,18 +268,89 @@ export const DROPS: readonly Drop[] = [
   }),
 ] as const;
 
+import { getPublicProducts, getPublicProductBySlug } from "@/lib/wearables/store";
+import type { PublicProduct } from "@/lib/wearables/types";
+
+export function publicProductToDrop(p: PublicProduct): Drop {
+  const priceAmount = p.basePricePaise / 100;
+  const currency = p.currency || "INR";
+  const displayPrice = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(priceAmount);
+
+  const heroImage = p.primaryImageUrl || p.galleryJson[0]?.src || DROP_IMAGES.jacket;
+
+  return {
+    slug: p.slug,
+    name: p.title,
+    price: {
+      amount: priceAmount,
+      currency,
+      display: displayPrice,
+    },
+    description: p.description || "",
+    image: heroImage,
+    imageAlt: `${p.title} — ${p.subtitle || "Ascend Wearable"}`,
+    category: (p.category as DropCategory) || "apparel",
+    dropName: p.subtitle || "Ascend / Release",
+    tagline: p.subtitle || "Built for discipline.",
+    hero: {
+      image: heroImage,
+      alt: `${p.title} limited release`,
+    },
+    story: {
+      headline: p.subtitle || "Ascend Standard",
+      body: [p.description || "Designed for discipline."],
+    },
+    visuals: p.galleryJson.map((g, idx) => ({
+      src: g.src,
+      alt: g.alt || `${p.title} — visual ${idx + 1}`,
+      caption: g.caption || `Visual · 0${idx + 1}`,
+    })),
+    details: p.materials ? p.materials.split(",").map((s) => s.trim()) : ["Matte shell", "Editorial cut"],
+    scarcity: {
+      labels: ["Limited Release", "No Restock"],
+      stockRemaining: p.variants.reduce((acc, v) => acc + v.stockQuantity, 0),
+      totalAllocation: 100,
+    },
+  };
+}
+
 const dropMap = new Map(DROPS.map((d) => [d.slug, d]));
 
 export function getDropBySlug(slug: string): Drop | undefined {
   return dropMap.get(slug);
 }
 
+export async function getDropBySlugAsync(slug: string): Promise<Drop | undefined> {
+  const p = await getPublicProductBySlug(slug);
+  if (!p) return undefined;
+  return publicProductToDrop(p);
+}
+
 export function getAllDropSlugs(): string[] {
   return DROPS.map((d) => d.slug);
 }
 
+export async function getAllDropSlugsAsync(): Promise<string[]> {
+  const products = await getPublicProducts();
+  if (products.length > 0) return products.map((p) => p.slug);
+  return getAllDropSlugs();
+}
+
 export function getDropsByCategory(category: DropCategory): Drop[] {
   return DROPS.filter((d) => d.category === category);
+}
+
+export async function getDropsByCategoryAsync(category: DropCategory): Promise<Drop[]> {
+  const products = await getPublicProducts();
+  const filtered = products.filter((p) => p.category === category);
+  if (filtered.length > 0) {
+    return filtered.map(publicProductToDrop);
+  }
+  return getDropsByCategory(category);
 }
 
 export function getFeaturedDrop(): Drop {

@@ -21,6 +21,10 @@ export type OrderCustomer = {
 
 export type OrderItem = {
   slug: string;
+  sku?: string;
+  variantId?: string;
+  size?: string;
+  color?: string;
   name: string;
   dropName: string;
   price: number;
@@ -48,7 +52,15 @@ export type Order = {
 };
 
 export type CreateOrderInput = {
-  items: { slug: string; quantity: number }[];
+  items: {
+    slug: string;
+    sku?: string;
+    variantId?: string;
+    size?: string;
+    color?: string;
+    price?: number;
+    quantity: number;
+  }[];
   customer: OrderCustomer;
   paymentMethod: PaymentMethod;
   paymentProvider?: PaymentProvider;

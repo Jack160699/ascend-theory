@@ -6,8 +6,15 @@ import { getModuleByPath } from "@/lib/admin/navigation";
 import { AdminModulePlaceholder } from "@/components/admin/ui/AdminModulePlaceholder";
 import { AdminEmptyState } from "@/components/admin/ui/AdminEmptyState";
 
+import { WearablesAdminContainer } from "@/components/admin/wearables/WearablesAdminContainer";
+
 export function AdminSubRouteView() {
   const pathname = usePathname();
+
+  if (pathname.startsWith("/admin/wearables")) {
+    return <WearablesAdminContainer />;
+  }
+
   const { domain, module } = getModuleByPath(pathname);
 
   if (!domain || !module) {

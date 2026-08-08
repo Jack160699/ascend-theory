@@ -1,5 +1,9 @@
 export type CartLine = {
   slug: string;
+  sku?: string;
+  variantId?: string;
+  size?: string;
+  color?: string;
   quantity: number;
 };
 

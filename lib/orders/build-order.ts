@@ -1,5 +1,6 @@
 import { getCartProduct } from "@/lib/cart/catalog";
 import { lineTotal } from "@/lib/cart/format";
+import { getAuthoritativeVariantForCheckout } from "@/lib/wearables/store";
 import type {
   CreateOrderInput,
   Order,
@@ -12,6 +13,96 @@ import { createOrderId } from "./id";
 export type BuildOrderResult =
   | { ok: true; order: Order }
   | { ok: false; error: string };
+
+export async function buildOrderFromInputAsync(input: CreateOrderInput): Promise<BuildOrderResult> {
+  if (!input.items.length) {
+    return { ok: false, error: "Cart is empty." };
+  }
+
+  const items: OrderItem[] = [];
+  let currency = "INR";
+
+  for (const line of input.items) {
+    // Authoritative Server-side Variant & Product Resolution from DB Store
+    const varResult = await getAuthoritativeVariantForCheckout({
+      slug: line.slug,
+      sku: line.sku,
+      variantId: line.variantId,
+    });
+
+    let authoritativePrice: number;
+    let name: string;
+    let dropName: string;
+    let sku: string;
+    let size: string;
+    let color: string;
+
+    if (varResult.ok) {
+      authoritativePrice = varResult.variant.pricePaise / 100;
+      currency = varResult.product.currency || "INR";
+      name = varResult.product.title;
+      dropName = varResult.product.subtitle || "Ascend Release";
+      sku = varResult.variant.sku;
+      size = varResult.variant.size;
+      color = varResult.variant.color;
+    } else {
+      // Fallback to static catalog check if store lookup returns error
+      const fallbackProduct = getCartProduct(line.slug);
+      if (!fallbackProduct) {
+        return { ok: false, error: `Invalid or unavailable product variant for '${line.slug}': ${varResult.error}` };
+      }
+      authoritativePrice = fallbackProduct.price;
+      currency = fallbackProduct.currency;
+      name = fallbackProduct.name;
+      dropName = fallbackProduct.dropName;
+      sku = line.sku || `${line.slug.toUpperCase()}-S`;
+      size = line.size || "S";
+      color = line.color || "black";
+    }
+
+    const quantity = Math.min(Math.max(1, Math.floor(line.quantity)), 10);
+    const itemLineTotal = Math.round(authoritativePrice * quantity * 100) / 100;
+
+    items.push({
+      slug: line.slug,
+      sku,
+      variantId: line.variantId,
+      size,
+      color,
+      name,
+      dropName,
+      price: authoritativePrice,
+      priceDisplay: new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(authoritativePrice),
+      quantity,
+      lineTotal: itemLineTotal,
+    });
+  }
+
+  const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+
+  const paymentProvider: PaymentProvider =
+    input.paymentMethod === "online"
+      ? (input.paymentProvider ?? detectPaymentProvider())
+      : "none";
+
+  const status: OrderStatus =
+    input.paymentMethod === "online" ? "pending_payment" : "pending_fulfillment";
+
+  const order: Order = {
+    id: createOrderId(),
+    createdAt: new Date().toISOString(),
+    status,
+    paymentMethod: input.paymentMethod,
+    paymentProvider,
+    currency,
+    subtotal,
+    items,
+    customer: input.customer,
+    fulfillment: { provider: "manual" },
+  };
+
+  return { ok: true, order };
+}
 
 export function buildOrderFromInput(input: CreateOrderInput): BuildOrderResult {
   if (!input.items.length) {
@@ -33,6 +124,9 @@ export function buildOrderFromInput(input: CreateOrderInput): BuildOrderResult {
     currency = product.currency;
     items.push({
       slug: product.slug,
+      sku: line.sku || `${product.slug.toUpperCase()}-S`,
+      size: line.size || "S",
+      color: line.color || "black",
       name: product.name,
       dropName: product.dropName,
       price: product.price,
