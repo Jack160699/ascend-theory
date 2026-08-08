@@ -3,8 +3,33 @@ import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getOrder, updateOrder } from "@/lib/orders/store";
 
 export type PaymentCaptureResult =
-  | { ok: true; alreadyPaid: boolean; orderId: string }
+  | { ok: true; alreadyPaid: boolean; orderId: string; message?: string }
   | { ok: false; error: string; status?: number };
+
+/**
+ * Checks if a provider event ID has already been recorded in payment_events table.
+ * Inspects both data and error.
+ */
+export async function hasProcessedProviderEvent(
+  providerEventId: string
+): Promise<boolean> {
+  if (!providerEventId) return false;
+  const serviceClient = createSupabaseServiceClient();
+  if (!serviceClient) return false;
+
+  const { data, error } = await serviceClient
+    .from("payment_events")
+    .select("id")
+    .eq("provider_event_id", providerEventId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[payment_events] Query error for provider_event_id:", error);
+    return false;
+  }
+
+  return Boolean(data);
+}
 
 /**
  * Authoritatively processes a verified payment capture using database RPC.
@@ -67,11 +92,6 @@ export async function capturePaymentAuthoritatively(params: {
     return { ok: false, error: "Cannot process payment for refunded order", status: 400 };
   }
 
-  // Check if order is already paid (Idempotency)
-  if (order.status === "paid") {
-    return { ok: true, alreadyPaid: true, orderId: ascendOrderId };
-  }
-
   // 3. Authoritative Total & Currency Validation
   const expectedPaise = Math.round(order.subtotal * 100);
   if (expectedPaise !== amountPaise) {
@@ -95,6 +115,7 @@ export async function capturePaymentAuthoritatively(params: {
   }
 
   // 4. Supabase DB Execution (when serviceClient is available)
+  // NO JS SHORT-CIRCUIT: Always invoke atomic RPC so DB checks payment identity & idempotency
   if (serviceClient) {
     const { data: rpcData, error: rpcError } = await serviceClient.rpc(
       "process_successful_payment",
@@ -115,21 +136,42 @@ export async function capturePaymentAuthoritatively(params: {
       if (isProduction || hasConfig) {
         throw new Error(`Payment capture database RPC failed: ${rpcError.message}`);
       }
-    } else if (rpcData && typeof rpcData === "object") {
-      if (!(rpcData as { ok?: boolean }).ok) {
-        const errMessage = (rpcData as { error?: string })?.error || "RPC returned error response";
-        return { ok: false, error: errMessage, status: 400 };
-      }
-
-      return {
-        ok: true,
-        alreadyPaid: Boolean((rpcData as { already_paid?: boolean }).already_paid),
-        orderId: ascendOrderId,
-      };
+      return { ok: false, error: `RPC Error: ${rpcError.message}`, status: 500 };
     }
+
+    if (!rpcData || typeof rpcData !== "object") {
+      if (isProduction || hasConfig) {
+        throw new Error("Payment capture RPC returned malformed null response");
+      }
+      return { ok: false, error: "RPC returned malformed response", status: 500 };
+    }
+
+    const resObj = rpcData as { ok?: boolean; error?: string; already_paid?: boolean };
+    if (!resObj.ok) {
+      const errMessage = resObj.error || "RPC returned error response";
+      return { ok: false, error: errMessage, status: 400 };
+    }
+
+    return {
+      ok: true,
+      alreadyPaid: Boolean(resObj.already_paid),
+      orderId: ascendOrderId,
+    };
   }
 
-  // Dev/Test-only store update
+  // Strict check: local fallback is ONLY permitted when serviceClient is null in dev/test without Supabase config
+  if (isProduction || hasConfig) {
+    throw new Error("[PaymentCapture] Cannot fall back to local memory store when Supabase is configured");
+  }
+
+  // Check in-memory status for dev/test mode without Supabase
+  if (order.status === "paid") {
+    if (order.paymentReference && order.paymentReference !== razorpayOrderId) {
+      return { ok: false, error: "already_paid_conflict", status: 400 };
+    }
+    return { ok: true, alreadyPaid: true, orderId: ascendOrderId };
+  }
+
   await updateOrder(ascendOrderId, {
     status: "paid",
     paymentReference: razorpayOrderId,
@@ -140,6 +182,7 @@ export async function capturePaymentAuthoritatively(params: {
 
 /**
  * Persists payment audit event to database.
+ * Does NOT log secrets, signatures, or sensitive headers.
  */
 export async function recordPaymentEvent(params: {
   orderId?: string;
@@ -152,12 +195,19 @@ export async function recordPaymentEvent(params: {
   if (!serviceClient) return;
 
   try {
+    // Sanitize details to exclude sensitive keys
+    const sanitizedDetails = { ...(params.details || {}) };
+    delete sanitizedDetails.signature;
+    delete sanitizedDetails.razorpay_signature;
+    delete sanitizedDetails.authorization;
+    delete sanitizedDetails.secret;
+
     const { error } = await serviceClient.from("payment_events").insert({
       order_id: params.orderId ?? null,
       payment_id: params.paymentId ?? null,
       event_type: params.eventType,
       provider_event_id: params.providerEventId ?? null,
-      payload_json: params.details ?? {},
+      payload_json: sanitizedDetails,
     });
 
     if (error) {

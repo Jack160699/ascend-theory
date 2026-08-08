@@ -1,6 +1,16 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import type { Order, OrderItem, OrderStatus, PaymentMethod, PaymentProvider } from "./types";
 
+export type AuthoritativeOrderDetails = {
+  id: string;
+  status: string;
+  paymentStatus: string;
+  totalPaise: number;
+  currency: string;
+  paymentReference?: string;
+  paymentProvider?: string;
+};
+
 /**
  * Maps an Ascend Theory Order domain entity to the Supabase database table format.
  */
@@ -11,9 +21,8 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
   }
 
   const subtotalPaise = Math.round((order.subtotal || 0) * 100);
-  const totalPaise = subtotalPaise; // Extendable for tax/shipping when added
+  const totalPaise = subtotalPaise;
 
-  // Map domain status to database constraint status: ('created', 'pending', 'paid', 'fulfilled', 'cancelled', 'refunded')
   let dbStatus = "pending";
   if (order.status === "created") dbStatus = "created";
   else if (order.status === "paid") dbStatus = "paid";
@@ -73,7 +82,7 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
     }
   }
 
-  // Persist payment mapping if paymentReference is present
+  // Persist initial payment mapping if paymentReference is present
   if (order.paymentReference) {
     const { error: paymentError } = await supabase.from("payments").upsert(
       {
@@ -96,6 +105,49 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
 }
 
 /**
+ * Retrieves authoritative order details directly from DB for payment calculation and verification.
+ */
+export async function getAuthoritativeOrderDetails(
+  orderId: string
+): Promise<AuthoritativeOrderDetails | null> {
+  const supabase = createSupabaseServiceClient();
+  if (!supabase) return null;
+
+  const { data: orderRow, error: orderError } = await supabase
+    .from("orders")
+    .select("id, status, payment_status, total_paise, subtotal_paise, currency")
+    .eq("id", orderId)
+    .single();
+
+  if (orderError || !orderRow) return null;
+
+  const { data: paymentRow, error: paymentError } = await supabase
+    .from("payments")
+    .select("provider_order_id, provider, amount_paise, currency, status")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (paymentError) {
+    console.error("[OrderStore] Payment row query error:", paymentError);
+    return null;
+  }
+
+  const totalPaise = Number(orderRow.total_paise || orderRow.subtotal_paise || 0);
+
+  return {
+    id: orderRow.id,
+    status: orderRow.status,
+    paymentStatus: orderRow.payment_status,
+    totalPaise,
+    currency: orderRow.currency || "INR",
+    paymentReference: paymentRow?.provider_order_id || undefined,
+    paymentProvider: paymentRow?.provider || undefined,
+  };
+}
+
+/**
  * Retrieves an order from Supabase database.
  */
 export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
@@ -110,10 +162,28 @@ export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
 
   if (orderError || !orderRow) return null;
 
-  const { data: itemRows } = await supabase
+  const { data: itemRows, error: itemsError } = await supabase
     .from("order_items")
     .select("*")
     .eq("order_id", orderId);
+
+  if (itemsError) {
+    console.error("[OrderStore] Order items fetch error:", itemsError);
+    return null;
+  }
+
+  const { data: paymentRow, error: paymentError } = await supabase
+    .from("payments")
+    .select("provider_order_id, provider, status")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (paymentError) {
+    console.error("[OrderStore] Payment row query error:", paymentError);
+    return null;
+  }
 
   const items: OrderItem[] = (itemRows || []).map((row) => {
     const snap = (row.snapshot_json || {}) as Partial<OrderItem>;
@@ -128,18 +198,8 @@ export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
     };
   });
 
-  // Query associated payments record for durable paymentReference & provider
-  const { data: paymentRow } = await supabase
-    .from("payments")
-    .select("provider_order_id, provider, status")
-    .eq("order_id", orderId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
   const customerObj = (orderRow.shipping_address || {}) as unknown as Order["customer"];
 
-  // Normalize database status to domain OrderStatus
   let domainStatus: OrderStatus = "pending_payment";
   if (orderRow.status === "paid" || orderRow.payment_status === "captured") {
     domainStatus = "paid";

@@ -1,10 +1,11 @@
 -- =============================================================================
--- ASCEND THEORY PLATFORM — ADDITIVE MIGRATION (PHASE 3 PAYMENTS HARDENING)
+-- ASCEND THEORY PLATFORM — ADDITIVE MIGRATION (PHASE 3 PAYMENTS HARDENING REPAIR)
 -- Migration: 20260809000003_secure_payments_and_idempotency.sql
 -- Description: Aligns payments & payment_events tables with Phase 2 schema.
---              Adds durable provider_order_id, provider_payment_id, captured_at.
+--              Adds provider_order_id, provider_payment_id, captured_at.
 --              Creates atomic SECURITY DEFINER process_successful_payment RPC
 --              strictly granted to service_role ONLY.
+--              Requires existing initial payment mapping before capture.
 -- =============================================================================
 
 -- 1. Additive columns for payments table
@@ -19,7 +20,7 @@ ALTER TABLE public.payment_events
   ADD COLUMN IF NOT EXISTS order_id TEXT REFERENCES public.orders(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS provider_event_id TEXT;
 
--- Make payment_id nullable in payment_events so pre-payment / security events can be logged
+-- Make payment_id nullable in payment_events for pre-payment / security audit logging
 ALTER TABLE public.payment_events
   ALTER COLUMN payment_id DROP NOT NULL;
 
@@ -57,11 +58,11 @@ SET search_path = public
 AS $$
 DECLARE
   v_order RECORD;
-  v_existing_payment RECORD;
-  v_payment_id UUID;
-  v_already_paid BOOLEAN := false;
+  v_payment RECORD;
+  v_other_payment RECORD;
+  v_expected_paise BIGINT;
 BEGIN
-  -- Fetch target order with lock
+  -- 1. Lock target order
   SELECT id, status, payment_status, total_paise, subtotal_paise, currency
   INTO v_order
   FROM public.orders
@@ -72,7 +73,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'order_not_found');
   END IF;
 
-  -- TERMINAL STATE SAFETY: Refuse to transition cancelled or refunded orders to paid
+  -- 2. TERMINAL STATE SAFETY: Refuse cancelled or refunded orders
   IF v_order.status = 'cancelled' THEN
     RETURN jsonb_build_object('ok', false, 'error', 'order_cancelled');
   END IF;
@@ -80,43 +81,39 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'order_refunded');
   END IF;
 
-  -- Check if order is already paid
-  IF v_order.status = 'paid' OR v_order.payment_status = 'captured' THEN
-    v_already_paid := true;
-    -- Verify existing provider payment match
-    SELECT id, provider_order_id, provider_payment_id, amount_paise, currency
-    INTO v_existing_payment
+  -- 3. Require existing payment mapping created during checkout
+  SELECT id, order_id, provider_order_id, provider_payment_id, amount_paise, currency, status
+  INTO v_payment
+  FROM public.payments
+  WHERE provider_order_id = p_provider_order_id AND order_id = p_order_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    -- Check if provider_order_id belongs to another order
+    SELECT id, order_id INTO v_other_payment
     FROM public.payments
-    WHERE order_id = p_order_id AND status = 'captured'
+    WHERE provider_order_id = p_provider_order_id
     LIMIT 1;
 
-    IF v_existing_payment IS NOT NULL THEN
-      IF v_existing_payment.provider_payment_id = p_provider_payment_id AND
-         v_existing_payment.provider_order_id = p_provider_order_id THEN
-        RETURN jsonb_build_object(
-          'ok', true,
-          'order_id', p_order_id,
-          'already_paid', true,
-          'payment_status', 'captured'
-        );
-      ELSE
-        RETURN jsonb_build_object('ok', false, 'error', 'already_paid_conflict');
-      END IF;
+    IF v_other_payment IS NOT NULL THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'provider_order_rebound');
+    ELSE
+      RETURN jsonb_build_object('ok', false, 'error', 'payment_mapping_missing');
     END IF;
   END IF;
 
-  -- Verify binding: ensure provider_order_id is not already bound to another Ascend order
-  SELECT id, order_id INTO v_existing_payment
+  -- 4. Reject if provider_payment_id is attached to a DIFFERENT order
+  SELECT id INTO v_other_payment
   FROM public.payments
-  WHERE provider_order_id = p_provider_order_id
+  WHERE provider_payment_id = p_provider_payment_id
     AND order_id != p_order_id
   LIMIT 1;
 
-  IF v_existing_payment IS NOT NULL THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'provider_order_rebound');
+  IF v_other_payment IS NOT NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'provider_payment_rebound');
   END IF;
 
-  -- Verify Currency Match
+  -- 5. Currency & Authoritative Amount Validation
   IF UPPER(v_order.currency) != UPPER(p_currency) THEN
     INSERT INTO public.payment_events (order_id, event_type, provider_event_id, payload_json)
     VALUES (p_order_id, 'currency_mismatch', p_provider_event_id, jsonb_build_object(
@@ -126,54 +123,40 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'currency_mismatch');
   END IF;
 
-  -- Authoritative Total Validation: compare against total_paise (fallback to subtotal_paise if total_paise is 0)
-  IF COALESCE(NULLIF(v_order.total_paise, 0), v_order.subtotal_paise) != p_amount_paise THEN
+  v_expected_paise := COALESCE(NULLIF(v_order.total_paise, 0), v_order.subtotal_paise);
+  IF v_expected_paise != p_amount_paise THEN
     INSERT INTO public.payment_events (order_id, event_type, provider_event_id, payload_json)
     VALUES (p_order_id, 'amount_mismatch', p_provider_event_id, jsonb_build_object(
-      'expected_total_paise', COALESCE(NULLIF(v_order.total_paise, 0), v_order.subtotal_paise),
+      'expected_total_paise', v_expected_paise,
       'received_amount_paise', p_amount_paise
     ));
     RETURN jsonb_build_object('ok', false, 'error', 'amount_mismatch');
   END IF;
 
-  -- Upsert payment record
-  INSERT INTO public.payments (
-    order_id,
-    provider,
-    provider_order_id,
-    provider_payment_id,
-    gateway_transaction_id,
-    amount_paise,
-    currency,
-    status,
-    captured_at,
-    updated_at
-  )
-  VALUES (
-    p_order_id,
-    'razorpay',
-    p_provider_order_id,
-    p_provider_payment_id,
-    p_provider_payment_id,
-    p_amount_paise,
-    p_currency,
-    'captured',
-    now(),
-    now()
-  )
-  ON CONFLICT (provider_order_id) WHERE provider_order_id IS NOT NULL
-  DO UPDATE SET
-    provider_payment_id = EXCLUDED.provider_payment_id,
-    gateway_transaction_id = EXCLUDED.provider_payment_id,
+  -- 6. Already Paid Check (Idempotency vs Conflict)
+  IF v_order.status = 'paid' OR v_order.payment_status = 'captured' OR v_payment.status = 'captured' THEN
+    IF v_payment.provider_payment_id = p_provider_payment_id THEN
+      RETURN jsonb_build_object(
+        'ok', true,
+        'order_id', p_order_id,
+        'already_paid', true,
+        'payment_status', 'captured'
+      );
+    ELSE
+      RETURN jsonb_build_object('ok', false, 'error', 'already_paid_conflict');
+    END IF;
+  END IF;
+
+  -- 7. Update exact payment record & order status
+  UPDATE public.payments
+  SET
+    provider_payment_id = p_provider_payment_id,
+    gateway_transaction_id = p_provider_payment_id,
     status = 'captured',
-    captured_at = COALESCE(public.payments.captured_at, now()),
-    updated_at = now();
+    captured_at = COALESCE(captured_at, now()),
+    updated_at = now()
+  WHERE id = v_payment.id;
 
-  SELECT id INTO v_payment_id
-  FROM public.payments
-  WHERE provider_order_id = p_provider_order_id;
-
-  -- Transition Order status authoritatively
   UPDATE public.orders
   SET
     status = 'paid',
@@ -181,7 +164,7 @@ BEGIN
     updated_at = now()
   WHERE id = p_order_id;
 
-  -- Record audit event
+  -- 8. Record payment audit event
   IF p_provider_event_id IS NOT NULL THEN
     INSERT INTO public.payment_events (
       order_id,
@@ -192,7 +175,7 @@ BEGIN
     )
     VALUES (
       p_order_id,
-      v_payment_id,
+      v_payment.id,
       p_event_type,
       p_provider_event_id,
       p_payload
@@ -208,7 +191,7 @@ BEGIN
     )
     VALUES (
       p_order_id,
-      v_payment_id,
+      v_payment.id,
       p_event_type,
       p_payload
     );
@@ -217,7 +200,7 @@ BEGIN
   RETURN jsonb_build_object(
     'ok', true,
     'order_id', p_order_id,
-    'already_paid', v_already_paid,
+    'already_paid', false,
     'payment_status', 'captured'
   );
 END;

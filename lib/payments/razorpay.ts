@@ -1,11 +1,13 @@
 import type { Order } from "@/lib/orders/types";
 import { getOrder } from "@/lib/orders/store";
+import { getAuthoritativeOrderDetails } from "@/lib/orders/supabase-store";
 import {
   verifyRazorpayCheckoutSignature,
   verifyRazorpayWebhookSignature,
 } from "./crypto";
 import {
   capturePaymentAuthoritatively,
+  hasProcessedProviderEvent,
   recordPaymentEvent,
 } from "./store-payments";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -104,8 +106,34 @@ export async function captureRazorpayPayment(
 }
 
 /**
+ * Helper to fetch existing durable payment mapping from Supabase database.
+ * Inspects both data and error.
+ */
+export async function getRazorpayPaymentMappingForOrder(
+  ascendOrderId: string,
+  razorpayOrderId: string
+) {
+  const serviceClient = createSupabaseServiceClient();
+  if (!serviceClient) return null;
+
+  const { data, error } = await serviceClient
+    .from("payments")
+    .select("id, order_id, provider, provider_order_id, provider_payment_id, amount_paise, currency, status")
+    .eq("order_id", ascendOrderId)
+    .eq("provider_order_id", razorpayOrderId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[payments] Query error for order payment mapping:", error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
  * Creates an authoritative server-side Razorpay order.
- * Fails closed in production mode if Razorpay credentials or DB persistence fails.
+ * Fails closed in production mode if Razorpay credentials or initial DB mapping persistence fails.
  */
 export async function createRazorpayCheckout(
   order: Order,
@@ -144,14 +172,21 @@ export async function createRazorpayCheckout(
 
   if (!res.ok) {
     console.error("[razorpay] order create failed", await res.text());
+    if (isProduction) {
+      throw new Error("Razorpay order creation API failed.");
+    }
     return null;
   }
 
   const data = (await res.json()) as { id: string };
 
-  // Persist initial payment mapping in Supabase payments table
+  // Initial payment mapping is MANDATORY
   const serviceClient = createSupabaseServiceClient();
-  if (serviceClient) {
+  if (!serviceClient) {
+    if (isProduction) {
+      throw new Error("Supabase service client missing during checkout creation.");
+    }
+  } else {
     const { error: insertError } = await serviceClient.from("payments").insert({
       order_id: order.id,
       provider: "razorpay",
@@ -162,10 +197,11 @@ export async function createRazorpayCheckout(
     });
 
     if (insertError) {
-      console.error("[razorpay] initial payment record insert error:", insertError);
+      console.error("[razorpay] Initial payment record insert error:", insertError);
       if (isProduction) {
         throw new Error(`Failed to persist initial payment mapping: ${insertError.message}`);
       }
+      return null;
     }
   }
 
@@ -194,6 +230,7 @@ export async function createRazorpayCheckout(
 
 /**
  * Cryptographically verifies a server-side checkout callback and verifies Razorpay provider state before DB transition.
+ * MANDATORY: Requires server Razorpay credentials and existing initial payment mapping.
  */
 export async function verifyRazorpayCheckoutCallback(params: {
   ascendOrderId: string;
@@ -203,7 +240,14 @@ export async function verifyRazorpayCheckoutCallback(params: {
 }) {
   const { ascendOrderId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = params;
 
-  // 1. Verify HMAC SHA-256 signature
+  // 1. Mandatory Razorpay Secret Credentials Check
+  const keyId = getRazorpayKeyId();
+  const keySecret = getRazorpayKeySecret();
+  if (!keyId || !keySecret) {
+    return { ok: false, error: "Razorpay secret credentials unconfigured", status: 500 };
+  }
+
+  // 2. Verify HMAC SHA-256 signature
   const isSignatureValid = verifyRazorpayCheckoutSignature({
     razorpay_order_id: razorpayOrderId,
     razorpay_payment_id: razorpayPaymentId,
@@ -219,101 +263,117 @@ export async function verifyRazorpayCheckoutCallback(params: {
     return { ok: false, error: "Invalid payment signature", status: 400 };
   }
 
-  // 2. Fetch target Ascend Order
-  const order = await getOrder(ascendOrderId);
-  if (!order) {
+  // 3. Fetch authoritative target Ascend Order details from DB or memory
+  const authoritativeOrder = await getAuthoritativeOrderDetails(ascendOrderId);
+  const fallbackOrder = authoritativeOrder ? null : await getOrder(ascendOrderId);
+  const orderId = authoritativeOrder?.id || fallbackOrder?.id;
+  const orderCurrency = authoritativeOrder?.currency || fallbackOrder?.currency || "INR";
+  const expectedPaise = authoritativeOrder?.totalPaise ?? Math.round((fallbackOrder?.subtotal || 0) * 100);
+
+  if (!orderId) {
     return { ok: false, error: "Order not found", status: 404 };
   }
 
-  // Durable binding check: Ensure Razorpay Order ID matches expected reference
-  if (order.paymentReference && order.paymentReference !== razorpayOrderId) {
-    await recordPaymentEvent({
-      orderId: ascendOrderId,
-      eventType: "provider_order_mismatch",
-      details: { expected: order.paymentReference, received: razorpayOrderId },
-    });
-    return { ok: false, error: "Razorpay order ID mismatch", status: 400 };
-  }
-
-  const expectedPaise = Math.round(order.subtotal * 100);
-
-  // 3. Provider REST API State Verification (if keys configured)
-  const authHeader = getAuthHeader();
-  if (authHeader) {
-    let providerPayment = await fetchRazorpayPayment(razorpayPaymentId);
-    if (!providerPayment) {
+  // 4. Require Existing Durable Payment Mapping (when Supabase client is present)
+  const serviceClient = createSupabaseServiceClient();
+  if (serviceClient) {
+    const existingMapping = await getRazorpayPaymentMappingForOrder(ascendOrderId, razorpayOrderId);
+    if (!existingMapping) {
       await recordPaymentEvent({
         orderId: ascendOrderId,
-        eventType: "provider_fetch_failed",
-        details: { razorpayPaymentId },
+        eventType: "payment_mapping_missing",
+        details: { razorpayOrderId },
       });
-      return { ok: false, error: "Failed to verify payment state with Razorpay", status: 502 };
+      return { ok: false, error: "Initial payment record missing for order", status: 400 };
     }
 
-    // Verify Provider Payment Attributes
-    if (providerPayment.id !== razorpayPaymentId) {
-      await recordPaymentEvent({
-        orderId: ascendOrderId,
-        eventType: "provider_payment_mismatch",
-        details: { expected: razorpayPaymentId, received: providerPayment.id },
-      });
-      return { ok: false, error: "Razorpay payment ID mismatch", status: 400 };
+    if (existingMapping.order_id !== ascendOrderId) {
+      return { ok: false, error: "Razorpay order ID belongs to a different Ascend order", status: 400 };
     }
 
-    if (providerPayment.order_id !== razorpayOrderId) {
-      await recordPaymentEvent({
-        orderId: ascendOrderId,
-        eventType: "provider_order_mismatch",
-        details: { expected: razorpayOrderId, received: providerPayment.order_id },
-      });
-      return { ok: false, error: "Razorpay payment belongs to another Razorpay order", status: 400 };
-    }
-
-    if (providerPayment.amount !== expectedPaise) {
-      await recordPaymentEvent({
-        orderId: ascendOrderId,
-        eventType: "amount_mismatch",
-        details: { expected: expectedPaise, received: providerPayment.amount },
-      });
+    if (Number(existingMapping.amount_paise) !== expectedPaise) {
       return { ok: false, error: "Amount mismatch", status: 400 };
     }
 
-    if (providerPayment.currency.toUpperCase() !== order.currency.toUpperCase()) {
-      await recordPaymentEvent({
-        orderId: ascendOrderId,
-        eventType: "currency_mismatch",
-        details: { expected: order.currency, received: providerPayment.currency },
-      });
+    if (existingMapping.currency.toUpperCase() !== orderCurrency.toUpperCase()) {
       return { ok: false, error: "Currency mismatch", status: 400 };
-    }
-
-    // Auto-capture if status is authorized
-    if (providerPayment.status === "authorized") {
-      const captured = await captureRazorpayPayment(razorpayPaymentId, expectedPaise, order.currency);
-      if (captured) providerPayment = captured;
-    }
-
-    if (providerPayment.status !== "captured") {
-      await recordPaymentEvent({
-        orderId: ascendOrderId,
-        eventType: "payment_uncaptured",
-        details: { providerStatus: providerPayment.status },
-      });
-      return {
-        ok: false,
-        error: `Payment is not in captured state (current status: ${providerPayment.status})`,
-        status: 400,
-      };
     }
   }
 
-  // 4. Authoritatively capture payment in database
+  // 5. MANDATORY Provider REST API State Verification
+  let providerPayment = await fetchRazorpayPayment(razorpayPaymentId);
+  if (!providerPayment) {
+    await recordPaymentEvent({
+      orderId: ascendOrderId,
+      eventType: "provider_fetch_failed",
+      details: { razorpayPaymentId },
+    });
+    return { ok: false, error: "Failed to verify payment state with Razorpay API", status: 502 };
+  }
+
+  // Verify Provider Payment Attributes
+  if (providerPayment.id !== razorpayPaymentId) {
+    await recordPaymentEvent({
+      orderId: ascendOrderId,
+      eventType: "provider_payment_mismatch",
+      details: { expected: razorpayPaymentId, received: providerPayment.id },
+    });
+    return { ok: false, error: "Razorpay payment ID mismatch", status: 400 };
+  }
+
+  if (providerPayment.order_id !== razorpayOrderId) {
+    await recordPaymentEvent({
+      orderId: ascendOrderId,
+      eventType: "provider_order_mismatch",
+      details: { expected: razorpayOrderId, received: providerPayment.order_id },
+    });
+    return { ok: false, error: "Razorpay payment belongs to another Razorpay order", status: 400 };
+  }
+
+  if (providerPayment.amount !== expectedPaise) {
+    await recordPaymentEvent({
+      orderId: ascendOrderId,
+      eventType: "amount_mismatch",
+      details: { expected: expectedPaise, received: providerPayment.amount },
+    });
+    return { ok: false, error: "Amount mismatch", status: 400 };
+  }
+
+  if (providerPayment.currency.toUpperCase() !== orderCurrency.toUpperCase()) {
+    await recordPaymentEvent({
+      orderId: ascendOrderId,
+      eventType: "currency_mismatch",
+      details: { expected: orderCurrency, received: providerPayment.currency },
+    });
+    return { ok: false, error: "Currency mismatch", status: 400 };
+  }
+
+  // Auto-capture if status is authorized
+  if (providerPayment.status === "authorized") {
+    const captured = await captureRazorpayPayment(razorpayPaymentId, expectedPaise, orderCurrency);
+    if (captured) providerPayment = captured;
+  }
+
+  if (providerPayment.status !== "captured") {
+    await recordPaymentEvent({
+      orderId: ascendOrderId,
+      eventType: "payment_uncaptured",
+      details: { providerStatus: providerPayment.status },
+    });
+    return {
+      ok: false,
+      error: `Payment is not in captured state (current status: ${providerPayment.status})`,
+      status: 400,
+    };
+  }
+
+  // 6. Authoritatively capture payment in database
   const captureResult = await capturePaymentAuthoritatively({
     ascendOrderId,
     razorpayOrderId,
     razorpayPaymentId,
     amountPaise: expectedPaise,
-    currency: order.currency,
+    currency: orderCurrency,
     eventType: "payment_captured",
     payload: { source: "checkout_callback" },
   });
@@ -327,6 +387,7 @@ export async function verifyRazorpayCheckoutCallback(params: {
 
 /**
  * Handles incoming Razorpay Webhooks with HMAC signature verification & idempotency.
+ * Ignores order.paid safely; handles payment.captured as canonical capture event.
  */
 export async function handleRazorpayWebhook(
   rawBody: string | Buffer,
@@ -338,9 +399,18 @@ export async function handleRazorpayWebhook(
   if (!isValid) {
     await recordPaymentEvent({
       eventType: "signature_invalid",
-      details: { header: signatureHeader },
+      details: { source: "webhook" },
     });
     return { ok: false, error: "Invalid webhook signature", status: 400 };
+  }
+
+  // 2. Duplicate Webhook Handling via x-razorpay-event-id
+  const providerEventId = eventIdHeader || undefined;
+  if (providerEventId) {
+    const alreadyProcessed = await hasProcessedProviderEvent(providerEventId);
+    if (alreadyProcessed) {
+      return { ok: true, alreadyPaid: true, message: "Duplicate webhook event already processed" };
+    }
   }
 
   const bodyString = typeof rawBody === "string" ? rawBody : rawBody.toString("utf-8");
@@ -352,10 +422,6 @@ export async function handleRazorpayWebhook(
   }
 
   const event = payload.event as string;
-  // Use header x-razorpay-event-id if present, otherwise fallback to account_id + created_at
-  const providerEventId =
-    eventIdHeader ||
-    (payload.account_id ? `${payload.event}_${payload.created_at}` : undefined);
 
   await recordPaymentEvent({
     eventType: "webhook_received",
@@ -363,28 +429,32 @@ export async function handleRazorpayWebhook(
     details: { event },
   });
 
+  // Ignore order.paid safely to prevent assigning orderEntity.id as paymentId
+  if (event === "order.paid") {
+    return { ok: true, message: "order.paid ignored; payment.captured is canonical" };
+  }
+
   const payloadContainer = payload.payload as
     | {
         payment?: { entity?: Record<string, unknown> };
-        order?: { entity?: Record<string, unknown> };
       }
     | undefined;
 
-  if (event === "payment.captured" || event === "order.paid") {
-    const entity = payloadContainer?.payment?.entity || payloadContainer?.order?.entity;
+  if (event === "payment.captured") {
+    const entity = payloadContainer?.payment?.entity;
     if (!entity) {
-      return { ok: true, message: "No entity payload to process" };
+      return { ok: true, message: "No payment entity payload to process" };
     }
 
-    const razorpayOrderId = (entity.order_id || entity.id) as string;
+    const razorpayOrderId = entity.order_id as string;
     const razorpayPaymentId = entity.id as string;
     const amountPaise = entity.amount as number;
     const currency = entity.currency as string;
     const notes = entity.notes as { ascendOrderId?: string } | undefined;
     const ascendOrderId = (notes?.ascendOrderId || entity.receipt) as string;
 
-    if (!ascendOrderId) {
-      return { ok: true, message: "No Ascend Order ID found in notes or receipt" };
+    if (!ascendOrderId || !razorpayOrderId || !razorpayPaymentId) {
+      return { ok: true, message: "Missing required order/payment IDs in webhook entity" };
     }
 
     const captureResult = await capturePaymentAuthoritatively({
