@@ -1,34 +1,48 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
-import { getOrder, updateOrder } from "@/lib/orders/store";
+import { updateOrder } from "@/lib/orders/store";
+import { getAuthoritativeOrderDetails } from "@/lib/orders/supabase-store";
 
 export type PaymentCaptureResult =
   | { ok: true; alreadyPaid: boolean; orderId: string; message?: string }
   | { ok: false; error: string; status?: number };
 
+export type ProcessedEventCheckResult =
+  | { ok: true; processed: boolean }
+  | { ok: false; error: string; dbError?: boolean };
+
 /**
- * Checks if a provider event ID has already been recorded in payment_events table.
- * Inspects both data and error.
+ * Checks if a provider event ID has ALREADY been SUCCESSFULLY processed in payment_events table.
+ * Distinguishes: processed (true), not processed (false), and database error.
  */
 export async function hasProcessedProviderEvent(
   providerEventId: string
-): Promise<boolean> {
-  if (!providerEventId) return false;
+): Promise<ProcessedEventCheckResult> {
+  if (!providerEventId) return { ok: true, processed: false };
+
   const serviceClient = createSupabaseServiceClient();
-  if (!serviceClient) return false;
+  if (!serviceClient) {
+    const isProduction = process.env.NODE_ENV === "production";
+    const hasConfig = hasSupabaseConfig();
+    if (isProduction || hasConfig) {
+      return { ok: false, error: "Supabase service client unconfigured", dbError: true };
+    }
+    return { ok: true, processed: false };
+  }
 
   const { data, error } = await serviceClient
     .from("payment_events")
-    .select("id")
+    .select("id, event_type")
     .eq("provider_event_id", providerEventId)
+    .in("event_type", ["payment_captured", "payment_failed"])
     .maybeSingle();
 
   if (error) {
     console.error("[payment_events] Query error for provider_event_id:", error);
-    return false;
+    return { ok: false, error: `Database error querying provider event: ${error.message}`, dbError: true };
   }
 
-  return Boolean(data);
+  return { ok: true, processed: Boolean(data) };
 }
 
 /**
@@ -65,15 +79,20 @@ export async function capturePaymentAuthoritatively(params: {
     throw new Error("[PaymentCapture] Supabase service role client is unconfigured.");
   }
 
-  // 1. Fetch target order record
-  const order = await getOrder(ascendOrderId);
-  if (!order) {
+  // 1. Fetch authoritative order record
+  const authResult = await getAuthoritativeOrderDetails(ascendOrderId);
+  if (!authResult.ok) {
+    if (authResult.dbError) {
+      return { ok: false, error: authResult.error, status: 500 };
+    }
     return { ok: false, error: "Order not found", status: 404 };
   }
 
+  const order = authResult.data;
+
   // 2. TERMINAL STATE SAFETY: Refuse cancelled or refunded orders
   if (order.status === "cancelled") {
-    await recordPaymentEvent({
+    await recordBestEffortPaymentEvent({
       orderId: ascendOrderId,
       eventType: "terminal_state_rejected",
       providerEventId,
@@ -82,8 +101,8 @@ export async function capturePaymentAuthoritatively(params: {
     return { ok: false, error: "Cannot process payment for cancelled order", status: 400 };
   }
 
-  if (order.status === "refunded") {
-    await recordPaymentEvent({
+  if (order.status === "refunded" || order.paymentStatus === "refunded") {
+    await recordBestEffortPaymentEvent({
       orderId: ascendOrderId,
       eventType: "terminal_state_rejected",
       providerEventId,
@@ -92,10 +111,10 @@ export async function capturePaymentAuthoritatively(params: {
     return { ok: false, error: "Cannot process payment for refunded order", status: 400 };
   }
 
-  // 3. Authoritative Total & Currency Validation
-  const expectedPaise = Math.round(order.subtotal * 100);
+  // 3. Authoritative Total & Currency Validation (using totalPaise!)
+  const expectedPaise = order.totalPaise;
   if (expectedPaise !== amountPaise) {
-    await recordPaymentEvent({
+    await recordBestEffortPaymentEvent({
       orderId: ascendOrderId,
       eventType: "amount_mismatch",
       providerEventId,
@@ -105,7 +124,7 @@ export async function capturePaymentAuthoritatively(params: {
   }
 
   if (order.currency.toUpperCase() !== currency.toUpperCase()) {
-    await recordPaymentEvent({
+    await recordBestEffortPaymentEvent({
       orderId: ascendOrderId,
       eventType: "currency_mismatch",
       providerEventId,
@@ -181,39 +200,57 @@ export async function capturePaymentAuthoritatively(params: {
 }
 
 /**
- * Persists payment audit event to database.
- * Does NOT log secrets, signatures, or sensitive headers.
+ * Persists required payment event to database. Surfacing DB errors.
  */
-export async function recordPaymentEvent(params: {
+export async function recordRequiredPaymentEvent(params: {
+  orderId?: string;
+  paymentId?: string;
+  eventType: string;
+  providerEventId?: string;
+  details?: Record<string, unknown>;
+}): Promise<{ ok: boolean; error?: string }> {
+  const serviceClient = createSupabaseServiceClient();
+  if (!serviceClient) {
+    const isProduction = process.env.NODE_ENV === "production";
+    const hasConfig = hasSupabaseConfig();
+    if (isProduction || hasConfig) {
+      return { ok: false, error: "Supabase service client unconfigured" };
+    }
+    return { ok: true };
+  }
+
+  const sanitizedDetails = { ...(params.details || {}) };
+  delete sanitizedDetails.signature;
+  delete sanitizedDetails.razorpay_signature;
+  delete sanitizedDetails.authorization;
+  delete sanitizedDetails.secret;
+
+  const { error } = await serviceClient.from("payment_events").insert({
+    order_id: params.orderId ?? null,
+    payment_id: params.paymentId ?? null,
+    event_type: params.eventType,
+    provider_event_id: params.providerEventId ?? null,
+    payload_json: sanitizedDetails,
+  });
+
+  if (error) {
+    console.error("[payment_events] Required event insert error:", error);
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Persists best-effort audit event to database.
+ * Does NOT log secrets or sensitive headers.
+ */
+export async function recordBestEffortPaymentEvent(params: {
   orderId?: string;
   paymentId?: string;
   eventType: string;
   providerEventId?: string;
   details?: Record<string, unknown>;
 }): Promise<void> {
-  const serviceClient = createSupabaseServiceClient();
-  if (!serviceClient) return;
-
-  try {
-    // Sanitize details to exclude sensitive keys
-    const sanitizedDetails = { ...(params.details || {}) };
-    delete sanitizedDetails.signature;
-    delete sanitizedDetails.razorpay_signature;
-    delete sanitizedDetails.authorization;
-    delete sanitizedDetails.secret;
-
-    const { error } = await serviceClient.from("payment_events").insert({
-      order_id: params.orderId ?? null,
-      payment_id: params.paymentId ?? null,
-      event_type: params.eventType,
-      provider_event_id: params.providerEventId ?? null,
-      payload_json: sanitizedDetails,
-    });
-
-    if (error) {
-      console.error("[payment_events] Log insert error:", error);
-    }
-  } catch (err) {
-    console.error("[payment_events] Log exception:", err);
-  }
+  await recordRequiredPaymentEvent(params);
 }

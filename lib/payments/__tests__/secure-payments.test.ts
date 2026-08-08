@@ -3,14 +3,16 @@ import assert from "node:assert";
 import crypto from "node:crypto";
 import {
   verifyRazorpayCheckoutSignature,
-  verifyRazorpayWebhookSignature,
 } from "../crypto.js";
 import {
   createRazorpayCheckout,
   verifyRazorpayCheckoutCallback,
   handleRazorpayWebhook,
 } from "../razorpay.js";
-import { capturePaymentAuthoritatively } from "../store-payments.js";
+import {
+  capturePaymentAuthoritatively,
+  hasProcessedProviderEvent,
+} from "../store-payments.js";
 import { saveOrder, getOrder } from "../../orders/store.js";
 import { buildOrderFromInput } from "../../orders/build-order.js";
 import { confirmOrderPaid } from "../../orders/create-order.js";
@@ -110,7 +112,6 @@ describe("Phase 3 Secure Razorpay Payments Real Failure Mode Tests", () => {
       .update("order_RZP_FETCH_FAIL|pay_FETCH_FAIL")
       .digest("hex");
 
-    // Mock fetch to simulate 500 API failure from Razorpay
     globalThis.fetch = (async () => {
       return {
         ok: false,
@@ -174,7 +175,6 @@ describe("Phase 3 Secure Razorpay Payments Real Failure Mode Tests", () => {
       .update("order_RZP_UNCAPTURED|pay_FAILED_STATUS")
       .digest("hex");
 
-    // Mock fetch to return status 'failed'
     globalThis.fetch = (async () => {
       return {
         ok: true,
@@ -271,6 +271,79 @@ describe("Phase 3 Secure Razorpay Payments Real Failure Mode Tests", () => {
       globalThis.fetch = origFetch;
       if (origKeyId) process.env.RAZORPAY_KEY_ID = origKeyId;
       if (origKeySecret) process.env.RAZORPAY_KEY_SECRET = origKeySecret;
+    }
+  });
+
+  it("handles webhook delivery failure window correctly (first delivery fails, retry succeeds, third delivery is idempotent)", async () => {
+    const rawBodyPayload = JSON.stringify({
+      event: "payment.captured",
+      payload: {
+        payment: {
+          entity: {
+            id: "pay_RETRY_9999",
+            order_id: "order_RETRY_123",
+            amount: 250000,
+            currency: "INR",
+            notes: { ascendOrderId: "ORD-RETRY-001" },
+          },
+        },
+      },
+    });
+
+    const originalWebhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    process.env.RAZORPAY_WEBHOOK_SECRET = TEST_WEBHOOK_SECRET;
+
+    try {
+      const signature = crypto
+        .createHmac("sha256", TEST_WEBHOOK_SECRET)
+        .update(rawBodyPayload)
+        .digest("hex");
+
+      // 1. Order not created yet -> First delivery fails
+      const eventId = "evt_retry_test_100";
+      const failRes = await handleRazorpayWebhook(rawBodyPayload, signature, eventId);
+      assert.strictEqual(failRes.ok, false);
+      assert.strictEqual((failRes as { error?: string }).error, "Order not found");
+
+      // Verify event is NOT marked processed
+      const checkResult = await hasProcessedProviderEvent(eventId);
+      assert.strictEqual(checkResult.ok, true);
+      assert.strictEqual(checkResult.processed, false);
+
+      // 2. Now save order and retry
+      const retryOrder: Order = {
+        id: "ORD-RETRY-001",
+        createdAt: new Date().toISOString(),
+        status: "pending_payment",
+        paymentMethod: "online",
+        paymentProvider: "razorpay",
+        paymentReference: "order_RETRY_123",
+        currency: "INR",
+        subtotal: 2500,
+        items: [],
+        customer: {
+          fullName: "Retry Test",
+          email: "retry@example.com",
+          phone: "+919999999999",
+          address: "123 St",
+          city: "Mumbai",
+          postalCode: "400001",
+          country: "IN",
+        },
+      };
+      await saveOrder(retryOrder);
+
+      const successRes = await handleRazorpayWebhook(rawBodyPayload, signature, eventId);
+      assert.strictEqual(successRes.ok, true);
+
+      const checkOrder = await getOrder("ORD-RETRY-001");
+      assert.strictEqual(checkOrder?.status, "paid");
+
+      // 3. Third delivery must return idempotent duplicate success
+      const thirdRes = await handleRazorpayWebhook(rawBodyPayload, signature, eventId);
+      assert.strictEqual(thirdRes.ok, true);
+    } finally {
+      process.env.RAZORPAY_WEBHOOK_SECRET = originalWebhookSecret;
     }
   });
 
