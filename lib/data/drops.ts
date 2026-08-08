@@ -1,4 +1,6 @@
 import { ASCEND_PRODUCT_IMAGES } from "@/lib/product-images";
+import { getPublicProducts, getPublicProductBySlug } from "@/lib/wearables/store";
+import type { PublicProduct, PublicProductVariant } from "@/lib/wearables/types";
 
 export type DropCategory = "apparel" | "eyewear" | "accessories";
 
@@ -37,6 +39,7 @@ export type Drop = {
     stockRemaining: number;
     totalAllocation: number;
   };
+  variants?: PublicProductVariant[];
 };
 
 const DROP_IMAGES = {
@@ -97,6 +100,11 @@ function buildDrop(
     visuals: core.gallery ?? core.visuals,
     details: core.details,
     scarcity: core.scarcity,
+    variants: [
+      { id: `var-${core.slug}-S`, productId: `prod-${core.slug}`, sku: `${core.slug.toUpperCase()}-S`, size: "S", color: "black", pricePaise: core.price * 100, stockQuantity: 10, availabilityStatus: "available", isActive: true, sortOrder: 1, createdAt: "", updatedAt: "" },
+      { id: `var-${core.slug}-M`, productId: `prod-${core.slug}`, sku: `${core.slug.toUpperCase()}-M`, size: "M", color: "black", pricePaise: core.price * 100, stockQuantity: 10, availabilityStatus: "available", isActive: true, sortOrder: 2, createdAt: "", updatedAt: "" },
+      { id: `var-${core.slug}-L`, productId: `prod-${core.slug}`, sku: `${core.slug.toUpperCase()}-L`, size: "L", color: "black", pricePaise: core.price * 100, stockQuantity: 10, availabilityStatus: "available", isActive: true, sortOrder: 3, createdAt: "", updatedAt: "" },
+    ],
   };
 }
 
@@ -268,9 +276,6 @@ export const DROPS: readonly Drop[] = [
   }),
 ] as const;
 
-import { getPublicProducts, getPublicProductBySlug } from "@/lib/wearables/store";
-import type { PublicProduct } from "@/lib/wearables/types";
-
 export function publicProductToDrop(p: PublicProduct): Drop {
   const priceAmount = p.basePricePaise / 100;
   const currency = p.currency || "INR";
@@ -315,6 +320,7 @@ export function publicProductToDrop(p: PublicProduct): Drop {
       stockRemaining: p.variants.reduce((acc, v) => acc + v.stockQuantity, 0),
       totalAllocation: 100,
     },
+    variants: p.variants,
   };
 }
 
@@ -336,8 +342,7 @@ export function getAllDropSlugs(): string[] {
 
 export async function getAllDropSlugsAsync(): Promise<string[]> {
   const products = await getPublicProducts();
-  if (products.length > 0) return products.map((p) => p.slug);
-  return getAllDropSlugs();
+  return products.map((p) => p.slug);
 }
 
 export function getDropsByCategory(category: DropCategory): Drop[] {
@@ -346,13 +351,16 @@ export function getDropsByCategory(category: DropCategory): Drop[] {
 
 export async function getDropsByCategoryAsync(category: DropCategory): Promise<Drop[]> {
   const products = await getPublicProducts();
-  const filtered = products.filter((p) => p.category === category);
-  if (filtered.length > 0) {
-    return filtered.map(publicProductToDrop);
-  }
-  return getDropsByCategory(category);
+  return products.filter((p) => p.category === category).map(publicProductToDrop);
 }
 
 export function getFeaturedDrop(): Drop {
   return DROPS[0]!;
+}
+
+export async function getFeaturedDropAsync(): Promise<Drop | undefined> {
+  const products = await getPublicProducts();
+  const featured = products.find((p) => p.isFeatured) || products[0];
+  if (!featured) return undefined;
+  return publicProductToDrop(featured);
 }

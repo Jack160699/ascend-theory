@@ -1,4 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { hasSupabaseConfig } from "@/lib/supabase/env";
 import type {
   Product,
   ProductVariant,
@@ -12,12 +13,13 @@ import type {
 import { validateProductPublishReadiness } from "./validation";
 import { DROPS } from "@/lib/data/drops";
 
-// Local seed storage for dev/testing when Supabase is not connected
+// Local seed storage ONLY used when Supabase is completely UNCONFIGURED (local testing without env)
 const memoryProducts = new Map<string, Product>();
 const memoryVariants = new Map<string, ProductVariant>();
 const memoryCollections = new Map<string, Collection>();
 
 function seedMemoryStoreIfNeeded() {
+  if (hasSupabaseConfig()) return; // Never seed memory if Supabase is configured
   if (memoryProducts.size > 0) return;
 
   const defaultCollection: Collection = {
@@ -93,115 +95,34 @@ function sanitizePublicVariant(variant: ProductVariant): PublicProductVariant {
 }
 
 /**
- * Public Catalogue Reader: Returns published active products and their active variants ONLY.
+ * Public Catalogue Reader: Returns published active products and their active+available variants ONLY.
  * Excludes draft/archived products and hides providerCostPaise.
+ * Empty DB when Supabase is configured returns 0 products (NO static fallback).
  */
 export async function getPublicProducts(): Promise<PublicProduct[]> {
-  const serviceClient = createSupabaseServiceClient();
+  if (hasSupabaseConfig()) {
+    const serviceClient = createSupabaseServiceClient();
+    if (!serviceClient) return [];
 
-  if (serviceClient) {
     const { data: productsData, error: pError } = await serviceClient
       .from("products")
       .select("*")
       .eq("status", "active");
 
-    if (!pError && productsData) {
-      const { data: variantsData } = await serviceClient
-        .from("product_variants")
-        .select("*")
-        .eq("is_active", true);
-
-      const variantsMap = new Map<string, ProductVariant[]>();
-      if (variantsData) {
-        variantsData.forEach((v) => {
-          const list = variantsMap.get(v.product_id) || [];
-          list.push({
-            id: v.id,
-            productId: v.product_id,
-            sku: v.sku,
-            size: v.size,
-            color: v.color,
-            colorDisplay: v.color_display ?? undefined,
-            stockQuantity: v.stock_quantity,
-            pricePaise: Number(v.price_paise),
-            compareAtPricePaise: Number(v.compare_at_price_paise || 0),
-            providerCostPaise: Number(v.provider_cost_paise || 0),
-            availabilityStatus: v.availability_status || "available",
-            isActive: v.is_active,
-            weightGrams: v.weight_grams ?? 0,
-            sortOrder: v.sort_order ?? 0,
-            createdAt: v.created_at,
-            updatedAt: v.updated_at || v.created_at,
-          });
-          variantsMap.set(v.product_id, list);
-        });
-      }
-
-      return productsData.map((p) => {
-        const fullVariants = variantsMap.get(p.id) || [];
-        return {
-          id: p.id,
-          slug: p.slug,
-          title: p.title,
-          subtitle: p.subtitle ?? undefined,
-          description: p.description ?? undefined,
-          status: p.status as ProductStatus,
-          basePricePaise: Number(p.base_price_paise),
-          currency: p.currency,
-          materials: p.materials ?? undefined,
-          category: p.category ?? "wearables",
-          collectionId: p.collection_id ?? undefined,
-          gender: p.gender ?? "unisex",
-          isFeatured: Boolean(p.is_featured),
-          publishedAt: p.published_at ?? undefined,
-          seoTitle: p.seo_title ?? undefined,
-          seoDescription: p.seo_description ?? undefined,
-          primaryImageUrl: p.primary_image_url ?? undefined,
-          galleryJson: (p.gallery_json as { src: string; alt?: string; caption?: string }[]) || [],
-          createdAt: p.created_at,
-          updatedAt: p.updated_at || p.created_at,
-          variants: fullVariants.map(sanitizePublicVariant),
-        };
-      });
+    if (pError || !productsData || productsData.length === 0) {
+      return [];
     }
-  }
 
-  // Memory fallback for local testing without Supabase
-  seedMemoryStoreIfNeeded();
-  const activeProducts = Array.from(memoryProducts.values()).filter((p) => p.status === "active");
+    const { data: variantsData } = await serviceClient
+      .from("product_variants")
+      .select("id, product_id, sku, size, color, color_display, stock_quantity, price_paise, compare_at_price_paise, availability_status, is_active, weight_grams, sort_order, created_at, updated_at")
+      .eq("is_active", true)
+      .eq("availability_status", "available");
 
-  return activeProducts.map((p) => {
-    const vars = Array.from(memoryVariants.values()).filter((v) => v.productId === p.id && v.isActive);
-    return {
-      ...p,
-      variants: vars.map(sanitizePublicVariant),
-    };
-  });
-}
-
-/**
- * Public Catalogue Reader: Returns single published active product by slug.
- * Returns null for draft or archived products.
- */
-export async function getPublicProductBySlug(slug: string): Promise<PublicProduct | null> {
-  const serviceClient = createSupabaseServiceClient();
-
-  if (serviceClient) {
-    const { data: p, error } = await serviceClient
-      .from("products")
-      .select("*")
-      .eq("slug", slug)
-      .eq("status", "active")
-      .maybeSingle();
-
-    if (!error && p) {
-      const { data: variantsData } = await serviceClient
-        .from("product_variants")
-        .select("*")
-        .eq("product_id", p.id)
-        .eq("is_active", true);
-
-      const variants: ProductVariant[] = (variantsData || []).map((v) => ({
+    const variantsMap = new Map<string, ProductVariant[]>();
+    (variantsData || []).forEach((v) => {
+      const list = variantsMap.get(v.product_id) || [];
+      list.push({
         id: v.id,
         productId: v.product_id,
         sku: v.sku,
@@ -211,15 +132,19 @@ export async function getPublicProductBySlug(slug: string): Promise<PublicProduc
         stockQuantity: v.stock_quantity,
         pricePaise: Number(v.price_paise),
         compareAtPricePaise: Number(v.compare_at_price_paise || 0),
-        providerCostPaise: Number(v.provider_cost_paise || 0),
+        providerCostPaise: 0, // Never exposed
         availabilityStatus: v.availability_status || "available",
         isActive: v.is_active,
         weightGrams: v.weight_grams ?? 0,
         sortOrder: v.sort_order ?? 0,
         createdAt: v.created_at,
         updatedAt: v.updated_at || v.created_at,
-      }));
+      });
+      variantsMap.set(v.product_id, list);
+    });
 
+    return productsData.map((p) => {
+      const fullVariants = variantsMap.get(p.id) || [];
       return {
         id: p.id,
         slug: p.slug,
@@ -241,9 +166,93 @@ export async function getPublicProductBySlug(slug: string): Promise<PublicProduc
         galleryJson: (p.gallery_json as { src: string; alt?: string; caption?: string }[]) || [],
         createdAt: p.created_at,
         updatedAt: p.updated_at || p.created_at,
-        variants: variants.map(sanitizePublicVariant),
+        variants: fullVariants.map(sanitizePublicVariant),
       };
-    }
+    });
+  }
+
+  // Local testing memory fallback
+  seedMemoryStoreIfNeeded();
+  const activeProducts = Array.from(memoryProducts.values()).filter((p) => p.status === "active");
+
+  return activeProducts.map((p) => {
+    const vars = Array.from(memoryVariants.values()).filter(
+      (v) => v.productId === p.id && v.isActive && v.availabilityStatus === "available"
+    );
+    return {
+      ...p,
+      variants: vars.map(sanitizePublicVariant),
+    };
+  });
+}
+
+/**
+ * Public Catalogue Reader: Returns single published active product by slug.
+ * Returns null for draft or archived products.
+ */
+export async function getPublicProductBySlug(slug: string): Promise<PublicProduct | null> {
+  if (hasSupabaseConfig()) {
+    const serviceClient = createSupabaseServiceClient();
+    if (!serviceClient) return null;
+
+    const { data: p, error } = await serviceClient
+      .from("products")
+      .select("*")
+      .eq("slug", slug)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (error || !p) return null;
+
+    const { data: variantsData } = await serviceClient
+      .from("product_variants")
+      .select("id, product_id, sku, size, color, color_display, stock_quantity, price_paise, compare_at_price_paise, availability_status, is_active, weight_grams, sort_order, created_at, updated_at")
+      .eq("product_id", p.id)
+      .eq("is_active", true)
+      .eq("availability_status", "available");
+
+    const variants: ProductVariant[] = (variantsData || []).map((v) => ({
+      id: v.id,
+      productId: v.product_id,
+      sku: v.sku,
+      size: v.size,
+      color: v.color,
+      colorDisplay: v.color_display ?? undefined,
+      stockQuantity: v.stock_quantity,
+      pricePaise: Number(v.price_paise),
+      compareAtPricePaise: Number(v.compare_at_price_paise || 0),
+      providerCostPaise: 0,
+      availabilityStatus: v.availability_status || "available",
+      isActive: v.is_active,
+      weightGrams: v.weight_grams ?? 0,
+      sortOrder: v.sort_order ?? 0,
+      createdAt: v.created_at,
+      updatedAt: v.updated_at || v.created_at,
+    }));
+
+    return {
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      subtitle: p.subtitle ?? undefined,
+      description: p.description ?? undefined,
+      status: p.status as ProductStatus,
+      basePricePaise: Number(p.base_price_paise),
+      currency: p.currency,
+      materials: p.materials ?? undefined,
+      category: p.category ?? "wearables",
+      collectionId: p.collection_id ?? undefined,
+      gender: p.gender ?? "unisex",
+      isFeatured: Boolean(p.is_featured),
+      publishedAt: p.published_at ?? undefined,
+      seoTitle: p.seo_title ?? undefined,
+      seoDescription: p.seo_description ?? undefined,
+      primaryImageUrl: p.primary_image_url ?? undefined,
+      galleryJson: (p.gallery_json as { src: string; alt?: string; caption?: string }[]) || [],
+      createdAt: p.created_at,
+      updatedAt: p.updated_at || p.created_at,
+      variants: variants.map(sanitizePublicVariant),
+    };
   }
 
   // Memory fallback
@@ -251,7 +260,9 @@ export async function getPublicProductBySlug(slug: string): Promise<PublicProduc
   const p = Array.from(memoryProducts.values()).find((prod) => prod.slug === slug && prod.status === "active");
   if (!p) return null;
 
-  const vars = Array.from(memoryVariants.values()).filter((v) => v.productId === p.id && v.isActive);
+  const vars = Array.from(memoryVariants.values()).filter(
+    (v) => v.productId === p.id && v.isActive && v.availabilityStatus === "available"
+  );
   return {
     ...p,
     variants: vars.map(sanitizePublicVariant),
@@ -259,26 +270,34 @@ export async function getPublicProductBySlug(slug: string): Promise<PublicProduc
 }
 
 /**
- * Resolves authoritative variant for checkout. Fails if product is draft or variant is inactive/unavailable.
+ * Resolves authoritative variant for checkout. Requires exact variant identity agreement across all supplied fields.
  */
 export async function getAuthoritativeVariantForCheckout(params: {
   slug?: string;
   sku?: string;
   variantId?: string;
+  size?: string;
+  color?: string;
 }): Promise<{ ok: true; product: Product; variant: ProductVariant } | { ok: false; error: string }> {
-  const serviceClient = createSupabaseServiceClient();
+  // Require at least sku or variantId or slug
+  if (!params.sku && !params.variantId && !params.slug) {
+    return { ok: false, error: "Variant SKU, variantId, or product slug required for checkout" };
+  }
 
-  if (serviceClient) {
+  if (hasSupabaseConfig()) {
+    const serviceClient = createSupabaseServiceClient();
+    if (!serviceClient) {
+      return { ok: false, error: "Supabase service client unconfigured during checkout variant resolution" };
+    }
+
     let query = serviceClient.from("product_variants").select("*, products!inner(*)");
 
     if (params.sku) {
-      query = query.eq("sku", params.sku);
+      query = query.eq("sku", params.sku.toUpperCase());
     } else if (params.variantId) {
       query = query.eq("id", params.variantId);
-    } else if (params.slug) {
-      query = query.eq("products.slug", params.slug);
     } else {
-      return { ok: false, error: "Variant SKU or product slug required" };
+      query = query.eq("products.slug", params.slug);
     }
 
     const { data: vData, error: vError } = await query.maybeSingle();
@@ -288,12 +307,32 @@ export async function getAuthoritativeVariantForCheckout(params: {
     }
 
     const p = vData.products;
+
+    // Verify parent product active
     if (p.status !== "active") {
       return { ok: false, error: `Product '${p.title}' is not active (status: ${p.status})` };
     }
 
+    // Verify variant is_active and availability_status = 'available'
     if (!vData.is_active || vData.availability_status !== "available") {
       return { ok: false, error: `Variant SKU '${vData.sku}' is not active or available for purchase` };
+    }
+
+    // STRICT IDENTITY AGREEMENT CHECK
+    if (params.variantId && vData.id !== params.variantId) {
+      return { ok: false, error: "Variant ID mismatch between submitted cart item and DB record" };
+    }
+    if (params.sku && vData.sku.toUpperCase() !== params.sku.toUpperCase()) {
+      return { ok: false, error: "Variant SKU mismatch between submitted cart item and DB record" };
+    }
+    if (params.slug && p.slug !== params.slug) {
+      return { ok: false, error: "Product slug mismatch between submitted cart item and DB record" };
+    }
+    if (params.size && vData.size.toUpperCase() !== params.size.toUpperCase()) {
+      return { ok: false, error: `Size mismatch: requested '${params.size}', variant is '${vData.size}'` };
+    }
+    if (params.color && vData.color.toLowerCase() !== params.color.toLowerCase()) {
+      return { ok: false, error: `Color mismatch: requested '${params.color}', variant is '${vData.color}'` };
     }
 
     const product: Product = {
@@ -338,7 +377,7 @@ export async function getAuthoritativeVariantForCheckout(params: {
     return { ok: true, product, variant };
   }
 
-  // Memory fallback for dev/testing
+  // Memory fallback for local testing ONLY
   seedMemoryStoreIfNeeded();
   let foundVariant: ProductVariant | undefined;
 
@@ -366,16 +405,34 @@ export async function getAuthoritativeVariantForCheckout(params: {
     return { ok: false, error: "Variant is inactive or unavailable" };
   }
 
+  // STRICT IDENTITY AGREEMENT CHECK IN MEMORY
+  if (params.variantId && foundVariant.id !== params.variantId) {
+    return { ok: false, error: "Variant ID mismatch" };
+  }
+  if (params.sku && foundVariant.sku.toUpperCase() !== params.sku.toUpperCase()) {
+    return { ok: false, error: "Variant SKU mismatch" };
+  }
+  if (params.slug && parentProduct.slug !== params.slug) {
+    return { ok: false, error: "Product slug mismatch" };
+  }
+  if (params.size && foundVariant.size.toUpperCase() !== params.size.toUpperCase()) {
+    return { ok: false, error: `Size mismatch: requested '${params.size}', variant is '${foundVariant.size}'` };
+  }
+  if (params.color && foundVariant.color.toLowerCase() !== params.color.toLowerCase()) {
+    return { ok: false, error: `Color mismatch: requested '${params.color}', variant is '${foundVariant.color}'` };
+  }
+
   return { ok: true, product: parentProduct, variant: foundVariant };
 }
 
 /**
- * Admin Reader: Fetch all products for HQ management (including draft/archived and variants with cost).
+ * Admin Reader: Fetch all products for HQ management.
  */
 export async function getAllProductsAdmin(): Promise<Product[]> {
-  const serviceClient = createSupabaseServiceClient();
+  if (hasSupabaseConfig()) {
+    const serviceClient = createSupabaseServiceClient();
+    if (!serviceClient) return [];
 
-  if (serviceClient) {
     const { data: productsData } = await serviceClient.from("products").select("*").order("created_at", { ascending: false });
     const { data: variantsData } = await serviceClient.from("product_variants").select("*").order("sort_order", { ascending: true });
 
@@ -483,9 +540,10 @@ export async function getWearablesOverviewStats(): Promise<WearablesOverviewStat
  * Admin Reader: Get all collections.
  */
 export async function getAllCollectionsAdmin(): Promise<Collection[]> {
-  const serviceClient = createSupabaseServiceClient();
+  if (hasSupabaseConfig()) {
+    const serviceClient = createSupabaseServiceClient();
+    if (!serviceClient) return [];
 
-  if (serviceClient) {
     const { data } = await serviceClient.from("collections").select("*").order("sort_order", { ascending: true });
     if (data) {
       return data.map((c) => ({
@@ -511,7 +569,8 @@ export async function getAllCollectionsAdmin(): Promise<Collection[]> {
 }
 
 /**
- * Admin Mutation: Upsert a Product with variants. Validates slug, SKU uniqueness, and publish-readiness.
+ * Admin Mutation: Upsert a Product with variants using ATOMIC RPC save_product_with_variants.
+ * Validates slug, SKU uniqueness, publish-readiness, non-negative prices & costs, and reconciles removed variants.
  */
 export async function saveProductAdmin(
   input: Omit<Partial<Product>, "variants"> & { variants?: Partial<ProductVariant>[] },
@@ -526,56 +585,21 @@ export async function saveProductAdmin(
     return { ok: false, error: "Title and slug are required" };
   }
 
-  // Validate slug uniqueness against other products
-  if (serviceClient) {
-    let slugCheck = serviceClient.from("products").select("id").eq("slug", slug);
-    if (input.id) {
-      slugCheck = slugCheck.neq("id", input.id);
-    }
-    const { data: existingSlug } = await slugCheck.maybeSingle();
-    if (existingSlug) {
-      return { ok: false, error: `Product slug '${slug}' already exists` };
-    }
-  } else {
-    seedMemoryStoreIfNeeded();
-    for (const [pId, p] of memoryProducts.entries()) {
-      if (p.slug === slug && pId !== input.id) {
-        return { ok: false, error: `Product slug '${slug}' already exists` };
-      }
-    }
-  }
-
-  // Check SKU uniqueness
-  const inputVariants = input.variants || [];
-  const skuSet = new Set<string>();
-  for (const v of inputVariants) {
-    if (v.sku) {
-      const norm = v.sku.trim().toUpperCase();
-      if (skuSet.has(norm)) {
-        return { ok: false, error: `Duplicate variant SKU '${v.sku}' in payload` };
-      }
-      skuSet.add(norm);
-
-      if (serviceClient) {
-        let skuQuery = serviceClient.from("product_variants").select("id, product_id").eq("sku", norm);
-        if (v.id) {
-          skuQuery = skuQuery.neq("id", v.id);
-        }
-        const { data: existingSku } = await skuQuery.maybeSingle();
-        if (existingSku && existingSku.product_id !== input.id) {
-          return { ok: false, error: `Variant SKU '${v.sku}' is already assigned to another product` };
-        }
-      } else {
-        for (const [vId, varItem] of memoryVariants.entries()) {
-          if (varItem.sku.toUpperCase() === norm && varItem.id !== v.id && varItem.productId !== input.id) {
-            return { ok: false, error: `Variant SKU '${v.sku}' is already assigned to another product` };
-          }
-        }
-      }
-    }
-  }
-
   const productId = input.id || (serviceClient ? crypto.randomUUID() : `prod-${slug}`);
+  const inputVariants = input.variants || [];
+
+  // Validate non-negative numbers on variants
+  for (const v of inputVariants) {
+    if (v.pricePaise !== undefined && v.pricePaise < 0) {
+      return { ok: false, error: `Variant price for SKU '${v.sku}' cannot be negative` };
+    }
+    if (v.providerCostPaise !== undefined && v.providerCostPaise < 0) {
+      return { ok: false, error: `Variant provider cost for SKU '${v.sku}' cannot be negative` };
+    }
+    if (v.compareAtPricePaise !== undefined && v.compareAtPricePaise < 0) {
+      return { ok: false, error: `Variant compare-at price for SKU '${v.sku}' cannot be negative` };
+    }
+  }
 
   const productRecord: Product = {
     id: productId,
@@ -601,7 +625,7 @@ export async function saveProductAdmin(
     updatedAt: new Date().toISOString(),
   };
 
-  // If status is active, enforce publish-readiness validator
+  // Enforce publish-readiness validator if activating
   if (input.status === "active") {
     const fullVariants: ProductVariant[] = inputVariants.map((v, idx) => ({
       id: v.id || `var-temp-${idx}`,
@@ -627,100 +651,66 @@ export async function saveProductAdmin(
     }
   }
 
+  // Supabase Atomic RPC Call
   if (serviceClient) {
-    const { error: pErr } = await serviceClient.from("products").upsert({
-      id: productRecord.id,
-      slug: productRecord.slug,
-      title: productRecord.title,
-      subtitle: productRecord.subtitle ?? null,
-      description: productRecord.description ?? null,
-      status: productRecord.status,
-      base_price_paise: productRecord.basePricePaise,
-      currency: productRecord.currency,
-      materials: productRecord.materials ?? null,
-      category: productRecord.category,
-      collection_id: productRecord.collectionId ?? null,
-      gender: productRecord.gender,
-      is_featured: productRecord.isFeatured,
-      published_at: productRecord.publishedAt ?? null,
-      seo_title: productRecord.seoTitle ?? null,
-      seo_description: productRecord.seoDescription ?? null,
-      primary_image_url: productRecord.primaryImageUrl ?? null,
-      gallery_json: productRecord.galleryJson,
-      size_chart_json: productRecord.sizeChartJson ?? null,
-      updated_at: new Date().toISOString(),
+    const { data: rpcData, error: rpcErr } = await serviceClient.rpc("save_product_with_variants", {
+      p_product: productRecord,
+      p_variants: inputVariants,
+      p_admin_id: adminId,
     });
 
-    if (pErr) {
-      return { ok: false, error: `Failed to save product in database: ${pErr.message}` };
+    if (rpcErr) {
+      return { ok: false, error: `Database RPC execution error: ${rpcErr.message}` };
     }
 
-    // Save variants
-    const upsertedVariants: ProductVariant[] = [];
-    for (const [idx, v] of inputVariants.entries()) {
-      const varId = v.id || crypto.randomUUID();
-      const variantRecord: ProductVariant = {
-        id: varId,
-        productId,
-        sku: v.sku ? v.sku.trim().toUpperCase() : `${slug.toUpperCase()}-${v.size || "S"}`,
-        size: v.size || "S",
-        color: v.color || "black",
-        colorDisplay: v.colorDisplay,
-        stockQuantity: v.stockQuantity ?? 0,
-        pricePaise: v.pricePaise ?? 0,
-        compareAtPricePaise: v.compareAtPricePaise ?? 0,
-        providerCostPaise: v.providerCostPaise ?? 0,
-        availabilityStatus: v.availabilityStatus || "available",
-        isActive: v.isActive ?? true,
-        weightGrams: v.weightGrams ?? 0,
-        sortOrder: v.sortOrder ?? idx,
-        createdAt: v.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      const { error: vErr } = await serviceClient.from("product_variants").upsert({
-        id: variantRecord.id,
-        product_id: variantRecord.productId,
-        sku: variantRecord.sku,
-        size: variantRecord.size,
-        color: variantRecord.color,
-        color_display: variantRecord.colorDisplay ?? null,
-        stock_quantity: variantRecord.stockQuantity,
-        price_paise: variantRecord.pricePaise,
-        compare_at_price_paise: variantRecord.compareAtPricePaise,
-        provider_cost_paise: variantRecord.providerCostPaise,
-        availability_status: variantRecord.availabilityStatus,
-        is_active: variantRecord.isActive,
-        weight_grams: variantRecord.weightGrams,
-        sort_order: variantRecord.sortOrder,
-        updated_at: new Date().toISOString(),
-      });
-
-      if (!vErr) {
-        upsertedVariants.push(variantRecord);
-      }
+    if (!rpcData || typeof rpcData !== "object" || !(rpcData as { ok?: boolean }).ok) {
+      const errMessage = (rpcData as { error?: string })?.error || "Atomic save RPC returned error";
+      return { ok: false, error: errMessage };
     }
 
-    // Write Audit Log
-    await serviceClient.from("audit_logs").insert({
-      admin_id: adminId,
-      action: input.id ? "product_updated" : "product_created",
-      entity_type: "product",
-      entity_id: productId,
-      details_json: { title: productRecord.title, slug: productRecord.slug, status: productRecord.status },
-    });
-
-    productRecord.variants = upsertedVariants;
-    return { ok: true, product: productRecord };
+    // Refresh and return full updated product record from DB
+    const updatedProducts = await getAllProductsAdmin();
+    const updated = updatedProducts.find((p) => p.id === productId);
+    return { ok: true, product: updated || productRecord };
   }
 
-  // Memory fallback
+  // Local testing memory fallback with reconciliation of removed variants
   seedMemoryStoreIfNeeded();
+
+  // Validate slug uniqueness in memory
+  for (const [pId, p] of memoryProducts.entries()) {
+    if (p.slug === slug && pId !== productId) {
+      return { ok: false, error: `Product slug '${slug}' already exists` };
+    }
+  }
+
+  // Validate SKU uniqueness in memory
+  const skuSet = new Set<string>();
+  for (const v of inputVariants) {
+    if (v.sku) {
+      const norm = v.sku.trim().toUpperCase();
+      if (skuSet.has(norm)) {
+        return { ok: false, error: `Duplicate variant SKU '${v.sku}' in payload` };
+      }
+      skuSet.add(norm);
+
+      for (const [_, varItem] of memoryVariants.entries()) {
+        if (varItem.sku.toUpperCase() === norm && varItem.id !== v.id && varItem.productId !== productId) {
+          return { ok: false, error: `Variant SKU '${v.sku}' is already assigned to another product` };
+        }
+      }
+    }
+  }
+
   memoryProducts.set(productId, productRecord);
 
+  const submittedVariantIds = new Set<string>();
   const savedVariants: ProductVariant[] = [];
+
   inputVariants.forEach((v, idx) => {
     const varId = v.id || `var-${slug}-${v.size || "S"}`;
+    submittedVariantIds.add(varId);
+
     const variantRecord: ProductVariant = {
       id: varId,
       productId,
@@ -742,6 +732,18 @@ export async function saveProductAdmin(
     memoryVariants.set(varId, variantRecord);
     savedVariants.push(variantRecord);
   });
+
+  // Reconcile removed variants in memory
+  for (const [varId, varItem] of memoryVariants.entries()) {
+    if (varItem.productId === productId && !submittedVariantIds.has(varId)) {
+      memoryVariants.set(varId, {
+        ...varItem,
+        isActive: false,
+        availabilityStatus: "unavailable",
+        updatedAt: new Date().toISOString(),
+      });
+    }
+  }
 
   productRecord.variants = savedVariants;
   return { ok: true, product: productRecord };

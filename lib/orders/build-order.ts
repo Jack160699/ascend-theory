@@ -15,7 +15,7 @@ export type BuildOrderResult =
   | { ok: false; error: string };
 
 export async function buildOrderFromInputAsync(input: CreateOrderInput): Promise<BuildOrderResult> {
-  if (!input.items.length) {
+  if (!input.items || !input.items.length) {
     return { ok: false, error: "Cart is empty." };
   }
 
@@ -23,54 +23,39 @@ export async function buildOrderFromInputAsync(input: CreateOrderInput): Promise
   let currency = "INR";
 
   for (const line of input.items) {
+    // Require exact sellable variant identity (sku OR variantId)
+    if (!line.sku && !line.variantId) {
+      return { ok: false, error: `Variant identity (SKU or variantId) is required for '${line.slug || "cart item"}'` };
+    }
+
     // Authoritative Server-side Variant & Product Resolution from DB Store
     const varResult = await getAuthoritativeVariantForCheckout({
       slug: line.slug,
       sku: line.sku,
       variantId: line.variantId,
+      size: line.size,
+      color: line.color,
     });
 
-    let authoritativePrice: number;
-    let name: string;
-    let dropName: string;
-    let sku: string;
-    let size: string;
-    let color: string;
-
-    if (varResult.ok) {
-      authoritativePrice = varResult.variant.pricePaise / 100;
-      currency = varResult.product.currency || "INR";
-      name = varResult.product.title;
-      dropName = varResult.product.subtitle || "Ascend Release";
-      sku = varResult.variant.sku;
-      size = varResult.variant.size;
-      color = varResult.variant.color;
-    } else {
-      // Fallback to static catalog check if store lookup returns error
-      const fallbackProduct = getCartProduct(line.slug);
-      if (!fallbackProduct) {
-        return { ok: false, error: `Invalid or unavailable product variant for '${line.slug}': ${varResult.error}` };
-      }
-      authoritativePrice = fallbackProduct.price;
-      currency = fallbackProduct.currency;
-      name = fallbackProduct.name;
-      dropName = fallbackProduct.dropName;
-      sku = line.sku || `${line.slug.toUpperCase()}-S`;
-      size = line.size || "S";
-      color = line.color || "black";
+    if (!varResult.ok) {
+      return { ok: false, error: `Checkout validation failed for '${line.slug || line.sku}': ${varResult.error}` };
     }
 
+    const { product, variant } = varResult;
+    const authoritativePrice = variant.pricePaise / 100;
+    currency = product.currency || "INR";
     const quantity = Math.min(Math.max(1, Math.floor(line.quantity)), 10);
     const itemLineTotal = Math.round(authoritativePrice * quantity * 100) / 100;
 
     items.push({
-      slug: line.slug,
-      sku,
-      variantId: line.variantId,
-      size,
-      color,
-      name,
-      dropName,
+      productId: product.id,
+      variantId: variant.id,
+      slug: product.slug,
+      sku: variant.sku,
+      size: variant.size,
+      color: variant.color,
+      name: product.title,
+      dropName: product.subtitle || "Ascend Release",
       price: authoritativePrice,
       priceDisplay: new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(authoritativePrice),
       quantity,

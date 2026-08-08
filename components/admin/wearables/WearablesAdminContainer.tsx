@@ -50,7 +50,7 @@ export function WearablesAdminContainer() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load wearables data");
-    } fontinally: {
+    } finally {
       setLoading(false);
     }
   }, []);

@@ -20,9 +20,10 @@ export type OrderCustomer = {
 };
 
 export type OrderItem = {
+  productId?: string;
+  variantId?: string;
   slug: string;
   sku?: string;
-  variantId?: string;
   size?: string;
   color?: string;
   name: string;

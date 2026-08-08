@@ -68,10 +68,12 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
   if (order.items && order.items.length > 0) {
     const itemRecords = order.items.map((item) => ({
       order_id: order.id,
-      sku: item.slug,
+      product_id: item.productId ?? null,
+      variant_id: item.variantId ?? null,
+      sku: item.sku || item.slug,
       title: item.name,
-      size: "STD",
-      color: "DEFAULT",
+      size: item.size || "STD",
+      color: item.color || "DEFAULT",
       unit_price_paise: Math.round(item.price * 100),
       quantity: item.quantity,
       total_price_paise: Math.round(item.lineTotal * 100),
@@ -80,6 +82,7 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
 
     const { error: itemsError } = await supabase.from("order_items").upsert(itemRecords, {
       onConflict: "order_id,sku",
+      ignoreDuplicates: true,
     });
 
     if (itemsError) {

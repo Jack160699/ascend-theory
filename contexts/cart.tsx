@@ -17,6 +17,17 @@ import {
 
 type ResolvedLine = { line: CartLine; product: CartProduct };
 
+type AddProductInput =
+  | string
+  | {
+      slug: string;
+      sku?: string;
+      variantId?: string;
+      size?: string;
+      color?: string;
+      quantity?: number;
+    };
+
 type CartContextValue = {
   hydrated: boolean;
   lines: CartLine[];
@@ -28,13 +39,19 @@ type CartContextValue = {
   openDrawer: () => void;
   closeDrawer: () => void;
   addDefaultProduct: () => void;
-  addProduct: (slug: string) => void;
-  setQuantity: (slug: string, quantity: number) => void;
-  removeLine: (slug: string) => void;
+  addProduct: (input: AddProductInput) => void;
+  setQuantity: (lineKeyOrSkuOrSlug: string, quantity: number) => void;
+  removeLine: (lineKeyOrSkuOrSlug: string) => void;
   clear: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
+
+function getLineIdentity(l: Partial<CartLine>): string {
+  if (l.variantId) return l.variantId;
+  if (l.sku) return l.sku;
+  return `${l.slug}-${l.size || "S"}-${l.color || "black"}`;
+}
 
 function clampQuantity(product: CartProduct, qty: number): number {
   return Math.min(Math.max(1, qty), product.maxQuantity);
@@ -58,10 +75,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     writeCart(lines);
   }, [lines, hydrated]);
-
-  const persist = useCallback((next: CartLine[]) => {
-    setLines(next);
-  }, []);
 
   const resolvedLines = useMemo((): ResolvedLine[] => {
     return lines
@@ -88,31 +101,47 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
-  const addProduct = useCallback((slug: string) => {
-    const product = getCartProduct(slug);
-    if (!product) return;
+  const addProduct = useCallback((input: AddProductInput) => {
+    const lineObj: CartLine =
+      typeof input === "string"
+        ? { slug: input, quantity: 1 }
+        : {
+            slug: input.slug,
+            sku: input.sku,
+            variantId: input.variantId,
+            size: input.size,
+            color: input.color,
+            quantity: input.quantity || 1,
+          };
+
+    const targetKey = getLineIdentity(lineObj);
+    const product = getCartProduct(lineObj.slug);
 
     setLines((prev) => {
-      const existing = prev.find((l) => l.slug === product.slug);
-      const nextQty = existing
-        ? clampQuantity(product, existing.quantity + 1)
-        : 1;
-      const next = existing
-        ? prev.map((l) =>
-            l.slug === product.slug ? { ...l, quantity: nextQty } : l,
-          )
-        : [...prev, { slug: product.slug, quantity: 1 }];
+      const existingIndex = prev.findIndex((l) => getLineIdentity(l) === targetKey);
+      if (existingIndex >= 0) {
+        const existing = prev[existingIndex];
+        const nextQty = product
+          ? clampQuantity(product, existing.quantity + (lineObj.quantity || 1))
+          : existing.quantity + (lineObj.quantity || 1);
 
-      return next;
+        const copy = [...prev];
+        copy[existingIndex] = { ...existing, quantity: nextQty };
+        return copy;
+      }
+
+      return [...prev, lineObj];
     });
 
-    event("AddToCart", {
-      content_name: product.name,
-      content_ids: [product.slug],
-      content_type: "product",
-      value: product.price,
-      currency: product.currency,
-    });
+    if (product) {
+      event("AddToCart", {
+        content_name: product.name,
+        content_ids: [lineObj.sku || lineObj.variantId || product.slug],
+        content_type: "product",
+        value: product.price,
+        currency: product.currency,
+      });
+    }
 
     setDrawerOpen(true);
   }, []);
@@ -121,21 +150,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
     addProduct(getDefaultCartProduct().slug);
   }, [addProduct]);
 
-  const setQuantity = useCallback((slug: string, quantity: number) => {
-    const product = getCartProduct(slug);
-    if (!product) return;
-    if (quantity < 1) {
-      setLines((prev) => prev.filter((l) => l.slug !== slug));
-      return;
-    }
-    const qty = clampQuantity(product, quantity);
-    setLines((prev) =>
-      prev.map((l) => (l.slug === slug ? { ...l, quantity: qty } : l)),
-    );
+  const setQuantity = useCallback((lineKeyOrSkuOrSlug: string, quantity: number) => {
+    setLines((prev) => {
+      if (quantity < 1) {
+        return prev.filter((l) => getLineIdentity(l) !== lineKeyOrSkuOrSlug && l.slug !== lineKeyOrSkuOrSlug && l.sku !== lineKeyOrSkuOrSlug && l.variantId !== lineKeyOrSkuOrSlug);
+      }
+      return prev.map((l) => {
+        const isMatch =
+          getLineIdentity(l) === lineKeyOrSkuOrSlug ||
+          l.slug === lineKeyOrSkuOrSlug ||
+          l.sku === lineKeyOrSkuOrSlug ||
+          l.variantId === lineKeyOrSkuOrSlug;
+
+        if (!isMatch) return l;
+
+        const product = getCartProduct(l.slug);
+        const qty = product ? clampQuantity(product, quantity) : quantity;
+        return { ...l, quantity: qty };
+      });
+    });
   }, []);
 
-  const removeLine = useCallback((slug: string) => {
-    setLines((prev) => prev.filter((l) => l.slug !== slug));
+  const removeLine = useCallback((lineKeyOrSkuOrSlug: string) => {
+    setLines((prev) =>
+      prev.filter(
+        (l) =>
+          getLineIdentity(l) !== lineKeyOrSkuOrSlug &&
+          l.slug !== lineKeyOrSkuOrSlug &&
+          l.sku !== lineKeyOrSkuOrSlug &&
+          l.variantId !== lineKeyOrSkuOrSlug
+      )
+    );
   }, []);
 
   const clear = useCallback(() => {

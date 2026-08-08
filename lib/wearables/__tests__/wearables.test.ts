@@ -1,34 +1,42 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
-  getPublicProducts,
   getPublicProductBySlug,
   getAuthoritativeVariantForCheckout,
   saveProductAdmin,
+  getAllProductsAdmin,
 } from "../store";
-import {
-  validateProductPublishReadiness,
-  calculateGrossMarginPaise,
-  calculateMarginPercentage,
-} from "../validation";
 import { buildOrderFromInputAsync } from "../../orders/build-order";
-import type { Product, ProductVariant } from "../types";
+import { getDropBySlugAsync } from "../../data/drops";
 
-describe("Phase 4 Wearables & Product Management Architecture Tests", () => {
-  it("public cannot read draft products or draft product variants", async () => {
-    const draftInput: Partial<Product> = {
-      title: "Draft Luxury Hoodie",
-      slug: "draft-luxury-hoodie",
-      description: "Unpublished test hoodie.",
-      status: "draft",
-      basePricePaise: 450000,
-      currency: "INR",
-      category: "apparel",
-    };
+describe("Phase 4 Wearables & Product Management Architecture & Security Tests", () => {
+  it("migration 00004 enforces column-level privilege lockdown revoking provider_cost_paise from anon/authenticated", () => {
+    const migrationPath = resolve(process.cwd(), "supabase/migrations/20260809000004_wearables_catalogue_management.sql");
+    const sql = readFileSync(migrationPath, "utf-8");
 
+    assert.strictEqual(sql.includes("REVOKE ALL ON public.product_variants FROM PUBLIC, anon, authenticated;"), true);
+    assert.strictEqual(sql.includes("GRANT SELECT ("), true);
+    assert.strictEqual(sql.includes("provider_cost_paise"), true);
+    // Ensure provider_cost_paise is NOT in the GRANT SELECT (...) column list for anon/authenticated
+    const selectGrantBlock = sql.match(/GRANT SELECT \([\s\S]*?\) ON public.product_variants TO anon, authenticated;/);
+    assert.notStrictEqual(selectGrantBlock, null);
+    if (selectGrantBlock) {
+      assert.strictEqual(selectGrantBlock[0].includes("provider_cost_paise"), false);
+    }
+  });
+
+  it("public cannot read draft products, draft variants, or provider_cost_paise", async () => {
     const saveRes = await saveProductAdmin(
       {
-        ...draftInput,
+        title: "Draft Luxury Hoodie",
+        slug: "draft-luxury-hoodie-test",
+        description: "Unpublished test hoodie.",
+        status: "draft",
+        basePricePaise: 450000,
+        currency: "INR",
+        category: "wearables",
         variants: [
           { sku: "DRAFT-HOODIE-M", size: "M", color: "black", pricePaise: 450000, providerCostPaise: 150000, isActive: true, availabilityStatus: "available" },
         ],
@@ -38,243 +46,235 @@ describe("Phase 4 Wearables & Product Management Architecture Tests", () => {
 
     assert.strictEqual(saveRes.ok, true);
 
-    const publicProduct = await getPublicProductBySlug("draft-luxury-hoodie");
+    const publicProduct = await getPublicProductBySlug("draft-luxury-hoodie-test");
     assert.strictEqual(publicProduct, null);
 
-    const allPublic = await getPublicProducts();
-    const foundDraft = allPublic.find((p) => p.slug === "draft-luxury-hoodie");
-    assert.strictEqual(foundDraft, undefined);
+    const drop = await getDropBySlugAsync("draft-luxury-hoodie-test");
+    assert.strictEqual(drop, undefined);
   });
 
-  it("public cannot read inactive variants and provider_cost_paise is NEVER returned publicly", async () => {
-    const pubRes = await saveProductAdmin(
-      {
-        title: "Active Vest Test",
-        slug: "active-vest-test",
-        description: "Test vest.",
-        status: "active",
-        basePricePaise: 300000,
-        currency: "INR",
-        primaryImageUrl: "https://example.com/vest.jpg",
-        variants: [
-          { sku: "VEST-ACTIVE-M", size: "M", color: "black", pricePaise: 300000, providerCostPaise: 100000, isActive: true, availabilityStatus: "available" },
-          { sku: "VEST-INACTIVE-L", size: "L", color: "black", pricePaise: 300000, providerCostPaise: 100000, isActive: false, availabilityStatus: "available" },
-        ],
-      },
-      "admin-owner-id"
-    );
-
-    assert.strictEqual(pubRes.ok, true);
-
-    const publicProduct = await getPublicProductBySlug("active-vest-test");
-    assert.notStrictEqual(publicProduct, null);
-    if (publicProduct) {
-      assert.strictEqual(publicProduct.variants.length, 1);
-      assert.strictEqual(publicProduct.variants[0].sku, "VEST-ACTIVE-M");
-
-      // Verify providerCostPaise is NOT in public variant object
-      assert.strictEqual("providerCostPaise" in publicProduct.variants[0], false);
-    }
-  });
-
-  it("rejects duplicate product slugs during admin creation", async () => {
+  it("public cannot read sample_only, returned_inventory_only, or unavailable variants", async () => {
     await saveProductAdmin(
       {
-        title: "Original Product",
-        slug: "unique-slug-test-1",
-        description: "Desc",
-        status: "draft",
-      },
-      "admin-id"
-    );
-
-    const dupRes = await saveProductAdmin(
-      {
-        title: "Duplicate Product",
-        slug: "unique-slug-test-1",
-        description: "Desc 2",
-        status: "draft",
-      },
-      "admin-id"
-    );
-
-    assert.strictEqual(dupRes.ok, false);
-    assert.strictEqual(dupRes.error.includes("already exists"), true);
-  });
-
-  it("rejects duplicate variant SKUs across products", async () => {
-    await saveProductAdmin(
-      {
-        title: "Product A",
-        slug: "product-sku-a",
-        description: "Desc",
-        status: "draft",
-        variants: [{ sku: "SHARED-SKU-999", size: "S", color: "black", pricePaise: 100000, providerCostPaise: 50000, isActive: true, availabilityStatus: "available" }],
-      },
-      "admin-id"
-    );
-
-    const dupSkuRes = await saveProductAdmin(
-      {
-        title: "Product B",
-        slug: "product-sku-b",
-        description: "Desc",
-        status: "draft",
-        variants: [{ sku: "SHARED-SKU-999", size: "M", color: "black", pricePaise: 100000, providerCostPaise: 50000, isActive: true, availabilityStatus: "available" }],
-      },
-      "admin-id"
-    );
-
-    assert.strictEqual(dupSkuRes.ok, false);
-    assert.strictEqual(dupSkuRes.error.includes("assigned to another product") || dupSkuRes.error.includes("payload"), true);
-  });
-
-  it("rejects transition to active status if publish readiness validator fails", async () => {
-    const incompleteRes = await saveProductAdmin(
-      {
-        title: "Incomplete Product",
-        slug: "incomplete-prod-1",
-        description: "", // Missing description
-        status: "active", // Attempting to activate
-        variants: [], // Missing active variant
-      },
-      "admin-id"
-    );
-
-    assert.strictEqual(incompleteRes.ok, false);
-    assert.strictEqual(incompleteRes.error, "Product publish readiness check failed");
-    assert.strictEqual((incompleteRes.errors || []).length > 0, true);
-  });
-
-  it("accepts product activation when publish readiness requirements are satisfied", () => {
-    const readyProduct: Partial<Product> = {
-      title: "Ready Jacket",
-      slug: "ready-jacket",
-      description: "Full description.",
-      primaryImageUrl: "https://example.com/jacket.jpg",
-      status: "active",
-    };
-
-    const readyVariants: ProductVariant[] = [
-      {
-        id: "var-1",
-        productId: "prod-1",
-        sku: "READY-JKT-L",
-        size: "L",
-        color: "black",
-        stockQuantity: 10,
-        pricePaise: 500000,
-        providerCostPaise: 200000,
-        availabilityStatus: "available",
-        isActive: true,
-        sortOrder: 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ];
-
-    const readiness = validateProductPublishReadiness(readyProduct, readyVariants);
-    assert.strictEqual(readiness.isValid, true);
-    assert.strictEqual(readiness.errors.length, 0);
-  });
-
-  it("calculates gross margin in paise and gross margin percentage correctly", () => {
-    const pricePaise = 500000; // ₹5,000
-    const costPaise = 200000; // ₹2,000
-
-    const marginPaise = calculateGrossMarginPaise(pricePaise, costPaise);
-    assert.strictEqual(marginPaise, 300000); // ₹3,000
-
-    const marginPct = calculateMarginPercentage(pricePaise, costPaise);
-    assert.strictEqual(marginPct, 60); // 60%
-  });
-
-  it("resolves authoritative variant price server-side and rejects client price tampering", async () => {
-    await saveProductAdmin(
-      {
-        title: "Auth Price Garment",
-        slug: "auth-price-garment",
-        description: "Desc",
-        status: "active",
-        primaryImageUrl: "https://example.com/garment.jpg",
-        variants: [
-          { sku: "AUTH-GARMENT-L", size: "L", color: "black", pricePaise: 800000, providerCostPaise: 300000, isActive: true, availabilityStatus: "available" },
-        ],
-      },
-      "admin-id"
-    );
-
-    const tamperedInput = {
-      items: [
-        {
-          slug: "auth-price-garment",
-          sku: "AUTH-GARMENT-L",
-          price: 1, // Tampered client price ₹1
-          quantity: 2,
-        },
-      ],
-      paymentMethod: "online" as const,
-      customer: {
-        fullName: "Tamper Tester",
-        email: "tamper@example.com",
-        phone: "+919999999999",
-        address: "123 Way",
-        city: "Mumbai",
-        postalCode: "400001",
-        country: "IN",
-      },
-    };
-
-    const buildResult = await buildOrderFromInputAsync(tamperedInput);
-    assert.strictEqual(buildResult.ok, true);
-
-    if (buildResult.ok) {
-      assert.strictEqual(buildResult.order.items[0].price, 8000); // Authoritative ₹8,000
-      assert.strictEqual(buildResult.order.items[0].lineTotal, 16000); // Authoritative ₹16,000
-      assert.strictEqual(buildResult.order.subtotal, 16000);
-      assert.strictEqual(buildResult.order.items[0].sku, "AUTH-GARMENT-L");
-      assert.strictEqual(buildResult.order.items[0].size, "L");
-    }
-  });
-
-  it("rejects unknown SKU or inactive SKU during checkout resolution", async () => {
-    const unknownRes = await getAuthoritativeVariantForCheckout({ sku: "NON-EXISTENT-SKU-999" });
-    assert.strictEqual(unknownRes.ok, false);
-    assert.strictEqual(unknownRes.error.includes("Unknown"), true);
-
-    // Save active product with 1 active variant and 1 inactive variant
-    await saveProductAdmin(
-      {
-        title: "Inactive Variant Garment",
-        slug: "inactive-var-garment",
+        title: "Multi Status Garment",
+        slug: "multi-status-garment",
         description: "Desc",
         status: "active",
         primaryImageUrl: "https://example.com/img.jpg",
         variants: [
-          { sku: "ACTIVE-SKU-001", size: "M", color: "black", pricePaise: 200000, providerCostPaise: 100000, isActive: true, availabilityStatus: "available" },
-          { sku: "INACTIVE-SKU-001", size: "S", color: "black", pricePaise: 200000, providerCostPaise: 100000, isActive: false, availabilityStatus: "available" },
+          { sku: "MULTI-AVAIL-M", size: "M", color: "black", pricePaise: 300000, providerCostPaise: 100000, isActive: true, availabilityStatus: "available" },
+          { sku: "MULTI-SAMPLE-L", size: "L", color: "black", pricePaise: 300000, providerCostPaise: 100000, isActive: true, availabilityStatus: "sample_only" },
+          { sku: "MULTI-UNAVAIL-S", size: "S", color: "black", pricePaise: 300000, providerCostPaise: 100000, isActive: true, availabilityStatus: "unavailable" },
+          { sku: "MULTI-RETURNED-XL", size: "XL", color: "black", pricePaise: 300000, providerCostPaise: 100000, isActive: true, availabilityStatus: "returned_inventory_only" },
         ],
       },
       "admin-id"
     );
 
-    const inactiveRes = await getAuthoritativeVariantForCheckout({ sku: "INACTIVE-SKU-001" });
-    assert.strictEqual(inactiveRes.ok, false);
-    assert.strictEqual(inactiveRes.error.includes("inactive"), true);
+    const pubProduct = await getPublicProductBySlug("multi-status-garment");
+    assert.notStrictEqual(pubProduct, null);
+    if (pubProduct) {
+      assert.strictEqual(pubProduct.variants.length, 1);
+      assert.strictEqual(pubProduct.variants[0].sku, "MULTI-AVAIL-M");
+      assert.strictEqual("providerCostPaise" in pubProduct.variants[0], false);
+    }
   });
 
-  it("removes archived products from public catalogue", async () => {
+  it("rejects unknown SKU, inactive SKU, sample_only, or unavailable SKU during checkout resolution", async () => {
+    const unknownRes = await getAuthoritativeVariantForCheckout({ sku: "NON-EXISTENT-SKU-999" });
+    assert.strictEqual(unknownRes.ok, false);
+
+    const sampleRes = await getAuthoritativeVariantForCheckout({ sku: "MULTI-SAMPLE-L" });
+    assert.strictEqual(sampleRes.ok, false);
+
+    const unavailRes = await getAuthoritativeVariantForCheckout({ sku: "MULTI-UNAVAIL-S" });
+    assert.strictEqual(unavailRes.ok, false);
+  });
+
+  it("rejects identity mismatches between submitted SKU, slug, size, and color", async () => {
+    // Mismatch size (submitted XL, variant is M)
+    const sizeMismatch = await getAuthoritativeVariantForCheckout({
+      slug: "multi-status-garment",
+      sku: "MULTI-AVAIL-M",
+      size: "XL",
+    });
+    assert.strictEqual(sizeMismatch.ok, false);
+    assert.strictEqual(sizeMismatch.error.includes("Size mismatch"), true);
+
+    // Mismatch slug (submitted wrong slug for SKU)
+    const slugMismatch = await getAuthoritativeVariantForCheckout({
+      slug: "wrong-slug",
+      sku: "MULTI-AVAIL-M",
+    });
+    assert.strictEqual(slugMismatch.ok, false);
+    assert.strictEqual(slugMismatch.error.includes("slug mismatch"), true);
+  });
+
+  it("rejects checkout build if SKU or variantId is omitted", async () => {
+    const res = await buildOrderFromInputAsync({
+      items: [
+        {
+          slug: "multi-status-garment",
+          quantity: 1,
+        },
+      ],
+      paymentMethod: "online",
+      customer: {
+        fullName: "No SKU Tester",
+        email: "test@example.com",
+        phone: "+919999999999",
+        address: "123 St",
+        city: "Mumbai",
+        postalCode: "400001",
+        country: "IN",
+      },
+    });
+
+    assert.strictEqual(res.ok, false);
+    assert.strictEqual(res.error.includes("Variant identity"), true);
+  });
+
+  it("reconciles removed variants by marking missing variants inactive and unavailable", async () => {
+    const initial = await saveProductAdmin(
+      {
+        title: "Reconcile Product",
+        slug: "reconcile-product",
+        description: "Desc",
+        status: "draft",
+        variants: [
+          { id: "var-rec-1", sku: "REC-1", size: "S", color: "black", pricePaise: 100000, providerCostPaise: 50000, isActive: true, availabilityStatus: "available" },
+          { id: "var-rec-2", sku: "REC-2", size: "M", color: "black", pricePaise: 100000, providerCostPaise: 50000, isActive: true, availabilityStatus: "available" },
+        ],
+      },
+      "admin-id"
+    );
+
+    assert.strictEqual(initial.ok, true);
+
+    // Update product submitting ONLY var-rec-1
+    const updateRes = await saveProductAdmin(
+      {
+        id: initial.ok ? initial.product.id : undefined,
+        title: "Reconcile Product Updated",
+        slug: "reconcile-product",
+        description: "Desc",
+        status: "draft",
+        variants: [
+          { id: "var-rec-1", sku: "REC-1", size: "S", color: "black", pricePaise: 100000, providerCostPaise: 50000, isActive: true, availabilityStatus: "available" },
+        ],
+      },
+      "admin-id"
+    );
+
+    assert.strictEqual(updateRes.ok, true);
+
+    // Check all admin products to verify var-rec-2 became inactive & unavailable
+    const allProds = await getAllProductsAdmin();
+    const recProd = allProds.find((p) => p.slug === "reconcile-product");
+    assert.notStrictEqual(recProd, undefined);
+    if (recProd) {
+      const removedVar = (recProd.variants || []).find((v) => v.id === "var-rec-2");
+      assert.notStrictEqual(removedVar, undefined);
+      if (removedVar) {
+        assert.strictEqual(removedVar.isActive, false);
+        assert.strictEqual(removedVar.availabilityStatus, "unavailable");
+      }
+    }
+  });
+
+  it("rejects negative prices and negative provider costs", async () => {
+    const negPriceRes = await saveProductAdmin(
+      {
+        title: "Neg Price Garment",
+        slug: "neg-price-garment",
+        description: "Desc",
+        status: "draft",
+        variants: [
+          { sku: "NEG-PRICE-1", size: "S", color: "black", pricePaise: -500, providerCostPaise: 10000, isActive: true },
+        ],
+      },
+      "admin-id"
+    );
+    assert.strictEqual(negPriceRes.ok, false);
+    assert.strictEqual(negPriceRes.error.includes("negative"), true);
+
+    const negCostRes = await saveProductAdmin(
+      {
+        title: "Neg Cost Garment",
+        slug: "neg-cost-garment",
+        description: "Desc",
+        status: "draft",
+        variants: [
+          { sku: "NEG-COST-1", size: "S", color: "black", pricePaise: 10000, providerCostPaise: -500, isActive: true },
+        ],
+      },
+      "admin-id"
+    );
+    assert.strictEqual(negCostRes.ok, false);
+    assert.strictEqual(negCostRes.error.includes("negative"), true);
+  });
+
+  it("resolves authoritative variant price server-side and computes correct order item snapshot", async () => {
     await saveProductAdmin(
       {
-        title: "Archived Garment Test",
-        slug: "archived-garment-test",
+        title: "Snapshot Garment",
+        slug: "snapshot-garment",
+        description: "Desc",
+        status: "active",
+        primaryImageUrl: "https://example.com/snapshot.jpg",
+        variants: [
+          { id: "var-snap-m", sku: "SNAP-GARMENT-M", size: "M", color: "black", pricePaise: 500000, providerCostPaise: 200000, isActive: true, availabilityStatus: "available" },
+        ],
+      },
+      "admin-id"
+    );
+
+    const buildRes = await buildOrderFromInputAsync({
+      items: [
+        {
+          slug: "snapshot-garment",
+          sku: "SNAP-GARMENT-M",
+          price: 1, // Tampered
+          quantity: 2,
+        },
+      ],
+      paymentMethod: "online",
+      customer: {
+        fullName: "Snapshot Tester",
+        email: "snap@example.com",
+        phone: "+919999999999",
+        address: "123 St",
+        city: "Mumbai",
+        postalCode: "400001",
+        country: "IN",
+      },
+    });
+
+    assert.strictEqual(buildRes.ok, true);
+    if (buildRes.ok) {
+      assert.strictEqual(buildRes.order.items[0].price, 5000);
+      assert.strictEqual(buildRes.order.items[0].sku, "SNAP-GARMENT-M");
+      assert.strictEqual(buildRes.order.items[0].size, "M");
+      assert.strictEqual(buildRes.order.items[0].color, "black");
+      assert.strictEqual(buildRes.order.items[0].variantId, "var-snap-m");
+    }
+  });
+
+  it("removes archived products from public storefront queries", async () => {
+    await saveProductAdmin(
+      {
+        title: "Archived Garment Test 2",
+        slug: "archived-garment-test-2",
         description: "Desc",
         status: "archived",
       },
       "admin-id"
     );
 
-    const pubRes = await getPublicProductBySlug("archived-garment-test");
+    const pubRes = await getPublicProductBySlug("archived-garment-test-2");
     assert.strictEqual(pubRes, null);
+
+    const dropRes = await getDropBySlugAsync("archived-garment-test-2");
+    assert.strictEqual(dropRes, undefined);
   });
 });

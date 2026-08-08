@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminSession, hasMinimumRole } from "@/lib/admin/auth";
+import { getAdminSession, hasPermission } from "@/lib/admin/auth";
 import { getAllCollectionsAdmin, saveCollectionAdmin } from "@/lib/wearables/store";
 
 export async function GET() {
@@ -18,9 +18,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.role === "support" || !hasMinimumRole(session.role, "editor")) {
+  if (!hasPermission(session.role, "wearables", "write")) {
     return NextResponse.json(
-      { error: "Forbidden: Support role cannot create or edit collections" },
+      { error: "Forbidden: Role does not have write permission for wearables collections" },
       { status: 403 }
     );
   }
