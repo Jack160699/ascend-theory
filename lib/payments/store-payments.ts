@@ -95,7 +95,6 @@ export async function capturePaymentAuthoritatively(params: {
     await recordBestEffortPaymentEvent({
       orderId: ascendOrderId,
       eventType: "terminal_state_rejected",
-      providerEventId,
       details: { status: "cancelled" },
     });
     return { ok: false, error: "Cannot process payment for cancelled order", status: 400 };
@@ -105,7 +104,6 @@ export async function capturePaymentAuthoritatively(params: {
     await recordBestEffortPaymentEvent({
       orderId: ascendOrderId,
       eventType: "terminal_state_rejected",
-      providerEventId,
       details: { status: "refunded" },
     });
     return { ok: false, error: "Cannot process payment for refunded order", status: 400 };
@@ -117,7 +115,6 @@ export async function capturePaymentAuthoritatively(params: {
     await recordBestEffortPaymentEvent({
       orderId: ascendOrderId,
       eventType: "amount_mismatch",
-      providerEventId,
       details: { expectedPaise, receivedPaise: amountPaise },
     });
     return { ok: false, error: "Amount mismatch", status: 400 };
@@ -127,7 +124,6 @@ export async function capturePaymentAuthoritatively(params: {
     await recordBestEffortPaymentEvent({
       orderId: ascendOrderId,
       eventType: "currency_mismatch",
-      providerEventId,
       details: { expectedCurrency: order.currency, receivedCurrency: currency },
     });
     return { ok: false, error: "Currency mismatch", status: 400 };

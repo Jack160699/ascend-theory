@@ -1,11 +1,13 @@
 -- =============================================================================
--- ASCEND THEORY PLATFORM — ADDITIVE MIGRATION (PHASE 3 PAYMENTS HARDENING REPAIR)
+-- ASCEND THEORY PLATFORM — ADDITIVE MIGRATION (PHASE 3 PAYMENTS HARDENING PATCH)
 -- Migration: 20260809000003_secure_payments_and_idempotency.sql
 -- Description: Aligns payments & payment_events tables with Phase 2 schema.
 --              Adds provider_order_id, provider_payment_id, captured_at.
 --              Creates atomic SECURITY DEFINER process_successful_payment RPC
 --              strictly granted to service_role ONLY.
---              Requires existing initial payment mapping before capture.
+--              Requires provider='razorpay' initial payment mapping.
+--              Persists provider_event_id ONLY on terminal success.
+--              Handles callback-first -> webhook-later event registration.
 -- =============================================================================
 
 -- 1. Additive columns for payments table
@@ -81,11 +83,13 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'order_refunded');
   END IF;
 
-  -- 3. Require existing payment mapping created during checkout
+  -- 3. Require existing payment mapping created during checkout (explicitly provider = 'razorpay')
   SELECT id, order_id, provider_order_id, provider_payment_id, amount_paise, currency, status
   INTO v_payment
   FROM public.payments
-  WHERE provider_order_id = p_provider_order_id AND order_id = p_order_id
+  WHERE provider_order_id = p_provider_order_id
+    AND order_id = p_order_id
+    AND provider = 'razorpay'
   FOR UPDATE;
 
   IF NOT FOUND THEN
@@ -114,9 +118,10 @@ BEGIN
   END IF;
 
   -- 5. Currency & Authoritative Amount Validation
+  -- Audit events for mismatches do NOT pass provider_event_id (passed as NULL) so event ID is preserved for retries
   IF UPPER(v_order.currency) != UPPER(p_currency) THEN
     INSERT INTO public.payment_events (order_id, event_type, provider_event_id, payload_json)
-    VALUES (p_order_id, 'currency_mismatch', p_provider_event_id, jsonb_build_object(
+    VALUES (p_order_id, 'currency_mismatch', NULL, jsonb_build_object(
       'expected_currency', v_order.currency,
       'received_currency', p_currency
     ));
@@ -126,16 +131,36 @@ BEGIN
   v_expected_paise := COALESCE(NULLIF(v_order.total_paise, 0), v_order.subtotal_paise);
   IF v_expected_paise != p_amount_paise THEN
     INSERT INTO public.payment_events (order_id, event_type, provider_event_id, payload_json)
-    VALUES (p_order_id, 'amount_mismatch', p_provider_event_id, jsonb_build_object(
+    VALUES (p_order_id, 'amount_mismatch', NULL, jsonb_build_object(
       'expected_total_paise', v_expected_paise,
       'received_amount_paise', p_amount_paise
     ));
     RETURN jsonb_build_object('ok', false, 'error', 'amount_mismatch');
   END IF;
 
-  -- 6. Already Paid Check (Idempotency vs Conflict)
+  -- 6. Already Paid Check (Callback-First -> Webhook-Later Idempotency)
   IF v_order.status = 'paid' OR v_order.payment_status = 'captured' OR v_payment.status = 'captured' THEN
     IF v_payment.provider_payment_id = p_provider_payment_id THEN
+      -- If webhook arrives later with p_provider_event_id, register payment_captured event with provider_event_id
+      IF p_provider_event_id IS NOT NULL THEN
+        INSERT INTO public.payment_events (
+          order_id,
+          payment_id,
+          event_type,
+          provider_event_id,
+          payload_json
+        )
+        VALUES (
+          p_order_id,
+          v_payment.id,
+          'payment_captured',
+          p_provider_event_id,
+          p_payload
+        )
+        ON CONFLICT (provider_event_id) WHERE provider_event_id IS NOT NULL
+        DO NOTHING;
+      END IF;
+
       RETURN jsonb_build_object(
         'ok', true,
         'order_id', p_order_id,
@@ -164,7 +189,7 @@ BEGIN
     updated_at = now()
   WHERE id = p_order_id;
 
-  -- 8. Record payment audit event
+  -- 8. Record terminal success payment audit event
   IF p_provider_event_id IS NOT NULL THEN
     INSERT INTO public.payment_events (
       order_id,

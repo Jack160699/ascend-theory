@@ -275,16 +275,18 @@ describe("Phase 3 Secure Razorpay Payments Real Failure Mode Tests", () => {
   });
 
   it("handles webhook delivery failure window correctly (first delivery fails, retry succeeds, third delivery is idempotent)", async () => {
+    const testOrderId = `ORD-RETRY-FAIL-${Date.now()}`;
+    const testRzpOrderId = `order_RETRY_${Date.now()}`;
     const rawBodyPayload = JSON.stringify({
       event: "payment.captured",
       payload: {
         payment: {
           entity: {
-            id: "pay_RETRY_9999",
-            order_id: "order_RETRY_123",
+            id: `pay_RETRY_${Date.now()}`,
+            order_id: testRzpOrderId,
             amount: 250000,
             currency: "INR",
-            notes: { ascendOrderId: "ORD-RETRY-001" },
+            notes: { ascendOrderId: testOrderId },
           },
         },
       },
@@ -300,7 +302,7 @@ describe("Phase 3 Secure Razorpay Payments Real Failure Mode Tests", () => {
         .digest("hex");
 
       // 1. Order not created yet -> First delivery fails
-      const eventId = "evt_retry_test_100";
+      const eventId = `evt_retry_test_${Date.now()}`;
       const failRes = await handleRazorpayWebhook(rawBodyPayload, signature, eventId);
       assert.strictEqual(failRes.ok, false);
       assert.strictEqual((failRes as { error?: string }).error, "Order not found");
@@ -312,12 +314,12 @@ describe("Phase 3 Secure Razorpay Payments Real Failure Mode Tests", () => {
 
       // 2. Now save order and retry
       const retryOrder: Order = {
-        id: "ORD-RETRY-001",
+        id: testOrderId,
         createdAt: new Date().toISOString(),
         status: "pending_payment",
         paymentMethod: "online",
         paymentProvider: "razorpay",
-        paymentReference: "order_RETRY_123",
+        paymentReference: testRzpOrderId,
         currency: "INR",
         subtotal: 2500,
         items: [],
@@ -336,12 +338,73 @@ describe("Phase 3 Secure Razorpay Payments Real Failure Mode Tests", () => {
       const successRes = await handleRazorpayWebhook(rawBodyPayload, signature, eventId);
       assert.strictEqual(successRes.ok, true);
 
-      const checkOrder = await getOrder("ORD-RETRY-001");
+      const checkOrder = await getOrder(testOrderId);
       assert.strictEqual(checkOrder?.status, "paid");
 
       // 3. Third delivery must return idempotent duplicate success
       const thirdRes = await handleRazorpayWebhook(rawBodyPayload, signature, eventId);
       assert.strictEqual(thirdRes.ok, true);
+    } finally {
+      process.env.RAZORPAY_WEBHOOK_SECRET = originalWebhookSecret;
+    }
+  });
+
+  it("ensures amount mismatch on webhook does NOT consume provider_event_id, enabling later corrected retry", async () => {
+    const mismatchPayload = JSON.stringify({
+      event: "payment.captured",
+      payload: {
+        payment: {
+          entity: {
+            id: "pay_MISMATCH_RETRY_99",
+            order_id: "order_MISMATCH_RETRY_123",
+            amount: 100000, // Mismatch! Expected 500000
+            currency: "INR",
+            notes: { ascendOrderId: "ORD-MISMATCH-RETRY-01" },
+          },
+        },
+      },
+    });
+
+    const originalWebhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    process.env.RAZORPAY_WEBHOOK_SECRET = TEST_WEBHOOK_SECRET;
+
+    try {
+      const signature = crypto
+        .createHmac("sha256", TEST_WEBHOOK_SECRET)
+        .update(mismatchPayload)
+        .digest("hex");
+
+      const order: Order = {
+        id: "ORD-MISMATCH-RETRY-01",
+        createdAt: new Date().toISOString(),
+        status: "pending_payment",
+        paymentMethod: "online",
+        paymentProvider: "razorpay",
+        paymentReference: "order_MISMATCH_RETRY_123",
+        currency: "INR",
+        subtotal: 5000,
+        items: [],
+        customer: {
+          fullName: "Mismatch Test",
+          email: "mismatch@example.com",
+          phone: "+919999999999",
+          address: "123 St",
+          city: "Mumbai",
+          postalCode: "400001",
+          country: "IN",
+        },
+      };
+      await saveOrder(order);
+
+      const eventId = "evt_mismatch_retry_999";
+      const result = await handleRazorpayWebhook(mismatchPayload, signature, eventId);
+      assert.strictEqual(result.ok, false);
+      assert.strictEqual((result as { error?: string }).error, "Amount mismatch");
+
+      // Verify event is NOT marked processed
+      const checkResult = await hasProcessedProviderEvent(eventId);
+      assert.strictEqual(checkResult.ok, true);
+      assert.strictEqual(checkResult.processed, false);
     } finally {
       process.env.RAZORPAY_WEBHOOK_SECRET = originalWebhookSecret;
     }

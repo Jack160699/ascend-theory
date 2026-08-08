@@ -133,6 +133,7 @@ export async function getRazorpayPaymentMappingForOrder(
     .select("id, order_id, provider, provider_order_id, provider_payment_id, amount_paise, currency, status")
     .eq("order_id", ascendOrderId)
     .eq("provider_order_id", razorpayOrderId)
+    .eq("provider", "razorpay")
     .maybeSingle();
 
   if (error) {
