@@ -15,7 +15,9 @@ import { useEffect, useState } from "react";
 export function OrderConfirmation() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") ?? "";
-  const paidFlag = searchParams.get("paid") === "1";
+  const razorpayOrderId = searchParams.get("razorpay_order_id") ?? "";
+  const razorpayPaymentId = searchParams.get("razorpay_payment_id") ?? "";
+  const razorpaySignature = searchParams.get("razorpay_signature") ?? "";
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,15 +31,21 @@ export function OrderConfirmation() {
     let cancelled = false;
 
     async function load() {
-      if (paidFlag) {
+      // Cryptographically verify Razorpay payment if callback params are present
+      if (razorpayOrderId && razorpayPaymentId && razorpaySignature) {
         try {
-          await fetch("/api/orders/confirm", {
+          await fetch("/api/payments/razorpay/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId }),
+            body: JSON.stringify({
+              ascendOrderId: orderId,
+              razorpayOrderId,
+              razorpayPaymentId,
+              razorpaySignature,
+            }),
           });
         } catch {
-          /* continue with snapshot */
+          /* continue to fetch server order state */
         }
       }
 
@@ -54,7 +62,7 @@ export function OrderConfirmation() {
     return () => {
       cancelled = true;
     };
-  }, [orderId, paidFlag]);
+  }, [orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature]);
 
   if (loading) {
     return (

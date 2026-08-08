@@ -1,7 +1,7 @@
 import { submitOrderForFulfillment } from "@/lib/fulfillment";
 import { createPaymentSession, getAvailablePaymentProviders } from "@/lib/payments";
 import { buildOrderFromInput } from "./build-order";
-import { saveOrder, updateOrder } from "./store";
+import { saveOrder } from "./store";
 import type { CreateOrderInput, CreateOrderResult } from "./types";
 
 export async function createOrder(
@@ -82,11 +82,19 @@ export async function createOrder(
   };
 }
 
+/**
+ * @deprecated Unauthenticated order status mutation is prohibited.
+ * Use verifyRazorpayCheckoutCallback or handleRazorpayWebhook for payment verification.
+ */
 export async function confirmOrderPaid(orderId: string): Promise<void> {
-  await updateOrder(orderId, { status: "paid" });
   const { getOrder } = await import("./store");
   const order = await getOrder(orderId);
-  if (order) {
-    await submitOrderForFulfillment({ ...order, status: "paid" });
+  if (!order) return;
+
+  // Unauthenticated browser navigation cannot mark order paid
+  if (order.status !== "paid") {
+    throw new Error(
+      `Cannot confirm order ${orderId} as paid without verified provider signature.`
+    );
   }
 }

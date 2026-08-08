@@ -1,8 +1,10 @@
 export type OrderStatus =
+  | "created"
   | "pending_payment"
   | "pending_fulfillment"
   | "paid"
-  | "cancelled";
+  | "cancelled"
+  | "refunded";
 
 export type PaymentMethod = "cod" | "online";
 export type PaymentProvider = "stripe" | "razorpay" | "none";

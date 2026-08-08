@@ -18,6 +18,23 @@ export function getFulfillmentAdapter(
 }
 
 export async function submitOrderForFulfillment(order: Order) {
+  if (order.status === "refunded") {
+    throw new Error(`Cannot submit refunded order ${order.id} for fulfillment.`);
+  }
+
+  if (order.status === "pending_payment" && order.paymentMethod === "online") {
+    throw new Error(`Cannot submit unpaid order ${order.id} for fulfillment.`);
+  }
+
+  if (order.fulfillment?.externalId && order.fulfillment.provider !== "manual") {
+    return {
+      success: true,
+      provider: order.fulfillment.provider,
+      externalId: order.fulfillment.externalId,
+      message: "Order already submitted for fulfillment.",
+    };
+  }
+
   const provider =
     order.fulfillment?.provider ??
     (process.env.FULFILLMENT_PROVIDER as FulfillmentProvider | undefined) ??
