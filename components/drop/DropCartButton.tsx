@@ -21,73 +21,182 @@ export function DropCartButton({
   const { addProduct } = useCart();
   const [pending, setPending] = useState(false);
 
+  // All active+available variants for this product
   const availableVariants = useMemo(() => {
     return (product.variants || []).filter(
       (v) => v.isActive && v.availabilityStatus === "available"
     );
   }, [product.variants]);
 
-  // Derive unique sizes & colors
-  const availableSizes = useMemo(() => {
-    const set = new Set<string>();
-    availableVariants.forEach((v) => set.add(v.size));
-    return Array.from(set);
+  // Derive unique sizes from actual variants (not hardcoded list)
+  const allSizes = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    availableVariants.forEach((v) => {
+      if (!seen.has(v.size)) {
+        seen.add(v.size);
+        out.push(v.size);
+      }
+    });
+    return out;
   }, [availableVariants]);
 
-  const availableColors = useMemo(() => {
-    const set = new Set<string>();
-    availableVariants.forEach((v) => set.add(v.colorDisplay || v.color));
-    return Array.from(set);
+  // Derive unique colors from actual variants
+  const allColors = useMemo(() => {
+    const seen = new Set<string>();
+    const out: { key: string; display: string }[] = [];
+    availableVariants.forEach((v) => {
+      const key = v.color;
+      const display = v.colorDisplay || v.color;
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.push({ key, display });
+      }
+    });
+    return out;
   }, [availableVariants]);
 
-  const [selectedSize, setSelectedSize] = useState<string>(availableSizes[0] || "M");
-  const [selectedColor, setSelectedColor] = useState<string>(availableColors[0] || "black");
+  const [selectedSize, setSelectedSize] = useState<string>(() => allSizes[0] ?? "");
+  const [selectedColor, setSelectedColor] = useState<string>(() => allColors[0]?.key ?? "");
 
-  // Find exact active+available variant
+  // When available variants change (product refresh), reset selections to first available
+  // Use a key-based approach: track whether allSizes/allColors have changed since last init
+  const effectiveSizesKey = allSizes.join(",");
+  const effectiveColorsKey = allColors.map((c) => c.key).join(",");
+  const [lastSizesKey, setLastSizesKey] = useState(effectiveSizesKey);
+  const [lastColorsKey, setLastColorsKey] = useState(effectiveColorsKey);
+
+  // Reset selection state when available variants change using React's render-phase state update pattern
+  // This avoids the react-hooks/set-state-in-effect rule and avoids an extra render cycle
+  if (effectiveSizesKey !== lastSizesKey) {
+    setLastSizesKey(effectiveSizesKey);
+    if (allSizes.length > 0 && !allSizes.includes(selectedSize)) {
+      setSelectedSize(allSizes[0] ?? "");
+    }
+  }
+  if (effectiveColorsKey !== lastColorsKey) {
+    setLastColorsKey(effectiveColorsKey);
+    if (allColors.length > 0 && !allColors.some((c) => c.key === selectedColor)) {
+      setSelectedColor(allColors[0]?.key ?? "");
+    }
+  }
+
+  /**
+   * Sizes available for currently selected color
+   */
+  const sizesForColor = useMemo(() => {
+    if (!selectedColor) return allSizes;
+    const set = new Set<string>();
+    availableVariants.filter((v) => v.color === selectedColor).forEach((v) => set.add(v.size));
+    return allSizes.filter((s) => set.has(s));
+  }, [availableVariants, selectedColor, allSizes]);
+
+  /**
+   * Colors available for currently selected size
+   */
+  const colorsForSize = useMemo(() => {
+    if (!selectedSize) return allColors;
+    const set = new Set<string>();
+    availableVariants.filter((v) => v.size === selectedSize).forEach((v) => set.add(v.color));
+    return allColors.filter((c) => set.has(c.key));
+  }, [availableVariants, selectedSize, allColors]);
+
+  /**
+   * EXACT variant match — no fallback to [0].
+   * If selected size+color does not map to a real active+available variant → undefined → button disabled.
+   */
   const selectedVariant = useMemo((): PublicProductVariant | undefined => {
-    return availableVariants.find((v) => {
-      const matchSize = v.size.toUpperCase() === selectedSize.toUpperCase();
-      const matchColor =
-        v.color.toLowerCase() === selectedColor.toLowerCase() ||
-        (v.colorDisplay && v.colorDisplay.toLowerCase() === selectedColor.toLowerCase());
-      return matchSize && matchColor;
-    }) || availableVariants[0];
+    if (!selectedSize || !selectedColor) return undefined;
+    return availableVariants.find(
+      (v) =>
+        v.size.toUpperCase() === selectedSize.toUpperCase() &&
+        v.color.toLowerCase() === selectedColor.toLowerCase()
+    );
   }, [availableVariants, selectedSize, selectedColor]);
 
   const handleClick = useCallback(() => {
     if (pending || !selectedVariant) return;
     setPending(true);
+
+    // Compute display price from variant (paise → display string)
+    const priceAmount = selectedVariant.pricePaise / 100;
+    const currencyCode = product.price.currency || "INR";
+    const priceDisplay = new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: currencyCode,
+      maximumFractionDigits: 0,
+    }).format(priceAmount);
+
     addProduct({
       slug: product.slug,
-      sku: selectedVariant.sku,
       variantId: selectedVariant.id,
+      sku: selectedVariant.sku,
       size: selectedVariant.size,
       color: selectedVariant.color,
       quantity: 1,
+      // Display snapshot for cart rendering (no static CATALOG lookup needed)
+      title: product.name,
+      image: product.hero.image,
+      priceDisplay,
+      currency: currencyCode,
+      pricePaise: selectedVariant.pricePaise,
     });
+
     window.setTimeout(() => setPending(false), 400);
-  }, [addProduct, pending, product.slug, selectedVariant]);
+  }, [addProduct, pending, product, selectedVariant]);
 
   return (
     <div className="flex flex-col gap-3">
-      {availableSizes.length > 0 && (
+      {/* Color Selector */}
+      {allColors.length > 1 && (
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono uppercase text-white/50">Size:</span>
-          <div className="flex gap-1.5">
-            {["S", "M", "L", "XL"].map((sz) => {
-              const isAvailable = availableVariants.some((v) => v.size.toUpperCase() === sz);
-              const isSelected = selectedSize.toUpperCase() === sz;
+          <span className="text-xs font-mono uppercase text-white/50">Color:</span>
+          <div className="flex gap-1.5 flex-wrap">
+            {allColors.map(({ key, display }) => {
+              const isAvailable = colorsForSize.some((c) => c.key === key);
+              const isSelected = selectedColor === key;
               return (
                 <button
-                  key={sz}
+                  key={key}
                   type="button"
                   disabled={!isAvailable}
-                  onClick={() => setSelectedSize(sz)}
+                  onClick={() => setSelectedColor(key)}
                   className={cn(
                     "px-2.5 py-1 text-xs font-mono rounded border transition",
                     isSelected
                       ? "bg-white text-black border-white font-medium"
                       : isAvailable
+                      ? "bg-black/40 text-white border-white/20 hover:border-white/50"
+                      : "bg-black/20 text-white/20 border-white/5 cursor-not-allowed line-through"
+                  )}
+                >
+                  {display}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Size Selector — derived from actual variant data, not hardcoded list */}
+      {allSizes.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono uppercase text-white/50">Size:</span>
+          <div className="flex gap-1.5 flex-wrap">
+            {allSizes.map((sz) => {
+              const isAvailableForColor = sizesForColor.includes(sz);
+              const isSelected = selectedSize === sz;
+              return (
+                <button
+                  key={sz}
+                  type="button"
+                  disabled={!isAvailableForColor}
+                  onClick={() => setSelectedSize(sz)}
+                  className={cn(
+                    "px-2.5 py-1 text-xs font-mono rounded border transition",
+                    isSelected
+                      ? "bg-white text-black border-white font-medium"
+                      : isAvailableForColor
                       ? "bg-black/40 text-white border-white/20 hover:border-white/50"
                       : "bg-black/20 text-white/20 border-white/5 cursor-not-allowed line-through"
                   )}
@@ -110,7 +219,7 @@ export function DropCartButton({
           className,
         )}
       >
-        {pending ? "Added" : !selectedVariant ? "Unavailable" : label}
+        {pending ? "Added" : !selectedVariant ? "Select a variant" : label}
       </button>
     </div>
   );

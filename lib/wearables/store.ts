@@ -90,7 +90,7 @@ function seedMemoryStoreIfNeeded() {
 
 function sanitizePublicVariant(variant: ProductVariant): PublicProductVariant {
   // Exclude providerCostPaise from public outputs
-  const { providerCostPaise: _, ...publicVariant } = variant;
+  const { providerCostPaise: _providerCostPaise, ...publicVariant } = variant;
   return publicVariant;
 }
 
@@ -431,60 +431,61 @@ export async function getAuthoritativeVariantForCheckout(params: {
 export async function getAllProductsAdmin(): Promise<Product[]> {
   if (hasSupabaseConfig()) {
     const serviceClient = createSupabaseServiceClient();
-    if (!serviceClient) return [];
+    if (!serviceClient) throw new Error("Supabase service client is not configured");
 
-    const { data: productsData } = await serviceClient.from("products").select("*").order("created_at", { ascending: false });
-    const { data: variantsData } = await serviceClient.from("product_variants").select("*").order("sort_order", { ascending: true });
+    const { data: productsData, error: pErr } = await serviceClient.from("products").select("*").order("created_at", { ascending: false });
+    const { data: variantsData, error: vErr } = await serviceClient.from("product_variants").select("*").order("sort_order", { ascending: true });
 
-    if (productsData) {
-      const variantsMap = new Map<string, ProductVariant[]>();
-      (variantsData || []).forEach((v) => {
-        const list = variantsMap.get(v.product_id) || [];
-        list.push({
-          id: v.id,
-          productId: v.product_id,
-          sku: v.sku,
-          size: v.size,
-          color: v.color,
-          colorDisplay: v.color_display ?? undefined,
-          stockQuantity: v.stock_quantity,
-          pricePaise: Number(v.price_paise),
-          compareAtPricePaise: Number(v.compare_at_price_paise || 0),
-          providerCostPaise: Number(v.provider_cost_paise || 0),
-          availabilityStatus: v.availability_status || "available",
-          isActive: v.is_active,
-          weightGrams: v.weight_grams ?? 0,
-          sortOrder: v.sort_order ?? 0,
-          createdAt: v.created_at,
-          updatedAt: v.updated_at || v.created_at,
-        });
-        variantsMap.set(v.product_id, list);
+    if (pErr) throw new Error(`Failed to load products from database: ${pErr.message}`);
+    if (vErr) throw new Error(`Failed to load product variants from database: ${vErr.message}`);
+
+    const variantsMap = new Map<string, ProductVariant[]>();
+    (variantsData || []).forEach((v) => {
+      const list = variantsMap.get(v.product_id) || [];
+      list.push({
+        id: v.id,
+        productId: v.product_id,
+        sku: v.sku,
+        size: v.size,
+        color: v.color,
+        colorDisplay: v.color_display ?? undefined,
+        stockQuantity: v.stock_quantity,
+        pricePaise: Number(v.price_paise),
+        compareAtPricePaise: Number(v.compare_at_price_paise || 0),
+        providerCostPaise: Number(v.provider_cost_paise || 0),
+        availabilityStatus: v.availability_status || "available",
+        isActive: v.is_active,
+        weightGrams: v.weight_grams ?? 0,
+        sortOrder: v.sort_order ?? 0,
+        createdAt: v.created_at,
+        updatedAt: v.updated_at || v.created_at,
       });
+      variantsMap.set(v.product_id, list);
+    });
 
-      return productsData.map((p) => ({
-        id: p.id,
-        slug: p.slug,
-        title: p.title,
-        subtitle: p.subtitle ?? undefined,
-        description: p.description ?? undefined,
-        status: p.status as ProductStatus,
-        basePricePaise: Number(p.base_price_paise),
-        currency: p.currency,
-        materials: p.materials ?? undefined,
-        category: p.category ?? "wearables",
-        collectionId: p.collection_id ?? undefined,
-        gender: p.gender ?? "unisex",
-        isFeatured: Boolean(p.is_featured),
-        publishedAt: p.published_at ?? undefined,
-        seoTitle: p.seo_title ?? undefined,
-        seoDescription: p.seo_description ?? undefined,
-        primaryImageUrl: p.primary_image_url ?? undefined,
-        galleryJson: (p.gallery_json as { src: string; alt?: string; caption?: string }[]) || [],
-        createdAt: p.created_at,
-        updatedAt: p.updated_at || p.created_at,
-        variants: variantsMap.get(p.id) || [],
-      }));
-    }
+    return (productsData || []).map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      subtitle: p.subtitle ?? undefined,
+      description: p.description ?? undefined,
+      status: p.status as ProductStatus,
+      basePricePaise: Number(p.base_price_paise),
+      currency: p.currency,
+      materials: p.materials ?? undefined,
+      category: p.category ?? "wearables",
+      collectionId: p.collection_id ?? undefined,
+      gender: p.gender ?? "unisex",
+      isFeatured: Boolean(p.is_featured),
+      publishedAt: p.published_at ?? undefined,
+      seoTitle: p.seo_title ?? undefined,
+      seoDescription: p.seo_description ?? undefined,
+      primaryImageUrl: p.primary_image_url ?? undefined,
+      galleryJson: (p.gallery_json as { src: string; alt?: string; caption?: string }[]) || [],
+      createdAt: p.created_at,
+      updatedAt: p.updated_at || p.created_at,
+      variants: variantsMap.get(p.id) || [],
+    }));
   }
 
   seedMemoryStoreIfNeeded();
@@ -542,26 +543,26 @@ export async function getWearablesOverviewStats(): Promise<WearablesOverviewStat
 export async function getAllCollectionsAdmin(): Promise<Collection[]> {
   if (hasSupabaseConfig()) {
     const serviceClient = createSupabaseServiceClient();
-    if (!serviceClient) return [];
+    if (!serviceClient) throw new Error("Supabase service client is not configured");
 
-    const { data } = await serviceClient.from("collections").select("*").order("sort_order", { ascending: true });
-    if (data) {
-      return data.map((c) => ({
-        id: c.id,
-        name: c.name,
-        slug: c.slug,
-        description: c.description ?? undefined,
-        story: c.story ?? undefined,
-        status: (c.status as CollectionStatus) || "draft",
-        startDate: c.start_date ?? undefined,
-        endDate: c.end_date ?? undefined,
-        heroImageUrl: c.hero_image_url ?? undefined,
-        mediaJson: c.media_json || [],
-        sortOrder: c.sort_order ?? 0,
-        createdAt: c.created_at,
-        updatedAt: c.updated_at || c.created_at,
-      }));
-    }
+    const { data, error } = await serviceClient.from("collections").select("*").order("sort_order", { ascending: true });
+    if (error) throw new Error(`Failed to load collections from database: ${error.message}`);
+
+    return (data || []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      description: c.description ?? undefined,
+      story: c.story ?? undefined,
+      status: (c.status as CollectionStatus) || "draft",
+      startDate: c.start_date ?? undefined,
+      endDate: c.end_date ?? undefined,
+      heroImageUrl: c.hero_image_url ?? undefined,
+      mediaJson: c.media_json || [],
+      sortOrder: c.sort_order ?? 0,
+      createdAt: c.created_at,
+      updatedAt: c.updated_at || c.created_at,
+    }));
   }
 
   seedMemoryStoreIfNeeded();
@@ -684,20 +685,37 @@ export async function saveProductAdmin(
     }
   }
 
-  // Validate SKU uniqueness in memory
+  // Validate SKU uniqueness and non-empty size/color in memory
   const skuSet = new Set<string>();
   for (const v of inputVariants) {
-    if (v.sku) {
-      const norm = v.sku.trim().toUpperCase();
-      if (skuSet.has(norm)) {
-        return { ok: false, error: `Duplicate variant SKU '${v.sku}' in payload` };
-      }
-      skuSet.add(norm);
+    if (!v.sku || v.sku.trim() === "") {
+      return { ok: false, error: "Variant SKU is required and cannot be empty" };
+    }
+    const sizeVal = v.size?.trim();
+    if (!sizeVal) {
+      return { ok: false, error: `Variant SKU '${v.sku}' has empty size — size is required` };
+    }
+    const colorVal = v.color?.trim();
+    if (!colorVal) {
+      return { ok: false, error: `Variant SKU '${v.sku}' has empty color — color is required` };
+    }
+    const norm = v.sku.trim().toUpperCase();
+    if (skuSet.has(norm)) {
+      return { ok: false, error: `Duplicate variant SKU '${v.sku}' in payload` };
+    }
+    skuSet.add(norm);
 
-      for (const [_, varItem] of memoryVariants.entries()) {
-        if (varItem.sku.toUpperCase() === norm && varItem.id !== v.id && varItem.productId !== productId) {
-          return { ok: false, error: `Variant SKU '${v.sku}' is already assigned to another product` };
-        }
+    for (const [, varItem] of memoryVariants.entries()) {
+      if (varItem.sku.toUpperCase() === norm && varItem.id !== v.id && varItem.productId !== productId) {
+        return { ok: false, error: `Variant SKU '${v.sku}' is already assigned to another product` };
+      }
+    }
+
+    // CROSS-PRODUCT VARIANT ID PROTECTION IN MEMORY
+    if (v.id) {
+      const existingById = memoryVariants.get(v.id);
+      if (existingById && existingById.productId !== productId) {
+        return { ok: false, error: "variant_product_mismatch: submitted variant ID belongs to a different product" };
       }
     }
   }

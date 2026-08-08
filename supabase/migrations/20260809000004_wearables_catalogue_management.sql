@@ -273,22 +273,40 @@ BEGIN
     FOR v_variant_elem IN SELECT * FROM jsonb_array_elements(p_variants) LOOP
       v_variant_id := COALESCE((v_variant_elem->>'id')::UUID, gen_random_uuid());
       v_sku := UPPER(TRIM(v_variant_elem->>'sku'));
-      v_size := COALESCE(TRIM(v_variant_elem->>'size'), 'S');
-      v_color := COALESCE(TRIM(v_variant_elem->>'color'), 'black');
+      v_size := TRIM(v_variant_elem->>'size');
+      v_color := TRIM(v_variant_elem->>'color');
       v_price_paise := COALESCE((v_variant_elem->>'pricePaise')::BIGINT, 0);
       v_cost_paise := COALESCE((v_variant_elem->>'providerCostPaise')::BIGINT, 0);
       v_compare_paise := COALESCE((v_variant_elem->>'compareAtPricePaise')::BIGINT, 0);
       v_avail := COALESCE(v_variant_elem->>'availabilityStatus', 'available');
       v_is_active := COALESCE((v_variant_elem->>'isActive')::BOOLEAN, true);
 
+      -- Structural validation: reject blank SKU, size, or color
       IF v_sku IS NULL OR v_sku = '' THEN
-        RAISE EXCEPTION 'Variant SKU is required';
+        RETURN jsonb_build_object('ok', false, 'error', 'Variant SKU is required and cannot be empty');
+      END IF;
+      IF v_size IS NULL OR v_size = '' THEN
+        RETURN jsonb_build_object('ok', false, 'error', format('Variant SKU ''%s'' has empty size — size is required', v_sku));
+      END IF;
+      IF v_color IS NULL OR v_color = '' THEN
+        RETURN jsonb_build_object('ok', false, 'error', format('Variant SKU ''%s'' has empty color — color is required', v_sku));
       END IF;
       IF v_price_paise < 0 THEN
-        RAISE EXCEPTION 'Variant price cannot be negative';
+        RETURN jsonb_build_object('ok', false, 'error', format('Variant SKU ''%s'' price cannot be negative', v_sku));
       END IF;
       IF v_cost_paise < 0 THEN
-        RAISE EXCEPTION 'Variant provider cost cannot be negative';
+        RETURN jsonb_build_object('ok', false, 'error', format('Variant SKU ''%s'' provider cost cannot be negative', v_sku));
+      END IF;
+
+      -- CROSS-PRODUCT VARIANT ID PROTECTION:
+      -- If a variant row already exists with this ID but belongs to a DIFFERENT product,
+      -- reject the entire operation (variant_product_mismatch). Never allow product A's
+      -- save request to mutate product B's variant row.
+      IF EXISTS (
+        SELECT 1 FROM public.product_variants
+        WHERE id = v_variant_id AND product_id != v_product_id
+      ) THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'variant_product_mismatch: submitted variant ID belongs to a different product');
       END IF;
 
       -- Check SKU uniqueness across OTHER products
@@ -298,7 +316,7 @@ BEGIN
       LIMIT 1;
 
       IF v_conflicting_sku IS NOT NULL THEN
-        RAISE EXCEPTION 'Variant SKU ''%'' is assigned to another product', v_sku;
+        RETURN jsonb_build_object('ok', false, 'error', format('Variant SKU ''%s'' is already assigned to another product', v_sku));
       END IF;
 
       INSERT INTO public.product_variants (
@@ -336,7 +354,9 @@ BEGIN
         is_active = EXCLUDED.is_active,
         weight_grams = EXCLUDED.weight_grams,
         sort_order = EXCLUDED.sort_order,
-        updated_at = now();
+        updated_at = now()
+        -- product_id is intentionally NOT updated: product ownership cannot change via ON CONFLICT
+        WHERE product_variants.product_id = v_product_id;
 
       v_submitted_variant_ids := array_append(v_submitted_variant_ids, v_variant_id);
     END LOOP;

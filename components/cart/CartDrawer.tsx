@@ -19,6 +19,7 @@ export function CartDrawer() {
     subtotal,
     currency,
     setQuantity,
+    removeLine,
     hydrated,
   } = useCart();
   const panelRef = useRef<HTMLElement>(null);
@@ -85,14 +86,20 @@ export function CartDrawer() {
             <p className="cart-drawer__empty">Your cart is empty.</p>
           ) : (
             <ul className="cart-drawer__lines">
-              {resolvedLines.map(({ line, product }) => (
-                <CartLineItem
-                  key={line.slug}
-                  line={line}
-                  product={product}
-                  onQuantityChange={(qty) => setQuantity(line.slug, qty)}
-                />
-              ))}
+              {resolvedLines.map(({ line, product }) => {
+                // Primary key: variantId; SKU fallback; slug-size-color last resort
+                const lineKey = line.variantId ?? line.sku ?? `${line.slug}-${line.size}-${line.color}`;
+                const quantityKey = line.variantId ?? line.sku ?? line.slug;
+                return (
+                  <CartLineItem
+                    key={lineKey}
+                    line={line}
+                    product={product}
+                    onQuantityChange={(qty) => setQuantity(quantityKey, qty)}
+                    onRemove={() => removeLine(quantityKey)}
+                  />
+                );
+              })}
             </ul>
           )}
         </div>

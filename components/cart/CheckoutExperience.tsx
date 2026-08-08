@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCart } from "@/contexts/cart";
 import { submitCreateOrder } from "@/lib/checkout/client";
@@ -70,7 +70,12 @@ export function CheckoutExperience() {
       const result = await submitCreateOrder({
         items: resolvedLines.map(({ line }) => ({
           slug: line.slug,
+          variantId: line.variantId,
+          sku: line.sku,
+          size: line.size,
+          color: line.color,
           quantity: line.quantity,
+          // Do NOT send client price — server resolves authoritatively
         })),
         customer,
         paymentMethod,
@@ -242,31 +247,41 @@ export function CheckoutExperience() {
         <aside className="checkout-summary" aria-label="Order summary">
           <p className="brand-eyebrow">Your order</p>
           <ul className="checkout-summary__lines">
-            {resolvedLines.map(({ line, product }) => (
-              <li key={line.slug} className="checkout-summary__line">
-                <div className="checkout-summary__thumb">
-                  <AscendImage
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    sizes="72px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="checkout-summary__meta">
-                  <Link
-                    href={BRAND_ROUTES.drop(line.slug)}
-                    className="checkout-summary__name"
-                  >
-                    {product.name}
-                  </Link>
-                  <p className="checkout-summary__qty">Qty {line.quantity}</p>
-                </div>
-                <p className="checkout-summary__price">
-                  {formatMoney(product.price * line.quantity, product.currency)}
-                </p>
-              </li>
-            ))}
+            {resolvedLines.map(({ line, product }) => {
+              const lineKey = line.variantId ?? line.sku ?? `${line.slug}-${line.size}-${line.color}`;
+              const unitPrice = line.pricePaise != null ? line.pricePaise / 100 : product.price;
+              const lineCurrency = line.currency ?? product.currency;
+              return (
+                <li key={lineKey} className="checkout-summary__line">
+                  <div className="checkout-summary__thumb">
+                    <AscendImage
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      sizes="72px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="checkout-summary__meta">
+                    <Link
+                      href={BRAND_ROUTES.drop(line.slug)}
+                      className="checkout-summary__name"
+                    >
+                      {product.name}
+                    </Link>
+                    {(line.size || line.color) && (
+                      <p className="checkout-summary__variant text-xs text-white/40 font-mono">
+                        {[line.size, line.color].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    <p className="checkout-summary__qty">Qty {line.quantity}</p>
+                  </div>
+                  <p className="checkout-summary__price">
+                    {formatMoney(unitPrice * line.quantity, lineCurrency)}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
           <div className="checkout-summary__total">
             <span>Total</span>

@@ -5,6 +5,12 @@ export type CartLine = {
   size?: string;
   color?: string;
   quantity: number;
+  // Display snapshot — carried in the cart line itself so DB-only products render correctly
+  title?: string;
+  image?: string;
+  priceDisplay?: string;
+  currency?: string;
+  pricePaise?: number;
 };
 
 export type CartProduct = {
