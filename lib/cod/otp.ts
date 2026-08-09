@@ -104,6 +104,16 @@ export async function createOtpChallengeAdmin(
       await supabase.rpc("mark_cod_otp_challenge_failed", { p_challenge_id: challengeId });
       return { ok: false, error: `otp_transport_delivery_failed: ${transportRes.error || "Delivery failed"}` };
     }
+
+    // Mark challenge sent atomically (Requirement #1)
+    const { data: sentRes, error: sentErr } = await supabase.rpc("mark_cod_otp_challenge_sent", {
+      p_challenge_id: challengeId,
+    });
+    if (sentErr || !sentRes || !(sentRes as { ok?: boolean }).ok) {
+      await supabase.rpc("mark_cod_otp_challenge_failed", { p_challenge_id: challengeId });
+      const errStr = (sentRes as { error?: string })?.error || sentErr?.message || "Failed to mark challenge sent";
+      return { ok: false, error: `otp_sent_status_failed: ${errStr}` };
+    }
   } else {
     // Memory fallback with 60s cooldown & resend throttling
     const existing = memoryOtpChallenges.get(orderId);

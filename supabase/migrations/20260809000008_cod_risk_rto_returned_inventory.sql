@@ -12,12 +12,11 @@
 ALTER FUNCTION public.is_valid_fulfillment_status_transition(TEXT, TEXT)
   SET search_path = pg_catalog;
 
--- 2. Deterministic SQL Phone Normalization Helper
+-- 2. Deterministic SQL Phone Normalization Helper (Pure invoker helper, non-SECURITY DEFINER)
 CREATE OR REPLACE FUNCTION public.normalize_phone(p_phone TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
 IMMUTABLE
-SECURITY DEFINER
 SET search_path = pg_catalog, public
 AS $$
 DECLARE
@@ -95,7 +94,7 @@ CREATE TABLE IF NOT EXISTS public.cod_advance_payments (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   captured_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT idx_unique_cod_advance_order_provider UNIQUE (order_id, provider_order_id)
+  CONSTRAINT idx_unique_cod_advance_order_provider UNIQUE (provider, provider_order_id)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cod_advance_payments_payment_id 
@@ -105,6 +104,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_cod_advance_payments_payment_id
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cod_advance_payments_provider_event 
   ON public.cod_advance_payments(provider_event_id) 
   WHERE provider_event_id IS NOT NULL;
+
+-- Foreign Key from orders to cod_advance_payments
+ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS fk_orders_advance_payment;
+ALTER TABLE public.orders ADD CONSTRAINT fk_orders_advance_payment 
+  FOREIGN KEY (advance_payment_id) REFERENCES public.cod_advance_payments(id) ON DELETE SET NULL;
 
 -- 6. Durable COD Lifecycle Events Table
 CREATE TABLE IF NOT EXISTS public.cod_lifecycle_events (
@@ -142,7 +146,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_cod_risk_profiles_phone
 CREATE INDEX IF NOT EXISTS idx_cod_risk_profiles_customer 
   ON public.cod_risk_profiles(customer_id);
 
--- 8. ALTER Existing Phase 2 Table: returned_inventory (Fix Legacy NOT NULL Contract)
+-- 8. ALTER Existing Phase 2 Table: returned_inventory (Fix Legacy NOT NULL Contract & Inspection Contract)
 -- Live Phase 2 schema has: id (UUID), return_id (UUID NOT NULL), variant_id (UUID), condition (TEXT), disposition (TEXT NOT NULL), created_at (TIMESTAMPTZ)
 ALTER TABLE public.returned_inventory ALTER COLUMN return_id DROP NOT NULL;
 ALTER TABLE public.returned_inventory ALTER COLUMN disposition DROP NOT NULL;
@@ -171,6 +175,13 @@ ALTER TABLE public.returned_inventory
 ALTER TABLE public.returned_inventory DROP CONSTRAINT IF EXISTS returned_inventory_reuse_status_check;
 ALTER TABLE public.returned_inventory ADD CONSTRAINT returned_inventory_reuse_status_check CHECK (
   reuse_status IN ('AWAITING_RECEIPT', 'RECEIVED', 'INSPECTION_REQUIRED', 'REUSABLE', 'RESERVED', 'REUSED', 'DAMAGED', 'DISPOSED')
+);
+
+-- Inspection-Only DB Contract (Requirement #16)
+ALTER TABLE public.returned_inventory DROP CONSTRAINT IF EXISTS check_returned_inventory_reusable_identity;
+ALTER TABLE public.returned_inventory ADD CONSTRAINT check_returned_inventory_reusable_identity CHECK (
+  (reuse_status = 'REUSABLE' AND reuse_eligible = true AND manufacturing_identity_hash IS NOT NULL AND trim(manufacturing_identity_hash) <> '' AND manufacturing_snapshot_json IS NOT NULL AND manufacturing_snapshot_json <> '{}'::jsonb)
+  OR (reuse_status <> 'REUSABLE' OR reuse_eligible = false)
 );
 
 CREATE INDEX IF NOT EXISTS idx_returned_inventory_mfg_hash 
@@ -235,7 +246,7 @@ GRANT ALL ON public.cod_otp_challenges TO service_role;
 GRANT ALL ON public.delivery_outcome_events TO service_role;
 GRANT ALL ON public.returned_inventory TO service_role;
 
--- 12. Canonical COD Status Transition Validator
+-- 12. Canonical COD Status Transition Validator (Pure invoker helper, non-SECURITY DEFINER)
 CREATE OR REPLACE FUNCTION public.is_valid_cod_status_transition(
   p_current_status TEXT,
   p_target_status TEXT
@@ -243,7 +254,6 @@ CREATE OR REPLACE FUNCTION public.is_valid_cod_status_transition(
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 IMMUTABLE
-SECURITY DEFINER
 SET search_path = pg_catalog, public
 AS $$
 BEGIN
@@ -324,7 +334,7 @@ BEGIN
 
   v_phone := public.normalize_phone(v_order.shipping_address->>'phone');
 
-  -- Exactly-Once COD Lifecycle Event Counter Accounting
+  -- Exactly-Once COD Lifecycle Event Counter Accounting (Requirement #5)
   IF v_phone IS NOT NULL THEN
     INSERT INTO public.cod_lifecycle_events (order_id, event_type)
     VALUES (p_order_id, 'COD_INITIALIZED')
@@ -355,13 +365,14 @@ BEGIN
     END IF;
   END IF;
 
-  -- Atomic set_prepaid_only update
+  -- Atomic set_prepaid_only update (Requirement #6)
   IF p_target_status = 'COD_PREPAID_ONLY' AND v_phone IS NOT NULL THEN
-    INSERT INTO public.cod_risk_profiles (phone_normalized, prepaid_only, risk_band, is_cod_eligible, updated_at)
-    VALUES (v_phone, true, 'PREPAID_ONLY', false, now())
+    INSERT INTO public.cod_risk_profiles (phone_normalized, prepaid_only, risk_band, risk_score, is_cod_eligible, updated_at)
+    VALUES (v_phone, true, 'PREPAID_ONLY', 90, false, now())
     ON CONFLICT (phone_normalized) DO UPDATE
     SET prepaid_only = true,
         risk_band = 'PREPAID_ONLY',
+        risk_score = 90,
         is_cod_eligible = false,
         updated_at = now();
   END IF;
@@ -431,11 +442,12 @@ BEGIN
 
   v_phone := public.normalize_phone(v_order.shipping_address->>'phone');
   IF p_target_status = 'COD_PREPAID_ONLY' AND v_phone IS NOT NULL THEN
-    INSERT INTO public.cod_risk_profiles (phone_normalized, prepaid_only, risk_band, is_cod_eligible, updated_at)
-    VALUES (v_phone, true, 'PREPAID_ONLY', false, now())
+    INSERT INTO public.cod_risk_profiles (phone_normalized, prepaid_only, risk_band, risk_score, is_cod_eligible, updated_at)
+    VALUES (v_phone, true, 'PREPAID_ONLY', 90, false, now())
     ON CONFLICT (phone_normalized) DO UPDATE
     SET prepaid_only = true,
         risk_band = 'PREPAID_ONLY',
+        risk_score = 90,
         is_cod_eligible = false,
         updated_at = now();
   END IF;
@@ -473,7 +485,7 @@ SET search_path = pg_catalog, public
 AS $$
 DECLARE
   v_order RECORD;
-  v_active RECORD;
+  v_latest RECORD;
   v_resend_count INT := 1;
   v_challenge_id UUID;
 BEGIN
@@ -482,30 +494,42 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'order_not_found');
   END IF;
 
+  IF v_order.payment_method <> 'cod' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'order_not_cod');
+  END IF;
+
   IF v_order.cod_confirmation_token_hash IS NULL OR v_order.cod_confirmation_token_hash <> p_token_hash THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_confirmation_token');
   END IF;
 
-  SELECT * INTO v_active
+  -- Rejects OTP creation from terminal or advanced decision states (Requirement #2)
+  IF v_order.cod_status IN ('COD_APPROVED', 'COD_REJECTED', 'COD_PREPAID_ONLY', 'COD_ADVANCE_REQUIRED', 'COD_ADVANCE_PENDING', 'COD_HELD') THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'cannot_create_otp_in_terminal_or_advanced_state');
+  END IF;
+
+  -- Query latest OTP challenge for order REGARDLESS of delivery_status or consumed_at (Requirement #3)
+  SELECT * INTO v_latest
   FROM public.cod_otp_challenges
-  WHERE order_id = p_order_id AND consumed_at IS NULL AND delivery_status IN ('pending', 'sent')
+  WHERE order_id = p_order_id
   ORDER BY created_at DESC
   LIMIT 1
   FOR UPDATE;
 
   IF FOUND THEN
-    IF v_active.sent_at > (now() - INTERVAL '60 seconds') THEN
+    IF v_latest.created_at > (now() - INTERVAL '60 seconds') THEN
       RETURN jsonb_build_object('ok', false, 'error', 'otp_resend_cooldown_active');
     END IF;
 
-    IF v_active.resend_count >= 3 THEN
+    IF v_latest.resend_count >= 3 THEN
       RETURN jsonb_build_object('ok', false, 'error', 'otp_max_resends_exceeded');
     END IF;
 
-    v_resend_count := v_active.resend_count + 1;
-    UPDATE public.cod_otp_challenges
-    SET consumed_at = now()
-    WHERE id = v_active.id;
+    v_resend_count := v_latest.resend_count + 1;
+    IF v_latest.consumed_at IS NULL THEN
+      UPDATE public.cod_otp_challenges
+      SET consumed_at = now()
+      WHERE id = v_latest.id;
+    END IF;
   END IF;
 
   INSERT INTO public.cod_otp_challenges (
@@ -516,6 +540,9 @@ BEGIN
   RETURNING id INTO v_challenge_id;
 
   UPDATE public.orders SET cod_status = 'COD_OTP_PENDING' WHERE id = p_order_id;
+
+  -- Exactly-once COD_INITIALIZED accounting
+  PERFORM public.apply_cod_decision_with_audit(p_order_id, 'COD_OTP_PENDING', 'OTP Challenge Created');
 
   INSERT INTO public.audit_logs (action, entity_type, entity_id, details_json, created_at)
   VALUES (
@@ -530,7 +557,45 @@ BEGIN
 END;
 $$;
 
--- 16. Atomic RPC: mark_cod_otp_challenge_failed
+-- 16. Atomic RPC: mark_cod_otp_challenge_sent (Requirement #1)
+CREATE OR REPLACE FUNCTION public.mark_cod_otp_challenge_sent(
+  p_challenge_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+  v_chal RECORD;
+BEGIN
+  SELECT * INTO v_chal FROM public.cod_otp_challenges WHERE id = p_challenge_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'challenge_not_found');
+  END IF;
+
+  IF v_chal.consumed_at IS NOT NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'challenge_already_consumed');
+  END IF;
+
+  IF v_chal.delivery_status = 'sent' THEN
+    RETURN jsonb_build_object('ok', true, 'already_sent', true, 'challenge_id', p_challenge_id);
+  END IF;
+
+  IF v_chal.delivery_status <> 'pending' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'challenge_status_not_pending');
+  END IF;
+
+  UPDATE public.cod_otp_challenges
+  SET delivery_status = 'sent',
+      sent_at = now()
+  WHERE id = p_challenge_id;
+
+  RETURN jsonb_build_object('ok', true, 'already_sent', false, 'challenge_id', p_challenge_id);
+END;
+$$;
+
+-- 17. Atomic RPC: mark_cod_otp_challenge_failed
 CREATE OR REPLACE FUNCTION public.mark_cod_otp_challenge_failed(
   p_challenge_id UUID
 )
@@ -549,7 +614,7 @@ BEGIN
 END;
 $$;
 
--- 17. Atomic SECURITY DEFINER RPC: verify_cod_otp_and_apply_decision_with_audit
+-- 18. Atomic SECURITY DEFINER RPC: verify_cod_otp_and_apply_decision_with_audit (Requirement #4)
 CREATE OR REPLACE FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(
   p_order_id TEXT,
   p_token_hash TEXT,
@@ -569,8 +634,10 @@ DECLARE
   v_target_status TEXT := 'COD_APPROVED';
   v_advance_req BOOLEAN := FALSE;
   v_advance_amt BIGINT := 0;
-  v_init_event RECORD;
   v_conf_event RECORD;
+  v_item_count INT := 0;
+  v_today_exposure BIGINT := 0;
+  v_today_kolkata TEXT;
 BEGIN
   SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
   IF NOT FOUND THEN
@@ -608,20 +675,33 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_otp', 'remaining_attempts', (v_challenge.max_attempts - (v_challenge.attempts + 1)));
   END IF;
 
-  -- OTP Verified! Compute Authoritative COD Decision inside transaction
+  -- OTP Verified! Compute Authoritative COD Decision matching TS policy exactly (Requirement #4)
   v_phone := public.normalize_phone(v_order.shipping_address->>'phone');
   IF v_phone IS NOT NULL THEN
     SELECT * INTO v_profile FROM public.cod_risk_profiles WHERE phone_normalized = v_phone;
   END IF;
 
-  IF v_profile.prepaid_only OR (v_profile.rto_count IS NOT NULL AND v_profile.rto_count >= 2) THEN
+  -- Compute total item quantity
+  SELECT COALESCE(SUM(quantity), 0) INTO v_item_count FROM public.order_items WHERE order_id = p_order_id;
+
+  -- Calculate Asia/Kolkata daily active COD exposure
+  v_today_kolkata := to_char(now() AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD');
+  SELECT COALESCE(SUM(total_paise), 0) INTO v_today_exposure
+  FROM public.orders
+  WHERE payment_method = 'cod'
+    AND cod_status IN ('COD_APPROVED', 'COD_CONFIRMED', 'COD_ADVANCE_PENDING')
+    AND to_char(created_at AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD') = v_today_kolkata;
+
+  IF v_profile.prepaid_only OR (COALESCE(v_profile.rto_count, 0) >= 2) THEN
     v_target_status := 'COD_PREPAID_ONLY';
-  ELSIF v_profile.manual_hold THEN
+  ELSIF COALESCE(v_profile.manual_hold, false) OR v_today_exposure >= 5000000 THEN
     v_target_status := 'COD_HELD';
-  ELSIF v_order.total_paise > 500000 OR (v_profile.rto_count IS NOT NULL AND v_profile.rto_count > 0) OR (v_profile.refused_count IS NOT NULL AND v_profile.refused_count > 0) THEN
+  ELSIF v_order.total_paise > 500000 OR v_item_count > 3 OR COALESCE(v_profile.rto_count, 0) > 0 OR COALESCE(v_profile.refused_count, 0) > 0 THEN
     v_target_status := 'COD_ADVANCE_REQUIRED';
     v_advance_req := TRUE;
-    v_advance_amt := 200000; -- ₹2,000 booking advance
+    v_advance_amt := 20000; -- ₹200 default high-risk booking advance (Requirement #4)
+  ELSIF COALESCE(v_profile.successful_cod_deliveries, 0) >= 2 AND COALESCE(v_profile.rto_count, 0) = 0 THEN
+    v_target_status := 'COD_APPROVED';
   ELSE
     v_target_status := 'COD_APPROVED';
   END IF;
@@ -640,18 +720,20 @@ BEGIN
       updated_at = now()
   WHERE id = p_order_id;
 
-  -- Pre-create advance row if advance required
-  IF v_advance_req THEN
-    INSERT INTO public.cod_advance_payments (
-      order_id, provider, provider_order_id, expected_amount_paise, status, created_at
-    ) VALUES (
-      p_order_id, 'razorpay', 'rzp_pending_' || p_order_id, v_advance_amt, 'created', now()
-    )
-    ON CONFLICT (order_id, provider_order_id) DO NOTHING;
+  -- Atomic prepaid_only update if needed (Requirement #6)
+  IF v_target_status = 'COD_PREPAID_ONLY' AND v_phone IS NOT NULL THEN
+    INSERT INTO public.cod_risk_profiles (phone_normalized, prepaid_only, risk_band, risk_score, is_cod_eligible, updated_at)
+    VALUES (v_phone, true, 'PREPAID_ONLY', 90, false, now())
+    ON CONFLICT (phone_normalized) DO UPDATE
+    SET prepaid_only = true,
+        risk_band = 'PREPAID_ONLY',
+        risk_score = 90,
+        is_cod_eligible = false,
+        updated_at = now();
   END IF;
 
-  -- Exactly-Once Counter Updates
-  IF v_phone IS NOT NULL THEN
+  -- Exactly-Once Counter Updates: COD_CONFIRMED ONLY when target is COD_APPROVED or COD_CONFIRMED (Requirement #5)
+  IF v_phone IS NOT NULL AND v_target_status IN ('COD_CONFIRMED', 'COD_APPROVED') THEN
     INSERT INTO public.cod_lifecycle_events (order_id, event_type)
     VALUES (p_order_id, 'COD_CONFIRMED')
     ON CONFLICT DO NOTHING
@@ -679,7 +761,7 @@ BEGIN
 END;
 $$;
 
--- 18. Atomic SECURITY DEFINER RPC: capture_cod_advance_with_audit
+-- 19. Atomic SECURITY DEFINER RPC: capture_cod_advance_with_audit (Requirements #11 & #12)
 CREATE OR REPLACE FUNCTION public.capture_cod_advance_with_audit(
   p_order_id TEXT,
   p_provider_order_id TEXT,
@@ -702,41 +784,48 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'order_not_found');
   END IF;
 
-  IF NOT v_order.advance_required THEN
+  IF v_order.payment_method <> 'cod' OR NOT v_order.advance_required THEN
     RETURN jsonb_build_object('ok', false, 'error', 'advance_not_required_for_order');
+  END IF;
+
+  IF v_order.cod_status NOT IN ('COD_ADVANCE_REQUIRED', 'COD_ADVANCE_PENDING') THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'order_not_in_advance_pending_state');
   END IF;
 
   IF v_order.advance_amount_paise <> p_captured_amount_paise THEN
     RETURN jsonb_build_object('ok', false, 'error', 'captured_amount_mismatch');
   END IF;
 
-  -- Lock pre-created or existing advance payment row
+  -- Lock PRE-CREATED advance payment row (Requirement #11: NO ELSE INSERT)
   SELECT * INTO v_advance_row
   FROM public.cod_advance_payments
-  WHERE order_id = p_order_id AND provider_order_id = p_provider_order_id
+  WHERE order_id = p_order_id AND provider_order_id = p_provider_order_id AND provider = 'razorpay'
   FOR UPDATE;
 
-  IF FOUND AND v_advance_row.status = 'captured' AND v_advance_row.provider_payment_id = p_provider_payment_id THEN
-    RETURN jsonb_build_object('ok', true, 'already_captured', true, 'order_id', p_order_id);
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'advance_payment_row_not_found');
   END IF;
 
-  IF FOUND THEN
-    UPDATE public.cod_advance_payments
-    SET provider_payment_id = p_provider_payment_id,
-        provider_event_id = p_provider_event_id,
-        captured_amount_paise = p_captured_amount_paise,
-        status = 'captured',
-        captured_at = now(),
-        updated_at = now()
-    WHERE id = v_advance_row.id;
-  ELSE
-    INSERT INTO public.cod_advance_payments (
-      order_id, provider, provider_order_id, provider_payment_id, provider_event_id, expected_amount_paise, captured_amount_paise, status, captured_at
-    ) VALUES (
-      p_order_id, 'razorpay', p_provider_order_id, p_provider_payment_id, p_provider_event_id, v_order.advance_amount_paise, p_captured_amount_paise, 'captured', now()
-    )
-    RETURNING * INTO v_advance_row;
+  IF v_advance_row.expected_amount_paise <> p_captured_amount_paise THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'captured_amount_mismatch');
   END IF;
+
+  IF v_advance_row.status = 'captured' THEN
+    IF v_advance_row.provider_payment_id = p_provider_payment_id THEN
+      RETURN jsonb_build_object('ok', true, 'already_captured', true, 'order_id', p_order_id);
+    ELSE
+      RETURN jsonb_build_object('ok', false, 'error', 'provider_payment_rebound');
+    END IF;
+  END IF;
+
+  UPDATE public.cod_advance_payments
+  SET provider_payment_id = p_provider_payment_id,
+      provider_event_id = p_provider_event_id,
+      captured_amount_paise = p_captured_amount_paise,
+      status = 'captured',
+      captured_at = now(),
+      updated_at = now()
+  WHERE id = v_advance_row.id;
 
   UPDATE public.orders
   SET cod_status = 'COD_APPROVED',
@@ -763,7 +852,7 @@ BEGIN
 END;
 $$;
 
--- 19. Atomic SECURITY DEFINER RPC: save_returned_inventory_with_audit
+-- 20. Atomic SECURITY DEFINER RPC: save_returned_inventory_with_audit (Requirement #17: Identity Rebound Protection)
 CREATE OR REPLACE FUNCTION public.save_returned_inventory_with_audit(
   p_id UUID,
   p_source_order_id TEXT,
@@ -790,32 +879,37 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = pg_catalog, public
 AS $$
+DECLARE
+  v_existing RECORD;
 BEGIN
-  IF p_manufacturing_identity_hash IS NULL OR trim(p_manufacturing_identity_hash) = '' THEN
-    RAISE EXCEPTION 'Manufacturing identity hash is required for returned inventory';
-  END IF;
+  SELECT * INTO v_existing FROM public.returned_inventory WHERE id = p_id FOR UPDATE;
 
-  IF p_manufacturing_snapshot_json IS NULL OR p_manufacturing_snapshot_json = '{}'::jsonb THEN
-    RAISE EXCEPTION 'Manufacturing snapshot JSON is required for returned inventory';
-  END IF;
+  IF FOUND THEN
+    -- Identity rebound protection: reject changing physical identity if already set
+    IF (v_existing.manufacturing_identity_hash IS NOT NULL AND v_existing.manufacturing_identity_hash <> p_manufacturing_identity_hash) OR
+       (v_existing.product_id IS NOT NULL AND v_existing.product_id <> p_product_id) OR
+       (v_existing.variant_id IS NOT NULL AND v_existing.variant_id <> p_variant_id) THEN
+      RAISE EXCEPTION 'Cannot modify immutable manufacturing identity of existing returned inventory item %', p_id;
+    END IF;
 
-  INSERT INTO public.returned_inventory (
-    id, source_order_id, source_order_item_id, fulfillment_id, product_id, variant_id, design_id, design_version,
-    sku, size, color, condition, manufacturing_identity_hash, manufacturing_snapshot_json, received_at,
-    reuse_status, reuse_eligible, notes, updated_at
-  ) VALUES (
-    p_id, p_source_order_id, p_source_order_item_id, p_fulfillment_id, p_product_id, p_variant_id, p_design_id, p_design_version,
-    p_sku, p_size, p_color, p_condition, p_manufacturing_identity_hash, p_manufacturing_snapshot_json, COALESCE(p_received_at, now()),
-    COALESCE(p_reuse_status, 'REUSABLE'), COALESCE(p_reuse_eligible, true), p_notes, now()
-  )
-  ON CONFLICT (id) DO UPDATE
-  SET condition = EXCLUDED.condition,
-      manufacturing_identity_hash = EXCLUDED.manufacturing_identity_hash,
-      manufacturing_snapshot_json = EXCLUDED.manufacturing_snapshot_json,
-      reuse_status = EXCLUDED.reuse_status,
-      reuse_eligible = EXCLUDED.reuse_eligible,
-      notes = EXCLUDED.notes,
-      updated_at = now();
+    UPDATE public.returned_inventory
+    SET condition = p_condition,
+        reuse_status = COALESCE(p_reuse_status, v_existing.reuse_status),
+        reuse_eligible = COALESCE(p_reuse_eligible, v_existing.reuse_eligible),
+        notes = COALESCE(p_notes, v_existing.notes),
+        updated_at = now()
+    WHERE id = p_id;
+  ELSE
+    INSERT INTO public.returned_inventory (
+      id, source_order_id, source_order_item_id, fulfillment_id, product_id, variant_id, design_id, design_version,
+      sku, size, color, condition, manufacturing_identity_hash, manufacturing_snapshot_json, received_at,
+      reuse_status, reuse_eligible, notes, updated_at
+    ) VALUES (
+      p_id, p_source_order_id, p_source_order_item_id, p_fulfillment_id, p_product_id, p_variant_id, p_design_id, p_design_version,
+      p_sku, p_size, p_color, p_condition, p_manufacturing_identity_hash, p_manufacturing_snapshot_json, COALESCE(p_received_at, now()),
+      COALESCE(p_reuse_status, 'REUSABLE'), COALESCE(p_reuse_eligible, true), p_notes, now()
+    );
+  END IF;
 
   INSERT INTO public.audit_logs (admin_id, action, entity_type, entity_id, details_json, created_at)
   VALUES (
@@ -831,7 +925,7 @@ BEGIN
 END;
 $$;
 
--- 20. Atomic SECURITY DEFINER RPC: record_delivery_outcome_with_audit
+-- 21. Atomic SECURITY DEFINER RPC: record_delivery_outcome_with_audit (Requirements #18, #19, #20)
 CREATE OR REPLACE FUNCTION public.record_delivery_outcome_with_audit(
   p_fulfillment_id UUID,
   p_outcome_type TEXT,
@@ -853,19 +947,23 @@ DECLARE
   v_refused_cnt INT;
   v_cod_succ INT;
   v_band TEXT;
+  v_score INT;
   v_prepaid_only BOOLEAN;
+  v_status_upper TEXT;
 BEGIN
   SELECT * INTO v_ful FROM public.fulfillments WHERE id = p_fulfillment_id FOR UPDATE;
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'error', 'fulfillment_not_found');
   END IF;
 
-  -- Validate outcome type against fulfillment status
-  IF p_outcome_type = 'DELIVERED' AND v_ful.status NOT IN ('in_transit', 'delivered') THEN
+  v_status_upper := upper(COALESCE(v_ful.status, ''));
+
+  -- Validate outcome type against fulfillment status (Uppercase Phase 6 parity, Requirement #18)
+  IF p_outcome_type = 'DELIVERED' AND v_status_upper NOT IN ('IN_TRANSIT', 'DELIVERED') THEN
     RETURN jsonb_build_object('ok', false, 'error', 'fulfillment_status_incompatible_with_delivery');
-  ELSIF p_outcome_type IN ('RTO', 'RETURNED') AND v_ful.status NOT IN ('in_transit', 'rto_initiated', 'returned') THEN
+  ELSIF p_outcome_type IN ('RTO', 'RETURNED') AND v_status_upper NOT IN ('IN_TRANSIT', 'RTO_INITIATED', 'RETURNED') THEN
     RETURN jsonb_build_object('ok', false, 'error', 'fulfillment_status_incompatible_with_rto');
-  ELSIF p_outcome_type = 'REFUSED' AND v_ful.status NOT IN ('in_transit', 'rto_initiated', 'failed') THEN
+  ELSIF p_outcome_type = 'REFUSED' AND v_status_upper NOT IN ('IN_TRANSIT', 'RTO_INITIATED', 'FAILED', 'EXCEPTION') THEN
     RETURN jsonb_build_object('ok', false, 'error', 'fulfillment_status_incompatible_with_refusal');
   END IF;
 
@@ -874,7 +972,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'order_not_found');
   END IF;
 
-  -- Race-Safe Idempotent Outcome Insertion
+  -- Race-Safe Idempotent Outcome Insertion (Requirement #21)
   INSERT INTO public.delivery_outcome_events (
     fulfillment_id, order_id, provider_event_id, outcome_type, outcome_status, details_json, processed_at
   ) VALUES (
@@ -910,21 +1008,28 @@ BEGIN
           last_rto_at = CASE WHEN p_outcome_type IN ('RTO', 'RETURNED', 'REFUSED') THEN now() ELSE public.cod_risk_profiles.last_rto_at END,
           updated_at = now();
     ELSE
+      -- Prepaid order outcome parity (Requirement #20: RTO/refusal incremented for prepaid too)
       INSERT INTO public.cod_risk_profiles (
-        phone_normalized, successful_prepaid_deliveries, last_successful_delivery_at, updated_at
+        phone_normalized, successful_prepaid_deliveries, rto_count, refused_count, last_successful_delivery_at, last_rto_at, updated_at
       ) VALUES (
         v_phone,
         CASE WHEN p_outcome_type = 'DELIVERED' THEN 1 ELSE 0 END,
+        CASE WHEN p_outcome_type IN ('RTO', 'RETURNED') THEN 1 ELSE 0 END,
+        CASE WHEN p_outcome_type = 'REFUSED' THEN 1 ELSE 0 END,
         CASE WHEN p_outcome_type = 'DELIVERED' THEN now() ELSE NULL END,
+        CASE WHEN p_outcome_type IN ('RTO', 'RETURNED', 'REFUSED') THEN now() ELSE NULL END,
         now()
       )
       ON CONFLICT (phone_normalized) DO UPDATE
       SET successful_prepaid_deliveries = CASE WHEN p_outcome_type = 'DELIVERED' THEN public.cod_risk_profiles.successful_prepaid_deliveries + 1 ELSE public.cod_risk_profiles.successful_prepaid_deliveries END,
+          rto_count = CASE WHEN p_outcome_type IN ('RTO', 'RETURNED') THEN public.cod_risk_profiles.rto_count + 1 ELSE public.cod_risk_profiles.rto_count END,
+          refused_count = CASE WHEN p_outcome_type = 'REFUSED' THEN public.cod_risk_profiles.refused_count + 1 ELSE public.cod_risk_profiles.refused_count END,
           last_successful_delivery_at = CASE WHEN p_outcome_type = 'DELIVERED' THEN now() ELSE public.cod_risk_profiles.last_successful_delivery_at END,
+          last_rto_at = CASE WHEN p_outcome_type IN ('RTO', 'RETURNED', 'REFUSED') THEN now() ELSE public.cod_risk_profiles.last_rto_at END,
           updated_at = now();
     END IF;
 
-    -- Recompute Risk Classification Parity in DB
+    -- Recompute Risk Classification & Exact Score Parity in DB (Requirement #19)
     SELECT * INTO v_prof FROM public.cod_risk_profiles WHERE phone_normalized = v_phone;
     v_rto_cnt := COALESCE(v_prof.rto_count, 0);
     v_refused_cnt := COALESCE(v_prof.refused_count, 0);
@@ -932,20 +1037,25 @@ BEGIN
 
     IF v_rto_cnt >= 2 OR v_prof.prepaid_only THEN
       v_band := 'PREPAID_ONLY';
+      v_score := 90;
       v_prepaid_only := TRUE;
     ELSIF v_cod_succ >= 2 AND v_rto_cnt = 0 THEN
       v_band := 'TRUSTED_REPEAT';
+      v_score := 10;
       v_prepaid_only := FALSE;
     ELSIF v_rto_cnt > 0 OR v_refused_cnt > 0 THEN
       v_band := 'HIGH_RISK';
+      v_score := 70;
       v_prepaid_only := FALSE;
     ELSE
       v_band := 'NEW_CUSTOMER';
+      v_score := 30;
       v_prepaid_only := FALSE;
     END IF;
 
     UPDATE public.cod_risk_profiles
     SET risk_band = v_band,
+        risk_score = v_score,
         prepaid_only = v_prepaid_only,
         is_cod_eligible = NOT v_prepaid_only,
         updated_at = now()
@@ -956,7 +1066,7 @@ BEGIN
 END;
 $$;
 
--- 21. Atomic SECURITY DEFINER RPC: reserve_matching_returned_inventory_with_audit
+-- 22. Atomic SECURITY DEFINER RPC: reserve_matching_returned_inventory_with_audit
 CREATE OR REPLACE FUNCTION public.reserve_matching_returned_inventory_with_audit(
   p_order_item_id UUID,
   p_admin_id UUID DEFAULT NULL
@@ -1038,12 +1148,13 @@ BEGIN
 END;
 $$;
 
--- 22. Revoke RPC execution privileges from PUBLIC/anon/authenticated and grant to service_role ONLY
+-- 23. Revoke SECURITY DEFINER execution privileges from PUBLIC/anon/authenticated and grant to service_role ONLY
 REVOKE EXECUTE ON FUNCTION public.normalize_phone(TEXT) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.is_valid_cod_status_transition(TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.apply_cod_decision_with_audit(TEXT, TEXT, TEXT, BOOLEAN, BIGINT, UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.override_cod_status_with_audit(TEXT, TEXT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.create_cod_otp_challenge_with_audit(TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.mark_cod_otp_challenge_sent(UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.mark_cod_otp_challenge_failed(UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(TEXT, TEXT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
@@ -1056,6 +1167,7 @@ GRANT EXECUTE ON FUNCTION public.is_valid_cod_status_transition(TEXT, TEXT) TO s
 GRANT EXECUTE ON FUNCTION public.apply_cod_decision_with_audit(TEXT, TEXT, TEXT, BOOLEAN, BIGINT, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.override_cod_status_with_audit(TEXT, TEXT, TEXT, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.create_cod_otp_challenge_with_audit(TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ) TO service_role;
+GRANT EXECUTE ON FUNCTION public.mark_cod_otp_challenge_sent(UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.mark_cod_otp_challenge_failed(UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(TEXT, TEXT, TEXT, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, UUID) TO service_role;

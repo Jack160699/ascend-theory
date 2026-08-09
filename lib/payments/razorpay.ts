@@ -533,3 +533,48 @@ export async function handleRazorpayWebhook(
 
   return { ok: true, message: "Webhook event ignored" };
 }
+
+/**
+ * Creates a standalone Razorpay order for COD advance payments.
+ * Reuses existing auth helpers. Fails closed if Razorpay credentials are missing.
+ */
+export async function createRazorpayOrder(params: {
+  amountPaise: number;
+  currency: string;
+  receipt: string;
+}): Promise<{ id: string; amount: number; currency: string } | null> {
+  const auth = getAuthHeader();
+  if (!auth) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("[razorpay] Cannot create order: credentials missing in production");
+    }
+    return null;
+  }
+
+  try {
+    const res = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: {
+        Authorization: auth,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount: params.amountPaise,
+        currency: params.currency,
+        receipt: params.receipt,
+        notes: { purpose: "cod_advance", ascendOrderId: params.receipt },
+      }),
+    });
+
+    if (!res.ok) {
+      console.error("[razorpay] advance order create failed:", await res.text());
+      return null;
+    }
+
+    const data = (await res.json()) as { id: string; amount: number; currency: string };
+    return data;
+  } catch (err) {
+    console.error("[razorpay] advance order create error:", err);
+    return null;
+  }
+}

@@ -14,6 +14,7 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [localCodStatus, setLocalCodStatus] = useState<string | null>(null);
 
   const handleSendOtp = async () => {
     if (!confirmationToken) {
@@ -33,6 +34,8 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
       const json = await res.json();
       if (res.ok) {
         setMessage("OTP sent successfully to your registered mobile number.");
+        // Requirement #22: Immediately show OTP input after successful send
+        setLocalCodStatus("COD_OTP_PENDING");
       } else {
         setError(json.details || json.error || "Failed to send OTP.");
       }
@@ -61,6 +64,9 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
       const json = await res.json();
       if (res.ok) {
         setMessage("OTP verified successfully!");
+        if (json.codStatus) {
+          setLocalCodStatus(json.codStatus);
+        }
         if (onStatusUpdated) onStatusUpdated();
       } else {
         setError(json.error || "Failed to verify OTP.");
@@ -72,7 +78,38 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
     }
   };
 
-  const codStatus = order.codStatus || "COD_PENDING_CONFIRMATION";
+  const handleCreateAdvanceCheckout = async () => {
+    if (!confirmationToken) {
+      setError("Confirmation token missing. Refresh session.");
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/orders/cod/advance/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id, confirmationToken }),
+      });
+      const json = await res.json();
+      if (res.ok && json.razorpayOrderId) {
+        setMessage(`Advance payment order created. Please complete payment of ₹${json.amountPaise / 100}.`);
+        // In a real integration, this would open the Razorpay checkout modal
+        // For now, show the payment details
+        setLocalCodStatus("COD_ADVANCE_PENDING");
+      } else {
+        setError(json.error || "Failed to create advance payment order.");
+      }
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const codStatus = localCodStatus || order.codStatus || "COD_PENDING_CONFIRMATION";
 
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 space-y-6 max-w-xl mx-auto my-6 text-neutral-200 font-sans">
@@ -132,10 +169,26 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
         </div>
       )}
 
-      {codStatus === "COD_ADVANCE_REQUIRED" && (
-        <div className="p-4 bg-amber-950/30 border border-amber-800/80 rounded text-sm text-amber-200 space-y-2">
-          <p className="font-semibold text-white">Booking Advance Payment Required</p>
-          <p>A partial booking advance of ₹{(order.advanceAmountPaise || 20000) / 100} is required to confirm this COD order.</p>
+      {(codStatus === "COD_ADVANCE_REQUIRED" || codStatus === "COD_ADVANCE_PENDING") && (
+        <div className="space-y-4">
+          <div className="p-4 bg-amber-950/30 border border-amber-800/80 rounded text-sm text-amber-200 space-y-2">
+            <p className="font-semibold text-white">Booking Advance Payment Required</p>
+            <p>A partial booking advance of ₹{(order.advanceAmountPaise || 20000) / 100} is required to confirm this COD order.</p>
+          </div>
+          {codStatus === "COD_ADVANCE_REQUIRED" && (
+            <button
+              onClick={handleCreateAdvanceCheckout}
+              disabled={loading}
+              className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-medium text-sm rounded transition"
+            >
+              {loading ? "Creating Payment..." : `Pay ₹${(order.advanceAmountPaise || 20000) / 100} Booking Advance`}
+            </button>
+          )}
+          {codStatus === "COD_ADVANCE_PENDING" && (
+            <div className="p-3 bg-neutral-950 border border-neutral-700 rounded text-sm text-neutral-400">
+              <p>Advance payment order has been created. Complete the payment to proceed.</p>
+            </div>
+          )}
         </div>
       )}
 

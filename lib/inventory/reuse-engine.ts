@@ -116,3 +116,56 @@ export function canReserveReturnedInventoryForOrder(order: Order): { allowed: bo
 
   return { allowed: true };
 }
+
+/**
+ * Authoritative Manufacturing Identity Builder (Requirement #14).
+ * Derives physical manufacturing identity from Phase 5/6 design store data.
+ * Does NOT trust cart/customer input for designs or placements.
+ */
+export async function buildAuthoritativeManufacturingIdentity(
+  productId: string,
+  variantId: string,
+  sku: string,
+): Promise<{ hash: string; snapshot: ManufacturingIdentityInput }> {
+  const { getAllDesignsAdmin } = await import("@/lib/wearables/design-store");
+  const allDesigns = await getAllDesignsAdmin();
+
+  const designs: ManufacturingIdentityInput["designs"] = [];
+  const placements: ManufacturingIdentityInput["placements"] = [];
+
+  for (const design of allDesigns) {
+    if (design.status !== "active") continue;
+    const matchingPlacements = (design.placements || []).filter(
+      (p) => p.productId === productId && (p.productVariantId === variantId || !p.productVariantId) && p.isActive,
+    );
+    if (matchingPlacements.length > 0) {
+      designs.push({
+        designId: design.id,
+        version: design.version ?? 1,
+        checksum: design.checksum || "",
+      });
+      for (const p of matchingPlacements) {
+        placements.push({
+          placementId: p.id,
+          location: p.placementLocation || p.position || "",
+          printMethod: p.printMethod || "dtf",
+          widthMm: p.widthMm || 0,
+          heightMm: p.heightMm || 0,
+          scale: p.scale ?? 1,
+          rotationDeg: p.rotationDeg ?? 0,
+        });
+      }
+    }
+  }
+
+  const input: ManufacturingIdentityInput = {
+    productId,
+    variantId,
+    sku,
+    designs,
+    placements,
+  };
+
+  const hash = computeManufacturingIdentityHash(input);
+  return { hash, snapshot: input };
+}

@@ -42,11 +42,32 @@ export async function GET(_req: NextRequest) {
       return item;
     });
 
+    // HQ summary: risk, OTP, RTO fields
+    const rtoItems = returnedInventory.filter((i) => i.reuseStatus === "REUSABLE" || i.reuseStatus === "RESERVED");
+    const inspectionItems = returnedInventory.filter((i) => i.reuseStatus === "INSPECTION_REQUIRED");
+    const disposedItems = returnedInventory.filter((i) => i.reuseStatus === "DISPOSED");
+    const totalCodOrders = codOrders.length;
+    const pendingCodOrders = codOrders.filter((o) => ["COD_PENDING_CONFIRMATION", "COD_OTP_PENDING"].includes(o.codStatus || "")).length;
+    const heldCodOrders = codOrders.filter((o) => o.codStatus === "COD_HELD").length;
+    const approvedCodOrders = codOrders.filter((o) => o.codStatus === "COD_APPROVED").length;
+    const advanceRequiredOrders = codOrders.filter((o) => o.codStatus === "COD_ADVANCE_REQUIRED" || o.codStatus === "COD_ADVANCE_PENDING").length;
+
     return NextResponse.json({
       ok: true,
       codOrders,
       dailyExposurePaise,
       returnedInventory: sanitizedInventory,
+      hqSummary: {
+        totalCodOrders,
+        pendingCodOrders,
+        heldCodOrders,
+        approvedCodOrders,
+        advanceRequiredOrders,
+        rtoReusableCount: rtoItems.length,
+        inspectionRequiredCount: inspectionItems.length,
+        disposedCount: disposedItems.length,
+        totalReturnedInventory: returnedInventory.length,
+      },
       userRole: session.role,
     });
   } catch (err) {

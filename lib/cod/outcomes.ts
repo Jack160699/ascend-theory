@@ -19,13 +19,14 @@ export async function recordDeliveryOutcomeAdmin(
   fulfillmentId: string,
   outcomeType: "DELIVERED" | "RTO" | "REFUSED" | "RETURNED",
   outcomeStatus: string = outcomeType,
+  providerEventId?: string,
 ): Promise<{ ok: true; alreadyProcessed: boolean } | { ok: false; error: string }> {
   const fulfillment = await getFulfillmentByIdAdmin(fulfillmentId);
   if (!fulfillment) {
     return { ok: false, error: "fulfillment_not_found" };
   }
 
-  // Outcome status validation against fulfillment status (Requirement #20)
+  // Outcome status validation against fulfillment status (uppercase Phase 6 parity)
   const fulStatusLower = (fulfillment.status || "").toLowerCase();
   if (outcomeType === "DELIVERED" && !["in_transit", "delivered"].includes(fulStatusLower)) {
     return { ok: false, error: "fulfillment_status_incompatible_with_delivery" };
@@ -33,7 +34,7 @@ export async function recordDeliveryOutcomeAdmin(
   if (["RTO", "RETURNED"].includes(outcomeType) && !["in_transit", "rto_initiated", "returned"].includes(fulStatusLower)) {
     return { ok: false, error: "fulfillment_status_incompatible_with_rto" };
   }
-  if (outcomeType === "REFUSED" && !["in_transit", "rto_initiated", "failed"].includes(fulStatusLower)) {
+  if (outcomeType === "REFUSED" && !["in_transit", "rto_initiated", "failed", "exception"].includes(fulStatusLower)) {
     return { ok: false, error: "fulfillment_status_incompatible_with_refusal" };
   }
 
@@ -55,6 +56,7 @@ export async function recordDeliveryOutcomeAdmin(
     const { data: rpcRes, error: rpcErr } = await supabase.rpc("record_delivery_outcome_with_audit", {
       p_fulfillment_id: fulfillmentId,
       p_outcome_type: outcomeType,
+      p_provider_event_id: providerEventId || null,
       p_details_json: { provider_status: fulfillment.providerStatus, status: outcomeStatus },
     });
 

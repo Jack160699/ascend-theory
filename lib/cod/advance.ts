@@ -1,7 +1,7 @@
 /**
- * Phase 7 — Authoritative Advance Payment Capture Manager (Requirements #15, #16, #17, #18)
+ * Phase 7 — Authoritative Advance Payment Capture & Checkout Manager (Requirements #7, #8, #9, #10, #11, #12)
  * Enforces server-side provider fetch (CodAdvancePaymentProvider), HMAC validation via process.env.RAZORPAY_KEY_SECRET ONLY,
- * and single-transaction RPC advance capture with event-id idempotency.
+ * real server-side advance checkout order creation, and single-transaction RPC advance capture.
  */
 
 import crypto from "node:crypto";
@@ -29,8 +29,8 @@ export class MockCodAdvancePaymentProvider implements CodAdvancePaymentProvider 
   async fetchPayment(paymentId: string) {
     const p = this.mockPayments.get(paymentId);
     if (!p) {
-      // Default fallback for unit test harness
-      return { id: paymentId, orderId: "rzp_order_adv_999", status: "captured" as const, amountPaise: 20000, currency: "INR" };
+      // Requirement #7: Unknown mock payment ID MUST fail closed! Never fabricate captured payments.
+      throw new Error(`payment_not_found: mock payment ID ${paymentId} not registered`);
     }
     return p;
   }
@@ -56,6 +56,97 @@ export function verifyRazorpayCheckoutSignature(
   const payload = `${razorpayOrderId}|${razorpayPaymentId}`;
   const expectedSig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig));
+}
+
+/**
+ * Creates a server-side Razorpay advance checkout order (Requirement #9).
+ */
+export async function createCodAdvanceCheckoutOrderAdmin(
+  input: { orderId: string; confirmationToken: string },
+  mockOrderCreator?: (amountPaise: number, receipt: string) => Promise<{ razorpayOrderId: string }>,
+): Promise<{ ok: true; razorpayOrderId: string; amountPaise: number; currency: string; keyId: string } | { ok: false; error: string }> {
+  const order = await getOrderAdmin(input.orderId);
+  if (!order) {
+    return { ok: false, error: "order_not_found" };
+  }
+
+  if (order.paymentMethod !== "cod") {
+    return { ok: false, error: "order_not_cod" };
+  }
+
+  // Token hash verification
+  const tokenHash = crypto.createHash("sha256").update(input.confirmationToken || "").digest("hex");
+  if (!order.codConfirmationTokenHash || order.codConfirmationTokenHash !== tokenHash) {
+    return { ok: false, error: "invalid_confirmation_token" };
+  }
+
+  if (!["COD_ADVANCE_REQUIRED", "COD_ADVANCE_PENDING"].includes(order.codStatus || "")) {
+    return { ok: false, error: "order_not_in_advance_required_state" };
+  }
+
+  const advanceAmountPaise = order.advanceAmountPaise || 20000;
+  let razorpayOrderId: string;
+
+  if (mockOrderCreator) {
+    const res = await mockOrderCreator(advanceAmountPaise, order.id);
+    razorpayOrderId = res.razorpayOrderId;
+  } else {
+    // Real Razorpay server order creation
+    const { createRazorpayOrder } = await import("@/lib/payments/razorpay");
+    const rzpOrder = await createRazorpayOrder({
+      amountPaise: advanceAmountPaise,
+      currency: "INR",
+      receipt: order.id,
+    });
+    if (!rzpOrder) {
+      return { ok: false, error: "razorpay_order_creation_failed" };
+    }
+    razorpayOrderId = rzpOrder.id;
+  }
+
+  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "rzp_test_key_id";
+
+  if (hasSupabaseConfig()) {
+    const supabase = createSupabaseServiceClient();
+    if (!supabase) {
+      return { ok: false, error: "Supabase service client unconfigured" };
+    }
+
+    const { error: dbErr } = await supabase.from("cod_advance_payments").upsert(
+      {
+        order_id: order.id,
+        provider: "razorpay",
+        provider_order_id: razorpayOrderId,
+        expected_amount_paise: advanceAmountPaise,
+        currency: "INR",
+        status: "created",
+      },
+      { onConflict: "provider,provider_order_id" },
+    );
+
+    if (dbErr) {
+      console.error("[CodAdvance] Failed to persist advance payment row:", dbErr);
+      return { ok: false, error: `db_error: ${dbErr.message}` };
+    }
+
+    await supabase.from("orders").update({
+      cod_status: "COD_ADVANCE_PENDING",
+      advance_status: "pending",
+      updated_at: new Date().toISOString(),
+    }).eq("id", order.id);
+  }
+
+  order.codStatus = "COD_ADVANCE_PENDING";
+  order.advanceStatus = "pending";
+  await saveOrder(order);
+
+  return {
+    ok: true,
+    razorpayOrderId,
+    amountPaise: advanceAmountPaise,
+    currency: "INR",
+    keyId,
+  };
 }
 
 export async function processCodAdvanceCaptureAdmin(
@@ -90,9 +181,47 @@ export async function processCodAdvanceCaptureAdmin(
     return { ok: false, error: "advance_not_required_for_order" };
   }
 
-  // Fetch payment details authoritatively via provider adapter
-  const adapter = providerAdapter || new MockCodAdvancePaymentProvider();
-  const paymentDetails = await adapter.fetchPayment(input.razorpayPaymentId);
+  // Requirement #7: Production path MUST NOT use default MockCodAdvancePaymentProvider fallback
+  let adapter = providerAdapter;
+  if (!adapter) {
+    if (process.env.NODE_ENV === "test") {
+      adapter = new MockCodAdvancePaymentProvider();
+    } else {
+      const { fetchRazorpayPayment } = await import("@/lib/payments/razorpay");
+      adapter = {
+        fetchPayment: async (pid: string) => {
+          const fetched = await fetchRazorpayPayment(pid);
+          if (!fetched) {
+            throw new Error(`payment_not_found: payment ${pid} not found on Razorpay`);
+          }
+          return {
+            id: fetched.id,
+            orderId: fetched.order_id,
+            status: fetched.status as "captured",
+            amountPaise: Number(fetched.amount),
+            currency: fetched.currency || "INR",
+          };
+        },
+      };
+    }
+  }
+
+  let paymentDetails: Awaited<ReturnType<CodAdvancePaymentProvider["fetchPayment"]>>;
+  try {
+    paymentDetails = await adapter.fetchPayment(input.razorpayPaymentId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "fetch_failed";
+    return { ok: false, error: msg };
+  }
+
+  // Requirement #8: Validate provider payment order details
+  if (paymentDetails.id !== input.razorpayPaymentId) {
+    return { ok: false, error: "payment_id_mismatch" };
+  }
+
+  if (paymentDetails.orderId !== input.razorpayOrderId) {
+    return { ok: false, error: "provider_order_mismatch" };
+  }
 
   if (paymentDetails.status !== "captured") {
     return { ok: false, error: "provider_payment_not_captured" };
