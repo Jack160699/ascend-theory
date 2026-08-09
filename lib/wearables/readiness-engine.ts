@@ -24,6 +24,8 @@ export function evaluateVariantReadiness(input: {
   variant: ProductVariant;
   design?: DesignAsset | null;
   placement?: DesignPlacement | null;
+  placements?: DesignPlacement[];
+  designsMap?: Map<string, DesignAsset>;
   providers?: PODProvider[];
   providerProduct?: ProviderProduct | null;
   providerVariant?: ProviderVariant | null;
@@ -39,6 +41,8 @@ export function evaluateVariantReadiness(input: {
     variant,
     design,
     placement,
+    placements,
+    designsMap = new Map(),
     providers = [],
     providerProduct,
     providerVariant,
@@ -66,41 +70,60 @@ export function evaluateVariantReadiness(input: {
     baseReasons.push("unavailable_variant");
   }
 
-  // 4. Design active check
+  // 4. Resolve all active placements for this variant
+  let activePlacements: DesignPlacement[] = [];
+  if (placements && placements.length > 0) {
+    activePlacements = placements.filter((p) => p.isActive);
+  } else if (placement && placement.isActive) {
+    activePlacements = [placement];
+  }
+
   let designAssigned = false;
-  if (!design) {
+  let placementValid = false;
+  let artworkPresent = false;
+
+  if (activePlacements.length === 0) {
     baseReasons.push("missing_design");
-  } else if (design.status === "draft") {
-    baseReasons.push("draft_design");
-  } else if (design.status === "archived") {
-    baseReasons.push("archived_design");
   } else {
     designAssigned = true;
-  }
+    placementValid = true;
+    artworkPresent = true;
 
-  // 5. Artwork asset check
-  const artworkPresent = Boolean(
-    design &&
-      ((design.storagePath && design.storagePath.trim().length > 0) ||
-        (design.assetUrl && design.assetUrl.trim().length > 0)),
-  );
-  if (!artworkPresent && design) {
-    baseReasons.push("missing_artwork");
-  }
+    for (const pl of activePlacements) {
+      // Validate placement dimensions
+      const valRes = validateDesignPlacement(pl);
+      if (!valRes.isValid) {
+        placementValid = false;
+        baseReasons.push("invalid_placement_dimensions");
+      }
 
-  // 6. Placement valid check
-  let placementValid = false;
-  if (placement) {
-    const valRes = validateDesignPlacement(placement);
-    placementValid = valRes.isValid && Boolean(placement.isActive);
-    if (!placementValid) {
-      baseReasons.push("invalid_placement_dimensions");
+      // Resolve design for this placement (supports multiple designs on same variant)
+      const plDesign = designsMap.get(pl.designId) || (design && design.id === pl.designId ? design : design);
+
+      if (!plDesign) {
+        designAssigned = false;
+        baseReasons.push("missing_design");
+      } else if (plDesign.status === "draft") {
+        designAssigned = false;
+        baseReasons.push("draft_design");
+      } else if (plDesign.status === "archived") {
+        designAssigned = false;
+        baseReasons.push("archived_design");
+      }
+
+      const hasArtwork = Boolean(
+        plDesign &&
+          ((plDesign.storagePath && plDesign.storagePath.trim().length > 0) ||
+            (plDesign.assetUrl && plDesign.assetUrl.trim().length > 0)),
+      );
+      if (!hasArtwork) {
+        artworkPresent = false;
+        baseReasons.push("missing_artwork");
+      }
     }
-  } else {
-    baseReasons.push("missing_design");
   }
 
-  // 7. Applicable Approved Primary Mockup check
+  // 5. Applicable Approved Primary Mockup check
   const mockupReady = mockups.some(
     (m) =>
       m.status === "approved" &&
@@ -112,7 +135,7 @@ export function evaluateVariantReadiness(input: {
     baseReasons.push("no_approved_primary_mockup");
   }
 
-  // 8. Multi-Provider Path Evaluation
+  // 6. Multi-Provider Path Evaluation
   const providerPathList: Array<{
     provider: PODProvider;
     providerProduct?: ProviderProduct | null;
@@ -172,15 +195,17 @@ export function evaluateVariantReadiness(input: {
         pReasons.push("unverified_provider_variant_mapping");
       }
 
-      // Printable area dimension check for this provider
-      if (placement && pProd?.printableAreasJson && pProd.printableAreasJson.length > 0) {
-        const areaSpec = pProd.printableAreasJson.find((spec: PrintableAreaSpec) => {
-          const specLoc = (spec.location || (spec as unknown as { placementLocation?: string }).placementLocation);
-          return specLoc === placement.placementLocation && spec.printMethod === placement.printMethod;
-        });
+      // Enforce printable area & method compatibility across EVERY active placement
+      if (pProd?.printableAreasJson && pProd.printableAreasJson.length > 0 && activePlacements.length > 0) {
+        for (const pl of activePlacements) {
+          const areaSpec = pProd.printableAreasJson.find((spec: PrintableAreaSpec) => {
+            const specLoc = spec.location || (spec as unknown as { placementLocation?: string }).placementLocation;
+            return specLoc === pl.placementLocation && spec.printMethod === pl.printMethod;
+          });
 
-        if (areaSpec) {
-          if (placement.widthMm > areaSpec.maxWidthMm || placement.heightMm > areaSpec.maxHeightMm) {
+          if (!areaSpec) {
+            pReasons.push("unsupported_provider_placement");
+          } else if (pl.widthMm > areaSpec.maxWidthMm || pl.heightMm > areaSpec.maxHeightMm) {
             pReasons.push("print_exceeds_provider_area");
           }
         }
@@ -240,6 +265,7 @@ export function evaluateProductReadiness(input: {
   providers?: PODProvider[];
   designsMap?: Map<string, DesignAsset>;
   placementsMap?: Map<string, DesignPlacement>;
+  placementsList?: DesignPlacement[];
   providerProductsMap?: Map<string, ProviderProduct>;
   providerVariantsMap?: Map<string, ProviderVariant>;
   providerMappingsList?: Array<{
@@ -254,6 +280,7 @@ export function evaluateProductReadiness(input: {
     providers = [],
     designsMap = new Map(),
     placementsMap = new Map(),
+    placementsList = [],
     providerProductsMap = new Map(),
     providerVariantsMap = new Map(),
     providerMappingsList,
@@ -262,25 +289,54 @@ export function evaluateProductReadiness(input: {
 
   const variants = product.variants || [];
   const variantReports: VariantReadiness[] = variants.map((v) => {
-    const placement = placementsMap.get(v.id) || placementsMap.get(product.id);
-    const design = placement ? designsMap.get(placement.designId) : undefined;
+    // Collect ALL active placements for this exact variant
+    let vPlacements = placementsList.filter((p) => p.productVariantId === v.id && p.isActive);
+    if (vPlacements.length === 0) {
+      const fallbackPl = placementsMap.get(v.id) || placementsMap.get(product.id);
+      if (fallbackPl && fallbackPl.isActive) {
+        vPlacements = [fallbackPl];
+      }
+    }
+
+    const singlePlacement = vPlacements.length > 0 ? vPlacements[0] : undefined;
+    const design = singlePlacement ? designsMap.get(singlePlacement.designId) : undefined;
     const providerProduct = providerProductsMap.get(product.id);
     const providerVariant = providerVariantsMap.get(v.id);
     const productMockups = mockups.filter((m) => m.productId === product.id);
 
-    const vProviderMappings = providerMappingsList
-      ? providerMappingsList.filter(
+    // Build clean per-variant provider mappings directly (Req #12)
+    const vProviderMappings = providers.map((prov) => {
+      let pProd: ProviderProduct | undefined = undefined;
+      let pVar: ProviderVariant | undefined = undefined;
+
+      if (providerMappingsList) {
+        const found = providerMappingsList.find(
           (m) =>
+            m.provider.id === prov.id &&
             (!m.providerProduct || m.providerProduct.productId === product.id) &&
             (!m.providerVariant || m.providerVariant.productVariantId === v.id),
-        )
-      : undefined;
+        );
+        pProd = found?.providerProduct || undefined;
+        pVar = found?.providerVariant || undefined;
+      } else {
+        pProd = providerProduct?.providerId === prov.id ? providerProduct : undefined;
+        pVar = providerVariant && pProd ? providerVariant : undefined;
+      }
+
+      return {
+        provider: prov,
+        providerProduct: pProd,
+        providerVariant: pVar,
+      };
+    });
 
     return evaluateVariantReadiness({
       product,
       variant: v,
       design,
-      placement,
+      placement: singlePlacement,
+      placements: vPlacements,
+      designsMap,
       providers,
       providerProduct,
       providerVariant,

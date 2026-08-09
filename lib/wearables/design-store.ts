@@ -641,7 +641,7 @@ export async function saveMockupAdmin(
       if (existing.productId !== productId) {
         return { ok: false, error: "mockup_rebound" };
       }
-      if (existing.variantId && input.variantId && existing.variantId !== input.variantId) {
+      if ((existing.variantId ?? null) !== (input.variantId ?? null)) {
         return { ok: false, error: "mockup_rebound" };
       }
     }
@@ -738,9 +738,12 @@ export async function getProductReadinessReportsAdmin(): Promise<ProductReadines
 
   const designsMap = new Map<string, DesignAsset>();
   const placementsMap = new Map<string, DesignPlacement>();
+  const placementsList: DesignPlacement[] = [];
+
   designs.forEach((d) => {
     designsMap.set(d.id, d);
     (d.placements || []).forEach((pl) => {
+      placementsList.push(pl);
       if (pl.productVariantId && pl.isActive) {
         placementsMap.set(pl.productVariantId, pl);
       } else if (pl.productId && pl.isActive && !placementsMap.has(pl.productId)) {
@@ -778,6 +781,7 @@ export async function getProductReadinessReportsAdmin(): Promise<ProductReadines
       providers,
       designsMap,
       placementsMap,
+      placementsList,
       providerMappingsList,
       mockups,
     });

@@ -196,9 +196,6 @@ ALTER TABLE public.provider_variants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.product_mockups ENABLE ROW LEVEL SECURITY;
 
 -- 8. ADMIN RLS POLICIES — Scoped explicitly TO authenticated
--- Any policy invoking public.is_caller_active_admin_with_roles MUST be TO authenticated.
-
--- Designs
 CREATE POLICY "Admin read designs" ON public.designs
   FOR SELECT TO authenticated
   USING (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin', 'editor', 'support']));
@@ -248,10 +245,27 @@ CREATE POLICY "Admin write provider variants" ON public.provider_variants
   USING (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin']))
   WITH CHECK (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin']));
 
--- Product Mockups (Admin & Public)
+-- Product Mockups (Public Policy requiring Active Product and Active Available Variant)
 CREATE POLICY "Public read approved mockups" ON public.product_mockups
   FOR SELECT TO anon, authenticated
-  USING (status = 'approved');
+  USING (
+    status = 'approved'
+    AND EXISTS (
+      SELECT 1 FROM public.products p
+      WHERE p.id = product_mockups.product_id
+        AND p.status = 'active'
+    )
+    AND (
+      variant_id IS NULL
+      OR EXISTS (
+        SELECT 1 FROM public.product_variants v
+        WHERE v.id = product_mockups.variant_id
+          AND v.product_id = product_mockups.product_id
+          AND v.is_active = true
+          AND v.availability_status = 'available'
+      )
+    )
+  );
 
 CREATE POLICY "Admin read product mockups" ON public.product_mockups
   FOR SELECT TO authenticated
@@ -264,7 +278,7 @@ CREATE POLICY "Admin write product mockups" ON public.product_mockups
 
 -- 9. SECURITY DEFINER ATOMIC RPCs FOR PHASE 5 MUTATIONS
 
--- 9a. Atomic Design + Placements Persistence RPC
+-- 9a. Atomic Design + Placements Persistence RPC (with Disable -> Re-Add Reactivation)
 CREATE OR REPLACE FUNCTION public.save_design_with_placements(
   p_design JSONB,
   p_placements JSONB,
@@ -289,19 +303,19 @@ DECLARE
   v_placement_id UUID;
   v_product_id UUID;
   v_variant_id UUID;
+  v_loc TEXT;
   v_width_mm INT;
   v_height_mm INT;
   v_x_norm NUMERIC(6,4);
   v_y_norm NUMERIC(6,4);
   v_existing_design_id UUID;
+  v_existing_pl_id UUID;
   v_submitted_placement_ids UUID[] := '{}';
   v_disabled_record RECORD;
   v_is_new_design BOOLEAN := false;
   v_is_new_placement BOOLEAN := false;
 BEGIN
-  -- =====================================================================
   -- PASS 1: VALIDATE EVERYTHING, WRITE NOTHING
-  -- =====================================================================
   v_design_id := COALESCE((p_design->>'id')::UUID, gen_random_uuid());
   v_title := TRIM(p_design->>'title');
   v_slug := LOWER(TRIM(p_design->>'slug'));
@@ -333,7 +347,6 @@ BEGIN
       RETURN jsonb_build_object('ok', false, 'error', 'Active design fileSizeBytes must be positive and <= 25MB');
     END IF;
 
-    -- Verify storage object existence in storage.objects if storage schema is present
     IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = 'storage' AND table_name = 'objects') THEN
       IF NOT EXISTS (SELECT 1 FROM storage.objects WHERE bucket_id = 'design-artwork' AND name = v_storage_path) THEN
         RETURN jsonb_build_object('ok', false, 'error', 'Active design storage artwork object does not exist in design-artwork bucket');
@@ -341,7 +354,6 @@ BEGIN
     END IF;
   END IF;
 
-  -- Validate tags array
   IF p_design->'tags' IS NOT NULL AND p_design->'tags' != 'null'::jsonb THEN
     IF jsonb_typeof(p_design->'tags') != 'array' THEN
       RETURN jsonb_build_object('ok', false, 'error', 'Design tags must be a JSON array');
@@ -351,7 +363,6 @@ BEGIN
     v_tags := '{}'::TEXT[];
   END IF;
 
-  -- Slug uniqueness
   IF EXISTS (SELECT 1 FROM public.designs WHERE slug = v_slug AND id != v_design_id) THEN
     RETURN jsonb_build_object('ok', false, 'error', format('Design slug ''%s'' already exists', v_slug));
   END IF;
@@ -362,6 +373,7 @@ BEGIN
       v_placement_id := (v_placement_elem->>'id')::UUID;
       v_product_id := (v_placement_elem->>'productId')::UUID;
       v_variant_id := (v_placement_elem->>'productVariantId')::UUID;
+      v_loc := COALESCE(v_placement_elem->>'placementLocation', 'front');
       v_width_mm := COALESCE((v_placement_elem->>'widthMm')::INT, 0);
       v_height_mm := COALESCE((v_placement_elem->>'heightMm')::INT, 0);
       v_x_norm := COALESCE((v_placement_elem->>'xNormalized')::NUMERIC, 0.5);
@@ -374,7 +386,6 @@ BEGIN
         RETURN jsonb_build_object('ok', false, 'error', 'Placement product_variant_id is required and must exist');
       END IF;
 
-      -- Ownership check: variant MUST belong to target product
       IF NOT EXISTS (SELECT 1 FROM public.product_variants WHERE id = v_variant_id AND product_id = v_product_id) THEN
         RETURN jsonb_build_object('ok', false, 'error', 'placement_product_variant_mismatch');
       END IF;
@@ -386,7 +397,6 @@ BEGIN
         RETURN jsonb_build_object('ok', false, 'error', 'Placement normalized coordinates (x_normalized, y_normalized) must be between 0 and 1');
       END IF;
 
-      -- Cross-design placement ID protection
       IF v_placement_id IS NOT NULL THEN
         SELECT design_id INTO v_existing_design_id FROM public.design_placements WHERE id = v_placement_id;
         IF v_existing_design_id IS NOT NULL AND v_existing_design_id != v_design_id THEN
@@ -396,9 +406,7 @@ BEGIN
     END LOOP;
   END IF;
 
-  -- =====================================================================
-  -- PASS 2: MUTATE — RAISE EXCEPTION on failure rolls back all writes
-  -- =====================================================================
+  -- PASS 2: MUTATE
   v_is_new_design := NOT EXISTS (SELECT 1 FROM public.designs WHERE id = v_design_id);
 
   INSERT INTO public.designs (
@@ -447,7 +455,6 @@ BEGIN
     version = EXCLUDED.version,
     updated_at = now();
 
-  -- Audit log for design
   INSERT INTO public.audit_logs (admin_id, action, entity_type, entity_id, details_json)
   VALUES (
     p_admin_id,
@@ -457,14 +464,26 @@ BEGIN
     jsonb_build_object('title', v_title, 'slug', v_slug, 'status', v_status)
   );
 
-  -- Upsert placements
+  -- Upsert placements with Disable -> Re-Add historical row reuse
   IF p_placements IS NOT NULL AND jsonb_array_length(p_placements) > 0 THEN
     FOR v_placement_elem IN SELECT * FROM jsonb_array_elements(p_placements) LOOP
-      v_placement_id := COALESCE((v_placement_elem->>'id')::UUID, gen_random_uuid());
+      v_placement_id := (v_placement_elem->>'id')::UUID;
       v_product_id := (v_placement_elem->>'productId')::UUID;
       v_variant_id := (v_placement_elem->>'productVariantId')::UUID;
-      v_submitted_placement_ids := array_append(v_submitted_placement_ids, v_placement_id);
+      v_loc := COALESCE(v_placement_elem->>'placementLocation', 'front');
 
+      -- Reuse existing historical row if no ID was supplied or if matching location exists
+      IF v_placement_id IS NULL THEN
+        SELECT id INTO v_existing_pl_id FROM public.design_placements
+        WHERE design_id = v_design_id
+          AND product_variant_id = v_variant_id
+          AND placement_location = v_loc
+        LIMIT 1;
+
+        v_placement_id := COALESCE(v_existing_pl_id, gen_random_uuid());
+      END IF;
+
+      v_submitted_placement_ids := array_append(v_submitted_placement_ids, v_placement_id);
       v_is_new_placement := NOT EXISTS (SELECT 1 FROM public.design_placements WHERE id = v_placement_id);
 
       INSERT INTO public.design_placements (
@@ -477,8 +496,8 @@ BEGIN
         v_design_id,
         v_product_id,
         v_variant_id,
-        COALESCE(v_placement_elem->>'placementLocation', 'front'),
-        COALESCE(v_placement_elem->>'placementLocation', 'front'),
+        v_loc,
+        v_loc,
         COALESCE((v_placement_elem->>'xNormalized')::NUMERIC, 0.5),
         COALESCE((v_placement_elem->>'yNormalized')::NUMERIC, 0.5),
         COALESCE((v_placement_elem->>'scale')::NUMERIC, 1.0),
@@ -510,12 +529,12 @@ BEGIN
         CASE WHEN v_is_new_placement THEN 'placement_created' ELSE 'placement_updated' END,
         'design_placement',
         v_placement_id::TEXT,
-        jsonb_build_object('design_id', v_design_id, 'product_variant_id', v_variant_id)
+        jsonb_build_object('design_id', v_design_id, 'product_variant_id', v_variant_id, 'placement_location', v_loc)
       );
     END LOOP;
   END IF;
 
-  -- Reconcile removed placements: mark active placements for this design absent from submission as is_active = false
+  -- Reconcile removed placements
   FOR v_disabled_record IN
     SELECT id, product_variant_id FROM public.design_placements
     WHERE design_id = v_design_id
@@ -543,7 +562,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
--- Strict RPC Privilege Lockdown
 REVOKE ALL ON FUNCTION public.save_design_with_placements(JSONB, JSONB, UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.save_design_with_placements(JSONB, JSONB, UUID) TO service_role;
 
@@ -624,7 +642,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'Provider external_product_id is required');
   END IF;
 
-  -- Protect Provider Product Ownership (provider_product_rebound check with null-safe comparison)
+  -- Protect Provider Product Ownership with null-safe comparison
   SELECT provider_id, product_id INTO v_existing_prov_id, v_existing_prod_id
   FROM public.provider_products WHERE id = v_prov_prod_id;
 
@@ -664,7 +682,7 @@ BEGIN
         END IF;
       END IF;
 
-      -- Protect Provider Variant Ownership (provider_variant_rebound check with null-safe comparison)
+      -- Protect Provider Variant Ownership with null-safe comparison
       SELECT provider_product_id, product_variant_id INTO v_existing_prov_prod_id, v_existing_ascend_var_id
       FROM public.provider_variants WHERE id = v_prov_var_id;
 
@@ -716,7 +734,6 @@ BEGIN
     verified_by = EXCLUDED.verified_by,
     updated_at = now();
 
-  -- Audit log for provider product
   INSERT INTO public.audit_logs (admin_id, action, entity_type, entity_id, details_json)
   VALUES (
     p_admin_id,
@@ -791,11 +808,10 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
--- Strict RPC Privilege Lockdown
 REVOKE ALL ON FUNCTION public.save_provider_mapping_with_audit(JSONB, JSONB, UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.save_provider_mapping_with_audit(JSONB, JSONB, UUID) TO service_role;
 
--- 9d. Atomic Mockup Save RPC with Rebound & Placement Compatibility Protections
+-- 9d. Atomic Mockup Save RPC with Null-Safe Rebound & Strict Placement Compatibility
 CREATE OR REPLACE FUNCTION public.save_mockup_with_audit(
   p_mockup JSONB,
   p_admin_id UUID
@@ -843,20 +859,19 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'Invalid mockup status');
   END IF;
 
-  -- Rebound Protection: Existing mockup ID must NOT change product_id or variant_id ownership
+  -- Rebound Protection with NULL-SAFE IS DISTINCT FROM comparison
   IF EXISTS (SELECT 1 FROM public.product_mockups WHERE id = v_mockup_id) THEN
     SELECT product_id, variant_id INTO v_existing_prod_id, v_existing_var_id
     FROM public.product_mockups WHERE id = v_mockup_id;
 
-    IF v_existing_prod_id != v_product_id THEN
+    IF v_existing_prod_id IS DISTINCT FROM v_product_id THEN
       RETURN jsonb_build_object('ok', false, 'error', 'mockup_rebound');
     END IF;
-    IF v_existing_var_id IS NOT NULL AND v_variant_id IS NOT NULL AND v_existing_var_id != v_variant_id THEN
+    IF v_existing_var_id IS DISTINCT FROM v_variant_id THEN
       RETURN jsonb_build_object('ok', false, 'error', 'mockup_rebound');
     END IF;
   END IF;
 
-  -- Validate relationship integrity
   IF v_variant_id IS NOT NULL AND NOT EXISTS (
     SELECT 1 FROM public.product_variants WHERE id = v_variant_id AND product_id = v_product_id
   ) THEN
@@ -878,7 +893,9 @@ BEGIN
     IF v_pl_prod_id != v_product_id THEN
       RETURN jsonb_build_object('ok', false, 'error', 'mockup_placement_product_mismatch');
     END IF;
-    IF v_variant_id IS NOT NULL AND v_pl_var_id IS NOT NULL AND v_pl_var_id != v_variant_id THEN
+    IF v_variant_id IS NULL THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'mockup_placement_variant_mismatch');
+    ELSIF v_pl_var_id != v_variant_id THEN
       RETURN jsonb_build_object('ok', false, 'error', 'mockup_placement_variant_mismatch');
     END IF;
     IF v_design_id IS NOT NULL AND v_pl_design_id != v_design_id THEN

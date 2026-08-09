@@ -7,6 +7,9 @@ import type {
   ProviderProduct,
   ProviderVariant,
   MappingStatus,
+  PrintMethod,
+  PrintableAreaSpec,
+  PlacementLocation,
 } from "@/lib/wearables/design-types";
 
 type PODMappingViewProps = {
@@ -29,6 +32,16 @@ export function PODMappingView({ products }: PODMappingViewProps) {
   const [providerProdTitle, setProviderProdTitle] = useState("");
   const [mappingStatus, setMappingStatus] = useState<MappingStatus>("mapped");
   const [notes, setNotes] = useState("");
+
+  // Print Methods & Printable Areas Configuration (Req #9 & #10)
+  const [printMethods, setPrintMethods] = useState<PrintMethod[]>(["dtf"]);
+  const [printableAreas, setPrintableAreas] = useState<PrintableAreaSpec[]>([]);
+
+  // Add new printable area input state
+  const [newAreaLocation, setNewAreaLocation] = useState<PlacementLocation>("front");
+  const [newAreaMethod, setNewAreaMethod] = useState<PrintMethod>("dtf");
+  const [newAreaWidthMm, setNewAreaWidthMm] = useState<number>(300);
+  const [newAreaHeightMm, setNewAreaHeightMm] = useState<number>(400);
 
   // Variant mappings dictionary: productVariantId -> { id?, externalVariantId, externalSku }
   const [variantMappings, setVariantMappings] = useState<
@@ -96,6 +109,8 @@ export function PODMappingView({ products }: PODMappingViewProps) {
         setProviderProdTitle(existingPP.title || existingPP.name || "");
         setMappingStatus(existingPP.mappingStatus || "mapped");
         setNotes(existingPP.notes || "");
+        setPrintMethods(existingPP.printMethodsJson && existingPP.printMethodsJson.length > 0 ? existingPP.printMethodsJson : ["dtf"]);
+        setPrintableAreas(existingPP.printableAreasJson || []);
 
         const mappedVars = providerVariants.filter((pv) => pv.providerProductId === existingPP.id);
         const mapDict: Record<string, { id?: string; externalVariantId: string; externalSku: string }> = {};
@@ -115,6 +130,8 @@ export function PODMappingView({ products }: PODMappingViewProps) {
         setProviderProdTitle("");
         setMappingStatus("unmapped");
         setNotes("");
+        setPrintMethods(["dtf"]);
+        setPrintableAreas([]);
         setVariantMappings({});
       }
     },
@@ -129,6 +146,28 @@ export function PODMappingView({ products }: PODMappingViewProps) {
   const handleProductSelect = (prodId: string) => {
     setSelectedProductId(prodId);
     syncFormState(prodId, selectedProviderId);
+  };
+
+  const handleAddPrintableArea = () => {
+    if (newAreaWidthMm <= 0 || newAreaHeightMm <= 0) return;
+    const newSpec: PrintableAreaSpec = {
+      location: newAreaLocation,
+      maxWidthMm: newAreaWidthMm,
+      maxHeightMm: newAreaHeightMm,
+      printMethod: newAreaMethod,
+    };
+    setPrintableAreas((prev) => {
+      const filtered = prev.filter(
+        (s) =>
+          (s.location || (s as unknown as { placementLocation?: string }).placementLocation) !== newAreaLocation ||
+          s.printMethod !== newAreaMethod,
+      );
+      return [...filtered, newSpec];
+    });
+  };
+
+  const handleRemovePrintableArea = (index: number) => {
+    setPrintableAreas((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveMapping = async (e: React.FormEvent) => {
@@ -158,6 +197,8 @@ export function PODMappingView({ products }: PODMappingViewProps) {
             productId: selectedProductId,
             externalProductId: extProductId.trim(),
             title: providerProdTitle.trim() || undefined,
+            printMethodsJson: printMethods,
+            printableAreasJson: printableAreas,
             mappingStatus,
             notes: notes.trim() || undefined,
           },
@@ -182,6 +223,8 @@ export function PODMappingView({ products }: PODMappingViewProps) {
   if (loading) {
     return <div className="p-8 text-center text-sm font-mono text-white/50">Loading POD Provider Mappings...</div>;
   }
+
+  const allPrintMethodsList: PrintMethod[] = ["dtf", "dtg", "screen_print", "embroidery", "sublimation", "other"];
 
   return (
     <div className="space-y-6">
@@ -255,117 +298,243 @@ export function PODMappingView({ products }: PODMappingViewProps) {
               </select>
             </div>
 
-            <div className="p-4 bg-black/40 border border-white/10 rounded-md space-y-3">
-              <span className="text-xs font-mono font-bold text-white/80 block uppercase">
-                Provider Catalogue Identifiers
-              </span>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-mono text-white/60 block mb-1">External Provider Product ID *</label>
+                <label className="text-xs font-mono text-white/60 block mb-1">Provider Ext Product ID *</label>
                 <input
                   type="text"
                   required
                   value={extProductId}
                   onChange={(e) => setExtProductId(e.target.value)}
                   className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                  placeholder="e.g. QIK-HOODIE-OVERSZD-350"
+                  placeholder="e.g. QIK-HOOD-100"
                 />
               </div>
-
               <div>
-                <label className="text-xs font-mono text-white/60 block mb-1">Provider Product Title / Description</label>
-                <input
-                  type="text"
-                  value={providerProdTitle}
-                  onChange={(e) => setProviderProdTitle(e.target.value)}
+                <label className="text-xs font-mono text-white/60 block mb-1">Mapping Status</label>
+                <select
+                  value={mappingStatus}
+                  onChange={(e) => setMappingStatus(e.target.value as MappingStatus)}
                   className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                  placeholder="e.g. Premium Heavyweight Fleece Hoodie 350 GSM"
-                />
+                >
+                  <option value="unmapped">Unmapped</option>
+                  <option value="draft">Draft</option>
+                  <option value="mapped">Mapped</option>
+                  <option value="verified">Verified (Approved for Production)</option>
+                  <option value="disabled">Disabled</option>
+                </select>
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-mono text-white/60 block mb-1">Provider Product Title / Catalog Name</label>
+              <input
+                type="text"
+                value={providerProdTitle}
+                onChange={(e) => setProviderProdTitle(e.target.value)}
+                className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
+                placeholder="e.g. Heavyweight Unisex Hoodie 350GSM"
+              />
+            </div>
+
+            {/* HQ Print Method Configuration (Req #9) */}
+            <div className="p-3 bg-black/40 border border-white/10 rounded-md space-y-2">
+              <label className="text-xs font-mono text-white/80 block">Supported Print Methods *</label>
+              <div className="grid grid-cols-3 gap-2">
+                {allPrintMethodsList.map((method) => (
+                  <label key={method} className="flex items-center space-x-2 text-xs font-mono text-white/80 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={printMethods.includes(method)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setPrintMethods((prev) => [...prev, method]);
+                        } else {
+                          setPrintMethods((prev) => prev.filter((m) => m !== method));
+                        }
+                      }}
+                      className="rounded bg-black border-white/20"
+                    />
+                    <span className="uppercase">{method}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Printable Area Specs Configuration Editor (Req #10) */}
+          <div className="bg-zinc-900/40 border border-white/10 rounded-lg p-6 space-y-4">
+            <h3 className="text-sm font-bold font-mono text-white uppercase border-b border-white/10 pb-2">
+              2. Provider Printable Area Specifications
+            </h3>
+
+            {/* Existing printable areas list */}
+            <div className="space-y-2 max-h-36 overflow-y-auto">
+              {printableAreas.length === 0 ? (
+                <p className="text-xs font-mono text-white/40 italic">No printable area specs defined for this provider product.</p>
+              ) : (
+                printableAreas.map((spec, idx) => (
+                  <div key={idx} className="p-2 bg-black/40 border border-white/10 rounded flex justify-between items-center text-xs font-mono text-white">
+                    <span>
+                      <strong className="uppercase text-amber-300">{spec.location || (spec as unknown as { placementLocation?: string }).placementLocation}</strong> ({spec.printMethod.toUpperCase()}): {spec.maxWidthMm}mm × {spec.maxHeightMm}mm max
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePrintableArea(idx)}
+                      className="text-red-400 hover:text-red-300 text-[10px]"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Add Printable Area Spec Input Row */}
+            <div className="p-3 bg-black/40 border border-white/10 rounded-md space-y-3">
+              <span className="text-xs font-mono text-white/80 block font-bold">+ Add Printable Area Spec</span>
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs font-mono text-white/60 block mb-1">Mapping Status</label>
+                  <label className="text-[10px] font-mono text-white/60 block">Location</label>
                   <select
-                    value={mappingStatus}
-                    onChange={(e) => setMappingStatus(e.target.value as MappingStatus)}
-                    className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
+                    value={newAreaLocation}
+                    onChange={(e) => setNewAreaLocation(e.target.value as PlacementLocation)}
+                    className="w-full bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white"
                   >
-                    <option value="unmapped">Unmapped</option>
-                    <option value="draft">Draft</option>
-                    <option value="mapped">Mapped</option>
-                    <option value="verified">Verified (Fulfilment Ready)</option>
-                    <option value="disabled">Disabled</option>
+                    <option value="front">Front</option>
+                    <option value="back">Back</option>
+                    <option value="left_chest">Left Chest</option>
+                    <option value="right_chest">Right Chest</option>
+                    <option value="left_sleeve">Left Sleeve</option>
+                    <option value="right_sleeve">Right Sleeve</option>
+                    <option value="neck">Neck Label</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-mono text-white/60 block">Technique</label>
+                  <select
+                    value={newAreaMethod}
+                    onChange={(e) => setNewAreaMethod(e.target.value as PrintMethod)}
+                    className="w-full bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white"
+                  >
+                    <option value="dtf">DTF</option>
+                    <option value="dtg">DTG</option>
+                    <option value="screen_print">Screen Print</option>
+                    <option value="embroidery">Embroidery</option>
+                    <option value="sublimation">Sublimation</option>
                   </select>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Variant SKU Mapping Grid */}
-          <div className="bg-zinc-900/40 border border-white/10 rounded-lg p-6 space-y-4">
-            <h3 className="text-sm font-bold font-mono text-white uppercase border-b border-white/10 pb-2">
-              2. Exact Variant SKU Mapping ({selectedProduct?.variants?.length || 0} Variants)
-            </h3>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-mono text-white/60 block">Max Width (mm)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newAreaWidthMm}
+                    onChange={(e) => setNewAreaWidthMm(parseInt(e.target.value) || 0)}
+                    className="w-full bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-mono text-white/60 block">Max Height (mm)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newAreaHeightMm}
+                    onChange={(e) => setNewAreaHeightMm(parseInt(e.target.value) || 0)}
+                    className="w-full bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white"
+                  />
+                </div>
+              </div>
 
-            <div className="space-y-3 max-h-[380px] overflow-y-auto">
-              {(selectedProduct?.variants || []).map((v) => {
-                const current = variantMappings[v.id] || { externalVariantId: "", externalSku: "" };
-                return (
-                  <div key={v.id} className="p-3 bg-black/40 border border-white/10 rounded-md space-y-2">
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <span className="font-bold text-white">
-                        {v.size} / {v.color}
-                      </span>
-                      <span className="text-white/50 text-[10px]">Ascend SKU: {v.sku}</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] font-mono text-white/50 block mb-1">Ext Variant ID</label>
-                        <input
-                          type="text"
-                          value={current.externalVariantId}
-                          onChange={(e) =>
-                            setVariantMappings({
-                              ...variantMappings,
-                              [v.id]: { ...current, externalVariantId: e.target.value },
-                            })
-                          }
-                          className="w-full bg-black/80 border border-white/20 rounded p-1.5 text-xs font-mono text-white"
-                          placeholder="e.g. VAR-QIK-BLK-XL"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-mono text-white/50 block mb-1">Ext Variant SKU</label>
-                        <input
-                          type="text"
-                          value={current.externalSku}
-                          onChange={(e) =>
-                            setVariantMappings({
-                              ...variantMappings,
-                              [v.id]: { ...current, externalSku: e.target.value },
-                            })
-                          }
-                          className="w-full bg-black/80 border border-white/20 rounded p-1.5 text-xs font-mono text-white"
-                          placeholder="e.g. QK-BLK-XL-350"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-white/10">
               <button
-                type="submit"
-                disabled={saveLoading}
-                className="px-6 py-2.5 bg-white text-black font-mono font-bold text-xs rounded hover:bg-white/90 transition disabled:opacity-50"
+                type="button"
+                onClick={handleAddPrintableArea}
+                className="w-full py-1 bg-white/20 hover:bg-white/30 text-white font-mono text-xs rounded transition"
               >
-                {saveLoading ? "Saving Mappings..." : "Save POD Mapping Set"}
+                Add Area Spec
               </button>
             </div>
+
+            <div>
+              <label className="text-xs font-mono text-white/60 block mb-1">Operational Notes</label>
+              <textarea
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
+                placeholder="Internal mapping notes, fabric blend restrictions, setup charges."
+              />
+            </div>
           </div>
+        </div>
+
+        {/* Variant SKU Mappings */}
+        <div className="bg-zinc-900/40 border border-white/10 rounded-lg p-6 space-y-4">
+          <h3 className="text-sm font-bold font-mono text-white uppercase border-b border-white/10 pb-2">
+            3. Variant SKU Identifiers Mapping ({selectedProduct?.variants?.length || 0} Variants)
+          </h3>
+
+          <div className="space-y-3 max-h-[300px] overflow-y-auto">
+            {(selectedProduct?.variants || []).map((v) => {
+              const currentVal = variantMappings[v.id] || { externalVariantId: "", externalSku: "" };
+              return (
+                <div key={v.id} className="p-3 bg-black/30 border border-white/10 rounded flex flex-col md:flex-row md:items-center justify-between gap-4 font-mono text-xs">
+                  <div>
+                    <span className="font-bold text-white">
+                      {v.size} / {v.color}
+                    </span>
+                    <span className="text-white/40 block text-[11px]">Ascend SKU: {v.sku}</span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div>
+                      <label className="text-[10px] text-white/50 block">Provider Ext Variant ID</label>
+                      <input
+                        type="text"
+                        value={currentVal.externalVariantId}
+                        onChange={(e) =>
+                          setVariantMappings({
+                            ...variantMappings,
+                            [v.id]: { ...currentVal, externalVariantId: e.target.value },
+                          })
+                        }
+                        className="bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white w-44"
+                        placeholder="e.g. QIK-VAR-BLK-M"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-white/50 block">Provider Ext SKU</label>
+                      <input
+                        type="text"
+                        value={currentVal.externalSku}
+                        onChange={(e) =>
+                          setVariantMappings({
+                            ...variantMappings,
+                            [v.id]: { ...currentVal, externalSku: e.target.value },
+                          })
+                        }
+                        className="bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white w-44"
+                        placeholder="e.g. QIK-SKU-BLK-M"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t border-white/10">
+          <button
+            type="submit"
+            disabled={saveLoading}
+            className="px-6 py-2.5 bg-white text-black font-mono font-bold text-xs rounded hover:bg-white/90 transition"
+          >
+            {saveLoading ? "Saving Mapping..." : "Save Provider Product & Variant Mappings"}
+          </button>
         </div>
       </form>
     </div>

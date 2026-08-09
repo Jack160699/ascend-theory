@@ -160,6 +160,7 @@ export type ReadinessBlockingReason =
   | "invalid_placement_dimensions"
   | "invalid_placement_coordinates"
   | "print_exceeds_provider_area"
+  | "unsupported_provider_placement"
   | "missing_provider"
   | "missing_provider_product_mapping"
   | "missing_provider_variant_mapping"
