@@ -66,6 +66,7 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
     advance_payment_id: order.advancePaymentId || null,
     advance_status: order.advanceStatus || "none",
     cod_confirmation_token_hash: order.codConfirmationTokenHash || null,
+    customer_read_token_hash: order.customerReadTokenHash || null,
     created_at: order.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
@@ -314,5 +315,6 @@ export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
     advancePaymentId: orderRow.advance_payment_id || undefined,
     advanceStatus: orderRow.advance_status || "none",
     codConfirmationTokenHash: orderRow.cod_confirmation_token_hash || undefined,
+    customerReadTokenHash: orderRow.customer_read_token_hash || undefined,
   };
 }

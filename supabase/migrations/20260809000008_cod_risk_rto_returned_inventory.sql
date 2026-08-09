@@ -43,7 +43,8 @@ ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS advance_amount_paise BIGINT NOT NULL DEFAULT 0 CHECK (advance_amount_paise >= 0),
   ADD COLUMN IF NOT EXISTS advance_payment_id UUID,
   ADD COLUMN IF NOT EXISTS advance_status TEXT DEFAULT 'none',
-  ADD COLUMN IF NOT EXISTS cod_confirmation_token_hash TEXT;
+  ADD COLUMN IF NOT EXISTS cod_confirmation_token_hash TEXT,
+  ADD COLUMN IF NOT EXISTS customer_read_token_hash TEXT;
 
 ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_cod_status_check;
 ALTER TABLE public.orders ADD CONSTRAINT orders_cod_status_check CHECK (

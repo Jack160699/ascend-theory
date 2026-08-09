@@ -197,6 +197,7 @@ export async function getAllOrdersAdmin(): Promise<Order[]> {
         advancePaymentId: row.advance_payment_id || undefined,
         advanceStatus: row.advance_status || "none",
         codConfirmationTokenHash: row.cod_confirmation_token_hash || undefined,
+        customerReadTokenHash: row.customer_read_token_hash || undefined,
       };
     });
   }

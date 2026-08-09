@@ -695,5 +695,67 @@ describe("Phase 7 — COD Risk, RTO & Returned Inventory Final Transactional Int
     const json = await resWithToken.json();
     assert.strictEqual(json.order.id, "ORD-PREPAID-AUTH-01");
     assert.strictEqual(json.order.customerReadTokenHash, undefined);
+    assert.strictEqual(json.order.codConfirmationTokenHash, undefined);
+    assert.strictEqual(json.order.items[0].manufacturingIdentityHash, undefined);
+    assert.strictEqual(json.order.items[0].manufacturingSnapshotJson, undefined);
+
+    // With incorrect token -> 403
+    const reqBadToken = new Request("http://localhost/api/orders/ORD-PREPAID-AUTH-01", {
+      headers: { "x-ascend-customer-read-token": "bad-invalid-token" },
+    });
+    const resBadToken = await GET(reqBadToken, { params: Promise.resolve({ orderId: "ORD-PREPAID-AUTH-01" }) });
+    assert.strictEqual(resBadToken.status, 403);
+  });
+
+  // 22. Customer read capability - create-order API response & DTO sanitization
+  it("POST /api/create-order returns customerReadToken and excludes customerReadTokenHash", async () => {
+    const { POST } = await import("@/app/api/create-order/route");
+    const payload = {
+      items: [{ slug: "ascend-jacket", sku: "ASCEND-JACKET-M", size: "M", color: "Black", price: 18000, quantity: 1 }],
+      customer: { fullName: "Read Cap User", email: "readcap@example.com", phone: "+919999911111", address: "L1", city: "Delhi", postalCode: "110001", country: "IN" },
+      paymentMethod: "cod" as const,
+    };
+    const req = new Request("http://localhost/api/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const res = await POST(req);
+    assert.strictEqual(res.status, 200);
+    const json = await res.json();
+
+    assert.ok(json.customerReadToken, "Response missing customerReadToken");
+    assert.ok(json.confirmationToken, "COD response missing confirmationToken");
+    assert.strictEqual(json.customerReadTokenHash, undefined, "Response leaked customerReadTokenHash");
+    assert.strictEqual(json.order.customerReadTokenHash, undefined, "Order DTO leaked customerReadTokenHash");
+    assert.strictEqual(json.order.codConfirmationTokenHash, undefined, "Order DTO leaked codConfirmationTokenHash");
+  });
+
+  // 23. Customer read capability - Migration 00008 contains customer_read_token_hash column & store code maps customerReadTokenHash
+  it("migration 00008 and order stores properly map customer_read_token_hash", () => {
+    const migrationPath = path.join(process.cwd(), "supabase", "migrations", "20260809000008_cod_risk_rto_returned_inventory.sql");
+    const sql = fs.readFileSync(migrationPath, "utf-8");
+    assert.ok(
+      sql.includes("customer_read_token_hash TEXT"),
+      "Migration 00008 missing customer_read_token_hash TEXT column",
+    );
+
+    const supabaseStorePath = path.join(process.cwd(), "lib", "orders", "supabase-store.ts");
+    const storeCode = fs.readFileSync(supabaseStorePath, "utf-8");
+    assert.ok(
+      storeCode.includes("customer_read_token_hash: order.customerReadTokenHash || null"),
+      "saveSupabaseOrder does not persist customer_read_token_hash",
+    );
+    assert.ok(
+      storeCode.includes("customerReadTokenHash: orderRow.customer_read_token_hash || undefined"),
+      "getSupabaseOrder does not hydrate customerReadTokenHash",
+    );
+
+    const adminStorePath = path.join(process.cwd(), "lib", "orders", "store.ts");
+    const adminCode = fs.readFileSync(adminStorePath, "utf-8");
+    assert.ok(
+      adminCode.includes("customerReadTokenHash: row.customer_read_token_hash || undefined"),
+      "getAllOrdersAdmin does not hydrate customerReadTokenHash",
+    );
   });
 });
