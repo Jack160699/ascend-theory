@@ -553,4 +553,54 @@ describe("Phase 7 — COD Risk, RTO & Returned Inventory Final Transactional Int
     const res = verifySig("rzp_order_123", "pay_123", "short_bad_sig", "test_secret");
     assert.strictEqual(res, false);
   });
+
+  // 17. Requirement #8: buildAuthoritativeManufacturingIdentity includes placement x/y
+  it("buildAuthoritativeManufacturingIdentity populates xNormalized and yNormalized in authoritative snapshot", async () => {
+    const { buildAuthoritativeManufacturingIdentity } = await import("@/lib/inventory/reuse-engine");
+    const res = await buildAuthoritativeManufacturingIdentity("prod-ph7-1", "var-ph7-m", "PH7-TEE-BLK-M");
+    assert.ok(res.hash);
+    assert.ok(res.snapshot);
+    if (res.snapshot.placements && res.snapshot.placements.length > 0) {
+      assert.strictEqual(typeof res.snapshot.placements[0].xNormalized, "number");
+      assert.strictEqual(typeof res.snapshot.placements[0].yNormalized, "number");
+    }
+  });
+
+  // 18. Requirement #5: Header-based token authorization for COD order read
+  it("GET /api/orders/[orderId] requires confirmation token header for COD orders", async () => {
+    const phone = "+919999900000";
+    const confToken = "raw-bearer-token-12345";
+    const tokenHash = crypto.createHash("sha256").update(confToken).digest("hex");
+    const orderAuth: Order = {
+      id: "ORD-AUTH-TOKEN-01",
+      customer: { fullName: "Auth User", email: "auth@example.com", phone, address: "L1", city: "Delhi", state: "Delhi", postalCode: "110001", country: "IN" },
+      items: [{ orderItemId: "item-auth-1", slug: "ph7-tee", name: "Tee", dropName: "D1", price: 1000, priceDisplay: "₹1,000", lineTotal: 1000, quantity: 1, productId: "prod-ph7-1", variantId: "var-ph7-m", sku: "PH7-TEE-BLK-M" }],
+      subtotal: 1000,
+      currency: "INR",
+      status: "created",
+      paymentMethod: "cod",
+      paymentProvider: "none",
+      codStatus: "COD_PENDING_CONFIRMATION",
+      codConfirmationTokenHash: tokenHash,
+      createdAt: new Date().toISOString(),
+    };
+    await saveOrder(orderAuth);
+
+    const { GET } = await import("@/app/api/orders/[orderId]/route");
+    
+    // Request without token -> 403
+    const reqNoToken = new Request("http://localhost/api/orders/ORD-AUTH-TOKEN-01");
+    const resNoToken = await GET(reqNoToken, { params: Promise.resolve({ orderId: "ORD-AUTH-TOKEN-01" }) });
+    assert.strictEqual(resNoToken.status, 403);
+
+    // Request with valid header token -> 200
+    const reqWithToken = new Request("http://localhost/api/orders/ORD-AUTH-TOKEN-01", {
+      headers: { "x-ascend-confirmation-token": confToken },
+    });
+    const resWithToken = await GET(reqWithToken, { params: Promise.resolve({ orderId: "ORD-AUTH-TOKEN-01" }) });
+    assert.strictEqual(resWithToken.status, 200);
+    const json = await resWithToken.json();
+    assert.strictEqual(json.order.id, "ORD-AUTH-TOKEN-01");
+    assert.strictEqual(json.order.codConfirmationTokenHash, undefined);
+  });
 });

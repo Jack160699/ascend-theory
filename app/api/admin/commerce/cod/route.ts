@@ -6,6 +6,8 @@ import { getAllReturnedInventoryAdmin } from "@/lib/inventory/returned-store";
 import { applyCodDecisionAdmin, overrideCodStatusAdmin } from "@/lib/cod/decision-engine";
 import { getRiskProfileByPhoneAdmin } from "@/lib/cod/outcomes";
 import { normalizePhone } from "@/lib/cod/otp";
+import { hasSupabaseConfig } from "@/lib/supabase/env";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import type { Order } from "@/lib/orders/types";
 
 export async function GET(_req: NextRequest) {
@@ -32,6 +34,21 @@ export async function GET(_req: NextRequest) {
           const phone = o.customer?.phone ? normalizePhone(o.customer.phone) : "";
           const profile = phone ? await getRiskProfileByPhoneAdmin(phone) : null;
 
+          let otpChallenge: { status?: string; attempt_count?: number; max_attempts?: number; resend_count?: number; expires_at?: string; verified_at?: string } | null = null;
+          if (hasSupabaseConfig()) {
+            const supabase = createSupabaseServiceClient();
+            if (supabase) {
+              const { data: ch } = await supabase
+                .from("cod_otp_challenges")
+                .select("status, attempt_count, max_attempts, resend_count, expires_at, verified_at")
+                .eq("order_id", o.id)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              otpChallenge = ch;
+            }
+          }
+
           return {
             ...sanitized,
             riskBand: profile?.riskBand || "NEW_CUSTOMER",
@@ -39,7 +56,12 @@ export async function GET(_req: NextRequest) {
             rtoCount: profile?.rtoCount || 0,
             refusedCount: profile?.refusedCount || 0,
             successfulCodDeliveries: profile?.successfulCodDeliveries || 0,
-            otpStatus: o.codStatus === "COD_OTP_PENDING" ? "pending" : "none",
+            otpStatus: otpChallenge?.status || (o.codStatus === "COD_OTP_PENDING" ? "pending" : "none"),
+            otpAttempts: otpChallenge?.attempt_count ?? 0,
+            otpMaxAttempts: otpChallenge?.max_attempts ?? 5,
+            otpResendCount: otpChallenge?.resend_count ?? 0,
+            otpExpiresAt: otpChallenge?.expires_at || null,
+            otpVerifiedAt: otpChallenge?.verified_at || null,
             advanceStatus: o.advanceStatus || "none",
             advanceAmountPaise: o.advanceAmountPaise || 0,
             recommendedAction:

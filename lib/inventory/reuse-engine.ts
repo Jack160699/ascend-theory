@@ -153,6 +153,8 @@ export async function buildAuthoritativeManufacturingIdentity(
           placementId: p.id,
           location: p.placementLocation || p.position || "",
           printMethod: p.printMethod || "dtf",
+          xNormalized: p.xNormalized,
+          yNormalized: p.yNormalized,
           widthMm: p.widthMm || 0,
           heightMm: p.heightMm || 0,
           scale: p.scale ?? 1,

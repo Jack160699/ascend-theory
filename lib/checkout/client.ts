@@ -58,7 +58,12 @@ export function clearOrderSnapshot(): void {
 }
 
 export async function fetchOrder(orderId: string): Promise<Order | null> {
-  const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}`);
+  const token = readCodConfirmationToken(orderId);
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["x-ascend-confirmation-token"] = token;
+  }
+  const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, { headers });
   if (!res.ok) return readOrderSnapshot();
   const data = (await res.json()) as { order: Order };
   return data.order;

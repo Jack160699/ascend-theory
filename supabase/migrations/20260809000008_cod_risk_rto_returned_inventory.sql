@@ -90,7 +90,8 @@ CREATE TABLE IF NOT EXISTS public.cod_advance_payments (
   expected_amount_paise BIGINT NOT NULL CHECK (expected_amount_paise > 0),
   captured_amount_paise BIGINT CHECK (captured_amount_paise >= 0),
   currency TEXT NOT NULL DEFAULT 'INR',
-  status TEXT NOT NULL DEFAULT 'created' CHECK (status IN ('created', 'authorized', 'captured', 'failed', 'refunded')),
+  status TEXT NOT NULL DEFAULT 'created' CHECK (status IN ('creating', 'created', 'creation_unknown', 'authorized', 'captured', 'failed', 'refunded')),
+  claim_token TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   captured_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -876,7 +877,7 @@ BEGIN
 END;
 $$;
 
--- 19b. Atomic SECURITY DEFINER RPC: claim_cod_advance_checkout_with_audit (Requirement #7: Exactly-Once Advance Checkout Creation)
+-- 19b. Atomic SECURITY DEFINER RPC: claim_cod_advance_checkout_with_audit (Requirement #2: Durable Claim Token & Lease Lifecycle)
 CREATE OR REPLACE FUNCTION public.claim_cod_advance_checkout_with_audit(
   p_order_id TEXT
 )
@@ -888,6 +889,7 @@ AS $$
 DECLARE
   v_order RECORD;
   v_existing RECORD;
+  v_claim_token TEXT;
   v_payment_id UUID;
 BEGIN
   SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
@@ -906,42 +908,52 @@ BEGIN
   -- Lock existing advance payment row if present
   SELECT * INTO v_existing
   FROM public.cod_advance_payments
-  WHERE order_id = p_order_id AND provider = 'razorpay' AND status IN ('created', 'authorized', 'captured')
+  WHERE order_id = p_order_id AND provider = 'razorpay' AND status IN ('creating', 'created', 'authorized', 'captured')
   ORDER BY created_at DESC
   LIMIT 1
   FOR UPDATE;
 
-  IF FOUND AND v_existing.provider_order_id NOT LIKE 'pending_claim_%' THEN
-    RETURN jsonb_build_object(
-      'ok', true,
-      'already_exists', true,
-      'payment_id', v_existing.id,
-      'razorpay_order_id', v_existing.provider_order_id,
-      'amount_paise', v_existing.expected_amount_paise,
-      'currency', v_existing.currency
-    );
+  IF FOUND THEN
+    IF v_existing.status = 'created' OR v_existing.status = 'captured' OR v_existing.status = 'authorized' THEN
+      RETURN jsonb_build_object(
+        'ok', true,
+        'creator', false,
+        'already_created', true,
+        'creation_in_progress', false,
+        'payment_id', v_existing.id,
+        'razorpay_order_id', v_existing.provider_order_id,
+        'amount_paise', v_existing.expected_amount_paise,
+        'currency', v_existing.currency
+      );
+    ELSIF v_existing.status = 'creating' THEN
+      RETURN jsonb_build_object(
+        'ok', true,
+        'creator', false,
+        'already_created', false,
+        'creation_in_progress', true,
+        'payment_id', v_existing.id,
+        'amount_paise', v_existing.expected_amount_paise,
+        'currency', v_existing.currency
+      );
+    END IF;
   END IF;
 
-  IF FOUND AND v_existing.provider_order_id LIKE 'pending_claim_%' THEN
-    RETURN jsonb_build_object(
-      'ok', true,
-      'already_exists', false,
-      'payment_id', v_existing.id,
-      'amount_paise', v_existing.expected_amount_paise,
-      'currency', v_existing.currency
-    );
-  END IF;
+  -- Generate unique claim token
+  v_claim_token := 'claim_' || gen_random_uuid()::text;
 
   INSERT INTO public.cod_advance_payments (
-    order_id, provider, provider_order_id, expected_amount_paise, currency, status, created_at, updated_at
+    order_id, provider, provider_order_id, expected_amount_paise, currency, status, claim_token, created_at, updated_at
   ) VALUES (
-    p_order_id, 'razorpay', 'pending_claim_' || gen_random_uuid()::text, COALESCE(v_order.advance_amount_paise, 20000), COALESCE(v_order.currency, 'INR'), 'created', now(), now()
+    p_order_id, 'razorpay', 'pending_claim_' || v_claim_token, COALESCE(v_order.advance_amount_paise, 20000), COALESCE(v_order.currency, 'INR'), 'creating', v_claim_token, now(), now()
   )
   RETURNING id INTO v_payment_id;
 
   RETURN jsonb_build_object(
     'ok', true,
-    'already_exists', false,
+    'creator', true,
+    'already_created', false,
+    'creation_in_progress', false,
+    'claim_token', v_claim_token,
     'payment_id', v_payment_id,
     'amount_paise', COALESCE(v_order.advance_amount_paise, 20000),
     'currency', COALESCE(v_order.currency, 'INR')
@@ -949,10 +961,11 @@ BEGIN
 END;
 $$;
 
--- 19c. Atomic SECURITY DEFINER RPC: bind_cod_advance_provider_order_with_audit (Requirement #7: Atomic Binding of Razorpay Order ID)
+-- 19c. Atomic SECURITY DEFINER RPC: bind_cod_advance_provider_order_with_audit (Requirement #2: Atomic Binding with Claim Token)
 CREATE OR REPLACE FUNCTION public.bind_cod_advance_provider_order_with_audit(
   p_payment_id UUID,
   p_order_id TEXT,
+  p_claim_token TEXT,
   p_provider_order_id TEXT
 )
 RETURNS JSONB
@@ -960,11 +973,31 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = pg_catalog, public
 AS $$
+DECLARE
+  v_payment RECORD;
 BEGIN
+  SELECT * INTO v_payment
+  FROM public.cod_advance_payments
+  WHERE id = p_payment_id AND order_id = p_order_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'advance_payment_row_not_found');
+  END IF;
+
+  IF v_payment.claim_token IS DISTINCT FROM p_claim_token THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'invalid_claim_token');
+  END IF;
+
+  IF v_payment.status <> 'creating' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'invalid_payment_status_for_binding');
+  END IF;
+
   UPDATE public.cod_advance_payments
   SET provider_order_id = p_provider_order_id,
+      status = 'created',
       updated_at = now()
-  WHERE id = p_payment_id AND order_id = p_order_id;
+  WHERE id = p_payment_id;
 
   UPDATE public.orders
   SET cod_status = 'COD_ADVANCE_PENDING',

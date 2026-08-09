@@ -107,7 +107,7 @@ export async function createCodAdvanceCheckoutOrderAdmin(
       return { ok: false, error: claimRes?.error || claimErr?.message || "claim_failed" };
     }
 
-    if (claimRes.already_exists) {
+    if (claimRes.already_created) {
       return {
         ok: true,
         razorpayOrderId: claimRes.razorpay_order_id,
@@ -117,31 +117,47 @@ export async function createCodAdvanceCheckoutOrderAdmin(
       };
     }
 
-    let razorpayOrderId: string;
-    if (mockOrderCreator) {
-      const res = await mockOrderCreator(advanceAmountPaise, order.id);
-      razorpayOrderId = res.razorpayOrderId;
-    } else {
-      const { createRazorpayOrder } = await import("@/lib/payments/razorpay");
-      const rzpOrder = await createRazorpayOrder({
-        amountPaise: advanceAmountPaise,
-        currency: "INR",
-        receipt: order.id,
-      });
-      if (!rzpOrder) {
-        return { ok: false, error: "razorpay_order_creation_failed" };
-      }
-      razorpayOrderId = rzpOrder.id;
+    if (claimRes.creation_in_progress) {
+      return { ok: false, error: "creation_in_progress" };
     }
 
-    const { error: bindErr } = await supabase.rpc("bind_cod_advance_provider_order_with_audit", {
+    if (!claimRes.creator || !claimRes.claim_token) {
+      return { ok: false, error: "claim_permission_denied" };
+    }
+
+    const claimToken = claimRes.claim_token;
+    let razorpayOrderId: string;
+    try {
+      if (mockOrderCreator) {
+        const res = await mockOrderCreator(advanceAmountPaise, order.id);
+        razorpayOrderId = res.razorpayOrderId;
+      } else {
+        const { createRazorpayOrder } = await import("@/lib/payments/razorpay");
+        const rzpOrder = await createRazorpayOrder({
+          amountPaise: advanceAmountPaise,
+          currency: "INR",
+          receipt: order.id,
+        });
+        if (!rzpOrder) {
+          await supabase.from("cod_advance_payments").update({ status: "creation_unknown" }).eq("id", claimRes.payment_id);
+          return { ok: false, error: "razorpay_order_creation_failed" };
+        }
+        razorpayOrderId = rzpOrder.id;
+      }
+    } catch (createErr) {
+      await supabase.from("cod_advance_payments").update({ status: "creation_unknown" }).eq("id", claimRes.payment_id);
+      throw createErr;
+    }
+
+    const { error: bindErr, data: bindRes } = await supabase.rpc("bind_cod_advance_provider_order_with_audit", {
       p_payment_id: claimRes.payment_id,
       p_order_id: order.id,
+      p_claim_token: claimToken,
       p_provider_order_id: razorpayOrderId,
     });
 
-    if (bindErr) {
-      return { ok: false, error: `bind_failed: ${bindErr.message}` };
+    if (bindErr || !bindRes?.ok) {
+      return { ok: false, error: bindRes?.error || bindErr?.message || "bind_failed" };
     }
 
     order.codStatus = "COD_ADVANCE_PENDING";

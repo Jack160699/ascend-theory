@@ -133,20 +133,34 @@ export function CodHqView() {
                 <tr>
                   <th className="p-3">Order ID</th>
                   <th className="p-3">Customer</th>
-                  <th className="p-3">Phone</th>
-                  <th className="p-3">Amount</th>
+                  <th className="p-3">Risk Band/Score</th>
+                  <th className="p-3">OTP State</th>
+                  <th className="p-3">RTO/Refusals</th>
                   <th className="p-3">COD Status</th>
-                  <th className="p-3">Advance Status</th>
+                  <th className="p-3">Recommended Action</th>
                   <th className="p-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-800 font-mono">
-                {codOrders.map((ord) => (
+                {codOrders.map((ord: Order & { riskBand?: string; riskScore?: number; otpStatus?: string; otpAttempts?: number; otpMaxAttempts?: number; rtoCount?: number; refusedCount?: number; successfulCodDeliveries?: number; recommendedAction?: string }) => (
                   <tr key={ord.id} className="hover:bg-neutral-800/40">
                     <td className="p-3 font-bold text-white">{ord.id}</td>
-                    <td className="p-3 text-neutral-300 font-sans">{ord.customer?.fullName}</td>
-                    <td className="p-3 text-neutral-400">{ord.customer?.phone}</td>
-                    <td className="p-3">₹{ord.subtotal}</td>
+                    <td className="p-3 text-neutral-300 font-sans">
+                      <div>{ord.customer?.fullName}</div>
+                      <div className="text-xs text-neutral-500 font-mono">{ord.customer?.phone}</div>
+                    </td>
+                    <td className="p-3">
+                      <span className="text-xs font-semibold text-amber-400">{ord.riskBand || "NEW_CUSTOMER"}</span>
+                      <div className="text-xs text-neutral-500 font-mono">Score: {ord.riskScore ?? 30}</div>
+                    </td>
+                    <td className="p-3 text-xs">
+                      <div>Status: {ord.otpStatus || "none"}</div>
+                      <div className="text-neutral-500">Attempts: {ord.otpAttempts ?? 0}/{ord.otpMaxAttempts ?? 5}</div>
+                    </td>
+                    <td className="p-3 text-xs text-neutral-400">
+                      <div>RTO: {ord.rtoCount ?? 0} | Refused: {ord.refusedCount ?? 0}</div>
+                      <div className="text-emerald-400">Succ: {ord.successfulCodDeliveries ?? 0}</div>
+                    </td>
                     <td className="p-3">
                       <span
                         className={`inline-block px-2 py-0.5 text-xs font-semibold rounded ${
@@ -162,9 +176,7 @@ export function CodHqView() {
                         {ord.codStatus || "COD_PENDING_CONFIRMATION"}
                       </span>
                     </td>
-                    <td className="p-3 text-xs text-neutral-400">
-                      {ord.advanceRequired ? `Required: ₹${(ord.advanceAmountPaise || 0) / 100} (${ord.advanceStatus || "pending"})` : "None"}
-                    </td>
+                    <td className="p-3 text-xs text-emerald-400 font-medium">{ord.recommendedAction || "Review status"}</td>
                     <td className="p-3 text-right space-x-2">
                       {canMutate ? (
                         <>

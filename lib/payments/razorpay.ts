@@ -493,16 +493,21 @@ export async function handleRazorpayWebhook(
       return { ok: true, message: "Missing required order/payment IDs in webhook entity" };
     }
 
-    // Requirement #10: Check if provider_order_id belongs to a COD advance payment
+    // Requirement #12: Check if provider_order_id belongs to a COD advance payment (Fail closed on DB error)
     if (hasSupabaseConfig()) {
       const supabase = createSupabaseServiceClient();
       if (supabase) {
-        const { data: advRow } = await supabase
+        const { data: advRow, error: advErr } = await supabase
           .from("cod_advance_payments")
           .select("order_id, expected_amount_paise, currency")
           .eq("provider", "razorpay")
           .eq("provider_order_id", razorpayOrderId)
           .maybeSingle();
+
+        if (advErr) {
+          console.error("[Razorpay Webhook] DB error querying cod_advance_payments:", advErr);
+          return { ok: false, error: `db_error_fetching_advance_payment: ${advErr.message}`, status: 500 };
+        }
 
         if (advRow?.order_id) {
           const { error: rpcErr, data: rpcRes } = await supabase.rpc("capture_cod_advance_with_audit", {

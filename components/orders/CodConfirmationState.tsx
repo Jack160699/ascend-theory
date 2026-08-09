@@ -65,8 +65,9 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
       const json = await res.json();
       if (res.ok) {
         setMessage("OTP verified successfully!");
-        if (json.codStatus) {
-          setLocalCodStatus(json.codStatus);
+        const nextStatus = json.codStatus || json.targetStatus;
+        if (nextStatus) {
+          setLocalCodStatus(nextStatus);
         }
         if (onStatusUpdated) onStatusUpdated();
       } else {
@@ -96,10 +97,57 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
       });
       const json = await res.json();
       if (res.ok && json.razorpayOrderId) {
-        setMessage(`Advance payment order created. Please complete payment of ₹${json.amountPaise / 100}.`);
-        // In a real integration, this would open the Razorpay checkout modal
-        // For now, show the payment details
+        setMessage(`Advance checkout order created: ${json.razorpayOrderId}`);
         setLocalCodStatus("COD_ADVANCE_PENDING");
+
+        const options = {
+          key: json.keyId,
+          amount: json.amountPaise,
+          currency: json.currency,
+          name: "Ascend Theory",
+          description: "COD Booking Advance (₹200)",
+          order_id: json.razorpayOrderId,
+          handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
+            setLoading(true);
+            try {
+              const verifyRes = await fetch("/api/orders/cod/advance/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  orderId: order.id,
+                  confirmationToken,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                }),
+              });
+              const verifyJson = await verifyRes.json();
+              if (verifyRes.ok && (verifyJson.codStatus || verifyJson.ok)) {
+                setLocalCodStatus(verifyJson.codStatus || "COD_APPROVED");
+                setMessage("Advance payment verified successfully!");
+                if (onStatusUpdated) onStatusUpdated();
+              } else {
+                setError(verifyJson.error || "Failed to verify advance payment.");
+              }
+            } catch (verifyErr) {
+              setError(String(verifyErr));
+            } finally {
+              setLoading(false);
+            }
+          },
+          prefill: {
+            name: order.customer?.fullName || "",
+            email: order.customer?.email || "",
+            contact: order.customer?.phone || "",
+          },
+          theme: { color: "#000000" },
+        };
+
+        if (typeof window !== "undefined" && (window as unknown as { Razorpay?: new (opts: unknown) => { open: () => void } }).Razorpay) {
+          const RazorpayCtor = (window as unknown as { Razorpay: new (opts: unknown) => { open: () => void } }).Razorpay;
+          const rzp = new RazorpayCtor(options);
+          rzp.open();
+        }
       } else {
         setError(json.error || "Failed to create advance payment order.");
       }

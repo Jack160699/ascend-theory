@@ -134,9 +134,47 @@ export async function saveReturnedInventoryItemAdmin(
       p_admin_id: adminId || null,
     });
 
-    if (rpcErr || !rpcRes) {
-      console.error("[ReturnedInventory] DB error saving inventory item via RPC:", rpcErr);
-      throw new Error(`Failed to save returned inventory via RPC: ${rpcErr?.message || "Unknown error"}`);
+    if (rpcErr || !rpcRes || rpcRes.ok === false) {
+      const errMsg = rpcRes?.error || rpcErr?.message || "Unknown RPC error";
+      console.error("[ReturnedInventory] DB error saving inventory item via RPC:", errMsg);
+      throw new Error(`Failed to save returned inventory via RPC: ${errMsg}`);
+    }
+
+    const { data: fetchedRow } = await supabase
+      .from("returned_inventory")
+      .select("*")
+      .eq("id", fullRecord.id)
+      .maybeSingle();
+
+    if (fetchedRow) {
+      const authoritativeItem: ReturnedInventoryItem = {
+        id: fetchedRow.id,
+        sourceOrderId: fetchedRow.source_order_id,
+        sourceOrderItemId: fetchedRow.source_order_item_id,
+        fulfillmentId: fetchedRow.fulfillment_id,
+        productId: fetchedRow.product_id,
+        variantId: fetchedRow.variant_id,
+        designId: fetchedRow.design_id,
+        designVersion: fetchedRow.design_version,
+        sku: fetchedRow.sku,
+        size: fetchedRow.size,
+        color: fetchedRow.color,
+        condition: fetchedRow.condition as GarmentCondition,
+        manufacturingIdentityHash: fetchedRow.manufacturing_identity_hash || "",
+        manufacturingSnapshotJson: fetchedRow.manufacturing_snapshot_json || undefined,
+        receivedAt: fetchedRow.received_at,
+        ageDays: calculateAgeDays(fetchedRow.received_at),
+        reuseStatus: fetchedRow.reuse_status as ReuseStatus,
+        reuseEligible: fetchedRow.reuse_eligible,
+        notes: fetchedRow.notes,
+        disposedAt: fetchedRow.disposed_at,
+        reusedAt: fetchedRow.reused_at,
+        replacementOrderId: fetchedRow.replacement_order_id,
+        createdAt: fetchedRow.created_at,
+        updatedAt: fetchedRow.updated_at,
+      };
+      memoryReturnedInventory.set(id, authoritativeItem);
+      return authoritativeItem;
     }
   }
 
