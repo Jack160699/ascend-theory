@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrderAdmin, saveOrder } from "@/lib/orders/store";
+import crypto from "node:crypto";
+import { getOrderAdmin } from "@/lib/orders/store";
 import { verifyOtpChallengeAdmin } from "@/lib/cod/otp";
-import { evaluateCodOrderDecision } from "@/lib/cod/decision-engine";
+import { evaluateCodOrderDecision, applyCodDecisionAdmin } from "@/lib/cod/decision-engine";
 import { getRiskProfileByPhoneAdmin } from "@/lib/cod/outcomes";
 import { getDailyCodExposureAdmin } from "@/lib/cod/exposure";
-import { hasSupabaseConfig } from "@/lib/supabase/env";
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { orderId, otp } = body;
+    const { orderId, confirmationToken, otp } = body;
 
-    if (!orderId || !otp) {
-      return NextResponse.json({ ok: false, error: "Missing orderId or otp" }, { status: 400 });
+    if (!orderId || !confirmationToken || !otp) {
+      return NextResponse.json(
+        { ok: false, error: "Missing orderId, confirmationToken, or otp" },
+        { status: 400 },
+      );
     }
 
     const order = await getOrderAdmin(orderId);
@@ -21,51 +23,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Order not found" }, { status: 404 });
     }
 
-    const verifyRes = await verifyOtpChallengeAdmin(orderId, otp);
+    // Validate confirmation token hash (Requirement #13)
+    if (order.codConfirmationTokenHash) {
+      const submittedHash = crypto.createHash("sha256").update(confirmationToken).digest("hex");
+      try {
+        const matches = crypto.timingSafeEqual(
+          Buffer.from(submittedHash, "hex"),
+          Buffer.from(order.codConfirmationTokenHash, "hex"),
+        );
+        if (!matches) {
+          return NextResponse.json({ ok: false, error: "Invalid confirmation token" }, { status: 403 });
+        }
+      } catch {
+        return NextResponse.json({ ok: false, error: "Invalid confirmation token" }, { status: 403 });
+      }
+    }
+
+    const verifyRes = await verifyOtpChallengeAdmin(orderId, otp, confirmationToken);
     if (!verifyRes.ok) {
       return NextResponse.json({ ok: false, error: verifyRes.error }, { status: 400 });
     }
 
-    // OTP verified -> re-evaluate decision engine or progress order
+    // Requirement #18: Re-evaluate decision engine after successful OTP verification
     const riskProfile = await getRiskProfileByPhoneAdmin(order.customer.phone);
     const currentExposure = await getDailyCodExposureAdmin();
 
     const decisionResult = evaluateCodOrderDecision(order, riskProfile, currentExposure);
 
-    // If decision after OTP is FULL_COD, transition to COD_APPROVED, else COD_CONFIRMED / ADVANCE_REQUIRED
-    let finalCodStatus = decisionResult.codStatus;
-    if (decisionResult.decision === "OTP_REQUIRED" || decisionResult.codStatus === "COD_OTP_PENDING") {
-      finalCodStatus = "COD_APPROVED"; // Successfully verified OTP promotes normal order to COD_APPROVED
+    // Determine target COD status post-OTP
+    let targetCodStatus = decisionResult.codStatus;
+    if (decisionResult.decision === "OTP_REQUIRED" || targetCodStatus === "COD_OTP_PENDING") {
+      targetCodStatus = "COD_APPROVED"; // Normal order after OTP verified promotes to COD_APPROVED
     }
 
-    const updatedOrder = {
-      ...order,
-      codStatus: finalCodStatus,
-      advanceRequired: decisionResult.decision === "ADVANCE_REQUIRED",
-      advanceAmountPaise: decisionResult.advanceAmountPaise || 0,
-    };
+    const applyRes = await applyCodDecisionAdmin(
+      order.id,
+      targetCodStatus,
+      `OTP Verified: ${decisionResult.reasons.join(", ")}`,
+      decisionResult.decision === "ADVANCE_REQUIRED",
+      decisionResult.advanceAmountPaise || 0,
+      null,
+    );
 
-    await saveOrder(updatedOrder);
-
-    if (hasSupabaseConfig()) {
-      const supabase = createSupabaseServiceClient();
-      if (supabase) {
-        await supabase
-          .from("orders")
-          .update({
-            cod_status: finalCodStatus,
-            advance_required: decisionResult.decision === "ADVANCE_REQUIRED",
-            advance_amount_paise: decisionResult.advanceAmountPaise || 0,
-          })
-          .eq("id", orderId);
-      }
+    if (!applyRes.ok) {
+      return NextResponse.json({ ok: false, error: applyRes.error }, { status: 500 });
     }
 
     return NextResponse.json({
       ok: true,
-      codStatus: finalCodStatus,
+      codStatus: targetCodStatus,
       advanceRequired: decisionResult.decision === "ADVANCE_REQUIRED",
-      advanceAmountPaise: decisionResult.advanceAmountPaise,
+      advanceAmountPaise: decisionResult.advanceAmountPaise || 0,
     });
   } catch (err) {
     return NextResponse.json(

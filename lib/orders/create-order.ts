@@ -40,30 +40,30 @@ export async function createOrder(
 
   await saveOrder(order);
 
-  // Requirement #2 & #4: COD checkout evaluates decision engine, persists initial codStatus, and returns.
-  // DOES NOT claim/create/submit fulfillment until Phase 7 explicit approval.
+  // Requirement #9 & #13: COD checkout MUST start in COD_PENDING_CONFIRMATION state and generate a confirmation token.
+  // DOES NOT claim/create/submit fulfillment or auto-approve until explicit server risk decision workflow.
   if (order.paymentMethod === "cod") {
-    const { evaluateCodOrderDecision } = await import("@/lib/cod/decision-engine");
-    const { getRiskProfileByPhoneAdmin } = await import("@/lib/cod/outcomes");
-    const { getDailyCodExposureAdmin } = await import("@/lib/cod/exposure");
-
-    const riskProfile = await getRiskProfileByPhoneAdmin(order.customer.phone);
-    const currentExposure = await getDailyCodExposureAdmin();
-
-    const decision = evaluateCodOrderDecision(order, riskProfile, currentExposure);
+    const { randomBytes, createHash } = await import("node:crypto");
+    const confirmationToken = randomBytes(32).toString("hex");
+    const codConfirmationTokenHash = createHash("sha256").update(confirmationToken).digest("hex");
 
     order = {
       ...order,
-      codStatus: decision.codStatus,
-      advanceRequired: decision.decision === "ADVANCE_REQUIRED",
-      advanceAmountPaise: decision.advanceAmountPaise || 0,
+      codStatus: "COD_PENDING_CONFIRMATION",
+      codConfirmationTokenHash,
+      advanceRequired: false,
+      advanceAmountPaise: 0,
+      advanceStatus: "none" as import("@/lib/cod/types").AdvanceStatus,
     };
 
     await saveOrder(order);
 
     return {
       ok: true,
-      data: { order },
+      data: {
+        order,
+        confirmationToken,
+      },
     };
   }
 

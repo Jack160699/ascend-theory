@@ -1,6 +1,8 @@
 /**
- * Phase 7 — Authoritative Delivery Outcome & RTO Idempotency Manager (Requirements #20 & #21)
+ * Phase 7 — Authoritative Delivery Outcome & RTO Idempotency Manager (Requirements #20, #21, #22)
  * Idempotently records delivery/RTO outcomes and updates risk profiles without double-counting on status replays.
+ * Derives order payment_method and phone from fulfillment -> order DB relation.
+ * Prepaid deliveries increment successfulPrepaidDeliveries, NOT successfulCodDeliveries.
  */
 
 import { hasSupabaseConfig } from "@/lib/supabase/env";
@@ -8,7 +10,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getFulfillmentByIdAdmin } from "@/lib/fulfillment/fulfillment-store";
 import { getOrderAdmin } from "@/lib/orders/store";
 import { normalizePhone } from "./otp";
-import type { CodRiskProfile } from "./types";
+import type { CodRiskProfile, CodRiskBand } from "./types";
 
 const memoryOutcomeEvents = new Set<string>(); // key: `fulId_outcomeType`
 const memoryRiskProfiles = new Map<string, CodRiskProfile>(); // key: phoneNormalized
@@ -24,9 +26,12 @@ export async function recordDeliveryOutcomeAdmin(
   }
 
   const order = await getOrderAdmin(fulfillment.orderId);
-  const rawPhone = order?.customer?.phone || "";
-  const phoneNormalized = normalizePhone(rawPhone);
+  if (!order) {
+    return { ok: false, error: "order_not_found" };
+  }
 
+  const rawPhone = order.customer?.phone || "";
+  const phoneNormalized = normalizePhone(rawPhone);
   const eventKey = `${fulfillmentId}_${outcomeType}`;
 
   if (hasSupabaseConfig()) {
@@ -37,10 +42,7 @@ export async function recordDeliveryOutcomeAdmin(
 
     const { data: rpcRes, error: rpcErr } = await supabase.rpc("record_delivery_outcome_with_audit", {
       p_fulfillment_id: fulfillmentId,
-      p_order_id: fulfillment.orderId,
       p_outcome_type: outcomeType,
-      p_outcome_status: outcomeStatus,
-      p_phone_normalized: phoneNormalized,
       p_details_json: { provider_status: fulfillment.providerStatus },
     });
 
@@ -48,11 +50,11 @@ export async function recordDeliveryOutcomeAdmin(
       return { ok: false, error: `RPC error recording outcome: ${rpcErr.message}` };
     }
 
-    const isAlready = Boolean((rpcRes as { already_processed?: boolean })?.already_processed);
+    const isAlready = Boolean((rpcRes as { alreadyProcessed?: boolean })?.alreadyProcessed);
     return { ok: true, alreadyProcessed: isAlready };
   }
 
-  // Memory fallback for dev/testing
+  // Memory fallback for dev/testing (Requirement #20 & #21 parity)
   if (memoryOutcomeEvents.has(eventKey)) {
     return { ok: true, alreadyProcessed: true };
   }
@@ -78,19 +80,38 @@ export async function recordDeliveryOutcomeAdmin(
       updatedAt: new Date().toISOString(),
     };
 
+    const isCodOrder = order.paymentMethod === "cod" || Boolean(order.isCod);
+
     if (outcomeType === "DELIVERED") {
-      profile.successfulCodDeliveries += 1;
-      profile.lastSuccessfulDeliveryAt = new Date().toISOString();
-      if (profile.successfulCodDeliveries >= 2 && profile.rtoCount === 0) {
-        profile.riskBand = "TRUSTED_REPEAT";
+      if (isCodOrder) {
+        profile.successfulCodDeliveries += 1;
+      } else {
+        // Prepaid delivery increments prepaid counter ONLY (Requirement #20)
+        profile.successfulPrepaidDeliveries += 1;
       }
-    } else if (["RTO", "RETURNED", "REFUSED"].includes(outcomeType)) {
+      profile.lastSuccessfulDeliveryAt = new Date().toISOString();
+    } else if (outcomeType === "REFUSED") {
+      profile.refusedCount += 1;
+      profile.lastRtoAt = new Date().toISOString();
+    } else if (["RTO", "RETURNED"].includes(outcomeType)) {
       profile.rtoCount += 1;
       profile.lastRtoAt = new Date().toISOString();
-      if (profile.rtoCount >= 2) {
-        profile.riskBand = "PREPAID_ONLY";
-        profile.prepaidOnly = true;
-      }
+    }
+
+    // Recompute classification
+    if (profile.rtoCount >= 2 || profile.prepaidOnly) {
+      profile.riskBand = "PREPAID_ONLY";
+      profile.prepaidOnly = true;
+      profile.riskScore = 90;
+    } else if (profile.successfulCodDeliveries >= 2 && profile.rtoCount === 0) {
+      profile.riskBand = "TRUSTED_REPEAT";
+      profile.riskScore = 10;
+    } else if (profile.rtoCount > 0 || profile.refusedCount > 0) {
+      profile.riskBand = "HIGH_RISK";
+      profile.riskScore = 70;
+    } else {
+      profile.riskBand = "NEW_CUSTOMER";
+      profile.riskScore = 30;
     }
 
     profile.updatedAt = new Date().toISOString();
@@ -110,11 +131,16 @@ export async function getRiskProfileByPhoneAdmin(rawPhone: string): Promise<CodR
   if (hasSupabaseConfig()) {
     const supabase = createSupabaseServiceClient();
     if (supabase) {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("cod_risk_profiles")
         .select("*")
         .eq("phone_normalized", phoneNormalized)
         .maybeSingle();
+
+      if (error) {
+        console.error("[RiskProfile] DB error reading risk profile:", error);
+        throw new Error(`Failed to read risk profile from Supabase: ${error.message}`);
+      }
 
       if (data) {
         return {
@@ -131,7 +157,7 @@ export async function getRiskProfileByPhoneAdmin(rawPhone: string): Promise<CodR
           lastRtoAt: data.last_rto_at,
           lastSuccessfulDeliveryAt: data.last_successful_delivery_at,
           riskScore: data.risk_score,
-          riskBand: data.risk_band,
+          riskBand: data.risk_band as CodRiskBand,
           prepaidOnly: data.prepaid_only,
           manualHold: data.manual_hold,
           notes: data.notes,
@@ -154,26 +180,33 @@ export async function saveRiskProfileAdmin(profile: CodRiskProfile): Promise<voi
 
   if (hasSupabaseConfig()) {
     const supabase = createSupabaseServiceClient();
-    if (supabase) {
-      await supabase.from("cod_risk_profiles").upsert({
-        id: updatedProfile.id,
-        phone_normalized: phoneNormalized,
-        successful_cod_deliveries: updatedProfile.successfulCodDeliveries,
-        successful_prepaid_deliveries: updatedProfile.successfulPrepaidDeliveries,
-        cod_orders: updatedProfile.codOrders,
-        cod_confirmed_orders: updatedProfile.codConfirmedOrders,
-        rto_count: updatedProfile.rtoCount,
-        refused_count: updatedProfile.refusedCount,
-        cancelled_after_confirmation_count: updatedProfile.cancelledAfterConfirmationCount,
-        last_rto_at: updatedProfile.lastRtoAt,
-        last_successful_delivery_at: updatedProfile.lastSuccessfulDeliveryAt,
-        risk_score: updatedProfile.riskScore,
-        risk_band: updatedProfile.riskBand,
-        prepaid_only: updatedProfile.prepaidOnly,
-        manual_hold: updatedProfile.manualHold,
-        notes: updatedProfile.notes,
-        updated_at: updatedProfile.updatedAt,
-      });
+    if (!supabase) {
+      throw new Error("[RiskProfile] Supabase service role client is unconfigured.");
+    }
+    const { error } = await supabase.from("cod_risk_profiles").upsert({
+      id: updatedProfile.id,
+      customer_id: updatedProfile.customerId || null,
+      phone_normalized: phoneNormalized,
+      successful_cod_deliveries: updatedProfile.successfulCodDeliveries,
+      successful_prepaid_deliveries: updatedProfile.successfulPrepaidDeliveries,
+      cod_orders: updatedProfile.codOrders,
+      cod_confirmed_orders: updatedProfile.codConfirmedOrders,
+      rto_count: updatedProfile.rtoCount,
+      refused_count: updatedProfile.refusedCount,
+      cancelled_after_confirmation_count: updatedProfile.cancelledAfterConfirmationCount,
+      last_rto_at: updatedProfile.lastRtoAt,
+      last_successful_delivery_at: updatedProfile.lastSuccessfulDeliveryAt,
+      risk_score: updatedProfile.riskScore,
+      risk_band: updatedProfile.riskBand,
+      prepaid_only: updatedProfile.prepaidOnly,
+      manual_hold: updatedProfile.manualHold,
+      notes: updatedProfile.notes,
+      updated_at: updatedProfile.updatedAt,
+    });
+
+    if (error) {
+      console.error("[RiskProfile] DB error saving risk profile:", error);
+      throw new Error(`Failed to save risk profile to Supabase: ${error.message}`);
     }
   }
 

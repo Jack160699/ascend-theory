@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin/auth";
-import { getAllOrdersAdmin, getOrderAdmin, saveOrder } from "@/lib/orders/store";
+import { getAllOrdersAdmin, getOrderAdmin } from "@/lib/orders/store";
 import { getRiskProfileByPhoneAdmin, saveRiskProfileAdmin } from "@/lib/cod/outcomes";
 import { getDailyCodExposureAdmin } from "@/lib/cod/exposure";
 import { getAllReturnedInventoryAdmin } from "@/lib/inventory/returned-store";
-import { hasSupabaseConfig } from "@/lib/supabase/env";
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import type { CodStatus } from "@/lib/cod/types";
+import { applyCodDecisionAdmin, overrideCodStatusAdmin } from "@/lib/cod/decision-engine";
+import type { Order } from "@/lib/orders/types";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const session = await getAdminSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "Unauthorized operational access" }, { status: 401 });
   }
 
-  // Requirement #13: GET RBAC lockdown (owner, admin, support ONLY - block editor with 403)
+  // Requirement #12 & #28: GET RBAC lockdown (owner, admin, support ONLY - block editor with 403)
   if (!["owner", "admin", "support"].includes(session.role)) {
     return NextResponse.json(
       { ok: false, error: "Forbidden: Operational role permissions insufficient for COD management access" },
@@ -24,7 +23,14 @@ export async function GET(req: NextRequest) {
 
   try {
     const allOrders = await getAllOrdersAdmin();
-    const codOrders = allOrders.filter((o: import("@/lib/orders/types").Order) => o.paymentMethod === "cod" || o.isCod || o.codStatus);
+    const codOrders = allOrders
+      .filter((o: Order) => o.paymentMethod === "cod" || o.isCod || Boolean(o.codStatus))
+      .map((o) => {
+        // Sanitize any internal secrets before sending to client
+        const { codConfirmationTokenHash, ...sanitized } = o;
+        return sanitized;
+      });
+
     const dailyExposurePaise = await getDailyCodExposureAdmin();
     const returnedInventory = await getAllReturnedInventoryAdmin();
 
@@ -49,7 +55,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Unauthorized operational access" }, { status: 401 });
   }
 
-  // Requirement #13: Manufacturing/Manual COD overrides restricted to owner & admin ONLY (support & editor return 403)
+  // Requirement #12 & #28: Manual COD decision override restricted to owner & admin ONLY (support & editor return 403)
   if (!["owner", "admin"].includes(session.role)) {
     return NextResponse.json(
       { ok: false, error: "Forbidden: Manual COD decision override requires owner or admin permissions" },
@@ -57,7 +63,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const adminId = session.id || null;
+  const adminId = session.id || "00000000-0000-0000-0000-000000000000";
 
   try {
     const body = await req.json();
@@ -72,66 +78,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Order not found" }, { status: 404 });
     }
 
-    let targetStatus: CodStatus | null = null;
-    let advanceReq = order.advanceRequired ?? false;
-    let advanceAmt = order.advanceAmountPaise ?? 0;
+    let decisionRes: { ok: boolean; error?: string };
 
     if (action === "approve_cod") {
-      targetStatus = "COD_APPROVED";
+      decisionRes = await applyCodDecisionAdmin(orderId, "COD_APPROVED", reason || "Admin manual approval", false, 0, adminId);
     } else if (action === "reject_cod") {
-      targetStatus = "COD_REJECTED";
+      decisionRes = await applyCodDecisionAdmin(orderId, "COD_REJECTED", reason || "Admin manual rejection", false, 0, adminId);
     } else if (action === "hold_cod") {
-      targetStatus = "COD_HELD";
+      decisionRes = await applyCodDecisionAdmin(orderId, "COD_HELD", reason || "Admin manual hold", false, 0, adminId);
     } else if (action === "require_advance") {
-      targetStatus = "COD_ADVANCE_REQUIRED";
-      advanceReq = true;
-      advanceAmt = body.advanceAmountPaise || 20000;
+      const advanceAmt = body.advanceAmountPaise || 20000;
+      decisionRes = await applyCodDecisionAdmin(orderId, "COD_ADVANCE_REQUIRED", reason || "Admin require advance", true, advanceAmt, adminId);
     } else if (action === "set_prepaid_only") {
-      targetStatus = "COD_PREPAID_ONLY";
-      // Update risk profile prepaidOnly flag
+      decisionRes = await applyCodDecisionAdmin(orderId, "COD_PREPAID_ONLY", reason || "Admin set prepaid only", false, 0, adminId);
       const profile = await getRiskProfileByPhoneAdmin(order.customer.phone);
       if (profile) {
         profile.prepaidOnly = true;
         profile.riskBand = "PREPAID_ONLY";
         await saveRiskProfileAdmin(profile);
       }
+    } else if (action === "override_status") {
+      if (!reason || !reason.trim()) {
+        return NextResponse.json({ ok: false, error: "Mandatory override reason is required" }, { status: 400 });
+      }
+      decisionRes = await overrideCodStatusAdmin(orderId, body.targetStatus, reason, adminId);
     } else {
       return NextResponse.json({ ok: false, error: "Invalid action" }, { status: 400 });
     }
 
-    const updatedOrder = {
-      ...order,
-      codStatus: targetStatus,
-      advanceRequired: advanceReq,
-      advanceAmountPaise: advanceAmt,
-    };
-
-    await saveOrder(updatedOrder);
-
-    if (hasSupabaseConfig()) {
-      const supabase = createSupabaseServiceClient();
-      if (supabase) {
-        await supabase
-          .from("orders")
-          .update({
-            cod_status: targetStatus,
-            advance_required: advanceReq,
-            advance_amount_paise: advanceAmt,
-          })
-          .eq("id", orderId);
-
-        if (adminId) {
-          await supabase.from("audit_logs").insert({
-            admin_id: adminId,
-            action: `cod_manual_${action}`,
-            entity_type: "order",
-            entity_id: orderId,
-            details_json: { target_status: targetStatus, reason: reason || "Manual admin action" },
-          });
-        }
-      }
+    if (!decisionRes.ok) {
+      return NextResponse.json({ ok: false, error: decisionRes.error }, { status: 500 });
     }
 
+    const updatedOrder = await getOrderAdmin(orderId);
     return NextResponse.json({ ok: true, order: updatedOrder });
   } catch (err) {
     return NextResponse.json(

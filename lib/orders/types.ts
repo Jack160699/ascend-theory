@@ -60,6 +60,7 @@ export type Order = {
   advanceAmountPaise?: number;
   advancePaymentId?: string;
   advanceStatus?: import("../cod/types").AdvanceStatus;
+  codConfirmationTokenHash?: string;
   fulfillment?: {
     provider?: "qikink" | "shopify" | "manual";
     externalId?: string;
@@ -85,4 +86,6 @@ export type CreateOrderResult = {
   order: Order;
   /** Redirect URL for online payment (Stripe Checkout, etc.) */
   paymentUrl?: string;
+  /** One-time customer confirmation token for COD authorization */
+  confirmationToken?: string;
 };

@@ -297,6 +297,14 @@ export const ADMIN_DOMAINS: AdminDomainSection[] = [
         description: "Promo codes, VIP member discounts, and automatic checkout rules.",
         status: "beta",
       },
+      {
+        id: "cod",
+        title: "Cash on Delivery",
+        href: "/admin/commerce/cod",
+        description: "COD risk decisions, OTP verification queue, advance payments, and RTO risk profile management.",
+        status: "active",
+        badge: "Risk HQ",
+      },
     ],
   },
   {

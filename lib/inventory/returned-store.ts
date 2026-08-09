@@ -1,7 +1,8 @@
 /**
- * Phase 7 — Authoritative Returned Inventory Store & Concurrency Manager (Requirements #22, #23, #25, #26)
- * Tracks physical returned items with exact manufactured identity (designId, designVersion, checksum).
+ * Phase 7 — Authoritative Returned Inventory Store & Concurrency Manager (Requirements #23, #24, #25, #26)
+ * Tracks physical returned items with exact manufactured identity hash and snapshot.
  * Provides atomic row-locking reservation via FOR UPDATE SKIP LOCKED.
+ * Fails closed on database errors when Supabase is configured.
  */
 
 import crypto from "node:crypto";
@@ -16,7 +17,7 @@ const memoryReturnedInventory = new Map<string, ReturnedInventoryItem>();
  */
 export function calculateAgeDays(receivedAt: string): number {
   const receivedMs = new Date(receivedAt).getTime();
-  const nowMs = new Date().getTime();
+  const nowMs = Date.now();
   const diffDays = Math.floor((nowMs - receivedMs) / (1000 * 60 * 60 * 24));
   return diffDays >= 0 ? diffDays : 0;
 }
@@ -38,6 +39,7 @@ export async function saveReturnedInventoryItemAdmin(
     designId: string;
     designVersion: number;
     sku: string;
+    manufacturingIdentityHash?: string;
   },
   adminId?: string | null,
 ): Promise<ReturnedInventoryItem> {
@@ -45,6 +47,13 @@ export async function saveReturnedInventoryItemAdmin(
   const nowIso = new Date().toISOString();
   const receivedAt = item.receivedAt || nowIso;
   const ageDays = calculateAgeDays(receivedAt);
+
+  const defaultHash =
+    item.manufacturingIdentityHash ||
+    crypto
+      .createHash("sha256")
+      .update(`${item.productId}:${item.variantId}:${item.sku}:${item.designId}:${item.designVersion}`)
+      .digest("hex");
 
   const fullRecord: ReturnedInventoryItem = {
     id,
@@ -59,6 +68,8 @@ export async function saveReturnedInventoryItemAdmin(
     size: item.size,
     color: item.color,
     condition: item.condition || "NEW_UNWORN",
+    manufacturingIdentityHash: defaultHash,
+    manufacturingSnapshotJson: item.manufacturingSnapshotJson || {},
     receivedAt,
     ageDays,
     reuseStatus: item.reuseStatus || "REUSABLE",
@@ -73,40 +84,53 @@ export async function saveReturnedInventoryItemAdmin(
 
   if (hasSupabaseConfig()) {
     const supabase = createSupabaseServiceClient();
-    if (supabase) {
-      await supabase.from("returned_inventory").upsert({
-        id: fullRecord.id,
-        source_order_id: fullRecord.sourceOrderId,
-        source_order_item_id: fullRecord.sourceOrderItemId,
-        fulfillment_id: fullRecord.fulfillmentId,
-        product_id: fullRecord.productId,
-        variant_id: fullRecord.variantId,
-        design_id: fullRecord.designId,
-        design_version: fullRecord.designVersion,
-        sku: fullRecord.sku,
-        size: fullRecord.size,
-        color: fullRecord.color,
-        condition: fullRecord.condition,
-        received_at: fullRecord.receivedAt,
-        age_days: fullRecord.ageDays,
-        reuse_status: fullRecord.reuseStatus,
-        reuse_eligible: fullRecord.reuseEligible,
-        notes: fullRecord.notes,
-        disposed_at: fullRecord.disposedAt,
-        reused_at: fullRecord.reusedAt,
-        replacement_order_id: fullRecord.replacementOrderId,
-        created_at: fullRecord.createdAt,
-        updated_at: fullRecord.updatedAt,
+    if (!supabase) {
+      throw new Error("[ReturnedInventory] Supabase service role client unconfigured.");
+    }
+
+    const { error: upsertErr } = await supabase.from("returned_inventory").upsert({
+      id: fullRecord.id,
+      source_order_id: fullRecord.sourceOrderId || null,
+      source_order_item_id: fullRecord.sourceOrderItemId || null,
+      fulfillment_id: fullRecord.fulfillmentId || null,
+      product_id: fullRecord.productId,
+      variant_id: fullRecord.variantId,
+      design_id: fullRecord.designId,
+      design_version: fullRecord.designVersion,
+      sku: fullRecord.sku,
+      size: fullRecord.size || null,
+      color: fullRecord.color || null,
+      condition: fullRecord.condition,
+      manufacturing_identity_hash: fullRecord.manufacturingIdentityHash,
+      manufacturing_snapshot_json: fullRecord.manufacturingSnapshotJson || {},
+      received_at: fullRecord.receivedAt,
+      reuse_status: fullRecord.reuseStatus,
+      reuse_eligible: fullRecord.reuseEligible,
+      notes: fullRecord.notes || null,
+      disposed_at: fullRecord.disposedAt || null,
+      reused_at: fullRecord.reusedAt || null,
+      replacement_order_id: fullRecord.replacementOrderId || null,
+      created_at: fullRecord.createdAt,
+      updated_at: fullRecord.updatedAt,
+    });
+
+    if (upsertErr) {
+      console.error("[ReturnedInventory] DB error saving inventory item:", upsertErr);
+      throw new Error(`Failed to save returned inventory to Supabase: ${upsertErr.message}`);
+    }
+
+    if (adminId) {
+      const { error: auditErr } = await supabase.from("audit_logs").insert({
+        admin_id: adminId,
+        action: "returned_inventory_saved",
+        entity_type: "returned_inventory",
+        entity_id: fullRecord.id,
+        details_json: { sku: fullRecord.sku, reuse_status: fullRecord.reuseStatus },
       });
 
-      if (adminId) {
-        await supabase.from("audit_logs").insert({
-          admin_id: adminId,
-          action: "returned_inventory_saved",
-          entity_type: "returned_inventory",
-          entity_id: fullRecord.id,
-          details_json: { sku: fullRecord.sku, reuse_status: fullRecord.reuseStatus },
-        });
+      if (auditErr) {
+        console.error("[ReturnedInventory] DB audit log insert error:", auditErr);
+        throw new Error(`Failed to insert audit log to Supabase: ${auditErr.message}`);
       }
     }
   }
@@ -118,35 +142,45 @@ export async function saveReturnedInventoryItemAdmin(
 export async function getAllReturnedInventoryAdmin(): Promise<ReturnedInventoryItem[]> {
   if (hasSupabaseConfig()) {
     const supabase = createSupabaseServiceClient();
-    if (supabase) {
-      const { data, error } = await supabase.from("returned_inventory").select("*").order("created_at", { ascending: false });
-      if (!error && data) {
-        return data.map((d) => ({
-          id: d.id,
-          sourceOrderId: d.source_order_id,
-          sourceOrderItemId: d.source_order_item_id,
-          fulfillmentId: d.fulfillment_id,
-          productId: d.product_id,
-          variantId: d.variant_id,
-          designId: d.design_id,
-          designVersion: d.design_version,
-          sku: d.sku,
-          size: d.size,
-          color: d.color,
-          condition: d.condition as GarmentCondition,
-          receivedAt: d.received_at,
-          ageDays: calculateAgeDays(d.received_at),
-          reuseStatus: d.reuse_status as ReuseStatus,
-          reuseEligible: d.reuse_eligible,
-          notes: d.notes,
-          disposedAt: d.disposed_at,
-          reusedAt: d.reused_at,
-          replacementOrderId: d.replacement_order_id,
-          createdAt: d.created_at,
-          updatedAt: d.updated_at,
-        }));
-      }
+    if (!supabase) {
+      throw new Error("[ReturnedInventory] Supabase service role client unconfigured.");
     }
+    const { data, error } = await supabase
+      .from("returned_inventory")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("[ReturnedInventory] DB error querying returned inventory:", error);
+      throw new Error(`Failed to read returned inventory from Supabase: ${error.message}`);
+    }
+
+    return (data || []).map((d) => ({
+      id: d.id,
+      sourceOrderId: d.source_order_id,
+      sourceOrderItemId: d.source_order_item_id,
+      fulfillmentId: d.fulfillment_id,
+      productId: d.product_id,
+      variantId: d.variant_id,
+      designId: d.design_id,
+      designVersion: d.design_version,
+      sku: d.sku,
+      size: d.size,
+      color: d.color,
+      condition: d.condition as GarmentCondition,
+      manufacturingIdentityHash: d.manufacturing_identity_hash || "",
+      manufacturingSnapshotJson: d.manufacturing_snapshot_json || {},
+      receivedAt: d.received_at,
+      ageDays: calculateAgeDays(d.received_at),
+      reuseStatus: d.reuse_status as ReuseStatus,
+      reuseEligible: d.reuse_eligible,
+      notes: d.notes,
+      disposedAt: d.disposed_at,
+      reusedAt: d.reused_at,
+      replacementOrderId: d.replacement_order_id,
+      createdAt: d.created_at,
+      updatedAt: d.updated_at,
+    }));
   }
 
   return Array.from(memoryReturnedInventory.values()).map((item) => ({
@@ -156,12 +190,14 @@ export async function getAllReturnedInventoryAdmin(): Promise<ReturnedInventoryI
 }
 
 /**
- * Atomic Returned Inventory Reservation with FOR UPDATE SKIP LOCKED (Requirement #25)
+ * Atomic Returned Inventory Reservation with FOR UPDATE SKIP LOCKED (Requirements #25 & #26)
  */
 export async function reserveReturnedInventoryAdmin(
   inventoryId: string,
   replacementOrderId: string,
   adminId?: string | null,
+  manufacturingHash?: string,
+  orderItemId?: string,
 ): Promise<{ ok: true; item: ReturnedInventoryItem } | { ok: false; error: string }> {
   if (hasSupabaseConfig()) {
     const supabase = createSupabaseServiceClient();
@@ -169,19 +205,49 @@ export async function reserveReturnedInventoryAdmin(
       return { ok: false, error: "Supabase service client unconfigured" };
     }
 
-    const { data: rpcData, error: rpcErr } = await supabase.rpc("reserve_returned_inventory_with_audit", {
-      p_inventory_id: inventoryId,
-      p_replacement_order_id: replacementOrderId,
-      p_admin_id: adminId || null,
-    });
+    if (manufacturingHash && orderItemId) {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc(
+        "reserve_matching_returned_inventory_with_audit",
+        {
+          p_order_id: replacementOrderId,
+          p_order_item_id: orderItemId,
+          p_manufacturing_hash: manufacturingHash,
+          p_admin_id: adminId || null,
+        },
+      );
 
-    if (rpcErr || !rpcData || !(rpcData as { ok?: boolean }).ok) {
-      const errStr = (rpcData as { error?: string })?.error || rpcErr?.message || "Reservation failed";
-      return { ok: false, error: errStr };
+      if (rpcErr || !rpcData || !(rpcData as { ok?: boolean }).ok) {
+        const errStr =
+          (rpcData as { error?: string })?.error || rpcErr?.message || "Reservation failed";
+        return { ok: false, error: errStr };
+      }
+    } else {
+      // Direct ID fallback for admin manual allocation
+      const { data: invRow, error: invErr } = await supabase
+        .from("returned_inventory")
+        .select("*")
+        .eq("id", inventoryId)
+        .single();
+
+      if (invErr || !invRow) return { ok: false, error: "inventory_unit_not_found" };
+      if (invRow.reuse_status !== "REUSABLE" || !invRow.reuse_eligible) {
+        return { ok: false, error: `inventory_not_reusable: current status is ${invRow.reuse_status}` };
+      }
+
+      const { error: updateErr } = await supabase
+        .from("returned_inventory")
+        .update({
+          reuse_status: "RESERVED",
+          replacement_order_id: replacementOrderId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", inventoryId);
+
+      if (updateErr) return { ok: false, error: updateErr.message };
     }
 
     const all = await getAllReturnedInventoryAdmin();
-    const updated = all.find((i) => i.id === inventoryId);
+    const updated = all.find((i) => i.id === inventoryId || i.replacementOrderId === replacementOrderId);
     return updated ? { ok: true, item: updated } : { ok: false, error: "Item not found after reservation" };
   }
 

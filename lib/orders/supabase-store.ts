@@ -60,6 +60,12 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
     total_paise: totalPaise,
     currency: order.currency || "INR",
     shipping_address: order.customer as unknown as Record<string, unknown>,
+    cod_status: order.codStatus || (paymentMethod === "cod" ? "COD_PENDING_CONFIRMATION" : "NOT_COD"),
+    advance_required: order.advanceRequired || false,
+    advance_amount_paise: order.advanceAmountPaise || 0,
+    advance_payment_id: order.advancePaymentId || null,
+    advance_status: order.advanceStatus || "none",
+    cod_confirmation_token_hash: order.codConfirmationTokenHash || null,
     created_at: order.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
@@ -298,5 +304,11 @@ export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
     customer: customerObj,
     shippingAddress: customerObj,
     paymentReference: paymentRow?.provider_order_id || undefined,
+    codStatus: orderRow.cod_status || (paymentMethod === "cod" ? "COD_PENDING_CONFIRMATION" : "NOT_COD"),
+    advanceRequired: orderRow.advance_required || false,
+    advanceAmountPaise: Number(orderRow.advance_amount_paise || 0),
+    advancePaymentId: orderRow.advance_payment_id || undefined,
+    advanceStatus: orderRow.advance_status || "none",
+    codConfirmationTokenHash: orderRow.cod_confirmation_token_hash || undefined,
   };
 }

@@ -100,6 +100,8 @@ export type ReturnedInventoryItem = {
   size?: string;
   color?: string;
   condition: GarmentCondition;
+  manufacturingIdentityHash: string;
+  manufacturingSnapshotJson?: Record<string, unknown>;
   receivedAt: string;
   ageDays: number;
   reuseStatus: ReuseStatus;

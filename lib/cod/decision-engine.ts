@@ -124,3 +124,106 @@ export function evaluateCodOrderDecision(
     reasons: ["NEW_CUSTOMER_OTP_VERIFICATION_REQUIRED"],
   };
 }
+
+/**
+ * Applies a COD decision atomically via SECURITY DEFINER RPC when Supabase is configured.
+ */
+export async function applyCodDecisionAdmin(
+  orderId: string,
+  targetStatus: string,
+  decisionReason: string,
+  advanceRequired: boolean = false,
+  advanceAmountPaise: number = 0,
+  adminId: string | null = null,
+): Promise<{ ok: boolean; error?: string }> {
+  const { hasSupabaseConfig } = await import("@/lib/supabase/env");
+  const { createSupabaseServiceClient } = await import("@/lib/supabase/service");
+  const { getOrderAdmin, saveOrder } = await import("@/lib/orders/store");
+
+  if (hasSupabaseConfig()) {
+    const supabase = createSupabaseServiceClient();
+    if (supabase) {
+      const { data, error } = await supabase.rpc("apply_cod_decision_with_audit", {
+        p_order_id: orderId,
+        p_target_status: targetStatus,
+        p_decision_reason: decisionReason,
+        p_advance_required: advanceRequired,
+        p_advance_amount_paise: advanceAmountPaise,
+        p_admin_id: adminId,
+      });
+
+      if (error) {
+        console.error("[DecisionEngine] RPC error applying COD decision:", error);
+        return { ok: false, error: error.message };
+      }
+      return { ok: true };
+    }
+  }
+
+  // Memory fallback for dev/testing
+  const order = await getOrderAdmin(orderId);
+  if (!order) return { ok: false, error: "Order not found" };
+
+  const updatedOrder = {
+    ...order,
+    codStatus: targetStatus as import("./types").CodStatus,
+    advanceRequired,
+    advanceAmountPaise,
+    advanceStatus: (advanceRequired ? "pending" : "none") as import("./types").AdvanceStatus,
+  };
+
+  await saveOrder(updatedOrder);
+  return { ok: true };
+}
+
+/**
+ * Applies an explicit operational override via SECURITY DEFINER RPC when Supabase is configured.
+ * Requires adminId and mandatory overrideReason.
+ */
+export async function overrideCodStatusAdmin(
+  orderId: string,
+  targetStatus: string,
+  overrideReason: string,
+  adminId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!adminId) {
+    return { ok: false, error: "Admin ID is required for operational COD override" };
+  }
+  if (!overrideReason || !overrideReason.trim()) {
+    return { ok: false, error: "Mandatory override reason is required" };
+  }
+
+  const { hasSupabaseConfig } = await import("@/lib/supabase/env");
+  const { createSupabaseServiceClient } = await import("@/lib/supabase/service");
+  const { getOrderAdmin, saveOrder } = await import("@/lib/orders/store");
+
+  if (hasSupabaseConfig()) {
+    const supabase = createSupabaseServiceClient();
+    if (supabase) {
+      const { error } = await supabase.rpc("override_cod_status_with_audit", {
+        p_order_id: orderId,
+        p_target_status: targetStatus,
+        p_override_reason: overrideReason,
+        p_admin_id: adminId,
+      });
+
+      if (error) {
+        console.error("[DecisionEngine] RPC error applying COD override:", error);
+        return { ok: false, error: error.message };
+      }
+      return { ok: true };
+    }
+  }
+
+  // Memory fallback for dev/testing
+  const order = await getOrderAdmin(orderId);
+  if (!order) return { ok: false, error: "Order not found" };
+
+  const updatedOrder = {
+    ...order,
+    codStatus: targetStatus as import("./types").CodStatus,
+  };
+
+  await saveOrder(updatedOrder);
+  return { ok: true };
+}

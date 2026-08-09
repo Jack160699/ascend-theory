@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { Order } from "./types";
+import type { Order, OrderItem, PaymentMethod } from "./types";
 import { hasSupabaseServiceConfig } from "@/lib/supabase/env";
 import { saveSupabaseOrder, getSupabaseOrder } from "./supabase-store";
 
@@ -118,34 +118,89 @@ export async function getAllOrdersAdmin(): Promise<Order[]> {
   const hasSupabase = hasSupabaseServiceConfig();
 
   if (hasSupabase) {
-    try {
-      const { createSupabaseServiceClient } = await import("@/lib/supabase/service");
-      const supabase = createSupabaseServiceClient();
-      if (supabase) {
-        const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-        if (!error && data) {
-          return data.map((row) => ({
-            id: row.id,
-            createdAt: row.created_at,
-            status: row.status,
-            paymentMethod: row.payment_method || "online",
-            paymentProvider: row.payment_provider || "none",
-            paymentStatus: row.payment_status,
-            currency: row.currency || "INR",
-            subtotal: Number(row.subtotal_paise || row.total_paise || 0) / 100,
-            items: row.items_json || [],
-            customer: row.customer_json || {},
-            codStatus: row.cod_status,
-            advanceRequired: row.advance_required,
-            advanceAmountPaise: row.advance_amount_paise,
-            advancePaymentId: row.advance_payment_id,
-            advanceStatus: row.advance_status,
-          }));
-        }
-      }
-    } catch (err) {
-      if (isProduction) throw err;
+    const { createSupabaseServiceClient } = await import("@/lib/supabase/service");
+    const supabase = createSupabaseServiceClient();
+    if (!supabase) {
+      throw new Error("[OrderStore FATAL] Supabase service client initialization failed.");
     }
+
+    const { data: orderRows, error: orderErr } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (orderErr) {
+      console.error("[OrderStore] DB error fetching all orders:", orderErr);
+      throw new Error(`Failed to fetch orders from Supabase: ${orderErr.message}`);
+    }
+
+    if (!orderRows || orderRows.length === 0) {
+      return [];
+    }
+
+    const orderIds = orderRows.map((r) => r.id);
+    const { data: itemRows, error: itemErr } = await supabase
+      .from("order_items")
+      .select("*")
+      .in("order_id", orderIds);
+
+    if (itemErr) {
+      console.error("[OrderStore] DB error fetching order items:", itemErr);
+      throw new Error(`Failed to fetch order items from Supabase: ${itemErr.message}`);
+    }
+
+    const itemsByOrder = new Map<string, OrderItem[]>();
+    for (const itemRow of itemRows || []) {
+      const snap = (itemRow.snapshot_json || {}) as Partial<OrderItem>;
+      const item: OrderItem = {
+        orderItemId: itemRow.id,
+        productId: itemRow.product_id || snap.productId || undefined,
+        variantId: itemRow.variant_id || snap.variantId || undefined,
+        slug: snap.slug || itemRow.sku || "",
+        sku: itemRow.sku || snap.sku || undefined,
+        size: itemRow.size || snap.size || undefined,
+        color: itemRow.color || snap.color || undefined,
+        name: itemRow.title || snap.name || "",
+        dropName: snap.dropName || "Ascend Drop",
+        price: Number(itemRow.unit_price_paise || 0) / 100,
+        pricePaise: Number(itemRow.unit_price_paise || 0),
+        priceDisplay: snap.priceDisplay || `₹${Number(itemRow.unit_price_paise || 0) / 100}`,
+        quantity: itemRow.quantity,
+        lineTotal: Number(itemRow.total_price_paise || 0) / 100,
+      };
+      const list = itemsByOrder.get(itemRow.order_id) || [];
+      list.push(item);
+      itemsByOrder.set(itemRow.order_id, list);
+    }
+
+    return orderRows.map((row) => {
+      const customerObj = (row.shipping_address || {}) as unknown as Order["customer"];
+      const paymentMethod: PaymentMethod = row.payment_method === "cod" ? "cod" : "online";
+      return {
+        id: row.id,
+        createdAt: row.created_at,
+        status: row.status,
+        paymentMethod,
+        paymentProvider: row.payment_provider || "razorpay",
+        paymentStatus: row.payment_status || "unpaid",
+        isCod: paymentMethod === "cod",
+        currency: row.currency || "INR",
+        subtotal: Number(row.subtotal_paise || row.total_paise || 0) / 100,
+        items: itemsByOrder.get(row.id) || [],
+        customer: customerObj,
+        shippingAddress: customerObj,
+        codStatus: row.cod_status || (paymentMethod === "cod" ? "COD_PENDING_CONFIRMATION" : "NOT_COD"),
+        advanceRequired: row.advance_required || false,
+        advanceAmountPaise: Number(row.advance_amount_paise || 0),
+        advancePaymentId: row.advance_payment_id || undefined,
+        advanceStatus: row.advance_status || "none",
+        codConfirmationTokenHash: row.cod_confirmation_token_hash || undefined,
+      };
+    });
+  }
+
+  if (isProduction) {
+    throw new Error("[OrderStore FATAL] Insecure memory fallback prohibited in production.");
   }
 
   return Array.from(memoryOrders.values());
