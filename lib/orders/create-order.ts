@@ -46,7 +46,7 @@ export async function createOrder(
     order = {
       ...order,
       fulfillment: {
-        provider: fulfillment.provider,
+        provider: fulfillment.provider as "qikink" | "shopify" | "manual" | undefined,
         externalId: fulfillment.externalId,
       },
     };

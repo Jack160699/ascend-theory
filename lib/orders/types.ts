@@ -3,6 +3,7 @@ export type OrderStatus =
   | "pending_payment"
   | "pending_fulfillment"
   | "paid"
+  | "processing"
   | "cancelled"
   | "refunded";
 
@@ -14,7 +15,10 @@ export type OrderCustomer = {
   email: string;
   phone: string;
   address: string;
+  addressLine1?: string;
+  addressLine2?: string;
   city: string;
+  state?: string;
   postalCode: string;
   country: string;
 };
@@ -29,6 +33,7 @@ export type OrderItem = {
   name: string;
   dropName: string;
   price: number;
+  pricePaise?: number;
   priceDisplay: string;
   quantity: number;
   lineTotal: number;
@@ -40,10 +45,13 @@ export type Order = {
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   paymentProvider: PaymentProvider;
+  paymentStatus?: string;
+  isCod?: boolean;
   currency: string;
   subtotal: number;
   items: OrderItem[];
   customer: OrderCustomer;
+  shippingAddress?: OrderCustomer;
   /** External payment reference (Stripe session id, Razorpay order id) */
   paymentReference?: string;
   fulfillment?: {

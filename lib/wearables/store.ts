@@ -495,6 +495,11 @@ export async function getAllProductsAdmin(): Promise<Product[]> {
   }));
 }
 
+export async function getProductAdmin(id: string): Promise<Product | null> {
+  const all = await getAllProductsAdmin();
+  return all.find((p) => p.id === id || p.slug === id) || null;
+}
+
 /**
  * Admin Reader: Overview statistics for Ascend HQ Wearables dashboard.
  */

@@ -1,23 +1,28 @@
-import { ManualFulfillmentAdapter } from "./manual";
-import { QikinkFulfillmentAdapter } from "./qikink";
-import { ShopifyFulfillmentAdapter } from "./shopify";
-import type { FulfillmentAdapter, FulfillmentProvider } from "./types";
+/**
+ * Phase 6 — POD Fulfilment Subsystem Module Exports
+ */
+
 import type { Order } from "@/lib/orders/types";
+import { evaluateOrderFulfillmentEligibility } from "./eligibility";
+import { createOrClaimFulfillmentAdmin, submitFulfillmentToProviderAdmin } from "./fulfillment-store";
+import type { FulfillmentStatus } from "./types";
 
-export function getFulfillmentAdapter(
-  provider?: FulfillmentProvider,
-): FulfillmentAdapter {
-  switch (provider) {
-    case "qikink":
-      return new QikinkFulfillmentAdapter();
-    case "shopify":
-      return new ShopifyFulfillmentAdapter();
-    default:
-      return new ManualFulfillmentAdapter();
-  }
-}
+export * from "./types";
+export * from "./qikink";
+export * from "./qikink-mock";
+export * from "./eligibility";
+export * from "./fulfillment-store";
 
-export async function submitOrderForFulfillment(order: Order) {
+/**
+ * Backward compatible helper for order fulfillment submission
+ */
+export async function submitOrderForFulfillment(order: Order): Promise<{
+  success: boolean;
+  provider?: string;
+  externalId?: string;
+  status?: FulfillmentStatus;
+  message?: string;
+}> {
   if (order.status === "refunded") {
     throw new Error(`Cannot submit refunded order ${order.id} for fulfillment.`);
   }
@@ -26,23 +31,27 @@ export async function submitOrderForFulfillment(order: Order) {
     throw new Error(`Cannot submit unpaid order ${order.id} for fulfillment.`);
   }
 
-  if (order.fulfillment?.externalId && order.fulfillment.provider !== "manual") {
+  const claimRes = await createOrClaimFulfillmentAdmin(order.id, "system");
+  if (!claimRes.ok) {
     return {
-      success: true,
-      provider: order.fulfillment.provider,
-      externalId: order.fulfillment.externalId,
-      message: "Order already submitted for fulfillment.",
+      success: false,
+      message: claimRes.error,
     };
   }
 
-  const provider =
-    order.fulfillment?.provider ??
-    (process.env.FULFILLMENT_PROVIDER as FulfillmentProvider | undefined) ??
-    "manual";
+  const submitRes = await submitFulfillmentToProviderAdmin(claimRes.fulfillment.id, "system");
+  if (!submitRes.ok) {
+    return {
+      success: false,
+      message: submitRes.error,
+    };
+  }
 
-  const adapter = getFulfillmentAdapter(provider);
-  const result = await adapter.submitOrder(order);
-  return result;
+  return {
+    success: true,
+    provider: submitRes.fulfillment.providerId,
+    externalId: submitRes.fulfillment.providerOrderId,
+    status: submitRes.fulfillment.status,
+    message: "Order submitted for fulfillment successfully.",
+  };
 }
-
-export type { FulfillmentAdapter, FulfillmentResult } from "./types";

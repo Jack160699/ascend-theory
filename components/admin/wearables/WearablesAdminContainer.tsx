@@ -7,6 +7,7 @@ import { calculateGrossMarginPaise, calculateMarginPercentage } from "@/lib/wear
 
 import { DesignStudioView } from "./DesignStudioView";
 import { PODMappingView } from "./PODMappingView";
+import { FulfillmentView } from "../fulfillment/FulfillmentView";
 
 export function WearablesAdminContainer() {
   const pathname = usePathname();
@@ -16,6 +17,8 @@ export function WearablesAdminContainer() {
     ? "design-studio"
     : pathname.includes("/pod-mapping")
     ? "pod-mapping"
+    : pathname.includes("/fulfillment")
+    ? "fulfillment"
     : pathname.includes("/collections")
     ? "collections"
     : pathname.includes("/products")
@@ -239,12 +242,20 @@ export function WearablesAdminContainer() {
         >
           POD Mapping 🔗
         </button>
+        <button
+          onClick={() => router.push("/admin/wearables/fulfillment")}
+          className={`pb-3 font-mono text-xs uppercase tracking-wider transition border-b-2 whitespace-nowrap ${activeTab === "fulfillment" ? "border-white text-white font-medium" : "border-transparent text-white/40 hover:text-white/70"}`}
+        >
+          POD Fulfilment 📦
+        </button>
       </div>
 
       {activeTab === "design-studio" ? (
         <DesignStudioView products={products} />
       ) : activeTab === "pod-mapping" ? (
         <PODMappingView products={products} />
+      ) : activeTab === "fulfillment" ? (
+        <FulfillmentView />
       ) : loading ? (
         <div className="p-12 text-center text-sm font-mono text-white/40 border border-white/10 rounded">
           Loading Ascend Wearables Catalogue...

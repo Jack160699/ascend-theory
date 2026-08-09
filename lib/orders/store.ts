@@ -109,3 +109,7 @@ export async function updateOrder(
   await saveOrder(next);
   return next;
 }
+
+export const getOrderAdmin = getOrder;
+export const saveOrderAdmin = saveOrder;
+
