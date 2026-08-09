@@ -55,6 +55,11 @@ export type Order = {
   shippingAddress?: OrderCustomer;
   /** External payment reference (Stripe session id, Razorpay order id) */
   paymentReference?: string;
+  codStatus?: import("../cod/types").CodStatus;
+  advanceRequired?: boolean;
+  advanceAmountPaise?: number;
+  advancePaymentId?: string;
+  advanceStatus?: import("../cod/types").AdvanceStatus;
   fulfillment?: {
     provider?: "qikink" | "shopify" | "manual";
     externalId?: string;

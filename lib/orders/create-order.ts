@@ -40,9 +40,27 @@ export async function createOrder(
 
   await saveOrder(order);
 
-  // Requirement #5: COD checkout persists order and returns normally.
+  // Requirement #2 & #4: COD checkout evaluates decision engine, persists initial codStatus, and returns.
   // DOES NOT claim/create/submit fulfillment until Phase 7 explicit approval.
   if (order.paymentMethod === "cod") {
+    const { evaluateCodOrderDecision } = await import("@/lib/cod/decision-engine");
+    const { getRiskProfileByPhoneAdmin } = await import("@/lib/cod/outcomes");
+    const { getDailyCodExposureAdmin } = await import("@/lib/cod/exposure");
+
+    const riskProfile = await getRiskProfileByPhoneAdmin(order.customer.phone);
+    const currentExposure = await getDailyCodExposureAdmin();
+
+    const decision = evaluateCodOrderDecision(order, riskProfile, currentExposure);
+
+    order = {
+      ...order,
+      codStatus: decision.codStatus,
+      advanceRequired: decision.decision === "ADVANCE_REQUIRED",
+      advanceAmountPaise: decision.advanceAmountPaise || 0,
+    };
+
+    await saveOrder(order);
+
     return {
       ok: true,
       data: { order },

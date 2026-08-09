@@ -113,3 +113,41 @@ export async function updateOrder(
 export const getOrderAdmin = getOrder;
 export const saveOrderAdmin = saveOrder;
 
+export async function getAllOrdersAdmin(): Promise<Order[]> {
+  const isProduction = process.env.NODE_ENV === "production";
+  const hasSupabase = hasSupabaseServiceConfig();
+
+  if (hasSupabase) {
+    try {
+      const { createSupabaseServiceClient } = await import("@/lib/supabase/service");
+      const supabase = createSupabaseServiceClient();
+      if (supabase) {
+        const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+        if (!error && data) {
+          return data.map((row) => ({
+            id: row.id,
+            createdAt: row.created_at,
+            status: row.status,
+            paymentMethod: row.payment_method || "online",
+            paymentProvider: row.payment_provider || "none",
+            paymentStatus: row.payment_status,
+            currency: row.currency || "INR",
+            subtotal: Number(row.subtotal_paise || row.total_paise || 0) / 100,
+            items: row.items_json || [],
+            customer: row.customer_json || {},
+            codStatus: row.cod_status,
+            advanceRequired: row.advance_required,
+            advanceAmountPaise: row.advance_amount_paise,
+            advancePaymentId: row.advance_payment_id,
+            advanceStatus: row.advance_status,
+          }));
+        }
+      }
+    } catch (err) {
+      if (isProduction) throw err;
+    }
+  }
+
+  return Array.from(memoryOrders.values());
+}
+

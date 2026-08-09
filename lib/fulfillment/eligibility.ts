@@ -25,10 +25,12 @@ export async function evaluateOrderFulfillmentEligibility(
     return { eligible: false, blockingReasons: ["order_not_found"] };
   }
 
-  // 1. COD Gate Check (Req #5, #8: Phase 7 owns COD risk approval)
+  // 1. Explicit Phase 7 COD Fulfillment Gate Check (Requirement #3)
   const isCod = order.paymentMethod === "cod" || Boolean(order.isCod);
   if (isCod) {
-    blockingReasons.push("cod_requires_phase7_approval");
+    if (order.codStatus !== "COD_APPROVED") {
+      blockingReasons.push("cod_approval_required");
+    }
   } else {
     // 2. Strict Authoritative Prepaid Payment Gate (Requirement #7)
     if (hasSupabaseConfig()) {
