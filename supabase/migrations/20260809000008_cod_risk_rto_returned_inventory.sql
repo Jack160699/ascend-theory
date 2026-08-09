@@ -200,7 +200,7 @@ CREATE TABLE IF NOT EXISTS public.cod_otp_challenges (
   verified_at TIMESTAMPTZ,
   consumed_at TIMESTAMPTZ,
   delivery_status TEXT NOT NULL DEFAULT 'pending' CHECK (delivery_status IN ('pending', 'sent', 'failed')),
-  sent_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  sent_at TIMESTAMPTZ NULL DEFAULT NULL,
   resend_count INT NOT NULL DEFAULT 1,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -536,7 +536,7 @@ BEGIN
   INSERT INTO public.cod_otp_challenges (
     order_id, phone_normalized, otp_hash, expires_at, delivery_status, resend_count, sent_at, created_at
   ) VALUES (
-    p_order_id, p_phone_normalized, p_otp_hash, p_expires_at, 'pending', v_resend_count, now(), now()
+    p_order_id, p_phone_normalized, p_otp_hash, p_expires_at, 'pending', v_resend_count, NULL, now()
   )
   RETURNING id INTO v_challenge_id;
 
@@ -843,6 +843,22 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'captured_amount_mismatch');
   END IF;
 
+  -- Requirement #6: Cross-row rebound check for provider_payment_id
+  IF p_provider_payment_id IS NOT NULL AND trim(p_provider_payment_id) <> '' THEN
+    PERFORM 1 FROM public.cod_advance_payments WHERE provider = 'razorpay' AND provider_payment_id = p_provider_payment_id AND id <> v_advance_row.id;
+    IF FOUND THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'provider_payment_rebound');
+    END IF;
+  END IF;
+
+  -- Requirement #6: Cross-row rebound check for provider_event_id
+  IF p_provider_event_id IS NOT NULL AND trim(p_provider_event_id) <> '' THEN
+    PERFORM 1 FROM public.cod_advance_payments WHERE provider = 'razorpay' AND provider_event_id = p_provider_event_id AND id <> v_advance_row.id;
+    IF FOUND THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'provider_event_rebound');
+    END IF;
+  END IF;
+
   UPDATE public.cod_advance_payments
   SET provider_payment_id = p_provider_payment_id,
       provider_event_id = p_provider_event_id,
@@ -908,13 +924,19 @@ BEGIN
   -- Lock existing advance payment row if present
   SELECT * INTO v_existing
   FROM public.cod_advance_payments
-  WHERE order_id = p_order_id AND provider = 'razorpay' AND status IN ('creating', 'created', 'authorized', 'captured')
+  WHERE order_id = p_order_id AND provider = 'razorpay' AND status IN ('creating', 'created', 'creation_unknown', 'authorized', 'captured')
   ORDER BY created_at DESC
   LIMIT 1
   FOR UPDATE;
 
   IF FOUND THEN
-    IF v_existing.status = 'created' OR v_existing.status = 'captured' OR v_existing.status = 'authorized' THEN
+    IF v_existing.status = 'creation_unknown' THEN
+      RETURN jsonb_build_object(
+        'ok', false,
+        'error', 'advance_creation_reconciliation_required',
+        'payment_id', v_existing.id
+      );
+    ELSIF v_existing.status = 'created' OR v_existing.status = 'captured' OR v_existing.status = 'authorized' THEN
       RETURN jsonb_build_object(
         'ok', true,
         'creator', false,
@@ -961,12 +983,12 @@ BEGIN
 END;
 $$;
 
--- 19c. Atomic SECURITY DEFINER RPC: bind_cod_advance_provider_order_with_audit (Requirement #2: Atomic Binding with Claim Token)
-CREATE OR REPLACE FUNCTION public.bind_cod_advance_provider_order_with_audit(
+-- 19c. Atomic SECURITY DEFINER RPC: mark_cod_advance_creation_unknown_with_audit (Requirement #3: Audited Creation Unknown RPC)
+CREATE OR REPLACE FUNCTION public.mark_cod_advance_creation_unknown_with_audit(
   p_payment_id UUID,
   p_order_id TEXT,
   p_claim_token TEXT,
-  p_provider_order_id TEXT
+  p_failure_reason TEXT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -990,14 +1012,83 @@ BEGIN
   END IF;
 
   IF v_payment.status <> 'creating' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'invalid_payment_status_for_creation_unknown');
+  END IF;
+
+  UPDATE public.cod_advance_payments
+  SET status = 'creation_unknown',
+      updated_at = now()
+  WHERE id = p_payment_id;
+
+  RETURN jsonb_build_object('ok', true, 'payment_id', p_payment_id, 'status', 'creation_unknown');
+END;
+$$;
+
+-- 19d. Atomic SECURITY DEFINER RPC: bind_cod_advance_provider_order_with_audit (Requirements #4, #5: Order Revalidation & Rebound Safety)
+CREATE OR REPLACE FUNCTION public.bind_cod_advance_provider_order_with_audit(
+  p_payment_id UUID,
+  p_order_id TEXT,
+  p_claim_token TEXT,
+  p_provider_order_id TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+  v_payment RECORD;
+  v_order RECORD;
+BEGIN
+  IF p_provider_order_id IS NULL OR trim(p_provider_order_id) = '' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'provider_order_id_required');
+  END IF;
+
+  -- Lock payment row
+  SELECT * INTO v_payment
+  FROM public.cod_advance_payments
+  WHERE id = p_payment_id AND order_id = p_order_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'advance_payment_row_not_found');
+  END IF;
+
+  IF v_payment.claim_token IS DISTINCT FROM p_claim_token THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'invalid_claim_token');
+  END IF;
+
+  IF v_payment.status = 'created' AND v_payment.provider_order_id = p_provider_order_id THEN
+    RETURN jsonb_build_object('ok', true, 'already_bound', true, 'payment_id', p_payment_id, 'provider_order_id', p_provider_order_id);
+  END IF;
+
+  IF v_payment.status <> 'creating' THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_payment_status_for_binding');
   END IF;
 
+  -- Requirement #5: Check if provider_order_id already belongs to another cod_advance_payment
+  PERFORM 1 FROM public.cod_advance_payments WHERE provider = 'razorpay' AND provider_order_id = p_provider_order_id AND id <> p_payment_id;
+  IF FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'provider_order_rebound');
+  END IF;
+
+  -- Lock order row FOR UPDATE
+  SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'order_not_found');
+  END IF;
+
+  -- Store provider_order_id on payment row
   UPDATE public.cod_advance_payments
   SET provider_order_id = p_provider_order_id,
       status = 'created',
       updated_at = now()
   WHERE id = p_payment_id;
+
+  -- Requirement #4: Revalidate order state
+  IF v_order.payment_method <> 'cod' OR NOT v_order.advance_required OR v_order.cod_status NOT IN ('COD_ADVANCE_REQUIRED', 'COD_ADVANCE_PENDING') THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'cod_state_changed_during_provider_creation', 'provider_order_id', p_provider_order_id);
+  END IF;
 
   UPDATE public.orders
   SET cod_status = 'COD_ADVANCE_PENDING',
@@ -1097,8 +1188,8 @@ BEGIN
 
     UPDATE public.returned_inventory
     SET condition = p_condition,
-        reuse_status = COALESCE(p_reuse_status, v_existing.reuse_status),
-        reuse_eligible = COALESCE(p_reuse_eligible, v_existing.reuse_eligible),
+        reuse_status = v_effective_status,
+        reuse_eligible = v_effective_eligible,
         notes = COALESCE(p_notes, v_existing.notes),
         updated_at = now()
     WHERE id = p_id;
@@ -1382,28 +1473,30 @@ REVOKE EXECUTE ON FUNCTION public.normalize_phone(TEXT) FROM PUBLIC, anon, authe
 REVOKE EXECUTE ON FUNCTION public.is_valid_cod_status_transition(TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.apply_cod_decision_with_audit(TEXT, TEXT, TEXT, BOOLEAN, BIGINT, UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.override_cod_status_with_audit(TEXT, TEXT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.create_cod_otp_challenge_with_audit(TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.create_cod_otp_challenge_with_audit(TEXT, TEXT, TIMESTAMPTZ, INT) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.mark_cod_otp_challenge_sent(UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.mark_cod_otp_challenge_failed(UUID) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(TEXT, TEXT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(UUID, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.claim_cod_advance_checkout_with_audit(TEXT) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.bind_cod_advance_provider_order_with_audit(UUID, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.mark_cod_advance_creation_unknown_with_audit(UUID, TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.bind_cod_advance_provider_order_with_audit(UUID, TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.save_returned_inventory_with_audit(UUID, TEXT, UUID, UUID, UUID, UUID, UUID, INT, TEXT, TEXT, TEXT, TEXT, TEXT, JSONB, TIMESTAMPTZ, TEXT, BOOLEAN, TEXT, UUID) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.reserve_matching_returned_inventory_with_audit(TEXT, UUID, UUID, UUID, TEXT, JSONB, UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.record_delivery_outcome_with_audit(UUID, TEXT, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.reserve_matching_returned_inventory_with_audit(UUID, UUID) FROM PUBLIC, anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.normalize_phone(TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.is_valid_cod_status_transition(TEXT, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.apply_cod_decision_with_audit(TEXT, TEXT, TEXT, BOOLEAN, BIGINT, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.override_cod_status_with_audit(TEXT, TEXT, TEXT, UUID) TO service_role;
-GRANT EXECUTE ON FUNCTION public.create_cod_otp_challenge_with_audit(TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ) TO service_role;
+GRANT EXECUTE ON FUNCTION public.create_cod_otp_challenge_with_audit(TEXT, TEXT, TIMESTAMPTZ, INT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.mark_cod_otp_challenge_sent(UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.mark_cod_otp_challenge_failed(UUID) TO service_role;
-GRANT EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(TEXT, TEXT, TEXT, UUID) TO service_role;
-GRANT EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, TEXT, UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(UUID, TEXT, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.claim_cod_advance_checkout_with_audit(TEXT) TO service_role;
-GRANT EXECUTE ON FUNCTION public.bind_cod_advance_provider_order_with_audit(UUID, TEXT, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.mark_cod_advance_creation_unknown_with_audit(UUID, TEXT, TEXT, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.bind_cod_advance_provider_order_with_audit(UUID, TEXT, TEXT, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.save_returned_inventory_with_audit(UUID, TEXT, UUID, UUID, UUID, UUID, UUID, INT, TEXT, TEXT, TEXT, TEXT, TEXT, JSONB, TIMESTAMPTZ, TEXT, BOOLEAN, TEXT, UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION public.reserve_matching_returned_inventory_with_audit(TEXT, UUID, UUID, UUID, TEXT, JSONB, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.record_delivery_outcome_with_audit(UUID, TEXT, TEXT, JSONB) TO service_role;
-GRANT EXECUTE ON FUNCTION public.reserve_matching_returned_inventory_with_audit(UUID, UUID) TO service_role;

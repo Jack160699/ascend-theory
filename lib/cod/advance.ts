@@ -139,13 +139,26 @@ export async function createCodAdvanceCheckoutOrderAdmin(
           receipt: order.id,
         });
         if (!rzpOrder) {
-          await supabase.from("cod_advance_payments").update({ status: "creation_unknown" }).eq("id", claimRes.payment_id);
+          const { error: markErr, data: markRes } = await supabase.rpc("mark_cod_advance_creation_unknown_with_audit", {
+            p_payment_id: claimRes.payment_id,
+            p_order_id: order.id,
+            p_claim_token: claimToken,
+            p_failure_reason: "razorpay_order_creation_failed",
+          });
+          if (markErr || !markRes?.ok) {
+            console.error("[CodAdvance] Failed to mark creation_unknown:", markErr || markRes);
+          }
           return { ok: false, error: "razorpay_order_creation_failed" };
         }
         razorpayOrderId = rzpOrder.id;
       }
     } catch (createErr) {
-      await supabase.from("cod_advance_payments").update({ status: "creation_unknown" }).eq("id", claimRes.payment_id);
+      await supabase.rpc("mark_cod_advance_creation_unknown_with_audit", {
+        p_payment_id: claimRes.payment_id,
+        p_order_id: order.id,
+        p_claim_token: claimToken,
+        p_failure_reason: String(createErr),
+      });
       throw createErr;
     }
 

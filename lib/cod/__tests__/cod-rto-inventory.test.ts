@@ -603,4 +603,65 @@ describe("Phase 7 — COD Risk, RTO & Returned Inventory Final Transactional Int
     assert.strictEqual(json.order.id, "ORD-AUTH-TOKEN-01");
     assert.strictEqual(json.order.codConfirmationTokenHash, undefined);
   });
+
+  // 19. Requirement #18-A: SQL Static Audit for 4-parameter bind RPC REVOKE/GRANT signatures
+  it("migration 00008 contains exact 4-parameter REVOKE/GRANT signatures for bind_cod_advance_provider_order_with_audit", () => {
+    const migrationPath = path.join(process.cwd(), "supabase", "migrations", "20260809000008_cod_risk_rto_returned_inventory.sql");
+    const sql = fs.readFileSync(migrationPath, "utf-8");
+
+    assert.ok(
+      sql.includes("REVOKE EXECUTE ON FUNCTION public.bind_cod_advance_provider_order_with_audit(UUID, TEXT, TEXT, TEXT)"),
+      "Migration 00008 missing exact 4-parameter REVOKE signature",
+    );
+    assert.ok(
+      sql.includes("GRANT EXECUTE ON FUNCTION public.bind_cod_advance_provider_order_with_audit(UUID, TEXT, TEXT, TEXT)"),
+      "Migration 00008 missing exact 4-parameter GRANT signature",
+    );
+    assert.ok(
+      sql.includes("mark_cod_advance_creation_unknown_with_audit"),
+      "Migration 00008 missing mark_cod_advance_creation_unknown_with_audit RPC",
+    );
+  });
+
+  // 20. Requirement #18-H: Razorpay script loader availability module
+  it("Razorpay script loader resolves correctly in server and client environments", async () => {
+    const { isRazorpayLoaded } = await import("@/lib/payments/razorpay-loader");
+    assert.strictEqual(isRazorpayLoaded(), false);
+  });
+
+  // 21. Requirement #18-J: Prepaid order customer read capability token authorization
+  it("GET /api/orders/[orderId] requires customer read capability token for prepaid orders", async () => {
+    const readToken = "prepaid-read-token-67890";
+    const readTokenHash = crypto.createHash("sha256").update(readToken).digest("hex");
+    const orderPrepaid: Order = {
+      id: "ORD-PREPAID-AUTH-01",
+      customer: { fullName: "Prepaid User", email: "prepaid@example.com", phone: "+919888877777", address: "L1", city: "Mumbai", state: "MH", postalCode: "400001", country: "IN" },
+      items: [{ orderItemId: "item-prepaid-1", slug: "ph7-tee", name: "Tee", dropName: "D1", price: 1000, priceDisplay: "₹1,000", lineTotal: 1000, quantity: 1, productId: "prod-ph7-1", variantId: "var-ph7-m", sku: "PH7-TEE-BLK-M" }],
+      subtotal: 1000,
+      currency: "INR",
+      status: "created",
+      paymentMethod: "online",
+      paymentProvider: "razorpay",
+      customerReadTokenHash: readTokenHash,
+      createdAt: new Date().toISOString(),
+    };
+    await saveOrder(orderPrepaid);
+
+    const { GET } = await import("@/app/api/orders/[orderId]/route");
+
+    // Without token -> 403
+    const reqNoToken = new Request("http://localhost/api/orders/ORD-PREPAID-AUTH-01");
+    const resNoToken = await GET(reqNoToken, { params: Promise.resolve({ orderId: "ORD-PREPAID-AUTH-01" }) });
+    assert.strictEqual(resNoToken.status, 403);
+
+    // With valid read token -> 200 sanitized
+    const reqWithToken = new Request("http://localhost/api/orders/ORD-PREPAID-AUTH-01", {
+      headers: { "x-ascend-customer-read-token": readToken },
+    });
+    const resWithToken = await GET(reqWithToken, { params: Promise.resolve({ orderId: "ORD-PREPAID-AUTH-01" }) });
+    assert.strictEqual(resWithToken.status, 200);
+    const json = await resWithToken.json();
+    assert.strictEqual(json.order.id, "ORD-PREPAID-AUTH-01");
+    assert.strictEqual(json.order.customerReadTokenHash, undefined);
+  });
 });

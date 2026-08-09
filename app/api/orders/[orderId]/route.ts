@@ -14,28 +14,34 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Order not found." }, { status: 404 });
   }
 
-  const isCod = order.paymentMethod === "cod" || Boolean(order.isCod);
-  if (isCod) {
-    const authHeader = request.headers.get("authorization");
-    const customHeader = request.headers.get("x-ascend-confirmation-token");
-    let token = customHeader || "";
-    if (!token && authHeader?.startsWith("Bearer ")) {
-      token = authHeader.substring(7).trim();
-    }
-
-    if (!token) {
-      return NextResponse.json({ error: "Forbidden: Confirmation token missing for COD order" }, { status: 403 });
-    }
-
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    if (!order.codConfirmationTokenHash || order.codConfirmationTokenHash !== tokenHash) {
-      return NextResponse.json({ error: "Forbidden: Invalid confirmation token" }, { status: 403 });
-    }
+  const authHeader = request.headers.get("authorization");
+  const readHeader = request.headers.get("x-ascend-customer-read-token");
+  const confHeader = request.headers.get("x-ascend-confirmation-token");
+  let token = readHeader || confHeader || "";
+  if (!token && authHeader?.startsWith("Bearer ")) {
+    token = authHeader.substring(7).trim();
   }
 
-  const { codConfirmationTokenHash: _h, ...sanitizedOrder } = order;
+  if (!token) {
+    return NextResponse.json({ error: "Forbidden: Customer read capability token missing" }, { status: 403 });
+  }
+
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const matchesCodHash = Boolean(order.codConfirmationTokenHash && order.codConfirmationTokenHash === tokenHash);
+  const matchesReadHash = Boolean(order.customerReadTokenHash && order.customerReadTokenHash === tokenHash);
+
+  if (!matchesCodHash && !matchesReadHash) {
+    return NextResponse.json({ error: "Forbidden: Invalid customer read capability token" }, { status: 403 });
+  }
+
+  const {
+    codConfirmationTokenHash: _h,
+    customerReadTokenHash: _rh,
+    ...sanitizedOrder
+  } = order;
+
   const sanitizedItems = (sanitizedOrder.items || []).map((item) => {
-    const { manufacturingSnapshotJson: _s, ...sanitizedItem } = item;
+    const { manufacturingSnapshotJson: _s, manufacturingIdentityHash: _mh, ...sanitizedItem } = item;
     return sanitizedItem;
   });
 

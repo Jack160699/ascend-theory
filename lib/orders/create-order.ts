@@ -24,6 +24,13 @@ export async function createOrder(
 
   let order = built.order;
 
+  const customerReadToken = crypto.randomBytes(32).toString("hex");
+  const customerReadTokenHash = crypto.createHash("sha256").update(customerReadToken).digest("hex");
+  order = {
+    ...order,
+    customerReadTokenHash,
+  };
+
   let confirmationToken: string | undefined;
 
   if (order.paymentMethod === "cod") {
@@ -42,14 +49,14 @@ export async function createOrder(
 
     await saveOrder(order);
 
-    // Sanitize customer DTO: NEVER expose codConfirmationTokenHash (Requirement #27)
-    const { codConfirmationTokenHash: _hash, ...sanitizedOrder } = order;
+    const { codConfirmationTokenHash: _hash, customerReadTokenHash: _rhash, ...sanitizedOrder } = order;
 
     return {
       ok: true,
       data: {
         order: sanitizedOrder,
         confirmationToken,
+        customerReadToken,
       },
     };
   }
@@ -89,11 +96,14 @@ export async function createOrder(
   };
   await saveOrder(order);
 
+  const { customerReadTokenHash: _rhash, ...sanitizedPrepaidOrder } = order;
+
   return {
     ok: true,
     data: {
-      order,
+      order: sanitizedPrepaidOrder,
       paymentUrl: payment.paymentUrl,
+      customerReadToken,
     },
   };
 }

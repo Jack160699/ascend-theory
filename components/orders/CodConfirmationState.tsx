@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import type { Order } from "@/lib/orders/types";
+import { loadRazorpayScript } from "@/lib/payments/razorpay-loader";
 
 export type CodConfirmationStateProps = {
   order: Order;
@@ -15,6 +16,12 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [localCodStatus, setLocalCodStatus] = useState<string | null>(null);
+  const [prevPropStatus, setPrevPropStatus] = useState<string | undefined>(order.codStatus);
+
+  if (order.codStatus !== prevPropStatus) {
+    setPrevPropStatus(order.codStatus);
+    setLocalCodStatus(null);
+  }
 
   const handleSendOtp = async () => {
     if (!confirmationToken) {
@@ -34,7 +41,6 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
       const json = await res.json();
       if (res.ok) {
         setMessage("OTP sent successfully to your registered mobile number.");
-        // Requirement #22: Immediately show OTP input after successful send
         setLocalCodStatus("COD_OTP_PENDING");
         if (onStatusUpdated) onStatusUpdated();
       } else {
@@ -85,9 +91,18 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
       setError("Confirmation token missing. Refresh session.");
       return;
     }
+
     setLoading(true);
     setMessage(null);
     setError(null);
+
+    // Requirement #12: Ensure Razorpay Checkout script is loaded BEFORE creating server advance order
+    const scriptLoaded = await loadRazorpayScript();
+    if (!scriptLoaded) {
+      setError("Failed to load Razorpay payment gateway script. Please check your internet connection.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/orders/cod/advance/create", {
