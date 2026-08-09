@@ -33,13 +33,14 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
     description: "",
     status: "draft",
     assetUrl: "",
+    storagePath: "",
     designer: "",
     tags: [],
   });
 
   // Placement visualizer state
   const [selectedProductId, setSelectedProductId] = useState<string>(products[0]?.id || "");
-  const [selectedVariantId] = useState<string>("");
+  const [selectedVariantIds, setSelectedVariantIds] = useState<string[]>([]);
   const [placementLocation, setPlacementLocation] = useState<PlacementLocation>("front");
   const [xNorm, setXNorm] = useState<number>(0.5);
   const [yNorm, setYNorm] = useState<number>(0.5);
@@ -48,6 +49,9 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
   const [widthMm, setWidthMm] = useState<number>(200);
   const [heightMm, setHeightMm] = useState<number>(250);
   const [printMethod, setPrintMethod] = useState<PrintMethod>("dtf");
+
+  // File upload state
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   // New mockup modal state
   const [mockupUrl, setMockupUrl] = useState("");
@@ -58,6 +62,43 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+
+  const selectedProduct = useMemo(
+    () => products.find((p) => p.id === selectedProductId) || products[0],
+    [products, selectedProductId],
+  );
+
+  const selectedDesign = useMemo(
+    () => designs.find((d) => d.id === selectedDesignId),
+    [designs, selectedDesignId],
+  );
+
+  const handleProductSelect = (prodId: string) => {
+    setSelectedProductId(prodId);
+    const prod = products.find((p) => p.id === prodId);
+    if (prod && prod.variants) {
+      setSelectedVariantIds(prod.variants.map((v) => v.id));
+    } else {
+      setSelectedVariantIds([]);
+    }
+  };
+
+  const handleSelectDesign = (d: DesignAsset) => {
+    setSelectedDesignId(d.id);
+    setEditingDesign(d);
+    if (d.placements && d.placements.length > 0) {
+      const pl = d.placements[0];
+      if (pl.productId) handleProductSelect(pl.productId);
+      setPlacementLocation(pl.placementLocation || "front");
+      setXNorm(pl.xNormalized ?? 0.5);
+      setYNorm(pl.yNormalized ?? 0.5);
+      setScale(pl.scale ?? 1.0);
+      setRotation(pl.rotationDeg ?? 0);
+      setWidthMm(pl.widthMm ?? 200);
+      setHeightMm(pl.heightMm ?? 250);
+      setPrintMethod(pl.printMethod || "dtf");
+    }
+  };
 
   const fetchStudioData = useCallback(async () => {
     try {
@@ -95,15 +136,42 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
     };
   }, []);
 
-  const selectedProduct = useMemo(
-    () => products.find((p) => p.id === selectedProductId) || products[0],
-    [products, selectedProductId],
-  );
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const selectedDesign = useMemo(
-    () => designs.find((d) => d.id === selectedDesignId),
-    [designs, selectedDesignId],
-  );
+    setUploadingFile(true);
+    setSaveError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/wearables/designs/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Artwork upload failed");
+      }
+
+      setEditingDesign((prev) => ({
+        ...prev,
+        storagePath: data.storagePath,
+        assetUrl: data.previewUrl || prev.assetUrl,
+        mimeType: data.mimeType,
+        originalFilename: data.originalFilename,
+        fileSizeBytes: data.fileSizeBytes,
+      }));
+      setSaveSuccess(`Uploaded artwork asset: ${data.originalFilename}`);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Artwork upload failed");
+    } finally {
+      setUploadingFile(false);
+    }
+  };
 
   const handleSaveDesign = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,52 +179,68 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
     setSaveError(null);
     setSaveSuccess(null);
 
-    const placementData: Partial<DesignPlacement> = {
-      productId: selectedProductId || undefined,
-      productVariantId: selectedVariantId || undefined,
-      placementLocation,
-      position: placementLocation,
-      xNormalized: xNorm,
-      yNormalized: yNorm,
-      scale,
-      rotationDeg: rotation,
-      widthMm,
-      heightMm,
-      printMethod,
-      isActive: true,
-    };
-
-    const valRes = validateDesignPlacement(placementData);
-    if (!valRes.isValid) {
-      setSaveError(valRes.error);
-      setSaveLoading(false);
-      return;
-    }
-
     try {
-      const payload = {
-        design: {
-          id: selectedDesignId || undefined,
-          ...editingDesign,
-        },
-        placements: [placementData],
-      };
+      if (!editingDesign.title || !editingDesign.slug) {
+        throw new Error("Title and slug are required");
+      }
+
+      if (selectedVariantIds.length === 0) {
+        throw new Error("At least one exact product variant must be selected for placement configuration");
+      }
+
+      // Build placement payloads preserving existing placement IDs
+      const existingPlacements = selectedDesign?.placements || [];
+      const placementsToSave: Partial<DesignPlacement>[] = selectedVariantIds.map((varId) => {
+        const existingPl = existingPlacements.find(
+          (p) => p.productId === selectedProductId && p.productVariantId === varId,
+        );
+
+        return {
+          id: existingPl?.id,
+          productId: selectedProductId,
+          productVariantId: varId,
+          placementLocation,
+          position: placementLocation,
+          xNormalized: xNorm,
+          yNormalized: yNorm,
+          scale,
+          rotationDeg: rotation,
+          widthMm,
+          heightMm,
+          printMethod,
+          isActive: true,
+        };
+      });
+
+      // Validate all placements before sending
+      for (const pl of placementsToSave) {
+        const valRes = validateDesignPlacement(pl);
+        if (!valRes.isValid) {
+          throw new Error(`Placement validation failed: ${valRes.error}`);
+        }
+      }
 
       const res = await fetch("/api/admin/wearables/designs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          design: {
+            ...editingDesign,
+            id: selectedDesignId || undefined,
+          },
+          placements: placementsToSave,
+        }),
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        setSaveError(data.error || "Failed to save design asset");
-      } else {
-        setSaveSuccess("Design asset & physical placement saved successfully.");
-        await fetchStudioData();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Failed to save design asset");
       }
+
+      setSaveSuccess(`Design asset '${editingDesign.title}' saved successfully with ${placementsToSave.length} variant placements.`);
+      await fetchStudioData();
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Network error");
+      setSaveError(err instanceof Error ? err.message : "Failed to save design asset");
     } finally {
       setSaveLoading(false);
     }
@@ -164,19 +248,23 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
 
   const handleCreateMockup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProductId || !mockupUrl.trim()) return;
-
     setSaveLoading(true);
     setSaveError(null);
+    setSaveSuccess(null);
+
     try {
+      if (!selectedProductId || !mockupUrl) {
+        throw new Error("Product and Image URL are required");
+      }
+
       const res = await fetch("/api/admin/wearables/mockups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productId: selectedProductId,
-          variantId: selectedVariantId || undefined,
+          variantId: selectedVariantIds[0] || undefined,
           designId: selectedDesignId || undefined,
-          imageUrl: mockupUrl.trim(),
+          imageUrl: mockupUrl,
           viewType: mockupViewType,
           isPrimary: mockupIsPrimary,
           status: "draft",
@@ -184,57 +272,64 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        setSaveError(data.error || "Failed to create mockup");
-      } else {
-        setMockupUrl("");
-        setSaveSuccess("Mockup created successfully.");
-        await fetchStudioData();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Failed to create mockup");
       }
+
+      setSaveSuccess("Mockup reference created successfully (status: draft)");
+      setMockupUrl("");
+      await fetchStudioData();
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Network error");
+      setSaveError(err instanceof Error ? err.message : "Failed to create mockup");
     } finally {
       setSaveLoading(false);
     }
   };
 
-  const handleUpdateMockupStatus = async (mockupId: string, newStatus: MockupStatus) => {
+  const handleSetMockupStatus = async (mockupId: string, status: MockupStatus) => {
+    setSaveLoading(true);
+    setSaveError(null);
+    setSaveSuccess(null);
+
     try {
       const res = await fetch("/api/admin/wearables/mockups", {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mockupId, status: newStatus }),
+        body: JSON.stringify({ mockupId, status }),
       });
-      if (res.ok) {
-        await fetchStudioData();
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Failed to update mockup status");
       }
+
+      setSaveSuccess(`Mockup status updated to ${status}`);
+      await fetchStudioData();
     } catch (err) {
-      console.error("Failed to update mockup status:", err);
+      setSaveError(err instanceof Error ? err.message : "Failed to update mockup status");
+    } finally {
+      setSaveLoading(false);
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-sm font-mono text-white/50">Loading Ascend HQ Design Studio...</div>;
+    return <div className="p-8 text-center text-xs font-mono text-white/50 animate-pulse">Loading Design Studio...</div>;
   }
 
   return (
     <div className="space-y-6">
-      {/* Studio Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-zinc-900/60 p-6 rounded-lg border border-white/10">
+      {/* HEADER & SUB-NAVIGATION */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded uppercase">
-              Internal Production Tool
-            </span>
-            <h2 className="text-xl font-bold tracking-tight text-white">Ascend HQ Design Studio</h2>
-          </div>
-          <p className="text-xs text-white/60 mt-1">
-            Artwork asset management, garment placement, physical dimensions (mm), and visual mockup reference editor.
+          <h2 className="text-lg font-bold font-mono text-white uppercase tracking-wider">
+            Ascend HQ — Design Studio
+          </h2>
+          <p className="text-xs font-mono text-white/60">
+            Manage artwork assets, physical placement overlays, and product mockup references.
           </p>
         </div>
 
-        {/* Sub-tab Switcher */}
-        <div className="flex gap-1 bg-black/40 p-1 rounded-md border border-white/10">
+        <div className="flex bg-black/40 border border-white/10 rounded-md p-1">
           <button
             type="button"
             onClick={() => setSubTab("assets")}
@@ -242,7 +337,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
               subTab === "assets" ? "bg-white text-black font-semibold" : "text-white/60 hover:text-white"
             }`}
           >
-            Artwork Assets ({designs.length})
+            Artwork Library ({designs.length})
           </button>
           <button
             type="button"
@@ -287,7 +382,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                 type="button"
                 onClick={() => {
                   setSelectedDesignId("");
-                  setEditingDesign({ title: "", slug: "", status: "draft", assetUrl: "" });
+                  setEditingDesign({ title: "", slug: "", status: "draft", assetUrl: "", storagePath: "" });
                 }}
                 className="px-2 py-1 text-[11px] font-mono bg-white/10 hover:bg-white/20 text-white rounded"
               >
@@ -300,10 +395,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                 <button
                   key={d.id}
                   type="button"
-                  onClick={() => {
-                    setSelectedDesignId(d.id);
-                    setEditingDesign(d);
-                  }}
+                  onClick={() => handleSelectDesign(d)}
                   className={`w-full text-left p-3 rounded border transition ${
                     selectedDesignId === d.id
                       ? "bg-white/10 border-white text-white"
@@ -362,9 +454,27 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                 </div>
               </div>
 
+              {/* Secure Artwork File Upload */}
+              <div className="p-4 bg-black/30 border border-white/10 rounded-md space-y-2">
+                <label className="text-xs font-mono text-white/80 block">Secure Artwork File Upload (PNG, JPG, WEBP, SVG ≤25MB)</label>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  onChange={handleFileUpload}
+                  disabled={uploadingFile}
+                  className="block w-full text-xs font-mono text-white/70 file:mr-4 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-mono file:bg-white/10 file:text-white hover:file:bg-white/20 cursor-pointer"
+                />
+                {uploadingFile && <span className="text-[11px] font-mono text-amber-300 block">Uploading & validating artwork file...</span>}
+                {editingDesign.storagePath && (
+                  <span className="text-[11px] font-mono text-emerald-400 block truncate">
+                    Storage Path: {editingDesign.storagePath}
+                  </span>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-mono text-white/60 block mb-1">Artwork URL / Asset Key *</label>
+                  <label className="text-xs font-mono text-white/60 block mb-1">Preview / Asset URL</label>
                   <input
                     type="text"
                     value={editingDesign.assetUrl || ""}
@@ -401,7 +511,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
               <div className="flex justify-end gap-3 pt-2 border-t border-white/10">
                 <button
                   type="submit"
-                  disabled={saveLoading}
+                  disabled={saveLoading || uploadingFile}
                   className="px-4 py-2 bg-white text-black font-mono font-bold text-xs rounded hover:bg-white/90 transition"
                 >
                   {saveLoading ? "Saving..." : "Save Design Asset"}
@@ -423,7 +533,6 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
 
             {/* Base Garment Mock Canvas */}
             <div className="relative w-72 h-80 bg-zinc-950 border border-white/20 rounded-lg overflow-hidden flex items-center justify-center shadow-2xl">
-              {/* Garment Base Background Image */}
               {selectedProduct?.primaryImageUrl ? (
                 /* eslint-disable-next-html-element-suppression */
                 <img
@@ -437,7 +546,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                 </div>
               )}
 
-              {/* Artwork Overlay Box positioned by normalized xNorm, yNorm, scale, rotation */}
+              {/* Artwork Overlay Box */}
               {selectedDesign?.assetUrl && (
                 <div
                   className="absolute pointer-events-none border border-amber-400/80 bg-amber-500/10 transition-all flex items-center justify-center"
@@ -465,10 +574,10 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
             </div>
           </div>
 
-          {/* Placement Controls & Coordinates Form */}
+          {/* Placement Controls & Variant Selection Form */}
           <div className="bg-zinc-900/40 border border-white/10 rounded-lg p-6 space-y-4">
             <h3 className="text-sm font-bold font-mono text-white uppercase border-b border-white/10 pb-2">
-              Physical Placement & Print Specifications
+              Physical Placement & Exact Variant Selection
             </h3>
 
             <form onSubmit={handleSaveDesign} className="space-y-4">
@@ -476,7 +585,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                 <label className="text-xs font-mono text-white/60 block mb-1">Target Ascend Product *</label>
                 <select
                   value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
+                  onChange={(e) => handleProductSelect(e.target.value)}
                   className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
                 >
                   {products.map((p) => (
@@ -485,6 +594,46 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Exact Variant Selection Checkbox List */}
+              <div className="p-3 bg-black/40 border border-white/10 rounded-md space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-mono text-white/80 block">Applicable Product Variants *</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (selectedVariantIds.length === (selectedProduct?.variants || []).length) {
+                        setSelectedVariantIds([]);
+                      } else {
+                        setSelectedVariantIds((selectedProduct?.variants || []).map((v) => v.id));
+                      }
+                    }}
+                    className="text-[10px] font-mono text-amber-300 hover:underline"
+                  >
+                    {selectedVariantIds.length === (selectedProduct?.variants || []).length ? "Deselect All" : "Select All"}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto">
+                  {(selectedProduct?.variants || []).map((v) => (
+                    <label key={v.id} className="flex items-center space-x-2 text-xs font-mono text-white/80 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedVariantIds.includes(v.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedVariantIds((prev) => [...prev, v.id]);
+                          } else {
+                            setSelectedVariantIds((prev) => prev.filter((id) => id !== v.id));
+                          }
+                        }}
+                        className="rounded bg-black border-white/20"
+                      />
+                      <span>{v.size} / {v.color} ({v.sku})</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -620,7 +769,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                   disabled={saveLoading || !selectedDesignId}
                   className="px-4 py-2 bg-white text-black font-mono font-bold text-xs rounded hover:bg-white/90 transition"
                 >
-                  {saveLoading ? "Saving..." : "Update Placement & Dimensions"}
+                  {saveLoading ? "Saving..." : "Update Variant Placements"}
                 </button>
               </div>
             </form>
@@ -654,108 +803,110 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
               </div>
 
               <div>
-                <label className="text-xs font-mono text-white/60 block mb-1">Mockup Image URL *</label>
+                <label className="text-xs font-mono text-white/60 block mb-1">Image URL *</label>
                 <input
-                  type="text"
+                  type="url"
                   required
                   value={mockupUrl}
                   onChange={(e) => setMockupUrl(e.target.value)}
                   className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                  placeholder="https://cdn.example.com/mockups/front.jpg"
+                  placeholder="https://cdn.ascendtheory.com/mockups/jacket-front.jpg"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-mono text-white/60 block mb-1">View Angle</label>
+                  <label className="text-xs font-mono text-white/60 block mb-1">View Type</label>
                   <select
                     value={mockupViewType}
                     onChange={(e) => setMockupViewType(e.target.value as MockupViewType)}
                     className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
                   >
-                    <option value="front">Front View</option>
-                    <option value="back">Back View</option>
-                    <option value="detail">Fabric Detail</option>
+                    <option value="front">Front</option>
+                    <option value="back">Back</option>
+                    <option value="detail">Detail</option>
                     <option value="lifestyle">Lifestyle</option>
                   </select>
                 </div>
                 <div className="flex items-center pt-5">
-                  <label className="flex items-center gap-2 text-xs font-mono text-white cursor-pointer">
+                  <label className="flex items-center space-x-2 text-xs font-mono text-white/80 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={mockupIsPrimary}
                       onChange={(e) => setMockupIsPrimary(e.target.checked)}
+                      className="rounded bg-black border-white/20"
                     />
-                    Primary Image
+                    <span>Is Primary</span>
                   </label>
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={saveLoading}
-                className="w-full py-2 bg-white text-black font-mono font-bold text-xs rounded hover:bg-white/90 transition mt-2"
-              >
-                {saveLoading ? "Saving..." : "Add Mockup Reference"}
-              </button>
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={saveLoading}
+                  className="w-full py-2 bg-white text-black font-mono font-bold text-xs rounded hover:bg-white/90 transition"
+                >
+                  {saveLoading ? "Saving..." : "Create Mockup (Draft)"}
+                </button>
+              </div>
             </form>
           </div>
 
-          {/* Mockups Grid */}
+          {/* Mockups Review Grid */}
           <div className="lg:col-span-2 bg-zinc-900/40 border border-white/10 rounded-lg p-6 space-y-4">
             <h3 className="text-sm font-bold font-mono text-white uppercase border-b border-white/10 pb-2">
-              Mockup Review & Approval Queue ({mockups.length})
+              Product Mockups Queue ({mockups.length})
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[550px] overflow-y-auto">
-              {mockups.map((m) => {
-                const prod = products.find((p) => p.id === m.productId);
-                return (
-                  <div key={m.id} className="bg-black/40 border border-white/10 rounded p-3 space-y-2">
-                    <div className="h-40 bg-zinc-950 rounded overflow-hidden flex items-center justify-center">
-                      <img src={m.imageUrl} alt={m.viewType} className="h-full object-contain" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
+              {mockups.map((m) => (
+                <div key={m.id} className="bg-black/40 border border-white/10 rounded-md p-3 space-y-2 flex flex-col justify-between">
+                  <div className="flex gap-3">
+                    <div className="w-16 h-20 bg-zinc-950 border border-white/10 rounded overflow-hidden flex-shrink-0">
+                      {/* eslint-disable-next-html-element-suppression */}
+                      <img src={m.imageUrl} alt={m.viewType} className="w-full h-full object-contain" />
                     </div>
-
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <span className="text-white font-bold">{prod?.title || "Garment"}</span>
+                    <div className="space-y-1 font-mono text-xs">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-white uppercase">{m.viewType} View</span>
+                        {m.isPrimary && <span className="bg-amber-400 text-black font-bold text-[9px] px-1 rounded">PRIMARY</span>}
+                      </div>
+                      <span className="text-[10px] text-white/50 block">ID: {m.id.slice(0, 8)}...</span>
                       <span
-                        className={`px-1.5 py-0.5 rounded text-[9px] uppercase ${
+                        className={`inline-block text-[9px] px-1.5 py-0.5 rounded uppercase ${
                           m.status === "approved"
-                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            ? "bg-emerald-500/20 text-emerald-300"
                             : m.status === "rejected"
-                            ? "bg-red-500/20 text-red-300 border border-red-500/30"
-                            : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                            ? "bg-red-500/20 text-red-300"
+                            : "bg-zinc-500/20 text-zinc-300"
                         }`}
                       >
-                        {m.status}
+                        Status: {m.status}
                       </span>
                     </div>
-
-                    <div className="flex justify-between items-center text-[10px] font-mono text-white/50">
-                      <span>View: {m.viewType}</span>
-                      {m.isPrimary && <span className="text-amber-400">★ Primary</span>}
-                    </div>
-
-                    {/* Status Toggle Buttons */}
-                    <div className="flex gap-2 pt-1 border-t border-white/10">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateMockupStatus(m.id, "approved")}
-                        className="flex-1 py-1 text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded hover:bg-emerald-500/30"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateMockupStatus(m.id, "rejected")}
-                        className="flex-1 py-1 text-[10px] font-mono bg-red-500/20 text-red-300 border border-red-500/40 rounded hover:bg-red-500/30"
-                      >
-                        Reject
-                      </button>
-                    </div>
                   </div>
-                );
-              })}
+
+                  <div className="flex gap-2 pt-2 border-t border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => handleSetMockupStatus(m.id, "approved")}
+                      disabled={saveLoading || m.status === "approved"}
+                      className="flex-1 py-1 text-[10px] font-mono font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded transition disabled:opacity-30"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSetMockupStatus(m.id, "rejected")}
+                      disabled={saveLoading || m.status === "rejected"}
+                      className="flex-1 py-1 text-[10px] font-mono font-bold bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded transition disabled:opacity-30"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

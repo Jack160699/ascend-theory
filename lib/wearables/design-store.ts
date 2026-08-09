@@ -22,7 +22,6 @@ import type {
   ProductReadinessReport,
 } from "./design-types";
 import { validateDesignPlacement } from "./placement-validator";
-import { validateArtworkUpload } from "./design-storage";
 import { getAllProductsAdmin } from "./store";
 import { evaluateProductReadiness } from "./readiness-engine";
 
@@ -75,7 +74,10 @@ export async function getAllDesignsAdmin(): Promise<DesignAsset[]> {
       throw new Error(`Failed to fetch designs: ${dErr.message}`);
     }
 
-    const { data: pData } = await serviceClient.from("design_placements").select("*");
+    const { data: pData, error: pErr } = await serviceClient.from("design_placements").select("*");
+    if (pErr) {
+      throw new Error(`Failed to fetch design placements: ${pErr.message}`);
+    }
 
     const placementsMap = new Map<string, DesignPlacement[]>();
     (pData || []).forEach((p: Record<string, unknown>) => {
@@ -131,7 +133,7 @@ export async function getAllDesignsAdmin(): Promise<DesignAsset[]> {
   const list = Array.from(memoryDesigns.values());
   return list.map((d) => ({
     ...d,
-    placements: Array.from(memoryPlacements.values()).filter((p) => p.designId === d.id),
+    placements: Array.from(memoryPlacements.values()).filter((p) => p.designId === d.id && p.isActive),
   }));
 }
 
@@ -141,32 +143,25 @@ export async function saveDesignAdmin(
     placements?: Partial<DesignPlacement>[];
   },
   adminId: string,
-): Promise<{ ok: true; design: DesignAsset } | { ok: false; error: string; errors?: string[] }> {
+): Promise<
+  | { ok: true; design: DesignAsset }
+  | { ok: false; error: string; errors?: string[] }
+> {
   const { design, placements = [] } = input;
   const title = design.title?.trim();
   const slug = design.slug?.trim().toLowerCase();
   const status = design.status || "draft";
 
   if (!title || !slug) {
-    return { ok: false, error: "Title and slug are required for design" };
+    return { ok: false, error: "Design title and slug are required" };
+  }
+  if (status === "active" && (!design.storagePath || design.storagePath.trim() === "") && (!design.assetUrl || design.assetUrl.trim() === "")) {
+    return { ok: false, error: "Active design requires valid artwork asset URL or storage path" };
   }
 
-  // Validate artwork if activating
-  if (status === "active") {
-    if (!design.assetUrl || design.assetUrl.trim() === "") {
-      return { ok: false, error: "Active design requires valid artwork asset URL" };
-    }
-  }
-
-  // Validate artwork MIME and file size if provided
-  if (design.mimeType && design.fileSizeBytes) {
-    const artVal = validateArtworkUpload({
-      mimeType: design.mimeType,
-      fileSizeBytes: design.fileSizeBytes,
-    });
-    if (!artVal.isValid) {
-      return { ok: false, error: artVal.error };
-    }
+  // Validate tags array format if provided
+  if (design.tags !== undefined && !Array.isArray(design.tags)) {
+    return { ok: false, error: "Design tags must be a JSON array" };
   }
 
   // Validate all placements
@@ -215,6 +210,28 @@ export async function saveDesignAdmin(
     }
   }
 
+  // Placement validations in memory
+  const allProducts = await getAllProductsAdmin();
+  for (const pl of placements) {
+    if (!pl.productId || !pl.productVariantId) {
+      return { ok: false, error: "Placement product_id and product_variant_id are required" };
+    }
+
+    // Ownership check: variant belongs to product
+    const prod = allProducts.find((p) => p.id === pl.productId);
+    if (!prod || !(prod.variants || []).some((v) => v.id === pl.productVariantId)) {
+      return { ok: false, error: "placement_product_variant_mismatch" };
+    }
+
+    // Cross-design placement ID protection
+    if (pl.id) {
+      const existingPl = memoryPlacements.get(pl.id);
+      if (existingPl && existingPl.designId !== designId) {
+        return { ok: false, error: "placement_design_mismatch" };
+      }
+    }
+  }
+
   const designRecord: DesignAsset = {
     id: designId,
     title,
@@ -240,9 +257,13 @@ export async function saveDesignAdmin(
 
   memoryDesigns.set(designId, designRecord);
 
+  const submittedPlIds = new Set<string>();
   const savedPlacements: DesignPlacement[] = [];
+
   placements.forEach((pl, idx) => {
     const plId = pl.id || `pl-${designId}-${idx}`;
+    submittedPlIds.add(plId);
+
     const plRecord: DesignPlacement = {
       id: plId,
       designId,
@@ -265,25 +286,35 @@ export async function saveDesignAdmin(
     savedPlacements.push(plRecord);
   });
 
+  // Reconcile removed placements in memory: set active placements for this design not submitted to isActive = false
+  for (const [pId, existingPl] of memoryPlacements.entries()) {
+    if (existingPl.designId === designId && !submittedPlIds.has(pId)) {
+      memoryPlacements.set(pId, { ...existingPl, isActive: false, updatedAt: new Date().toISOString() });
+    }
+  }
+
   designRecord.placements = savedPlacements;
   return { ok: true, design: designRecord };
 }
 
 export async function archiveDesignAdmin(
   designId: string,
-  _adminId: string,
+  adminId: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (hasSupabaseConfig()) {
     const serviceClient = createSupabaseServiceClient();
     if (!serviceClient) {
       return { ok: false, error: "Server configuration error: Supabase service client unavailable" };
     }
-    const { error } = await serviceClient
-      .from("designs")
-      .update({ status: "archived", updated_at: new Date().toISOString() })
-      .eq("id", designId);
-    if (error) {
-      return { ok: false, error: error.message };
+    const { data: rpcData, error: rpcErr } = await serviceClient.rpc("archive_design_with_audit", {
+      p_design_id: designId,
+      p_admin_id: adminId,
+    });
+    if (rpcErr) {
+      return { ok: false, error: rpcErr.message };
+    }
+    if (!rpcData || typeof rpcData !== "object" || !(rpcData as { ok?: boolean }).ok) {
+      return { ok: false, error: (rpcData as { error?: string })?.error || "Failed to archive design" };
     }
     return { ok: true };
   }
@@ -389,7 +420,7 @@ export async function saveProviderMappingAdmin(
     providerProduct: Partial<ProviderProduct>;
     providerVariants?: Partial<ProviderVariant>[];
   },
-  _adminId: string,
+  adminId: string,
 ): Promise<{ ok: true; providerProduct: ProviderProduct } | { ok: false; error: string }> {
   const { providerProduct, providerVariants = [] } = input;
   const extProdId = providerProduct.externalProductId?.trim();
@@ -423,7 +454,7 @@ export async function saveProviderMappingAdmin(
     const { data: rpcData, error: rpcErr } = await serviceClient.rpc("save_provider_mapping_with_audit", {
       p_provider_product: providerProduct,
       p_provider_variants: providerVariants,
-      p_admin_id: _adminId,
+      p_admin_id: adminId,
     });
 
     if (rpcErr) {
@@ -446,10 +477,14 @@ export async function saveProviderMappingAdmin(
   seedPhase5MemoryStoreIfNeeded();
   const provProdId = providerProduct.id || `pprod-${providerId}-${extProdId}`;
 
-  // Unique constraint check in memory
-  for (const [pId, p] of memoryProviderProducts.entries()) {
-    if (p.providerId === providerId && p.externalProductId === extProdId && pId !== provProdId) {
-      return { ok: false, error: `Provider external product ID '${extProdId}' already mapped for this provider` };
+  // Provider product rebound check
+  const existingPP = memoryProviderProducts.get(provProdId);
+  if (existingPP) {
+    if (existingPP.providerId !== providerId) {
+      return { ok: false, error: "provider_product_rebound" };
+    }
+    if (existingPP.productId && providerProduct.productId && existingPP.productId !== providerProduct.productId) {
+      return { ok: false, error: "provider_product_rebound" };
     }
   }
 
@@ -465,7 +500,7 @@ export async function saveProviderMappingAdmin(
     mappingStatus: providerProduct.mappingStatus || "mapped",
     notes: providerProduct.notes,
     verifiedAt: providerProduct.mappingStatus === "verified" ? new Date().toISOString() : undefined,
-    verifiedBy: providerProduct.mappingStatus === "verified" ? _adminId : undefined,
+    verifiedBy: providerProduct.mappingStatus === "verified" ? adminId : undefined,
     createdAt: providerProduct.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -473,9 +508,20 @@ export async function saveProviderMappingAdmin(
   memoryProviderProducts.set(provProdId, provProdRecord);
 
   const savedVariants: ProviderVariant[] = [];
-  providerVariants.forEach((pv, idx) => {
+  for (let idx = 0; idx < providerVariants.length; idx++) {
+    const pv = providerVariants[idx];
     const extVarId = pv.externalVariantId?.trim() || `ext-var-${idx}`;
     const pVarId = pv.id || `pvar-${provProdId}-${extVarId}`;
+
+    const existingPV = memoryProviderVariants.get(pVarId);
+    if (existingPV) {
+      if (existingPV.providerProductId !== provProdId) {
+        return { ok: false, error: "provider_variant_rebound" };
+      }
+      if (existingPV.productVariantId && pv.productVariantId && existingPV.productVariantId !== pv.productVariantId) {
+        return { ok: false, error: "provider_variant_rebound" };
+      }
+    }
 
     const pVarRecord: ProviderVariant = {
       id: pVarId,
@@ -486,16 +532,16 @@ export async function saveProviderMappingAdmin(
       sku: pv.sku || pv.externalSku || extVarId,
       providerColor: pv.providerColor,
       providerSize: pv.providerSize,
-      mappingStatus: pv.mappingStatus || "mapped",
+      mappingStatus: pv.mappingStatus || providerProduct.mappingStatus || "mapped",
       notes: pv.notes,
       verifiedAt: providerProduct.mappingStatus === "verified" ? new Date().toISOString() : undefined,
-      verifiedBy: providerProduct.mappingStatus === "verified" ? _adminId : undefined,
+      verifiedBy: providerProduct.mappingStatus === "verified" ? adminId : undefined,
       createdAt: pv.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
     memoryProviderVariants.set(pVarId, pVarRecord);
     savedVariants.push(pVarRecord);
-  });
+  }
 
   provProdRecord.variants = savedVariants;
   return { ok: true, providerProduct: provProdRecord };
@@ -533,36 +579,42 @@ export async function getAllMockupsAdmin(): Promise<ProductMockup[]> {
 
 export async function saveMockupAdmin(
   input: Partial<ProductMockup>,
-  _adminId: string,
+  adminId: string,
 ): Promise<{ ok: true; mockup: ProductMockup } | { ok: false; error: string }> {
   const { productId, imageUrl } = input;
   if (!productId || !imageUrl || imageUrl.trim() === "") {
     return { ok: false, error: "Product ID and image URL are required for mockup" };
   }
 
+  const allProducts = await getAllProductsAdmin();
+  const prod = allProducts.find((p) => p.id === productId);
+  if (!prod) {
+    return { ok: false, error: "Mockup product_id does not exist" };
+  }
+
+  if (input.variantId) {
+    const varExists = (prod.variants || []).some((v) => v.id === input.variantId);
+    if (!varExists) {
+      return { ok: false, error: "mockup_variant_mismatch: variant does not belong to product" };
+    }
+  }
+
   if (hasSupabaseConfig()) {
     const serviceClient = createSupabaseServiceClient();
     if (!serviceClient) return { ok: false, error: "Server configuration error: Supabase service client unavailable" };
 
-    const mockupId = input.id || crypto.randomUUID();
-    const { error } = await serviceClient.from("product_mockups").upsert({
-      id: mockupId,
-      product_id: productId,
-      variant_id: input.variantId ?? null,
-      design_id: input.designId ?? null,
-      placement_id: input.placementId ?? null,
-      image_url: imageUrl,
-      view_type: input.viewType || "front",
-      is_primary: Boolean(input.isPrimary),
-      sort_order: input.sortOrder ?? 0,
-      status: input.status || "draft",
-      updated_at: new Date().toISOString(),
+    const { data: rpcData, error: rpcErr } = await serviceClient.rpc("save_mockup_with_audit", {
+      p_mockup: input,
+      p_admin_id: adminId,
     });
 
-    if (error) return { ok: false, error: error.message };
+    if (rpcErr) return { ok: false, error: rpcErr.message };
+    if (!rpcData || typeof rpcData !== "object" || !(rpcData as { ok?: boolean }).ok) {
+      return { ok: false, error: (rpcData as { error?: string })?.error || "Failed to save mockup" };
+    }
 
     const allMockups = await getAllMockupsAdmin();
-    const saved = allMockups.find((m) => m.id === mockupId);
+    const saved = allMockups.find((m) => m.id === (rpcData as { mockup_id?: string }).mockup_id || m.imageUrl === imageUrl);
     return { ok: true, mockup: saved || (input as ProductMockup) };
   }
 
@@ -589,16 +641,22 @@ export async function saveMockupAdmin(
 export async function setMockupStatusAdmin(
   mockupId: string,
   status: "approved" | "rejected" | "draft",
-  _adminId: string,
+  adminId: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (hasSupabaseConfig()) {
     const serviceClient = createSupabaseServiceClient();
     if (!serviceClient) return { ok: false, error: "Server configuration error: Supabase service client unavailable" };
-    const { error } = await serviceClient
-      .from("product_mockups")
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq("id", mockupId);
-    if (error) return { ok: false, error: error.message };
+
+    const { data: rpcData, error: rpcErr } = await serviceClient.rpc("set_mockup_status_with_audit", {
+      p_mockup_id: mockupId,
+      p_status: status,
+      p_admin_id: adminId,
+    });
+
+    if (rpcErr) return { ok: false, error: rpcErr.message };
+    if (!rpcData || typeof rpcData !== "object" || !(rpcData as { ok?: boolean }).ok) {
+      return { ok: false, error: (rpcData as { error?: string })?.error || "Failed to update mockup status" };
+    }
     return { ok: true };
   }
 
@@ -610,22 +668,23 @@ export async function setMockupStatusAdmin(
   return { ok: true };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// READINESS REPORT GENERATOR
-// ─────────────────────────────────────────────────────────────────────────────
-
 export async function getProductReadinessReportsAdmin(): Promise<ProductReadinessReport[]> {
   const products = await getAllProductsAdmin();
   const designs = await getAllDesignsAdmin();
+  const providers = await getAllPODProvidersAdmin();
   const mappings = await getAllProviderMappingsAdmin();
   const mockups = await getAllMockupsAdmin();
 
-  const designsMap = new Map<string, DesignAsset>(designs.map((d) => [d.id, d]));
+  const designsMap = new Map<string, DesignAsset>();
   const placementsMap = new Map<string, DesignPlacement>();
   designs.forEach((d) => {
-    (d.placements || []).forEach((p) => {
-      if (p.productVariantId) placementsMap.set(p.productVariantId, p);
-      if (p.productId) placementsMap.set(p.productId, p);
+    designsMap.set(d.id, d);
+    (d.placements || []).forEach((pl) => {
+      if (pl.productVariantId && pl.isActive) {
+        placementsMap.set(pl.productVariantId, pl);
+      } else if (pl.productId && pl.isActive && !placementsMap.has(pl.productId)) {
+        placementsMap.set(pl.productId, pl);
+      }
     });
   });
 
@@ -642,11 +701,12 @@ export async function getProductReadinessReportsAdmin(): Promise<ProductReadines
   return products.map((p) =>
     evaluateProductReadiness({
       product: p,
+      providers,
       designsMap,
       placementsMap,
       providerProductsMap,
       providerVariantsMap,
       mockups,
-    })
+    }),
   );
 }

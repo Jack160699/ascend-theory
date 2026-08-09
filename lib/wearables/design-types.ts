@@ -140,20 +140,40 @@ export type ProductMockup = {
   updatedAt: string;
 };
 
+export type PublicProductMockup = {
+  imageUrl: string;
+  viewType: MockupViewType;
+  isPrimary: boolean;
+  sortOrder: number;
+  variantId?: string;
+};
+
 export type ReadinessBlockingReason =
   | "draft_product"
   | "inactive_variant"
   | "unavailable_variant"
   | "missing_design"
+  | "draft_design"
+  | "archived_design"
   | "missing_artwork"
   | "invalid_placement_dimensions"
   | "invalid_placement_coordinates"
+  | "print_exceeds_provider_area"
   | "missing_provider"
   | "missing_provider_product_mapping"
   | "missing_provider_variant_mapping"
-  | "unverified_provider_mapping"
+  | "unverified_provider_product_mapping"
+  | "unverified_provider_variant_mapping"
   | "disabled_provider_mapping"
-  | "no_approved_mockup";
+  | "no_approved_primary_mockup";
+
+export type ProviderReadiness = {
+  providerId: string;
+  providerSlug: string;
+  providerName: string;
+  ready: boolean;
+  reasons: ReadinessBlockingReason[];
+};
 
 export type VariantReadiness = {
   variantId: string;
@@ -173,6 +193,7 @@ export type VariantReadiness = {
     providerVariantMapped: boolean;
     mockupReady: boolean;
   };
+  providerReadiness?: ProviderReadiness[];
   blockingReasons: ReadinessBlockingReason[];
 };
 

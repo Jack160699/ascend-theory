@@ -24,14 +24,15 @@ export function PODMappingView({ products }: PODMappingViewProps) {
   const [selectedProductId, setSelectedProductId] = useState<string>(products[0]?.id || "");
 
   // Form inputs
+  const [existingProviderProductId, setExistingProviderProductId] = useState<string | undefined>(undefined);
   const [extProductId, setExtProductId] = useState("");
   const [providerProdTitle, setProviderProdTitle] = useState("");
   const [mappingStatus, setMappingStatus] = useState<MappingStatus>("mapped");
   const [notes, setNotes] = useState("");
 
-  // Variant mappings dictionary: productVariantId -> externalVariantId & externalSku
+  // Variant mappings dictionary: productVariantId -> { id?, externalVariantId, externalSku }
   const [variantMappings, setVariantMappings] = useState<
-    Record<string, { externalVariantId: string; externalSku: string }>
+    Record<string, { id?: string; externalVariantId: string; externalSku: string }>
   >({});
 
   const [saveLoading, setSaveLoading] = useState(false);
@@ -90,16 +91,18 @@ export function PODMappingView({ products }: PODMappingViewProps) {
       );
 
       if (existingPP) {
+        setExistingProviderProductId(existingPP.id);
         setExtProductId(existingPP.externalProductId || "");
         setProviderProdTitle(existingPP.title || existingPP.name || "");
         setMappingStatus(existingPP.mappingStatus || "mapped");
         setNotes(existingPP.notes || "");
 
         const mappedVars = providerVariants.filter((pv) => pv.providerProductId === existingPP.id);
-        const mapDict: Record<string, { externalVariantId: string; externalSku: string }> = {};
+        const mapDict: Record<string, { id?: string; externalVariantId: string; externalSku: string }> = {};
         mappedVars.forEach((v) => {
           if (v.productVariantId) {
             mapDict[v.productVariantId] = {
+              id: v.id,
               externalVariantId: v.externalVariantId,
               externalSku: v.externalSku || v.sku || "",
             };
@@ -107,6 +110,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
         });
         setVariantMappings(mapDict);
       } else {
+        setExistingProviderProductId(undefined);
         setExtProductId("");
         setProviderProdTitle("");
         setMappingStatus("unmapped");
@@ -136,6 +140,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
     setSaveSuccess(null);
 
     const variantsPayload = Object.entries(variantMappings).map(([pVarId, vData]) => ({
+      id: vData.id,
       productVariantId: pVarId,
       externalVariantId: vData.externalVariantId,
       externalSku: vData.externalSku,
@@ -148,6 +153,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           providerProduct: {
+            id: existingProviderProductId,
             providerId: selectedProviderId,
             productId: selectedProductId,
             externalProductId: extProductId.trim(),
@@ -160,7 +166,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
       });
 
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok || !data.ok) {
         setSaveError(data.error || "Failed to save POD mapping");
       } else {
         setSaveSuccess("POD provider product & variant mappings saved successfully.");
@@ -249,112 +255,99 @@ export function PODMappingView({ products }: PODMappingViewProps) {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-black/40 border border-white/10 rounded-md space-y-3">
+              <span className="text-xs font-mono font-bold text-white/80 block uppercase">
+                Provider Catalogue Identifiers
+              </span>
               <div>
-                <label className="text-xs font-mono text-white/60 block mb-1">Provider External Product ID *</label>
+                <label className="text-xs font-mono text-white/60 block mb-1">External Provider Product ID *</label>
                 <input
                   type="text"
                   required
                   value={extProductId}
                   onChange={(e) => setExtProductId(e.target.value)}
                   className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                  placeholder="e.g. QIK-OVERSIZED-TEE-240"
+                  placeholder="e.g. QIK-HOODIE-OVERSZD-350"
                 />
               </div>
+
               <div>
-                <label className="text-xs font-mono text-white/60 block mb-1">Provider Product Title</label>
+                <label className="text-xs font-mono text-white/60 block mb-1">Provider Product Title / Description</label>
                 <input
                   type="text"
                   value={providerProdTitle}
                   onChange={(e) => setProviderProdTitle(e.target.value)}
                   className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                  placeholder="Qikink Heavyweight Oversized Tee"
+                  placeholder="e.g. Premium Heavyweight Fleece Hoodie 350 GSM"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-mono text-white/60 block mb-1">Mapping Verification Status</label>
-                <select
-                  value={mappingStatus}
-                  onChange={(e) => setMappingStatus(e.target.value as MappingStatus)}
-                  className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                >
-                  <option value="unmapped">Unmapped</option>
-                  <option value="mapped">Mapped (Draft)</option>
-                  <option value="verified">Verified (Sample Tested)</option>
-                  <option value="disabled">Disabled</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-mono text-white/60 block mb-1">Internal Notes</label>
-                <input
-                  type="text"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                  placeholder="Internal sample notes, fabric weight match verification."
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-mono text-white/60 block mb-1">Mapping Status</label>
+                  <select
+                    value={mappingStatus}
+                    onChange={(e) => setMappingStatus(e.target.value as MappingStatus)}
+                    className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
+                  >
+                    <option value="unmapped">Unmapped</option>
+                    <option value="draft">Draft</option>
+                    <option value="mapped">Mapped</option>
+                    <option value="verified">Verified (Fulfilment Ready)</option>
+                    <option value="disabled">Disabled</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Exact Variant Matrix Mapping */}
+          {/* Variant SKU Mapping Grid */}
           <div className="bg-zinc-900/40 border border-white/10 rounded-lg p-6 space-y-4">
-            <div className="flex justify-between items-center border-b border-white/10 pb-2">
-              <h3 className="text-sm font-bold font-mono text-white uppercase">
-                2. Exact Variant Matrix Mapping ({selectedProduct?.title})
-              </h3>
-              <span className="text-[11px] font-mono text-white/50">
-                Each Ascend SKU maps to 1 Provider External Variant
-              </span>
-            </div>
+            <h3 className="text-sm font-bold font-mono text-white uppercase border-b border-white/10 pb-2">
+              2. Exact Variant SKU Mapping ({selectedProduct?.variants?.length || 0} Variants)
+            </h3>
 
-            <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+            <div className="space-y-3 max-h-[380px] overflow-y-auto">
               {(selectedProduct?.variants || []).map((v) => {
-                const currentMap = variantMappings[v.id] || { externalVariantId: "", externalSku: "" };
+                const current = variantMappings[v.id] || { externalVariantId: "", externalSku: "" };
                 return (
-                  <div
-                    key={v.id}
-                    className="p-3 bg-black/40 border border-white/10 rounded space-y-2 text-xs font-mono"
-                  >
-                    <div className="flex justify-between items-center text-white">
-                      <span className="font-bold">
-                        {v.size} / {v.colorDisplay || v.color} ({v.sku})
+                  <div key={v.id} className="p-3 bg-black/40 border border-white/10 rounded-md space-y-2">
+                    <div className="flex justify-between items-center text-xs font-mono">
+                      <span className="font-bold text-white">
+                        {v.size} / {v.color}
                       </span>
-                      <span className="text-[10px] text-white/50">ID: {v.id}</span>
+                      <span className="text-white/50 text-[10px]">Ascend SKU: {v.sku}</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <span className="text-[10px] text-white/40 block">External Variant ID</span>
+                        <label className="text-[10px] font-mono text-white/50 block mb-1">Ext Variant ID</label>
                         <input
                           type="text"
-                          value={currentMap.externalVariantId}
+                          value={current.externalVariantId}
                           onChange={(e) =>
                             setVariantMappings({
                               ...variantMappings,
-                              [v.id]: { ...currentMap, externalVariantId: e.target.value },
+                              [v.id]: { ...current, externalVariantId: e.target.value },
                             })
                           }
-                          className="w-full bg-zinc-900 border border-white/20 rounded p-1.5 text-xs font-mono text-white"
-                          placeholder="e.g. QIK-VAR-BLK-M"
+                          className="w-full bg-black/80 border border-white/20 rounded p-1.5 text-xs font-mono text-white"
+                          placeholder="e.g. VAR-QIK-BLK-XL"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] text-white/40 block">External SKU</span>
+                        <label className="text-[10px] font-mono text-white/50 block mb-1">Ext Variant SKU</label>
                         <input
                           type="text"
-                          value={currentMap.externalSku}
+                          value={current.externalSku}
                           onChange={(e) =>
                             setVariantMappings({
                               ...variantMappings,
-                              [v.id]: { ...currentMap, externalSku: e.target.value },
+                              [v.id]: { ...current, externalSku: e.target.value },
                             })
                           }
-                          className="w-full bg-zinc-900 border border-white/20 rounded p-1.5 text-xs font-mono text-white"
-                          placeholder="e.g. QIK-SKU-BLK-M"
+                          className="w-full bg-black/80 border border-white/20 rounded p-1.5 text-xs font-mono text-white"
+                          placeholder="e.g. QK-BLK-XL-350"
                         />
                       </div>
                     </div>
@@ -362,17 +355,17 @@ export function PODMappingView({ products }: PODMappingViewProps) {
                 );
               })}
             </div>
-          </div>
-        </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-          <button
-            type="submit"
-            disabled={saveLoading}
-            className="px-6 py-2.5 bg-white text-black font-mono font-bold text-xs uppercase tracking-wider rounded hover:bg-white/90 transition shadow-lg"
-          >
-            {saveLoading ? "Saving..." : "Save POD Provider Mapping"}
-          </button>
+            <div className="flex justify-end pt-4 border-t border-white/10">
+              <button
+                type="submit"
+                disabled={saveLoading}
+                className="px-6 py-2.5 bg-white text-black font-mono font-bold text-xs rounded hover:bg-white/90 transition disabled:opacity-50"
+              >
+                {saveLoading ? "Saving Mappings..." : "Save POD Mapping Set"}
+              </button>
+            </div>
+          </div>
         </div>
       </form>
     </div>

@@ -65,8 +65,11 @@ export type Product = {
   collection?: Collection;
 };
 
+import type { PublicProductMockup } from "./design-types";
+
 export type PublicProduct = Omit<Product, "variants"> & {
   variants: PublicProductVariant[];
+  mockups?: PublicProductMockup[];
 };
 
 export type ProductValidationResult = {
