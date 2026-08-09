@@ -51,6 +51,30 @@ export async function saveReturnedInventoryItemAdmin(
     snapshot = item.manufacturingInput as unknown as Record<string, unknown>;
   }
 
+  // Requirement #15: If source_order_item_id is provided, load source order item and copy its stored authoritative hash/snapshot
+  if (item.sourceOrderItemId && item.sourceOrderId) {
+    const { getOrderAdmin } = await import("@/lib/orders/store");
+    const srcOrder = await getOrderAdmin(item.sourceOrderId);
+    if (srcOrder && srcOrder.items) {
+      const srcItem = srcOrder.items.find(
+        (i) => i.orderItemId === item.sourceOrderItemId || i.productId === item.productId,
+      );
+      if (srcItem) {
+        if (
+          (item.productId && srcItem.productId && item.productId !== srcItem.productId) ||
+          (item.variantId && srcItem.variantId && item.variantId !== srcItem.variantId) ||
+          (item.sku && srcItem.sku && item.sku !== srcItem.sku)
+        ) {
+          throw new Error("source_order_item_identity_mismatch: item attributes do not match source order item");
+        }
+        if (srcItem.manufacturingIdentityHash) {
+          hash = srcItem.manufacturingIdentityHash;
+          snapshot = (srcItem.manufacturingSnapshotJson || null) as Record<string, unknown> | null;
+        }
+      }
+    }
+  }
+
   // If item lacks an exact manufacturing snapshot/hash, store for inspection but mark reuse_eligible = false
   const reuseEligible = Boolean(hash && snapshot && item.reuseEligible !== false);
   const reuseStatus: ReuseStatus = reuseEligible ? item.reuseStatus || "REUSABLE" : "INSPECTION_REQUIRED";

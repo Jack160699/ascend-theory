@@ -89,6 +89,8 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
       quantity: item.quantity,
       total_price_paise: Math.round(item.lineTotal * 100),
       snapshot_json: (item as unknown) as Record<string, unknown>,
+      manufacturing_identity_hash: item.manufacturingIdentityHash || null,
+      manufacturing_snapshot_json: item.manufacturingSnapshotJson || null,
     }));
 
     const { error: itemsError } = await supabase.from("order_items").upsert(itemRecords, {
@@ -258,6 +260,8 @@ export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
       priceDisplay: snap.priceDisplay || `₹${Number(row.unit_price_paise || 0) / 100}`,
       quantity: row.quantity,
       lineTotal: Number(row.total_price_paise || 0) / 100,
+      manufacturingIdentityHash: row.manufacturing_identity_hash || snap.manufacturingIdentityHash || undefined,
+      manufacturingSnapshotJson: row.manufacturing_snapshot_json || snap.manufacturingSnapshotJson || undefined,
     };
   });
 

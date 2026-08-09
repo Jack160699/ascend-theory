@@ -13,6 +13,7 @@ import { normalizePhone } from "./otp";
 import type { CodRiskProfile, CodRiskBand } from "./types";
 
 const memoryOutcomeEvents = new Set<string>(); // key: `fulId_outcomeType`
+const memoryProviderEvents = new Map<string, { fulfillmentId: string; outcomeType: string }>();
 const memoryRiskProfiles = new Map<string, CodRiskProfile>(); // key: phoneNormalized
 
 export async function recordDeliveryOutcomeAdmin(
@@ -60,8 +61,9 @@ export async function recordDeliveryOutcomeAdmin(
       p_details_json: { provider_status: fulfillment.providerStatus, status: outcomeStatus },
     });
 
-    if (rpcErr) {
-      return { ok: false, error: `RPC error recording outcome: ${rpcErr.message}` };
+    if (rpcErr || !rpcRes || !(rpcRes as { ok?: boolean }).ok) {
+      const errStr = (rpcRes as { error?: string })?.error || rpcErr?.message || "RPC error recording outcome";
+      return { ok: false, error: errStr };
     }
 
     const isAlready = Boolean((rpcRes as { alreadyProcessed?: boolean })?.alreadyProcessed);
@@ -69,6 +71,17 @@ export async function recordDeliveryOutcomeAdmin(
   }
 
   // Memory fallback for dev/testing
+  if (providerEventId) {
+    const existingEv = memoryProviderEvents.get(providerEventId);
+    if (existingEv) {
+      if (existingEv.fulfillmentId === fulfillmentId && existingEv.outcomeType === outcomeType) {
+        return { ok: true, alreadyProcessed: true };
+      }
+      return { ok: false, error: "provider_event_rebound" };
+    }
+    memoryProviderEvents.set(providerEventId, { fulfillmentId, outcomeType });
+  }
+
   if (memoryOutcomeEvents.has(eventKey)) {
     return { ok: true, alreadyProcessed: true };
   }

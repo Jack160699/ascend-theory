@@ -503,7 +503,7 @@ BEGIN
   END IF;
 
   -- Rejects OTP creation from terminal or advanced decision states (Requirement #2)
-  IF v_order.cod_status IN ('COD_APPROVED', 'COD_REJECTED', 'COD_PREPAID_ONLY', 'COD_ADVANCE_REQUIRED', 'COD_ADVANCE_PENDING', 'COD_HELD') THEN
+  IF NOT public.is_valid_cod_status_transition(COALESCE(v_order.cod_status, 'COD_PENDING_CONFIRMATION'), 'COD_OTP_PENDING') THEN
     RETURN jsonb_build_object('ok', false, 'error', 'cannot_create_otp_in_terminal_or_advanced_state');
   END IF;
 
@@ -768,6 +768,7 @@ CREATE OR REPLACE FUNCTION public.capture_cod_advance_with_audit(
   p_provider_payment_id TEXT,
   p_captured_amount_paise BIGINT,
   p_provider_event_id TEXT DEFAULT NULL,
+  p_currency TEXT DEFAULT 'INR',
   p_admin_id UUID DEFAULT NULL
 )
 RETURNS JSONB
@@ -778,6 +779,7 @@ AS $$
 DECLARE
   v_order RECORD;
   v_advance_row RECORD;
+  v_existing_event RECORD;
 BEGIN
   SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
   IF NOT FOUND THEN
@@ -808,6 +810,18 @@ BEGIN
 
   IF v_advance_row.expected_amount_paise <> p_captured_amount_paise THEN
     RETURN jsonb_build_object('ok', false, 'error', 'captured_amount_mismatch');
+  END IF;
+
+  IF v_advance_row.currency <> p_currency THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'currency_mismatch');
+  END IF;
+
+  IF p_provider_event_id IS NOT NULL THEN
+    IF v_advance_row.provider_event_id = p_provider_event_id THEN
+      RETURN jsonb_build_object('ok', true, 'already_processed', true, 'already_captured', (v_advance_row.status = 'captured'), 'order_id', p_order_id);
+    ELSIF v_advance_row.provider_event_id IS NOT NULL AND v_advance_row.provider_event_id <> p_provider_event_id THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'provider_event_rebound');
+    END IF;
   END IF;
 
   IF v_advance_row.status = 'captured' THEN
@@ -1157,7 +1171,7 @@ REVOKE EXECUTE ON FUNCTION public.create_cod_otp_challenge_with_audit(TEXT, TEXT
 REVOKE EXECUTE ON FUNCTION public.mark_cod_otp_challenge_sent(UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.mark_cod_otp_challenge_failed(UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(TEXT, TEXT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.save_returned_inventory_with_audit(UUID, TEXT, UUID, UUID, UUID, UUID, UUID, INT, TEXT, TEXT, TEXT, TEXT, TEXT, JSONB, TIMESTAMPTZ, TEXT, BOOLEAN, TEXT, UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.record_delivery_outcome_with_audit(UUID, TEXT, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.reserve_matching_returned_inventory_with_audit(UUID, UUID) FROM PUBLIC, anon, authenticated;
@@ -1170,7 +1184,7 @@ GRANT EXECUTE ON FUNCTION public.create_cod_otp_challenge_with_audit(TEXT, TEXT,
 GRANT EXECUTE ON FUNCTION public.mark_cod_otp_challenge_sent(UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.mark_cod_otp_challenge_failed(UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(TEXT, TEXT, TEXT, UUID) TO service_role;
-GRANT EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, TEXT, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.save_returned_inventory_with_audit(UUID, TEXT, UUID, UUID, UUID, UUID, UUID, INT, TEXT, TEXT, TEXT, TEXT, TEXT, JSONB, TIMESTAMPTZ, TEXT, BOOLEAN, TEXT, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.record_delivery_outcome_with_audit(UUID, TEXT, TEXT, JSONB) TO service_role;
 GRANT EXECUTE ON FUNCTION public.reserve_matching_returned_inventory_with_audit(UUID, UUID) TO service_role;

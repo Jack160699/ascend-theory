@@ -36,6 +36,7 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
         setMessage("OTP sent successfully to your registered mobile number.");
         // Requirement #22: Immediately show OTP input after successful send
         setLocalCodStatus("COD_OTP_PENDING");
+        if (onStatusUpdated) onStatusUpdated();
       } else {
         setError(json.details || json.error || "Failed to send OTP.");
       }

@@ -137,6 +137,7 @@ export async function createOtpChallengeAdmin(
       attemptCount: 0,
       maxAttempts: 3,
       resendCount,
+      deliveryStatus: "sent",
       createdAt: new Date().toISOString(),
     };
     memoryOtpChallenges.set(orderId, challenge);

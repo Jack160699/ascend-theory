@@ -47,6 +47,17 @@ export async function buildOrderFromInputAsync(input: CreateOrderInput): Promise
     const quantity = Math.min(Math.max(1, Math.floor(line.quantity)), 10);
     const itemLineTotal = Math.round(authoritativePrice * quantity * 100) / 100;
 
+    const { buildAuthoritativeManufacturingIdentity } = await import("@/lib/inventory/reuse-engine");
+    let mfgHash: string | undefined;
+    let mfgSnapshot: Record<string, unknown> | undefined;
+    try {
+      const mfgRes = await buildAuthoritativeManufacturingIdentity(product.id, variant.id, variant.sku);
+      mfgHash = mfgRes.hash;
+      mfgSnapshot = mfgRes.snapshot as unknown as Record<string, unknown>;
+    } catch (err) {
+      console.warn("[BuildOrder] Could not build manufacturing identity:", err);
+    }
+
     items.push({
       productId: product.id,
       variantId: variant.id,
@@ -60,6 +71,8 @@ export async function buildOrderFromInputAsync(input: CreateOrderInput): Promise
       priceDisplay: new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(authoritativePrice),
       quantity,
       lineTotal: itemLineTotal,
+      manufacturingIdentityHash: mfgHash,
+      manufacturingSnapshotJson: mfgSnapshot,
     });
   }
 

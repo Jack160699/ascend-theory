@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin/auth";
 import { getAllOrdersAdmin, getOrderAdmin } from "@/lib/orders/store";
-import { getRiskProfileByPhoneAdmin, saveRiskProfileAdmin } from "@/lib/cod/outcomes";
 import { getDailyCodExposureAdmin } from "@/lib/cod/exposure";
 import { getAllReturnedInventoryAdmin } from "@/lib/inventory/returned-store";
 import { applyCodDecisionAdmin, overrideCodStatusAdmin } from "@/lib/cod/decision-engine";

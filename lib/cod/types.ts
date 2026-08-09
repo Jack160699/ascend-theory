@@ -68,6 +68,7 @@ export type CodOtpChallenge = {
   maxAttempts: number;
   verifiedAt?: string;
   consumedAt?: string;
+  deliveryStatus?: "pending" | "sent" | "failed";
   resendCount?: number;
   createdAt: string;
 };

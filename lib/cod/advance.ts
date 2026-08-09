@@ -184,26 +184,22 @@ export async function processCodAdvanceCaptureAdmin(
   // Requirement #7: Production path MUST NOT use default MockCodAdvancePaymentProvider fallback
   let adapter = providerAdapter;
   if (!adapter) {
-    if (process.env.NODE_ENV === "test") {
-      adapter = new MockCodAdvancePaymentProvider();
-    } else {
-      const { fetchRazorpayPayment } = await import("@/lib/payments/razorpay");
-      adapter = {
-        fetchPayment: async (pid: string) => {
-          const fetched = await fetchRazorpayPayment(pid);
-          if (!fetched) {
-            throw new Error(`payment_not_found: payment ${pid} not found on Razorpay`);
-          }
-          return {
-            id: fetched.id,
-            orderId: fetched.order_id,
-            status: fetched.status as "captured",
-            amountPaise: Number(fetched.amount),
-            currency: fetched.currency || "INR",
-          };
-        },
-      };
-    }
+    const { fetchRazorpayPayment } = await import("@/lib/payments/razorpay");
+    adapter = {
+      fetchPayment: async (pid: string) => {
+        const fetched = await fetchRazorpayPayment(pid);
+        if (!fetched) {
+          throw new Error(`payment_not_found: payment ${pid} not found on Razorpay`);
+        }
+        return {
+          id: fetched.id,
+          orderId: fetched.order_id,
+          status: fetched.status as "captured",
+          amountPaise: Number(fetched.amount),
+          currency: fetched.currency || "INR",
+        };
+      },
+    };
   }
 
   let paymentDetails: Awaited<ReturnType<CodAdvancePaymentProvider["fetchPayment"]>>;
@@ -248,6 +244,7 @@ export async function processCodAdvanceCaptureAdmin(
       p_provider_payment_id: input.razorpayPaymentId,
       p_captured_amount_paise: paymentDetails.amountPaise,
       p_provider_event_id: input.providerEventId || null,
+      p_currency: paymentDetails.currency,
       p_admin_id: adminId || null,
     });
 

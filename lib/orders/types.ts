@@ -38,6 +38,8 @@ export type OrderItem = {
   priceDisplay: string;
   quantity: number;
   lineTotal: number;
+  manufacturingIdentityHash?: string;
+  manufacturingSnapshotJson?: Record<string, unknown>;
 };
 
 export type Order = {

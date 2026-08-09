@@ -350,4 +350,150 @@ describe("Phase 7 — COD Risk, RTO & Returned Inventory Final Transactional Int
     const dateStr = getTodayKolkataDateString();
     assert.strictEqual(/^\d{4}-\d{2}-\d{2}$/.test(dateStr), true);
   });
+
+  // 11. Requirement #7: Unknown mock payment ID MUST fail closed
+  it("MockCodAdvancePaymentProvider throws when unknown payment ID is queried", async () => {
+    const mock = new MockCodAdvancePaymentProvider();
+    await assert.rejects(
+      async () => {
+        await mock.fetchPayment("unknown_pay_123");
+      },
+      (err: Error) => err.message.includes("payment_not_found"),
+    );
+  });
+
+  // 12. Requirement #8: processCodAdvanceCaptureAdmin rejects provider order mismatch
+  it("processCodAdvanceCaptureAdmin rejects provider order mismatch", async () => {
+    const advanceOrder: Order = {
+      id: "ORD-ADVANCE-MISMATCH-01",
+      customer: { fullName: "Advance Customer", email: "adv@example.com", phone: "+919876543210", address: "Line 1", city: "Kolkata", state: "West Bengal", postalCode: "700001", country: "IN" },
+      items: [{ orderItemId: "item-adv-1", slug: "ph7-tee", name: "Tee", dropName: "D1", price: 6000, priceDisplay: "₹6,000", lineTotal: 6000, quantity: 1, productId: "prod-ph7-1", variantId: "var-ph7-m", sku: "PH7-TEE-BLK-M" }],
+      subtotal: 6000,
+      currency: "INR",
+      status: "pending_fulfillment",
+      paymentMethod: "cod",
+      paymentProvider: "razorpay",
+      codStatus: "COD_ADVANCE_REQUIRED",
+      advanceRequired: true,
+      advanceAmountPaise: 20000,
+      advanceStatus: "pending",
+      createdAt: new Date().toISOString(),
+    };
+    await saveOrder(advanceOrder);
+
+    const rzpOrderId = "rzp_order_expected";
+    const rzpPaymentId = "pay_mismatch";
+    const secret = "test_key_secret_for_unit_tests";
+    const validSig = crypto.createHmac("sha256", secret).update(`${rzpOrderId}|${rzpPaymentId}`).digest("hex");
+
+    const mockProvider = new MockCodAdvancePaymentProvider();
+    // Register payment with DIFFERENT order ID
+    mockProvider.setMockPayment(rzpPaymentId, "rzp_order_DIFFERENT", "captured", 20000, "INR");
+
+    const res = await processCodAdvanceCaptureAdmin(
+      {
+        orderId: advanceOrder.id,
+        razorpayOrderId: rzpOrderId,
+        razorpayPaymentId: rzpPaymentId,
+        razorpaySignature: validSig,
+      },
+      mockProvider,
+    );
+
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) {
+      assert.strictEqual(res.error, "provider_order_mismatch");
+    }
+  });
+
+  // 13. Requirement #15: saveReturnedInventoryItemAdmin rejects source order item attribute mismatch
+  it("saveReturnedInventoryItemAdmin rejects identity mismatch against source order item", async () => {
+    const srcOrder: Order = {
+      id: "ORD-SOURCE-RET-01",
+      customer: { fullName: "Source User", email: "src@example.com", phone: "+919876543210", address: "Line 1", city: "Mumbai", state: "MH", postalCode: "400001", country: "IN" },
+      items: [
+        {
+          orderItemId: "item-source-100",
+          productId: "prod-ph7-1",
+          variantId: "var-ph7-m",
+          sku: "PH7-TEE-BLK-M",
+          slug: "ph7-tee",
+          name: "Phase 7 Tee",
+          dropName: "D1",
+          price: 1000,
+          priceDisplay: "₹1,000",
+          quantity: 1,
+          lineTotal: 1000,
+          manufacturingIdentityHash: "auth-hash-12345",
+          manufacturingSnapshotJson: { test: true },
+        },
+      ],
+      subtotal: 1000,
+      currency: "INR",
+      status: "pending_fulfillment",
+      paymentMethod: "cod",
+      paymentProvider: "none",
+      createdAt: new Date().toISOString(),
+    };
+    await saveOrder(srcOrder);
+
+    // Mismatched SKU should throw
+    await assert.rejects(
+      async () => {
+        await saveReturnedInventoryItemAdmin({
+          sourceOrderId: srcOrder.id,
+          sourceOrderItemId: "item-source-100",
+          productId: "prod-ph7-1",
+          variantId: "var-ph7-m",
+          designId: "dsg-ph7-1",
+          designVersion: 1,
+          sku: "MISMATCHED-SKU",
+        });
+      },
+      (err: Error) => err.message.includes("source_order_item_identity_mismatch"),
+    );
+  });
+
+  // 14. Requirement #21: recordDeliveryOutcomeAdmin handles provider event idempotency and rebound
+  it("recordDeliveryOutcomeAdmin handles provider event idempotency and rebound", async () => {
+    const phone = "+919111122222";
+    const orderA: Order = {
+      id: "ORD-EV-IDEM-01",
+      customer: { fullName: "Ev User", email: "ev@example.com", phone, address: "Line 1", city: "Delhi", state: "Delhi", postalCode: "110001", country: "IN" },
+      items: [{ orderItemId: "item-ev-1", slug: "ph7-tee", name: "Tee", dropName: "D1", price: 1000, priceDisplay: "₹1,000", lineTotal: 1000, quantity: 1, productId: "prod-ph7-1", variantId: "var-ph7-m", sku: "PH7-TEE-BLK-M" }],
+      subtotal: 1000,
+      currency: "INR",
+      status: "pending_fulfillment",
+      paymentMethod: "cod",
+      paymentProvider: "none",
+      codStatus: "COD_APPROVED",
+      createdAt: new Date().toISOString(),
+    };
+    await saveOrder(orderA);
+
+    const { createOrClaimFulfillmentAdmin } = await import("@/lib/fulfillment/fulfillment-store");
+    await createOrClaimFulfillmentAdmin(orderA.id, null);
+    const allFul = await (await import("@/lib/fulfillment/fulfillment-store")).getAllFulfillmentsAdmin();
+    const ful = allFul.find((f) => f.orderId === orderA.id);
+    assert.notStrictEqual(ful, undefined);
+
+    if (ful) {
+      ful.status = "IN_TRANSIT";
+
+      const evtId = "provider_event_12345";
+      const res1 = await recordDeliveryOutcomeAdmin(ful.id, "DELIVERED", "DELIVERED", evtId);
+      assert.strictEqual(res1.ok, true);
+      if (res1.ok) assert.strictEqual(res1.alreadyProcessed, false);
+
+      // Replay same event ID -> alreadyProcessed
+      const resReplay = await recordDeliveryOutcomeAdmin(ful.id, "DELIVERED", "DELIVERED", evtId);
+      assert.strictEqual(resReplay.ok, true);
+      if (resReplay.ok) assert.strictEqual(resReplay.alreadyProcessed, true);
+
+      // Rebind same event ID to different outcome -> provider_event_rebound
+      const resRebound = await recordDeliveryOutcomeAdmin(ful.id, "REFUSED", "REFUSED", evtId);
+      assert.strictEqual(resRebound.ok, false);
+      if (!resRebound.ok) assert.strictEqual(resRebound.error, "provider_event_rebound");
+    }
+  });
 });
