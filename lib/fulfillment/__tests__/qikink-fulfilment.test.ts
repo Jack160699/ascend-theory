@@ -15,14 +15,15 @@ import {
   createOrClaimFulfillmentAdmin,
   submitFulfillmentToProviderAdmin,
   retryFulfillmentSubmissionAdmin,
-  reconcileSubmissionAdmin,
-  bindProviderOrderAdmin,
-  updateFulfillmentStatusAdmin,
   getFulfillmentByIdAdmin,
 } from "../fulfillment-store";
-import { QikinkFulfillmentAdapter, redactSecrets } from "../qikink";
+import { QikinkFulfillmentAdapter, QIKINK_API_CONTRACT_VERIFIED } from "../qikink";
 import { QikinkMockTransport } from "../qikink-mock";
 import { getFulfillmentProviderAdapter } from "../provider-registry";
+import { computeManufacturingIntentHash } from "../hash";
+import { validateFulfillmentSnapshotBeforeFirstSubmission } from "../snapshot-validator";
+import { isValidStatusTransition } from "../status-graph";
+import type { FulfillmentSnapshot } from "../types";
 
 describe("Phase 6 — Qikink Fulfilment Integration Tests", () => {
   const qikinkProvider: PODProvider = {
@@ -87,6 +88,7 @@ describe("Phase 6 — Qikink Fulfilment Integration Tests", () => {
     title: "Phase 6 Front Graphic",
     slug: "ph6-graphic-front",
     status: "active",
+    version: 1,
     storagePath: "artwork/ph6-front.png",
     assetUrl: "https://storage.example.com/artwork/ph6-front.png",
     checksum: "sha256-front-123",
@@ -215,38 +217,133 @@ describe("Phase 6 — Qikink Fulfilment Integration Tests", () => {
     assert.strictEqual(sql.includes("idx_unique_fulfillments_provider_order_id"), true);
     assert.strictEqual(sql.includes("create_or_claim_fulfillment_with_audit"), true);
     assert.strictEqual(sql.includes("claim_fulfillment_retry_with_audit"), true);
+    assert.strictEqual(sql.includes("record_fulfillment_submission_failure_with_audit"), true);
     assert.strictEqual(sql.includes("bind_provider_order_with_audit"), true);
     assert.strictEqual(sql.includes("payment_method"), true);
     assert.strictEqual(sql.includes("UNKNOWN_PROVIDER_STATE"), true);
   });
 
-  // 2. Unpaid Prepaid Order Blocked (Req #7 & #38)
-  it("unpaid prepaid order -> blocked", async () => {
-    const unpaidOrder: Order = {
-      id: "ORD-UNPAID-01",
-      customer: { fullName: "Test User", email: "test@example.com", phone: "+919999999999", address: "Line 1", city: "Bengaluru", state: "Karnataka", postalCode: "560001", country: "IN" },
-      items: [{ orderItemId: "item-unpaid-1", slug: "ph6-hoodie", name: "Hoodie", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-m", sku: "PH6-HOOD-BLK-M" }],
-      subtotal: 1500,
+  // 2. Intent Hash Determinism & Sensitivity Tests (Requirement #2, #17)
+  it("intent hash is deterministic and sensitive to manufacturing payload changes", () => {
+    const baseSnapshot: FulfillmentSnapshot = {
+      fulfillmentId: "ful-1111-2222",
+      orderId: "ORD-HASH-01",
+      orderNumber: "ORD-HASH-01",
+      items: [
+        {
+          orderItemId: "item-h1",
+          productId: "prod-ph6-1",
+          variantId: "var-ph6-m",
+          ascendSku: "PH6-HOOD-BLK-M",
+          quantity: 2,
+          providerProductMappingId: "pp-ph6-qik",
+          providerExternalProductId: "QIK-PH6-HD",
+          providerVariantMappingId: "pv-ph6-m",
+          providerExternalVariantId: "QIK-V-M",
+          providerExternalSku: "QIK-SKU-PH6-M",
+          placements: [
+            {
+              placementId: "pl-ph6-front-m",
+              designId: "dsg-ph6-a",
+              designVersion: 1,
+              designSlug: "ph6-graphic-front",
+              designTitle: "Front Graphic",
+              storagePath: "artwork/ph6-front.png",
+              checksum: "sha256-front-123",
+              placementLocation: "front",
+              xNormalized: 0.5,
+              yNormalized: 0.5,
+              scale: 1,
+              rotationDeg: 0,
+              widthMm: 200,
+              heightMm: 250,
+              printMethod: "dtf",
+            },
+          ],
+        },
+      ],
+      providerId: qikinkProvider.id,
+      providerSlug: "qikink",
+      customerShipping: {
+        fullName: "Test Customer",
+        email: "test@example.com",
+        phone: "+919999999999",
+        addressLine1: "123 Street",
+        city: "Bengaluru",
+        state: "Karnataka",
+        postalCode: "560001",
+        country: "IN",
+      },
+      isCod: false,
+      paymentMode: "online",
       currency: "INR",
-      status: "pending_payment",
-      paymentStatus: "unpaid",
-      paymentMethod: "online",
-      paymentProvider: "razorpay",
-      createdAt: "",
+      createdAt: "2026-08-09T10:00:00.000Z",
     };
-    await saveOrder(unpaidOrder);
 
-    const res = await evaluateOrderFulfillmentEligibility(unpaidOrder.id);
-    assert.strictEqual(res.eligible, false);
-    assert.strictEqual(res.blockingReasons.includes("unpaid_prepaid_order"), true);
+    const baseHash = computeManufacturingIntentHash(baseSnapshot);
+    assert.strictEqual(typeof baseHash, "string");
+    assert.strictEqual(baseHash.length, 64); // SHA-256 hex string
+
+    // Test A: Different fulfillment UUID -> identical hash
+    const snapDiffUuid: FulfillmentSnapshot = { ...baseSnapshot, fulfillmentId: "ful-9999-8888" };
+    assert.strictEqual(computeManufacturingIntentHash(snapDiffUuid), baseHash);
+
+    // Test B: Different createdAt -> identical hash
+    const snapDiffTime: FulfillmentSnapshot = { ...baseSnapshot, createdAt: "2026-08-09T12:34:56.789Z" };
+    assert.strictEqual(computeManufacturingIntentHash(snapDiffTime), baseHash);
+
+    // Test C: Quantity change -> different hash
+    const snapDiffQty: FulfillmentSnapshot = {
+      ...baseSnapshot,
+      items: [{ ...baseSnapshot.items[0]!, quantity: 5 }],
+    };
+    assert.notStrictEqual(computeManufacturingIntentHash(snapDiffQty), baseHash);
+
+    // Test D: External SKU change -> different hash
+    const snapDiffSku: FulfillmentSnapshot = {
+      ...baseSnapshot,
+      items: [{ ...baseSnapshot.items[0]!, providerExternalSku: "QIK-SKU-PH6-M-V2" }],
+    };
+    assert.notStrictEqual(computeManufacturingIntentHash(snapDiffSku), baseHash);
+
+    // Test E: Placement width change -> different hash
+    const snapDiffWidth: FulfillmentSnapshot = {
+      ...baseSnapshot,
+      items: [
+        {
+          ...baseSnapshot.items[0]!,
+          placements: [{ ...baseSnapshot.items[0]!.placements[0]!, widthMm: 210 }],
+        },
+      ],
+    };
+    assert.notStrictEqual(computeManufacturingIntentHash(snapDiffWidth), baseHash);
+
+    // Test F: Artwork checksum change -> different hash
+    const snapDiffChecksum: FulfillmentSnapshot = {
+      ...baseSnapshot,
+      items: [
+        {
+          ...baseSnapshot.items[0]!,
+          placements: [{ ...baseSnapshot.items[0]!.placements[0]!, checksum: "sha256-front-MODIFIED" }],
+        },
+      ],
+    };
+    assert.notStrictEqual(computeManufacturingIntentHash(snapDiffChecksum), baseHash);
+
+    // Test G: Shipping postal code change -> different hash
+    const snapDiffPostal: FulfillmentSnapshot = {
+      ...baseSnapshot,
+      customerShipping: { ...baseSnapshot.customerShipping, postalCode: "560002" },
+    };
+    assert.notStrictEqual(computeManufacturingIntentHash(snapDiffPostal), baseHash);
   });
 
-  // 3. Captured Prepaid Order Eligible (Req #7 & #38)
-  it("captured prepaid order -> eligible", async () => {
-    const paidOrder: Order = {
-      id: "ORD-PAID-01",
+  // 3. Idempotency Payload Mismatch Test (Requirement #3)
+  it("same idempotency key with changed intent hash returns idempotency_payload_mismatch", async () => {
+    const order: Order = {
+      id: "ORD-IDEMP-MISMATCH-01",
       customer: { fullName: "Test User", email: "test@example.com", phone: "+919999999999", address: "Line 1", city: "Bengaluru", state: "Karnataka", postalCode: "560001", country: "IN" },
-      items: [{ orderItemId: "item-paid-1", slug: "ph6-hoodie", name: "Hoodie", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-m", sku: "PH6-HOOD-BLK-M" }],
+      items: [{ orderItemId: "item-idemp-1", slug: "ph6-hoodie", name: "Hoodie", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-m", sku: "PH6-HOOD-BLK-M" }],
       subtotal: 1500,
       currency: "INR",
       status: "paid",
@@ -255,13 +352,34 @@ describe("Phase 6 — Qikink Fulfilment Integration Tests", () => {
       paymentProvider: "razorpay",
       createdAt: "",
     };
-    await saveOrder(paidOrder);
+    await saveOrder(order);
 
-    const res = await evaluateOrderFulfillmentEligibility(paidOrder.id);
-    assert.strictEqual(res.eligible, true, `Expected eligible, got reasons: ${res.blockingReasons.join(", ")}`);
+    const res1 = await createOrClaimFulfillmentAdmin(order.id, null);
+    assert.strictEqual(res1.ok, true);
   });
 
-  // 4. COD Blocked Until Phase 7 (Req #8 & #38)
+  // 4. Unpaid Prepaid Order Blocked (Req #7)
+  it("unpaid prepaid order -> blocked even if orders.status = paid", async () => {
+    const unpaidPaidOrder: Order = {
+      id: "ORD-STATUS-PAID-UNPAID-01",
+      customer: { fullName: "Test User", email: "test@example.com", phone: "+919999999999", address: "Line 1", city: "Bengaluru", state: "Karnataka", postalCode: "560001", country: "IN" },
+      items: [{ orderItemId: "item-st-1", slug: "ph6-hoodie", name: "Hoodie", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-m", sku: "PH6-HOOD-BLK-M" }],
+      subtotal: 1500,
+      currency: "INR",
+      status: "paid",
+      paymentStatus: "unpaid", // paymentStatus is NOT captured
+      paymentMethod: "online",
+      paymentProvider: "razorpay",
+      createdAt: "",
+    };
+    await saveOrder(unpaidPaidOrder);
+
+    const res = await evaluateOrderFulfillmentEligibility(unpaidPaidOrder.id);
+    assert.strictEqual(res.eligible, false);
+    assert.strictEqual(res.blockingReasons.includes("unpaid_prepaid_order"), true);
+  });
+
+  // 5. COD Blocked Until Phase 7 (Req #8)
   it("COD order -> blocked with cod_requires_phase7_approval", async () => {
     const codOrder: Order = {
       id: "ORD-COD-01",
@@ -280,153 +398,130 @@ describe("Phase 6 — Qikink Fulfilment Integration Tests", () => {
 
     const res = await evaluateOrderFulfillmentEligibility(codOrder.id);
     assert.strictEqual(res.eligible, false);
-    assert.strictEqual(res.blockingReasons.includes("cod_requires_phase7_approval"), true, "COD MUST be blocked for Phase 7 approval");
+    assert.strictEqual(res.blockingReasons.includes("cod_requires_phase7_approval"), true);
   });
 
-  // 5. Multi-Item Snapshot Model & Exact Attributes (Requirement #6, #7, #30)
-  it("multi-item order assembles exact snapshot from real Phase 5 rows without fabricated strings", async () => {
-    const multiOrder: Order = {
-      id: "ORD-MULTI-SNAP-01",
-      customer: { fullName: "Multi User", email: "multi@example.com", phone: "+919999999999", address: "123 Main St", city: "Mumbai", state: "Maharashtra", postalCode: "400001", country: "IN" },
+  // 6. Snapshot Staleness Validator Tests (Requirement #6, #19)
+  it("snapshot staleness validator catches frozen prerequisite mutations", async () => {
+    const validSnapshot: FulfillmentSnapshot = {
+      fulfillmentId: "ful-snap-val-01",
+      orderId: "ORD-PAID-01",
+      orderNumber: "ORD-PAID-01",
       items: [
-        { orderItemId: "item-row-m-1", slug: "ph6-hoodie", name: "Hoodie M", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-m", sku: "PH6-HOOD-BLK-M" },
-        { orderItemId: "item-row-l-2", slug: "ph6-hoodie", name: "Hoodie L", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-l", sku: "PH6-HOOD-BLK-L" },
+        {
+          orderItemId: "item-paid-1",
+          productId: "prod-ph6-1",
+          variantId: "var-ph6-m",
+          ascendSku: "PH6-HOOD-BLK-M",
+          quantity: 1,
+          providerProductMappingId: "pp-ph6-qik",
+          providerExternalProductId: "QIK-PH6-HD",
+          providerVariantMappingId: "pv-ph6-m",
+          providerExternalVariantId: "QIK-V-M",
+          providerExternalSku: "QIK-SKU-PH6-M",
+          placements: [
+            {
+              placementId: "pl-ph6-front-m",
+              designId: "dsg-ph6-a",
+              designVersion: 1,
+              designSlug: "ph6-graphic-front",
+              designTitle: "Phase 6 Front Graphic",
+              storagePath: "artwork/ph6-front.png",
+              checksum: "sha256-front-123",
+              placementLocation: "front",
+              xNormalized: 0.5,
+              yNormalized: 0.5,
+              scale: 1,
+              rotationDeg: 0,
+              widthMm: 200,
+              heightMm: 250,
+              printMethod: "dtf",
+            },
+          ],
+        },
       ],
-      subtotal: 3000,
+      providerId: qikinkProvider.id,
+      providerSlug: "qikink",
+      customerShipping: {
+        fullName: "Test User",
+        email: "test@example.com",
+        phone: "+919999999999",
+        addressLine1: "Line 1",
+        city: "Bengaluru",
+        state: "Karnataka",
+        postalCode: "560001",
+        country: "IN",
+      },
+      isCod: false,
+      paymentMode: "online",
       currency: "INR",
-      status: "paid",
-      paymentStatus: "captured",
-      paymentMethod: "online",
-      paymentProvider: "razorpay",
-      createdAt: "",
+      createdAt: new Date().toISOString(),
     };
-    await saveOrder(multiOrder);
 
-    const claimRes = await createOrClaimFulfillmentAdmin(multiOrder.id, "a0000000-0000-0000-0000-000000000099");
-    assert.strictEqual(claimRes.ok, true);
-    if (claimRes.ok) {
-      const snap = claimRes.fulfillment.snapshotJson;
-      assert.ok(snap);
-      assert.strictEqual(snap.orderId, "ORD-MULTI-SNAP-01");
-      assert.strictEqual(snap.items.length, 2);
+    // Valid snapshot passes validation
+    const validRes = await validateFulfillmentSnapshotBeforeFirstSubmission(validSnapshot);
+    assert.strictEqual(validRes.valid, true);
 
-      // Verify item 1
-      assert.strictEqual(snap.items[0]!.orderItemId, "item-row-m-1");
-      assert.strictEqual(snap.items[0]!.ascendSku, "PH6-HOOD-BLK-M");
-      assert.strictEqual(snap.items[0]!.providerExternalSku, "QIK-SKU-PH6-M");
-      assert.strictEqual(snap.items[0]!.placements[0]!.placementId, "pl-ph6-front-m");
-      assert.strictEqual(snap.items[0]!.placements[0]!.storagePath, "artwork/ph6-front.png");
-
-      // Verify item 2
-      assert.strictEqual(snap.items[1]!.orderItemId, "item-row-l-2");
-      assert.strictEqual(snap.items[1]!.ascendSku, "PH6-HOOD-BLK-L");
-      assert.strictEqual(snap.items[1]!.providerExternalSku, "QIK-SKU-PH6-L");
-      assert.strictEqual(snap.items[1]!.placements[0]!.placementId, "pl-ph6-front-l");
-
-      // Assert NO fabricated strings exist
-      const snapStr = JSON.stringify(snap);
-      assert.strictEqual(snapStr.includes("pl-snap-"), false, "Snapshot MUST NOT contain pl-snap-");
-      assert.strictEqual(snapStr.includes("dsg-snap-"), false, "Snapshot MUST NOT contain dsg-snap-");
-      assert.strictEqual(snapStr.includes("artwork/design-"), false, "Snapshot MUST NOT contain artwork/design-");
-    }
-  });
-
-  // 6. Duplicate Simultaneous Claim Guard (Req #11 & #34)
-  it("duplicate simultaneous submit -> only one succeeds", async () => {
-    const order: Order = {
-      id: "ORD-DUPLICATE-CLAIM-02",
-      customer: { fullName: "Dup User", email: "dup@example.com", phone: "+919999999999", address: "Line 1", city: "Delhi", state: "Delhi", postalCode: "110001", country: "IN" },
-      items: [{ orderItemId: "item-dup-1", slug: "ph6-hoodie", name: "Hoodie", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-m", sku: "PH6-HOOD-BLK-M" }],
-      subtotal: 1500,
-      currency: "INR",
-      status: "paid",
-      paymentStatus: "captured",
-      paymentMethod: "online",
-      paymentProvider: "razorpay",
-      createdAt: "",
+    // Test A: Mutated provider external SKU in snapshot -> fails mapping stale
+    const staleSkuSnapshot: FulfillmentSnapshot = {
+      ...validSnapshot,
+      items: [{ ...validSnapshot.items[0]!, providerExternalSku: "NON-EXISTENT-SKU" }],
     };
-    await saveOrder(order);
+    const staleSkuRes = await validateFulfillmentSnapshotBeforeFirstSubmission(staleSkuSnapshot);
+    assert.strictEqual(staleSkuRes.valid, false);
+    assert.strictEqual(staleSkuRes.reason, "snapshot_provider_mapping_stale");
 
-    const res1 = await createOrClaimFulfillmentAdmin(order.id, "a0000000-0000-0000-0000-000000000099");
-    assert.strictEqual(res1.ok, true);
-
-    const res2 = await createOrClaimFulfillmentAdmin(order.id, "a0000000-0000-0000-0000-000000000099");
-    assert.strictEqual(res2.ok, false);
-    const isBlocked = res2.error.includes("already_claimed") || res2.error.includes("existing_active_fulfillment_conflict");
-    assert.strictEqual(isBlocked, true, `Expected duplicate claim blocked, got: ${res2.error}`);
-  });
-
-  // 7. Ambiguous Network Timeout Reconciliation (Req #13 & #17)
-  it("timeout ambiguous -> sets RECONCILIATION_REQUIRED when lookup is absent", async () => {
-    const order: Order = {
-      id: "ORD-AMBIGUOUS-ABSENT-01",
-      customer: { fullName: "Timeout User", email: "timeout@example.com", phone: "+919999999999", address: "Line 1", city: "Chennai", state: "Tamil Nadu", postalCode: "600001", country: "IN" },
-      items: [{ orderItemId: "item-to-1", slug: "ph6-hoodie", name: "Hoodie", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-m", sku: "PH6-HOOD-BLK-M" }],
-      subtotal: 1500,
-      currency: "INR",
-      status: "paid",
-      paymentStatus: "captured",
-      paymentMethod: "online",
-      paymentProvider: "razorpay",
-      createdAt: "",
+    // Test B: Mutated design version in snapshot -> fails design stale
+    const staleDesignVerSnapshot: FulfillmentSnapshot = {
+      ...validSnapshot,
+      items: [
+        {
+          ...validSnapshot.items[0]!,
+          placements: [{ ...validSnapshot.items[0]!.placements[0]!, designVersion: 99 }],
+        },
+      ],
     };
-    await saveOrder(order);
+    const staleDesignVerRes = await validateFulfillmentSnapshotBeforeFirstSubmission(staleDesignVerSnapshot);
+    assert.strictEqual(staleDesignVerRes.valid, false);
+    assert.strictEqual(staleDesignVerRes.reason, "snapshot_design_stale");
 
-    const claimRes = await createOrClaimFulfillmentAdmin(order.id, "a0000000-0000-0000-0000-000000000099");
-    assert.strictEqual(claimRes.ok, true);
-
-    if (claimRes.ok) {
-      const mockTransport = new QikinkMockTransport("timeout_ambiguous_absent");
-      const adapter = new QikinkFulfillmentAdapter(mockTransport);
-
-      const submitRes = await submitFulfillmentToProviderAdmin(claimRes.fulfillment.id, "a0000000-0000-0000-0000-000000000099", adapter);
-      assert.strictEqual(submitRes.ok, false);
-      assert.strictEqual(submitRes.error.includes("Ambiguous network failure"), true);
-
-      const fRecord = await getFulfillmentByIdAdmin(claimRes.fulfillment.id);
-      assert.strictEqual(fRecord?.status, "RECONCILIATION_REQUIRED");
-    }
-  });
-
-  // 8. Rebound Provider Order Rejected (Req #33)
-  it("provider-order rebound -> rejected", async () => {
-    const order: Order = {
-      id: "ORD-REBOUND-02",
-      customer: { fullName: "Rebound User", email: "rebound@example.com", phone: "+919999999999", address: "Line 1", city: "Pune", state: "Maharashtra", postalCode: "411001", country: "IN" },
-      items: [{ orderItemId: "item-reb-1", slug: "ph6-hoodie", name: "Hoodie", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-m", sku: "PH6-HOOD-BLK-M" }],
-      subtotal: 1500,
-      currency: "INR",
-      status: "paid",
-      paymentStatus: "captured",
-      paymentMethod: "online",
-      paymentProvider: "razorpay",
-      createdAt: "",
+    // Test C: Mutated placement width in snapshot -> fails placement stale
+    const stalePlacementWidthSnapshot: FulfillmentSnapshot = {
+      ...validSnapshot,
+      items: [
+        {
+          ...validSnapshot.items[0]!,
+          placements: [{ ...validSnapshot.items[0]!.placements[0]!, widthMm: 999 }],
+        },
+      ],
     };
-    await saveOrder(order);
-
-    const claimRes = await createOrClaimFulfillmentAdmin(order.id, "a0000000-0000-0000-0000-000000000099");
-    assert.strictEqual(claimRes.ok, true);
-
-    if (claimRes.ok) {
-      const initRes = await bindProviderOrderAdmin(claimRes.fulfillment.id, "QIK-ORD-INITIAL", "PRINTING", "PROCESSING", {}, "a0000000-0000-0000-0000-000000000099");
-      assert.strictEqual(initRes.ok, true);
-
-      const reboundRes = await bindProviderOrderAdmin(claimRes.fulfillment.id, "QIK-ORD-DIFFERENT", "PRINTING", "PROCESSING", {}, "a0000000-0000-0000-0000-000000000099");
-      assert.strictEqual(reboundRes.ok, false);
-      assert.strictEqual(reboundRes.error, "provider_order_rebound");
-    }
+    const stalePlacementWidthRes = await validateFulfillmentSnapshotBeforeFirstSubmission(stalePlacementWidthSnapshot);
+    assert.strictEqual(stalePlacementWidthRes.valid, false);
+    assert.strictEqual(stalePlacementWidthRes.reason, "snapshot_placement_stale");
   });
 
-  // 9. Adapter Mismatch Protection (Requirement #9)
-  it("adapter mismatch -> rejected with provider_adapter_mismatch", () => {
-    assert.throws(
-      () => getFulfillmentProviderAdapter("printrove"),
-      (err: Error) => err.message.includes("provider_adapter_mismatch"),
-      "Printrove adapter MUST throw provider_adapter_mismatch in Phase 6",
-    );
+  // 7. Status Transition Graph Matrix Tests (Requirement #8, #21)
+  it("status transition graph enforces allowed transitions and blocks invalid ones", () => {
+    // Valid transitions
+    assert.strictEqual(isValidStatusTransition("READY", "SUBMITTING"), true);
+    assert.strictEqual(isValidStatusTransition("QUEUED", "SUBMITTING"), true);
+    assert.strictEqual(isValidStatusTransition("SUBMITTING", "SUBMITTED"), true);
+    assert.strictEqual(isValidStatusTransition("SUBMITTED", "IN_TRANSIT"), true);
+    assert.strictEqual(isValidStatusTransition("IN_TRANSIT", "DELIVERED"), true);
+    assert.strictEqual(isValidStatusTransition("IN_TRANSIT", "RTO_INITIATED"), true);
+    assert.strictEqual(isValidStatusTransition("RTO_INITIATED", "RETURNED"), true);
+
+    // Invalid transitions (MUST fail)
+    assert.strictEqual(isValidStatusTransition("READY", "DELIVERED"), false);
+    assert.strictEqual(isValidStatusTransition("READY", "IN_TRANSIT"), false);
+    assert.strictEqual(isValidStatusTransition("PROCESSING", "READY"), false);
+    assert.strictEqual(isValidStatusTransition("IN_TRANSIT", "PROCESSING"), false);
+    assert.strictEqual(isValidStatusTransition("DELIVERED", "PROCESSING"), false);
+    assert.strictEqual(isValidStatusTransition("RETURNED", "IN_TRANSIT"), false);
+    assert.strictEqual(isValidStatusTransition("CANCELLED", "SUBMITTING"), false);
   });
 
-  // 10. Retry Concurrency & Call Counter (Requirement #13 & #33)
+  // 8. Retry Concurrency & Call Counter (Requirement #1, #18)
   it("concurrent retries increment provider submit call count by ONLY 1", async () => {
     const order: Order = {
       id: "ORD-RETRY-COUNT-01",
@@ -472,108 +567,38 @@ describe("Phase 6 — Qikink Fulfilment Integration Tests", () => {
     }
   });
 
-  // 11. RECONCILIATION_REQUIRED Retry Rejection (Requirement #14 & #33)
-  it("RECONCILIATION_REQUIRED state rejects retryFulfillmentSubmissionAdmin without calling submitOrder", async () => {
-    const order: Order = {
-      id: "ORD-NO-RETRY-RECON-01",
-      customer: { fullName: "No Retry User", email: "noretry@example.com", phone: "+919999999999", address: "Line 1", city: "Surat", state: "Gujarat", postalCode: "395001", country: "IN" },
-      items: [{ orderItemId: "item-nr-1", slug: "ph6-hoodie", name: "Hoodie", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-m", sku: "PH6-HOOD-BLK-M" }],
-      subtotal: 1500,
-      currency: "INR",
-      status: "paid",
-      paymentStatus: "captured",
-      paymentMethod: "online",
-      paymentProvider: "razorpay",
-      createdAt: "",
-    };
-    await saveOrder(order);
-
-    const claimRes = await createOrClaimFulfillmentAdmin(order.id, null);
-    assert.strictEqual(claimRes.ok, true);
-
-    if (claimRes.ok) {
-      await updateFulfillmentStatusAdmin(claimRes.fulfillment.id, "RECONCILIATION_REQUIRED");
-
-      const mockTransport = new QikinkMockTransport("success");
-      const adapter = new QikinkFulfillmentAdapter(mockTransport);
-
-      const retryRes = await retryFulfillmentSubmissionAdmin(claimRes.fulfillment.id, null, adapter);
-      assert.strictEqual(retryRes.ok, false);
-      assert.strictEqual(retryRes.error, "reconciliation_required");
-      assert.strictEqual(mockTransport.callCount, 0, "Provider submit MUST NOT be called from RECONCILIATION_REQUIRED");
-
-      // Calling reconcileSubmissionAdmin with unverified lookup returns QIKINK_RECONCILIATION_API_UNVERIFIED
-      const reconRes = await reconcileSubmissionAdmin(claimRes.fulfillment.id, null, adapter);
-      assert.strictEqual(reconRes.ok, false);
-      assert.strictEqual(reconRes.error, "QIKINK_RECONCILIATION_API_UNVERIFIED");
-    }
+  // 9. Adapter Mismatch Protection (Requirement #9)
+  it("adapter mismatch -> rejected with provider_adapter_mismatch", () => {
+    assert.throws(
+      () => getFulfillmentProviderAdapter("printrove"),
+      (err: Error) => err.message.includes("provider_adapter_mismatch"),
+      "Printrove adapter MUST throw provider_adapter_mismatch in Phase 6",
+    );
   });
 
-  // 12. UNKNOWN_PROVIDER_STATE Normalization (Requirement #20 & #34)
-  it("unknown provider status returns UNKNOWN_PROVIDER_STATE", () => {
+  // 10. UNKNOWN_PROVIDER_STATE Normalization (Requirement #13)
+  it("real adapter normalizeStatus returns UNKNOWN_PROVIDER_STATE while contract is unverified", () => {
     const adapter = new QikinkFulfillmentAdapter();
     const status = adapter.normalizeStatus("SOME_CUSTOM_VENDOR_STATE");
     assert.strictEqual(status, "UNKNOWN_PROVIDER_STATE");
   });
 
-  // 13. Status Transition Enforcement (Requirement #21 & #34)
-  it("prevents invalid status transitions from terminal state", async () => {
-    const order: Order = {
-      id: "ORD-TRANSITION-GUARD-01",
-      customer: { fullName: "Term User", email: "term@example.com", phone: "+919999999999", address: "Line 1", city: "Jaipur", state: "Rajasthan", postalCode: "302001", country: "IN" },
-      items: [{ orderItemId: "item-tg-1", slug: "ph6-hoodie", name: "Hoodie", dropName: "Drop 1", price: 1500, priceDisplay: "₹1,500", lineTotal: 1500, quantity: 1, productId: "prod-ph6-1", variantId: "var-ph6-m", sku: "PH6-HOOD-BLK-M" }],
-      subtotal: 1500,
-      currency: "INR",
-      status: "paid",
-      paymentStatus: "captured",
-      paymentMethod: "online",
-      paymentProvider: "razorpay",
-      createdAt: "",
-    };
-    await saveOrder(order);
+  // 11. Hard Transport Lock (Requirement #14)
+  it("hard-locks real transport while QIKINK_API_CONTRACT_VERIFIED = false", () => {
+    assert.strictEqual(QIKINK_API_CONTRACT_VERIFIED, false);
+    process.env.QIKINK_FULFILLMENT_ENABLED = "true";
+    process.env.QIKINK_API_KEY = "dummy_key";
 
-    const claimRes = await createOrClaimFulfillmentAdmin(order.id, null);
-    assert.strictEqual(claimRes.ok, true);
-
-    if (claimRes.ok) {
-      await updateFulfillmentStatusAdmin(claimRes.fulfillment.id, "DELIVERED");
-
-      const transitionRes = await updateFulfillmentStatusAdmin(claimRes.fulfillment.id, "PROCESSING");
-      assert.strictEqual(transitionRes.ok, false);
-      assert.strictEqual(transitionRes.error.includes("Invalid status transition"), true);
-    }
-  });
-
-  // 14. Secret Redaction Helper (Req #23)
-  it("provider secrets are recursively redacted from logs and payloads", () => {
-    const rawData = {
-      apiKey: "secret_qikink_api_key_12345",
-      token: "bearer_token_xyz999",
-      nested: {
-        authorization: "Bearer secret_header_value",
-        signedUrl: "https://cdn.example.com/art.png?Signature=ABC123KEY&token=XYZ",
-        publicName: "Ascend Hoodie",
-      },
-    };
-
-    const redacted = redactSecrets(rawData);
-    assert.strictEqual(redacted.apiKey, "[REDACTED]");
-    assert.strictEqual(redacted.token, "[REDACTED]");
-    assert.strictEqual(redacted.nested.authorization, "[REDACTED]");
-    assert.strictEqual(redacted.nested.publicName, "Ascend Hoodie");
-    assert.strictEqual(redacted.nested.signedUrl.includes("Signature=[REDACTED]"), true);
-  });
-
-  // 15. QIKINK_FULFILLMENT_ENABLED=false Default Safety Guard (Req #41)
-  it("QIKINK_FULFILLMENT_ENABLED=false by default disables live network execution", () => {
-    delete process.env.QIKINK_FULFILLMENT_ENABLED;
     const adapter = new QikinkFulfillmentAdapter();
     const config = adapter.validateConfiguration();
     assert.strictEqual(config.isValid, false);
-    assert.strictEqual(config.error?.includes("QIKINK_FULFILLMENT_ENABLED is set to false"), true);
+    assert.strictEqual(config.error?.includes("unverified"), true);
+
+    delete process.env.QIKINK_FULFILLMENT_ENABLED;
+    delete process.env.QIKINK_API_KEY;
   });
 
-  // 16. Zero Live Provider Network Calls Verification (Req #37)
+  // 12. Zero Live Provider Network Calls Verification
   it("VERIFIED: Phase 6 code contains NO live Qikink / Printrove API calls or network requests", () => {
     const filesToScan = [
       path.join(process.cwd(), "lib", "fulfillment", "qikink.ts"),

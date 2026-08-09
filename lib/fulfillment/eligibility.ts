@@ -1,7 +1,8 @@
 /**
  * Phase 6 — Server-Side Fulfilment Eligibility Evaluator
  * Evaluates whether an Ascend customer order is eligible for POD manufacturing fulfillment.
- * Enforces authoritative payment evidence, COD Phase 7 gate, and strict Qikink provider mapping.
+ * Enforces strict captured payment evidence, COD Phase 7 gate, missing orderItemId check,
+ * and strict Qikink provider mapping.
  */
 
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -29,7 +30,7 @@ export async function evaluateOrderFulfillmentEligibility(
   if (isCod) {
     blockingReasons.push("cod_requires_phase7_approval");
   } else {
-    // 2. Authoritative Prepaid Payment Gate (Req #4)
+    // 2. Strict Authoritative Prepaid Payment Gate (Requirement #7)
     if (hasSupabaseConfig()) {
       const supabase = createSupabaseServiceClient();
       if (!supabase) {
@@ -46,7 +47,8 @@ export async function evaluateOrderFulfillmentEligibility(
       if (orderErr || !orderRow) {
         console.error("[Eligibility] DB error fetching order:", orderErr);
         blockingReasons.push("db_error_verifying_payment");
-      } else if (orderRow.payment_status !== "captured" && orderRow.status !== "paid") {
+      } else if (orderRow.payment_status !== "captured") {
+        // Requirement #7: Strictly require orders.payment_status = 'captured' (status = paid alone is insufficient)
         blockingReasons.push("unpaid_prepaid_order");
       } else {
         const orderTotalPaise = Number(orderRow.total_paise || orderRow.subtotal_paise || 0);
@@ -67,12 +69,14 @@ export async function evaluateOrderFulfillmentEligibility(
           blockingReasons.push("unpaid_prepaid_order");
         } else if (Number(paymentRow.amount_paise) !== orderTotalPaise || paymentRow.currency !== (orderRow.currency || "INR")) {
           blockingReasons.push("payment_amount_currency_mismatch");
+        } else if (orderRow.payment_provider && paymentRow.provider !== orderRow.payment_provider) {
+          blockingReasons.push("payment_provider_mismatch");
         }
       }
     } else {
       // Memory fallback for dev/testing when Supabase is not configured
-      const isPaid = order.paymentStatus === "captured" || order.status === "paid";
-      if (!isPaid) {
+      const isCaptured = order.paymentStatus === "captured";
+      if (!isCaptured) {
         blockingReasons.push("unpaid_prepaid_order");
       }
     }
@@ -90,15 +94,22 @@ export async function evaluateOrderFulfillmentEligibility(
   if (
     existingFulfillment &&
     existingFulfillment.id !== currentFulfillmentId &&
-    !["FAILED", "CANCELLED", "failed", "cancelled"].includes(existingFulfillment.status)
+    !["FAILED", "CANCELLED"].includes(existingFulfillment.status)
   ) {
     blockingReasons.push("existing_active_fulfillment_conflict");
   }
 
-  // 5. Order Items & Provider Mappings (Req #8: Qikink-explicit selection per item)
+  // 5. Order Items & Provider Mappings
   const items = order.items || [];
   if (items.length === 0) {
     blockingReasons.push("empty_order_items");
+  }
+
+  // Requirement #4: Every order item MUST have a real orderItemId when Supabase is configured
+  for (const item of items) {
+    if (!item.orderItemId) {
+      blockingReasons.push("missing_order_item_id");
+    }
   }
 
   const providers = await getAllPODProvidersAdmin();
@@ -146,7 +157,6 @@ export async function evaluateOrderFulfillmentEligibility(
     );
 
     if (!pProd) {
-      // Check if another provider has mapping for error specificity
       const printroveProd = mappings.providerProducts.find(
         (pp) => pp.productId === product.id && pp.mappingStatus === "verified",
       );

@@ -10,15 +10,20 @@ import {
 } from "@/lib/fulfillment/fulfillment-store";
 import { evaluateOrderFulfillmentEligibility } from "@/lib/fulfillment/eligibility";
 
+import { QIKINK_API_CONTRACT_VERIFIED } from "@/lib/fulfillment/qikink";
+
 export async function GET(req: NextRequest) {
   const session = await getAdminSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "Unauthorized operational access" }, { status: 401 });
   }
 
+  const fulfillmentEnabled = process.env.QIKINK_FULFILLMENT_ENABLED === "true";
+  const apiContractVerified = QIKINK_API_CONTRACT_VERIFIED;
+
   const safetyStatus = {
-    transportLocked: process.env.QIKINK_FULFILLMENT_ENABLED !== "true",
-    apiContractUnverified: true,
+    transportLocked: !fulfillmentEnabled || !apiContractVerified,
+    apiContractUnverified: !apiContractVerified,
   };
 
   const { searchParams } = new URL(req.url);

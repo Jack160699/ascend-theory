@@ -20,6 +20,9 @@ import { evaluateOrderFulfillmentEligibility } from "./eligibility";
 import { redactSecrets } from "./qikink";
 import { getFulfillmentProviderAdapter } from "./provider-registry";
 import { getAllDesignsAdmin, getAllProviderMappingsAdmin } from "@/lib/wearables/design-store";
+import { computeManufacturingIntentHash } from "./hash";
+import { validateFulfillmentSnapshotBeforeFirstSubmission } from "./snapshot-validator";
+import { isValidStatusTransition } from "./status-graph";
 
 export type FulfillmentRecord = {
   id: string;
@@ -88,7 +91,6 @@ function mapRowToFulfillmentRecord(row: Record<string, unknown>): FulfillmentRec
 /**
  * Calculates exponential backoff with bounded jitter (30s, 2m, 8m).
  */
-
 function computeNextRetryAt(attemptCount: number): { nextRetryAt: string; delaySec: number } {
   const delays = [30, 120, 480];
   const idx = Math.min(attemptCount, delays.length - 1);
@@ -187,7 +189,7 @@ export async function createOrClaimFulfillmentAdmin(
   orderId: string,
   adminId?: string | null,
 ): Promise<{ ok: true; fulfillment: FulfillmentRecord } | { ok: false; error: string; fulfillmentId?: string }> {
-  // 1. Evaluate server-side fulfillment eligibility (Req #4 & #8)
+  // 1. Evaluate server-side fulfillment eligibility
   const eligibility = await evaluateOrderFulfillmentEligibility(orderId);
   if (!eligibility.eligible) {
     return {
@@ -199,13 +201,13 @@ export async function createOrClaimFulfillmentAdmin(
   const order = eligibility.order!;
   const provider = eligibility.provider!;
 
-  const fulfillmentId = crypto.randomUUID(); // Requirement #10: Pre-generated exact UUID
+  const fulfillmentId = crypto.randomUUID(); // Pre-generated exact UUID
   const idempotencyKey = `idemp-${order.id}-${provider.id}`;
   const providerRef = `ASCEND-ORD-${order.id}`;
 
-  const dbAdminId = isUUID(adminId) ? adminId : null; // Requirement #27: System actor uses null UUID
+  const dbAdminId = isUUID(adminId) ? adminId : null; // System actor uses null UUID
 
-  // Load real Phase 5 entities for snapshot assembly (Requirement #6 & #7)
+  // Load real Phase 5 entities for snapshot assembly
   const mappings = await getAllProviderMappingsAdmin();
   const designs = await getAllDesignsAdmin();
   const designsMap = new Map(designs.map((d) => [d.id, d]));
@@ -214,6 +216,11 @@ export async function createOrClaimFulfillmentAdmin(
   const itemsSnapshots: FulfillmentItemSnapshot[] = [];
 
   for (const item of order.items || []) {
+    // Requirement #4: Every order item MUST have a real orderItemId
+    if (!item.orderItemId) {
+      return { ok: false, error: "missing_order_item_id" };
+    }
+
     const pProd = mappings.providerProducts.find(
       (pp) => pp.productId === item.productId && pp.providerId === provider.id && pp.mappingStatus === "verified",
     );
@@ -233,6 +240,7 @@ export async function createOrClaimFulfillmentAdmin(
       return {
         placementId: pl.id,
         designId: pl.designId,
+        designVersion: design?.version ?? 1, // Requirement #5: designVersion in snapshot
         designSlug: design?.slug || "",
         designTitle: design?.title || "Design Artwork",
         storagePath: design?.storagePath || "",
@@ -249,7 +257,7 @@ export async function createOrClaimFulfillmentAdmin(
     });
 
     itemsSnapshots.push({
-      orderItemId: item.orderItemId || `item-${item.variantId || item.sku}`,
+      orderItemId: item.orderItemId,
       productId: item.productId || "",
       variantId: item.variantId || "",
       ascendSku: item.sku || item.slug || "",
@@ -295,9 +303,8 @@ export async function createOrClaimFulfillmentAdmin(
     createdAt: new Date().toISOString(),
   };
 
-  // Requirement #11: Deterministic canonical request hash
-  const canonicalString = JSON.stringify(unhashedSnapshot, Object.keys(unhashedSnapshot).sort());
-  const requestHash = crypto.createHash("sha256").update(canonicalString).digest("hex");
+  // Requirement #2: Recursive stable canonicalizer & SHA-256 manufacturing intent hash
+  const requestHash = computeManufacturingIntentHash(unhashedSnapshot as FulfillmentSnapshot);
 
   const snapshot: FulfillmentSnapshot = redactSecrets({
     ...unhashedSnapshot,
@@ -335,7 +342,7 @@ export async function createOrClaimFulfillmentAdmin(
     return { ok: true, fulfillment: fulfillment || (memoryFulfillments.get(claimedId)!) };
   }
 
-  // LOCAL MEMORY FALLBACK WITH EXACTLY-ONCE & REQUEST HASH GUARD
+  // LOCAL MEMORY FALLBACK WITH EXACTLY-ONCE & REQUEST HASH GUARD (Requirement #3)
   const existing = Array.from(memoryFulfillments.values()).find(
     (f) => f.idempotencyKey === idempotencyKey || (f.orderId === orderId && f.providerId === provider.id && !["FAILED", "CANCELLED"].includes(f.status)),
   );
@@ -376,8 +383,8 @@ export async function createOrClaimFulfillmentAdmin(
 /**
  * Submits an initial claimed fulfillment lock to the provider adapter.
  * Enforces server-side guards: provider_order_id must be NULL, status must be SUBMITTING. (Requirement #15)
- * Enforces adapter mismatch guard and staleness validation. (Requirement #9 & #18)
- * Handles ambiguous network timeouts with reconciliation lookup. (Requirement #17)
+ * Enforces exact snapshot staleness validator. (Requirement #6)
+ * Handles ambiguous network timeouts with reconciliation lookup. (Requirement #11 & #17)
  */
 export async function submitFulfillmentToProviderAdmin(
   fulfillmentId: string,
@@ -408,6 +415,16 @@ export async function submitFulfillmentToProviderAdmin(
 
   const snapshot = fulfillment.snapshotJson;
 
+  // Requirement #6: Exact Snapshot Staleness Validator
+  const snapshotValidation = await validateFulfillmentSnapshotBeforeFirstSubmission(snapshot);
+  if (!snapshotValidation.valid) {
+    return {
+      ok: false,
+      error: snapshotValidation.reason,
+      fulfillment,
+    };
+  }
+
   // Requirement #9: Adapter mismatch protection
   let adapter: PODFulfillmentProvider;
   try {
@@ -420,24 +437,16 @@ export async function submitFulfillmentToProviderAdmin(
     return { ok: false, error: "provider_adapter_mismatch", fulfillment };
   }
 
-  // Requirement #18: Exact Snapshot Staleness Check
-  const eligibility = await evaluateOrderFulfillmentEligibility(fulfillment.orderId, fulfillmentId);
-  if (!eligibility.eligible && !fulfillment.submittedAt) {
-    return {
-      ok: false,
-      error: `provider_mapping_became_stale: ${eligibility.blockingReasons.join(", ")}`,
-      fulfillment,
-    };
-  }
+  const dbAdminId = isUUID(adminId) ? adminId : null;
 
   let submissionResult: ProviderOrderSubmissionResult;
   try {
     submissionResult = await adapter.submitOrder(snapshot);
   } catch (err) {
-    // Requirement #17: Ambiguous network failure handling -> RECONCILIATION_REQUIRED
+    // Requirement #11 & #17: Ambiguous network failure handling -> RECONCILIATION_REQUIRED
     const errMessage = err instanceof Error ? err.message : "Ambiguous network failure during submission";
 
-    await updateFulfillmentStatusAdmin(
+    const transitionResult = await updateFulfillmentStatusAdmin(
       fulfillmentId,
       "RECONCILIATION_REQUIRED",
       "AMBIGUOUS_NETWORK_TIMEOUT",
@@ -448,12 +457,20 @@ export async function submitFulfillmentToProviderAdmin(
       adminId,
     );
 
+    if (!transitionResult.ok) {
+      return {
+        ok: false,
+        error: `ambiguous_submission_state_persist_failed: ${transitionResult.error}`,
+        fulfillment: (await getFulfillmentByIdAdmin(fulfillmentId)) || undefined,
+      };
+    }
+
     // If verified lookup is supported by provider adapter, attempt merchant ref lookup
     if (adapter.capabilities.orderLookup) {
       try {
         const lookup = await adapter.getOrder("", fulfillment.providerReference);
         if (lookup.found && lookup.providerOrderId) {
-          await bindProviderOrderAdmin(
+          const bindRes = await bindProviderOrderAdmin(
             fulfillmentId,
             lookup.providerOrderId,
             lookup.providerStatus || "PRINTING",
@@ -461,6 +478,13 @@ export async function submitFulfillmentToProviderAdmin(
             redactSecrets(lookup.rawResponse || {}),
             adminId,
           );
+          if (!bindRes.ok) {
+            return {
+              ok: false,
+              error: `provider_order_bind_failed: ${bindRes.error}`,
+              fulfillment: (await getFulfillmentByIdAdmin(fulfillmentId)) || undefined,
+            };
+          }
           const bound = await getFulfillmentByIdAdmin(fulfillmentId);
           return { ok: true, fulfillment: bound! };
         }
@@ -477,7 +501,7 @@ export async function submitFulfillmentToProviderAdmin(
   }
 
   if (!submissionResult.success || !submissionResult.providerOrderId) {
-    // Requirement #16: Bounded retry decision
+    // Requirement #9 & #10: Atomic failure recording via RPC
     const isTransient = ["429_RATE_LIMIT", "500_SERVER_ERROR"].includes(submissionResult.errorCode || "");
     const attemptCount = fulfillment.attemptCount || 1;
     const maxAttempts = fulfillment.maxAttempts || 3;
@@ -491,28 +515,41 @@ export async function submitFulfillmentToProviderAdmin(
     if (hasSupabaseConfig()) {
       const serviceClient = createSupabaseServiceClient();
       if (serviceClient) {
-        await serviceClient
-          .from("fulfillments")
-          .update({
-            status: nextStatus,
-            provider_status: submissionResult.providerStatus || "FAILED",
-            failure_code: submissionResult.errorCode || "SUBMISSION_FAILED",
-            failure_message: submissionResult.errorMessage || "Provider submission failed",
-            retryable,
-            next_retry_at: retryable ? nextRetryAt : null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", fulfillmentId);
+        const { data: rpcData, error: rpcErr } = await serviceClient.rpc(
+          "record_fulfillment_submission_failure_with_audit",
+          {
+            p_fulfillment_id: fulfillmentId,
+            p_next_status: nextStatus,
+            p_provider_status: submissionResult.providerStatus || "FAILED",
+            p_failure_code: submissionResult.errorCode || "SUBMISSION_FAILED",
+            p_failure_message: submissionResult.errorMessage || "Provider order submission failed",
+            p_retryable: retryable,
+            p_next_retry_at: retryable ? nextRetryAt : null,
+            p_admin_id: dbAdminId,
+          },
+        );
+
+        if (rpcErr || !rpcData || typeof rpcData !== "object" || !(rpcData as { ok?: boolean }).ok) {
+          return {
+            ok: false,
+            error: rpcErr?.message || (rpcData as { error?: string })?.error || "Failed to record submission failure",
+            fulfillment,
+          };
+        }
       }
     } else {
       const rec = memoryFulfillments.get(fulfillmentId);
       if (rec) {
+        if (!isValidStatusTransition(rec.status, nextStatus)) {
+          return { ok: false, error: `invalid_status_transition: cannot move from ${rec.status} to ${nextStatus}`, fulfillment: rec };
+        }
         rec.status = nextStatus;
         rec.providerStatus = submissionResult.providerStatus || "FAILED";
         rec.failureCode = submissionResult.errorCode || "SUBMISSION_FAILED";
-        rec.failureMessage = submissionResult.errorMessage || "Provider submission failed";
+        rec.failureMessage = submissionResult.errorMessage || "Provider order submission failed";
         rec.retryable = retryable;
         rec.nextRetryAt = retryable ? nextRetryAt : undefined;
+        if (nextStatus === "FAILED") rec.failedAt = rec.failedAt || new Date().toISOString();
         rec.updatedAt = new Date().toISOString();
       }
     }
@@ -535,7 +572,7 @@ export async function submitFulfillmentToProviderAdmin(
   );
 
   if (!bindRes.ok) {
-    return { ok: false, error: bindRes.error, fulfillment: (await getFulfillmentByIdAdmin(fulfillmentId)) || undefined };
+    return { ok: false, error: `provider_order_bind_failed: ${bindRes.error}`, fulfillment: (await getFulfillmentByIdAdmin(fulfillmentId)) || undefined };
   }
 
   const updated = await getFulfillmentByIdAdmin(fulfillmentId);
@@ -543,8 +580,8 @@ export async function submitFulfillmentToProviderAdmin(
 }
 
 /**
- * Retries a QUEUED or FAILED fulfillment attempt using the atomic claim_fulfillment_retry_with_audit RPC.
- * (Requirement #13)
+ * Retries a QUEUED fulfillment attempt using the atomic claim_fulfillment_retry_with_audit RPC.
+ * Enforces status MUST be strictly QUEUED. (Requirement #1)
  */
 export async function retryFulfillmentSubmissionAdmin(
   fulfillmentId: string,
@@ -553,11 +590,13 @@ export async function retryFulfillmentSubmissionAdmin(
 ): Promise<{ ok: true; fulfillment: FulfillmentRecord } | { ok: false; error: string; fulfillment?: FulfillmentRecord }> {
   const dbAdminId = isUUID(adminId) ? adminId : null;
 
-  // ATOMIC RETRY CLAIM (Requirement #13)
+  // ATOMIC RETRY CLAIM (Requirement #1: Status MUST be strictly QUEUED)
   if (hasSupabaseConfig()) {
     const fulfillment = await getFulfillmentByIdAdmin(fulfillmentId);
     if (!fulfillment) return { ok: false, error: "Fulfillment record not found" };
+    if (fulfillment.status === "SUBMITTING") return { ok: false, error: "already_claimed", fulfillment };
     if (fulfillment.status === "RECONCILIATION_REQUIRED") return { ok: false, error: "reconciliation_required", fulfillment };
+    if (fulfillment.status !== "QUEUED") return { ok: false, error: `invalid_retry_state: status is ${fulfillment.status}`, fulfillment };
     if (fulfillment.providerOrderId) return { ok: false, error: "already_submitted", fulfillment };
 
     const serviceClient = createSupabaseServiceClient();
@@ -567,13 +606,10 @@ export async function retryFulfillmentSubmissionAdmin(
 
     const { data: rpcData, error: rpcErr } = await serviceClient.rpc("claim_fulfillment_retry_with_audit", {
       p_fulfillment_id: fulfillmentId,
-      p_max_attempts: 3,
       p_admin_id: dbAdminId,
     });
 
-    if (rpcErr) {
-      return { ok: false, error: rpcErr.message, fulfillment };
-    }
+    if (rpcErr) return { ok: false, error: rpcErr.message, fulfillment };
     if (!rpcData || typeof rpcData !== "object" || !(rpcData as { ok?: boolean }).ok) {
       const errStr = (rpcData as { error?: string })?.error || "Retry claim failed";
       return { ok: false, error: errStr, fulfillment };
@@ -583,8 +619,9 @@ export async function retryFulfillmentSubmissionAdmin(
     const rec = memoryFulfillments.get(fulfillmentId);
     if (!rec) return { ok: false, error: "Fulfillment not found" };
     if (rec.providerOrderId) return { ok: false, error: "already_submitted", fulfillment: rec };
-    if (rec.status === "RECONCILIATION_REQUIRED") return { ok: false, error: "reconciliation_required", fulfillment: rec };
     if (rec.status === "SUBMITTING") return { ok: false, error: "already_claimed", fulfillment: rec };
+    if (rec.status === "RECONCILIATION_REQUIRED") return { ok: false, error: "reconciliation_required", fulfillment: rec };
+    if (rec.status !== "QUEUED") return { ok: false, error: `invalid_retry_state: status is ${rec.status}`, fulfillment: rec };
     if (!rec.retryable || rec.attemptCount >= (rec.maxAttempts || 3)) {
       return { ok: false, error: "retry_exhausted", fulfillment: rec };
     }
@@ -599,7 +636,7 @@ export async function retryFulfillmentSubmissionAdmin(
 
 /**
  * Reconciles an ambiguous fulfillment submission in RECONCILIATION_REQUIRED state.
- * (Requirement #14)
+ * (Requirement #12)
  */
 export async function reconcileSubmissionAdmin(
   fulfillmentId: string,
@@ -626,7 +663,7 @@ export async function reconcileSubmissionAdmin(
     return { ok: false, error: err instanceof Error ? err.message : "provider_adapter_mismatch", fulfillment };
   }
 
-  // Requirement #14: If lookup capability is unverified, return QIKINK_RECONCILIATION_API_UNVERIFIED
+  // Requirement #12: If lookup capability is unverified, return QIKINK_RECONCILIATION_API_UNVERIFIED
   if (!adapter.capabilities.orderLookup) {
     return { ok: false, error: "QIKINK_RECONCILIATION_API_UNVERIFIED", fulfillment };
   }
@@ -668,6 +705,10 @@ export async function bindProviderOrderAdmin(
   const existing = await getFulfillmentByIdAdmin(fulfillmentId);
   if (existing && existing.providerOrderId && existing.providerOrderId !== providerOrderId) {
     return { ok: false, error: "provider_order_rebound" };
+  }
+
+  if (existing && !isValidStatusTransition(existing.status, normalizedStatus)) {
+    return { ok: false, error: `invalid_status_transition: cannot move from ${existing.status} to ${normalizedStatus}` };
   }
 
   if (hasSupabaseConfig()) {
@@ -721,13 +762,11 @@ export async function updateFulfillmentStatusAdmin(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const dbAdminId = isUUID(adminId) ? adminId : null;
 
-  // Enforce controlled status transitions (Requirement #21)
+  // Enforce controlled status transitions (Requirement #21 / #8)
   const existing = await getFulfillmentByIdAdmin(fulfillmentId);
   if (existing) {
-    if (existing.status !== status) {
-      if (["DELIVERED", "RETURNED", "CANCELLED"].includes(existing.status)) {
-        return { ok: false, error: `Invalid status transition from terminal state ${existing.status} to ${status}` };
-      }
+    if (!isValidStatusTransition(existing.status, status)) {
+      return { ok: false, error: `invalid_status_transition: cannot move from ${existing.status} to ${status}` };
     }
   }
 

@@ -1,8 +1,8 @@
 /**
  * Phase 6 — Qikink POD Provider Adapter
  * Implements PODFulfillmentProvider for Qikink manufacturing integration.
- * Transport is DISABLED by default (QIKINK_FULFILLMENT_ENABLED=false) until
- * exact official Qikink API documentation and merchant credentials are provided.
+ * Transport is HARD-LOCKED by safety guard (QIKINK_API_CONTRACT_VERIFIED = false)
+ * until exact official Qikink API documentation and merchant credentials are provided.
  */
 
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -17,6 +17,12 @@ import type {
   FulfillmentStatus,
 } from "./types";
 import { QikinkMockTransport } from "./qikink-mock";
+
+/**
+ * Server Safety Hard Lock Constant.
+ * Must remain false until exact merchant API contract is verified.
+ */
+export const QIKINK_API_CONTRACT_VERIFIED = false;
 
 export function redactSecrets<T>(data: T): T {
   if (data === null || data === undefined) return data;
@@ -53,7 +59,7 @@ export function redactSecrets<T>(data: T): T {
 export class QikinkFulfillmentAdapter implements PODFulfillmentProvider {
   readonly providerSlug = "qikink" as const;
 
-  // Requirement #19: Honest capability reporting for unverified Qikink API contract
+  // Requirement #13: Honest capability reporting for unverified Qikink API contract
   readonly capabilities: ProviderCapabilityModel = {
     submitOrder: true,
     orderLookup: false,
@@ -70,6 +76,13 @@ export class QikinkFulfillmentAdapter implements PODFulfillmentProvider {
   }
 
   validateConfiguration(): { isValid: boolean; error?: string } {
+    if (!QIKINK_API_CONTRACT_VERIFIED) {
+      return {
+        isValid: false,
+        error: "Qikink API contract is unverified (QIKINK_API_CONTRACT_VERIFIED = false). Production transport remains hard-locked.",
+      };
+    }
+
     const enabled = process.env.QIKINK_FULFILLMENT_ENABLED === "true";
     if (!enabled) {
       return {
@@ -129,7 +142,7 @@ export class QikinkFulfillmentAdapter implements PODFulfillmentProvider {
       }),
     );
 
-    // Unverified API Contract Safety Lock: Return QIKINK_API_CONTRACT_UNVERIFIED response (Req #36)
+    // Unverified API Contract Safety Lock: Return QIKINK_API_CONTRACT_UNVERIFIED response
     return {
       success: false,
       normalizedStatus: "FAILED",
@@ -165,50 +178,42 @@ export class QikinkFulfillmentAdapter implements PODFulfillmentProvider {
     };
   }
 
+  /**
+   * REAL QIKINK STATUS MAP PENDING VERIFIED MERCHANT API CONTRACT
+   * Until exact merchant API contract is verified, all external raw status strings map to UNKNOWN_PROVIDER_STATE.
+   */
   normalizeStatus(rawStatus: string): FulfillmentStatus {
-    if (!rawStatus) return "UNKNOWN_PROVIDER_STATE";
-    const s = rawStatus.toUpperCase().trim();
-    switch (s) {
-      case "LIVE":
-      case "PRINTING":
-      case "PROCESSING":
-      case "IN_PRODUCTION":
-        return "PROCESSING";
-      case "LIVE-OOS":
-      case "OUT_OF_STOCK":
-      case "OOS":
-        return "OUT_OF_STOCK";
-      case "ACTION_REQUIRED":
-      case "ACTION REQUIRED":
-      case "ATTENTION":
-        return "ACTION_REQUIRED";
-      case "MANIFESTED":
-      case "PACKED":
-      case "READY_TO_SHIP":
-        return "MANIFESTED";
-      case "IN_TRANSIT":
-      case "DISPATCHED":
-      case "SHIPPED":
-        return "IN_TRANSIT";
-      case "DELIVERED":
-      case "COMPLETED":
-        return "DELIVERED";
-      case "RTO":
-      case "RTO_INITIATED":
-      case "RETURN_TO_ORIGIN":
-        return "RTO_INITIATED";
-      case "RETURNED":
-        return "RETURNED";
-      case "CANCELLED":
-      case "CANCELED":
-        return "CANCELLED";
-      case "FAILED":
-      case "REJECTED":
-        return "FAILED";
-      default:
-        // Requirement #20: Unknown status maps to UNKNOWN_PROVIDER_STATE
-        return "UNKNOWN_PROVIDER_STATE";
+    if (this.mockTransport) {
+      // Mock transport retains deterministic mapping for unit test scenarios
+      const s = (rawStatus || "").toUpperCase().trim();
+      switch (s) {
+        case "PROCESSING":
+          return "PROCESSING";
+        case "ACTION_REQUIRED":
+          return "ACTION_REQUIRED";
+        case "OUT_OF_STOCK":
+          return "OUT_OF_STOCK";
+        case "MANIFESTED":
+          return "MANIFESTED";
+        case "IN_TRANSIT":
+          return "IN_TRANSIT";
+        case "DELIVERED":
+          return "DELIVERED";
+        case "RTO_INITIATED":
+          return "RTO_INITIATED";
+        case "RETURNED":
+          return "RETURNED";
+        case "CANCELLED":
+          return "CANCELLED";
+        case "FAILED":
+          return "FAILED";
+        default:
+          return "UNKNOWN_PROVIDER_STATE";
+      }
     }
+
+    // Real adapter maps any raw status to UNKNOWN_PROVIDER_STATE while contract is unverified
+    return "UNKNOWN_PROVIDER_STATE";
   }
 
   async healthCheck(): Promise<{ ok: boolean; message?: string }> {

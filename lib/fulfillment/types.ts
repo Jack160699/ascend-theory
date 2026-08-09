@@ -51,6 +51,7 @@ export type ProviderCapabilityModel = {
 export type ActivePlacementSnapshot = {
   placementId: string;
   designId: string;
+  designVersion: number;
   designSlug: string;
   designTitle: string;
   storagePath: string;
