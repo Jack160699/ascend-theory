@@ -91,6 +91,11 @@ BEGIN
   END IF;
 END $$;
 
+-- Partial Unique Index on provider_products (provider_id, product_id) to prevent duplicate provider products for the same Ascend product (Req #8)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_provider_product_per_provider
+  ON public.provider_products (provider_id, product_id)
+  WHERE (product_id IS NOT NULL);
+
 -- 5. Extend provider_variants table
 ALTER TABLE public.provider_variants
   ADD COLUMN IF NOT EXISTS product_variant_id UUID REFERENCES public.product_variants(id) ON DELETE SET NULL,
@@ -596,7 +601,7 @@ $$;
 REVOKE ALL ON FUNCTION public.archive_design_with_audit(UUID, UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.archive_design_with_audit(UUID, UUID) TO service_role;
 
--- 9c. Atomic Provider Product + Variant Mapping RPC
+-- 9c. Atomic Provider Product + Variant Mapping RPC (with Strict Validation & Server-Side Rules)
 CREATE OR REPLACE FUNCTION public.save_provider_mapping_with_audit(
   p_provider_product JSONB,
   p_provider_variants JSONB,
@@ -613,6 +618,15 @@ DECLARE
   v_ext_prod_id TEXT;
   v_product_id UUID;
   v_status TEXT;
+  v_print_methods JSONB;
+  v_printable_areas JSONB;
+  v_method_elem JSONB;
+  v_area_elem JSONB;
+  v_method_str TEXT;
+  v_area_loc TEXT;
+  v_area_method TEXT;
+  v_area_w INT;
+  v_area_h INT;
   v_variant_elem JSONB;
   v_prov_var_id UUID;
   v_ascend_var_id UUID;
@@ -625,12 +639,17 @@ DECLARE
   v_is_new_prov_prod BOOLEAN := false;
   v_is_new_prov_var BOOLEAN := false;
 BEGIN
-  -- PASS 1: Validate
+  -- PASS 1: Validate EVERYTHING, write NOTHING
   v_prov_prod_id := COALESCE((p_provider_product->>'id')::UUID, gen_random_uuid());
   v_provider_id := (p_provider_product->>'providerId')::UUID;
   v_ext_prod_id := TRIM(p_provider_product->>'externalProductId');
   v_product_id := (p_provider_product->>'productId')::UUID;
   v_status := COALESCE(p_provider_product->>'mappingStatus', 'draft');
+
+  -- Require product_id to reference a valid Ascend product (Req #9)
+  IF v_product_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.products WHERE id = v_product_id) THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'providerProduct.productId is required and must reference a valid Ascend product');
+  END IF;
 
   IF v_status NOT IN ('unmapped', 'draft', 'mapped', 'verified', 'disabled') THEN
     RETURN jsonb_build_object('ok', false, 'error', format('Invalid mapping status: ''%s''', v_status));
@@ -642,6 +661,51 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'Provider external_product_id is required');
   END IF;
 
+  -- Validate printMethodsJson
+  v_print_methods := COALESCE(p_provider_product->'printMethodsJson', '[]'::jsonb);
+  IF jsonb_typeof(v_print_methods) != 'array' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'printMethodsJson must be a JSON array');
+  END IF;
+
+  -- Require verified provider product to have at least 1 supported print method (Req #6)
+  IF v_status = 'verified' AND jsonb_array_length(v_print_methods) = 0 THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'Verified provider product requires at least one supported print method');
+  END IF;
+
+  IF jsonb_array_length(v_print_methods) > 0 THEN
+    FOR v_method_elem IN SELECT * FROM jsonb_array_elements(v_print_methods) LOOP
+      v_method_str := TRIM(v_method_elem#>>'{}');
+      IF v_method_str NOT IN ('dtf', 'dtg', 'screen_print', 'embroidery', 'sublimation', 'other') THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'malformed_printable_area_print_method');
+      END IF;
+    END LOOP;
+  END IF;
+
+  -- Validate printableAreasJson (Req #7)
+  v_printable_areas := COALESCE(p_provider_product->'printableAreasJson', '[]'::jsonb);
+  IF jsonb_typeof(v_printable_areas) != 'array' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'printableAreasJson must be a JSON array');
+  END IF;
+
+  IF jsonb_array_length(v_printable_areas) > 0 THEN
+    FOR v_area_elem IN SELECT * FROM jsonb_array_elements(v_printable_areas) LOOP
+      v_area_loc := COALESCE(v_area_elem->>'location', v_area_elem->>'placementLocation');
+      v_area_method := COALESCE(v_area_elem->>'printMethod', 'dtf');
+      v_area_w := COALESCE((v_area_elem->>'maxWidthMm')::INT, 0);
+      v_area_h := COALESCE((v_area_elem->>'maxHeightMm')::INT, 0);
+
+      IF v_area_loc NOT IN ('front', 'back', 'left_chest', 'right_chest', 'left_sleeve', 'right_sleeve', 'neck', 'custom') THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'malformed_printable_area_location');
+      END IF;
+      IF v_area_method NOT IN ('dtf', 'dtg', 'screen_print', 'embroidery', 'sublimation', 'other') THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'malformed_printable_area_print_method');
+      END IF;
+      IF v_area_w <= 0 OR v_area_h <= 0 THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'invalid_printable_area_dimensions');
+      END IF;
+    END LOOP;
+  END IF;
+
   -- Protect Provider Product Ownership with null-safe comparison
   SELECT provider_id, product_id INTO v_existing_prov_id, v_existing_prod_id
   FROM public.provider_products WHERE id = v_prov_prod_id;
@@ -649,37 +713,31 @@ BEGIN
   IF v_existing_prov_id IS NOT NULL AND v_existing_prov_id != v_provider_id THEN
     RETURN jsonb_build_object('ok', false, 'error', 'provider_product_rebound');
   END IF;
-  IF v_existing_prod_id IS NOT NULL THEN
-    IF v_product_id IS NULL OR v_existing_prod_id != v_product_id THEN
-      RETURN jsonb_build_object('ok', false, 'error', 'provider_product_rebound');
-    END IF;
+  IF v_existing_prod_id IS NOT NULL AND v_existing_prod_id != v_product_id THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'provider_product_rebound');
   END IF;
 
-  -- Validate variant mapping list
+  -- Validate variant mapping list (Req #9)
   IF p_provider_variants IS NOT NULL AND jsonb_array_length(p_provider_variants) > 0 THEN
     FOR v_variant_elem IN SELECT * FROM jsonb_array_elements(p_provider_variants) LOOP
       v_prov_var_id := COALESCE((v_variant_elem->>'id')::UUID, gen_random_uuid());
       v_ascend_var_id := (v_variant_elem->>'productVariantId')::UUID;
       v_ext_var_id := TRIM(v_variant_elem->>'externalVariantId');
-      v_var_status := COALESCE(v_variant_elem->>'mappingStatus', v_status);
+      v_var_status := COALESCE(v_variant_elem->>'mappingStatus', 'unmapped');
+
+      IF v_ascend_var_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.product_variants WHERE id = v_ascend_var_id) THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'providerVariant.productVariantId is required and must reference a valid Ascend variant');
+      END IF;
+
+      IF NOT EXISTS (SELECT 1 FROM public.product_variants WHERE id = v_ascend_var_id AND product_id = v_product_id) THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'mapping_product_mismatch: variant does not belong to the target product');
+      END IF;
 
       IF v_var_status NOT IN ('unmapped', 'draft', 'mapped', 'verified', 'disabled') THEN
         RETURN jsonb_build_object('ok', false, 'error', format('Invalid variant mapping status: ''%s''', v_var_status));
       END IF;
       IF v_ext_var_id IS NULL OR v_ext_var_id = '' THEN
         RETURN jsonb_build_object('ok', false, 'error', 'Provider external_variant_id is required for variant mapping');
-      END IF;
-
-      IF v_ascend_var_id IS NOT NULL THEN
-        IF NOT EXISTS (SELECT 1 FROM public.product_variants WHERE id = v_ascend_var_id) THEN
-          RETURN jsonb_build_object('ok', false, 'error', format('Ascend product_variant_id %s does not exist', v_ascend_var_id));
-        END IF;
-
-        IF v_product_id IS NOT NULL AND NOT EXISTS (
-          SELECT 1 FROM public.product_variants WHERE id = v_ascend_var_id AND product_id = v_product_id
-        ) THEN
-          RETURN jsonb_build_object('ok', false, 'error', 'mapping_product_mismatch: variant does not belong to the target product');
-        END IF;
       END IF;
 
       -- Protect Provider Variant Ownership with null-safe comparison
@@ -689,10 +747,8 @@ BEGIN
       IF v_existing_prov_prod_id IS NOT NULL AND v_existing_prov_prod_id != v_prov_prod_id THEN
         RETURN jsonb_build_object('ok', false, 'error', 'provider_variant_rebound');
       END IF;
-      IF v_existing_ascend_var_id IS NOT NULL THEN
-        IF v_ascend_var_id IS NULL OR v_existing_ascend_var_id != v_ascend_var_id THEN
-          RETURN jsonb_build_object('ok', false, 'error', 'provider_variant_rebound');
-        END IF;
+      IF v_existing_ascend_var_id IS NOT NULL AND v_existing_ascend_var_id != v_ascend_var_id THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'provider_variant_rebound');
       END IF;
     END LOOP;
   END IF;
@@ -712,8 +768,8 @@ BEGIN
     v_ext_prod_id,
     COALESCE(p_provider_product->>'title', p_provider_product->>'name', v_ext_prod_id),
     p_provider_product->>'title',
-    COALESCE(p_provider_product->'printMethodsJson', '[]'::jsonb),
-    COALESCE(p_provider_product->'printableAreasJson', '[]'::jsonb),
+    v_print_methods,
+    v_printable_areas,
     v_status,
     p_provider_product->>'notes',
     CASE WHEN v_status = 'verified' THEN now() ELSE NULL END,
@@ -748,13 +804,13 @@ BEGIN
     jsonb_build_object('external_product_id', v_ext_prod_id, 'mapping_status', v_status)
   );
 
-  -- Upsert provider variants with variant-specific verification metadata
+  -- Upsert provider variants with variant-specific verification metadata (Req #3 & #4)
   IF p_provider_variants IS NOT NULL AND jsonb_array_length(p_provider_variants) > 0 THEN
     FOR v_variant_elem IN SELECT * FROM jsonb_array_elements(p_provider_variants) LOOP
       v_prov_var_id := COALESCE((v_variant_elem->>'id')::UUID, gen_random_uuid());
       v_ascend_var_id := (v_variant_elem->>'productVariantId')::UUID;
       v_ext_var_id := TRIM(v_variant_elem->>'externalVariantId');
-      v_var_status := COALESCE(v_variant_elem->>'mappingStatus', v_status);
+      v_var_status := COALESCE(v_variant_elem->>'mappingStatus', 'unmapped');
       v_is_new_prov_var := NOT EXISTS (SELECT 1 FROM public.provider_variants WHERE id = v_prov_var_id);
 
       INSERT INTO public.provider_variants (

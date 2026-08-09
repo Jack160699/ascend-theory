@@ -43,9 +43,9 @@ export function PODMappingView({ products }: PODMappingViewProps) {
   const [newAreaWidthMm, setNewAreaWidthMm] = useState<number>(300);
   const [newAreaHeightMm, setNewAreaHeightMm] = useState<number>(400);
 
-  // Variant mappings dictionary: productVariantId -> { id?, externalVariantId, externalSku }
+  // Variant mappings dictionary: productVariantId -> { id?, externalVariantId, externalSku, mappingStatus } (Req #3)
   const [variantMappings, setVariantMappings] = useState<
-    Record<string, { id?: string; externalVariantId: string; externalSku: string }>
+    Record<string, { id?: string; externalVariantId: string; externalSku: string; mappingStatus: MappingStatus }>
   >({});
 
   const [saveLoading, setSaveLoading] = useState(false);
@@ -113,13 +113,14 @@ export function PODMappingView({ products }: PODMappingViewProps) {
         setPrintableAreas(existingPP.printableAreasJson || []);
 
         const mappedVars = providerVariants.filter((pv) => pv.providerProductId === existingPP.id);
-        const mapDict: Record<string, { id?: string; externalVariantId: string; externalSku: string }> = {};
+        const mapDict: Record<string, { id?: string; externalVariantId: string; externalSku: string; mappingStatus: MappingStatus }> = {};
         mappedVars.forEach((v) => {
           if (v.productVariantId) {
             mapDict[v.productVariantId] = {
               id: v.id,
               externalVariantId: v.externalVariantId,
               externalSku: v.externalSku || v.sku || "",
+              mappingStatus: v.mappingStatus || "unmapped",
             };
           }
         });
@@ -183,7 +184,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
       productVariantId: pVarId,
       externalVariantId: vData.externalVariantId,
       externalSku: vData.externalSku,
-      mappingStatus,
+      mappingStatus: vData.mappingStatus || "unmapped", // Independent per variant (Req #3 & #4)
     }));
 
     try {
@@ -311,7 +312,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-mono text-white/60 block mb-1">Mapping Status</label>
+                <label className="text-xs font-mono text-white/60 block mb-1">Product Mapping Status</label>
                 <select
                   value={mappingStatus}
                   onChange={(e) => setMappingStatus(e.target.value as MappingStatus)}
@@ -337,7 +338,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
               />
             </div>
 
-            {/* HQ Print Method Configuration (Req #9) */}
+            {/* HQ Print Method Configuration */}
             <div className="p-3 bg-black/40 border border-white/10 rounded-md space-y-2">
               <label className="text-xs font-mono text-white/80 block">Supported Print Methods *</label>
               <div className="grid grid-cols-3 gap-2">
@@ -362,7 +363,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
             </div>
           </div>
 
-          {/* Printable Area Specs Configuration Editor (Req #10) */}
+          {/* Printable Area Specs Configuration Editor */}
           <div className="bg-zinc-900/40 border border-white/10 rounded-lg p-6 space-y-4">
             <h3 className="text-sm font-bold font-mono text-white uppercase border-b border-white/10 pb-2">
               2. Provider Printable Area Specifications
@@ -479,7 +480,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
 
           <div className="space-y-3 max-h-[300px] overflow-y-auto">
             {(selectedProduct?.variants || []).map((v) => {
-              const currentVal = variantMappings[v.id] || { externalVariantId: "", externalSku: "" };
+              const currentVal = variantMappings[v.id] || { externalVariantId: "", externalSku: "", mappingStatus: "unmapped" };
               return (
                 <div key={v.id} className="p-3 bg-black/30 border border-white/10 rounded flex flex-col md:flex-row md:items-center justify-between gap-4 font-mono text-xs">
                   <div>
@@ -489,7 +490,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
                     <span className="text-white/40 block text-[11px]">Ascend SKU: {v.sku}</span>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3 items-center">
                     <div>
                       <label className="text-[10px] text-white/50 block">Provider Ext Variant ID</label>
                       <input
@@ -501,7 +502,7 @@ export function PODMappingView({ products }: PODMappingViewProps) {
                             [v.id]: { ...currentVal, externalVariantId: e.target.value },
                           })
                         }
-                        className="bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white w-44"
+                        className="bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white w-36"
                         placeholder="e.g. QIK-VAR-BLK-M"
                       />
                     </div>
@@ -516,9 +517,28 @@ export function PODMappingView({ products }: PODMappingViewProps) {
                             [v.id]: { ...currentVal, externalSku: e.target.value },
                           })
                         }
-                        className="bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white w-44"
+                        className="bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white w-36"
                         placeholder="e.g. QIK-SKU-BLK-M"
                       />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-white/50 block">Variant Status</label>
+                      <select
+                        value={currentVal.mappingStatus}
+                        onChange={(e) =>
+                          setVariantMappings({
+                            ...variantMappings,
+                            [v.id]: { ...currentVal, mappingStatus: e.target.value as MappingStatus },
+                          })
+                        }
+                        className="bg-black/60 border border-white/20 rounded p-1.5 text-xs font-mono text-white w-28"
+                      >
+                        <option value="unmapped">Unmapped</option>
+                        <option value="draft">Draft</option>
+                        <option value="mapped">Mapped</option>
+                        <option value="verified">Verified</option>
+                        <option value="disabled">Disabled</option>
+                      </select>
                     </div>
                   </div>
                 </div>

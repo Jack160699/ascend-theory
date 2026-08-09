@@ -16,6 +16,7 @@ import type {
   ProductReadinessReport,
   ReadinessBlockingReason,
   PrintableAreaSpec,
+  PrintMethod,
 } from "./design-types";
 import { validateDesignPlacement } from "./placement-validator";
 
@@ -31,6 +32,7 @@ export function evaluateVariantReadiness(input: {
   providerVariant?: ProviderVariant | null;
   providerMappings?: Array<{
     provider: PODProvider;
+    productVariantId?: string;
     providerProduct?: ProviderProduct | null;
     providerVariant?: ProviderVariant | null;
   }>;
@@ -135,15 +137,29 @@ export function evaluateVariantReadiness(input: {
     baseReasons.push("no_approved_primary_mockup");
   }
 
-  // 6. Multi-Provider Path Evaluation
+  // 6. Multi-Provider Path Evaluation (Exact Variant Identity, No Wildcards)
   const providerPathList: Array<{
     provider: PODProvider;
+    productVariantId: string;
     providerProduct?: ProviderProduct | null;
     providerVariant?: ProviderVariant | null;
   }> = [];
 
   if (providerMappings && providerMappings.length > 0) {
-    providerPathList.push(...providerMappings);
+    providerMappings.forEach((m) => {
+      // Filter out mismatched variant mappings to prevent shadowing
+      if (
+        (!m.productVariantId || m.productVariantId === variant.id) &&
+        (!m.providerVariant || m.providerVariant.productVariantId === variant.id)
+      ) {
+        providerPathList.push({
+          provider: m.provider,
+          productVariantId: variant.id,
+          providerProduct: m.providerProduct,
+          providerVariant: m.providerVariant,
+        });
+      }
+    });
   } else if (providerProduct || providerVariant) {
     const pSlug = providerProduct?.providerId === "a0000000-0000-0000-0000-000000000001" ? "qikink" : "printrove";
     const pName = pSlug === "qikink" ? "Qikink" : "Printrove";
@@ -155,12 +171,13 @@ export function evaluateVariantReadiness(input: {
         isActive: true,
         createdAt: new Date().toISOString(),
       },
+      productVariantId: variant.id,
       providerProduct,
       providerVariant,
     });
   } else if (providers.length > 0) {
     providers.forEach((p) => {
-      providerPathList.push({ provider: p });
+      providerPathList.push({ provider: p, productVariantId: variant.id });
     });
   }
 
@@ -195,18 +212,28 @@ export function evaluateVariantReadiness(input: {
         pReasons.push("unverified_provider_variant_mapping");
       }
 
-      // Enforce printable area & method compatibility across EVERY active placement
-      if (pProd?.printableAreasJson && pProd.printableAreasJson.length > 0 && activePlacements.length > 0) {
-        for (const pl of activePlacements) {
-          const areaSpec = pProd.printableAreasJson.find((spec: PrintableAreaSpec) => {
-            const specLoc = spec.location || (spec as unknown as { placementLocation?: string }).placementLocation;
-            return specLoc === pl.placementLocation && spec.printMethod === pl.printMethod;
-          });
+      // Enforce print method & printable area compatibility across EVERY active placement
+      if (activePlacements.length > 0 && pProd) {
+        const supportedMethods: PrintMethod[] = pProd.printMethodsJson || [];
 
-          if (!areaSpec) {
-            pReasons.push("unsupported_provider_placement");
-          } else if (pl.widthMm > areaSpec.maxWidthMm || pl.heightMm > areaSpec.maxHeightMm) {
-            pReasons.push("print_exceeds_provider_area");
+        for (const pl of activePlacements) {
+          // Check print method support (Req #5)
+          if (supportedMethods.length > 0 && !supportedMethods.includes(pl.printMethod as PrintMethod)) {
+            pReasons.push("unsupported_provider_print_method");
+          }
+
+          // Check printable area specifications
+          if (pProd.printableAreasJson && pProd.printableAreasJson.length > 0) {
+            const areaSpec = pProd.printableAreasJson.find((spec: PrintableAreaSpec) => {
+              const specLoc = spec.location || (spec as unknown as { placementLocation?: string }).placementLocation;
+              return specLoc === pl.placementLocation && spec.printMethod === pl.printMethod;
+            });
+
+            if (!areaSpec) {
+              pReasons.push("unsupported_provider_placement");
+            } else if (pl.widthMm > areaSpec.maxWidthMm || pl.heightMm > areaSpec.maxHeightMm) {
+              pReasons.push("print_exceeds_provider_area");
+            }
           }
         }
       }
@@ -270,6 +297,7 @@ export function evaluateProductReadiness(input: {
   providerVariantsMap?: Map<string, ProviderVariant>;
   providerMappingsList?: Array<{
     provider: PODProvider;
+    productVariantId?: string;
     providerProduct?: ProviderProduct | null;
     providerVariant?: ProviderVariant | null;
   }>;
@@ -304,7 +332,7 @@ export function evaluateProductReadiness(input: {
     const providerVariant = providerVariantsMap.get(v.id);
     const productMockups = mockups.filter((m) => m.productId === product.id);
 
-    // Build clean per-variant provider mappings directly (Req #12)
+    // Build EXACT per-variant provider mappings directly (Req #1)
     const vProviderMappings = providers.map((prov) => {
       let pProd: ProviderProduct | undefined = undefined;
       let pVar: ProviderVariant | undefined = undefined;
@@ -313,11 +341,20 @@ export function evaluateProductReadiness(input: {
         const found = providerMappingsList.find(
           (m) =>
             m.provider.id === prov.id &&
+            m.productVariantId === v.id &&
             (!m.providerProduct || m.providerProduct.productId === product.id) &&
             (!m.providerVariant || m.providerVariant.productVariantId === v.id),
         );
-        pProd = found?.providerProduct || undefined;
-        pVar = found?.providerVariant || undefined;
+        if (found) {
+          pProd = found.providerProduct || undefined;
+          pVar = found.providerVariant || undefined;
+        } else {
+          // Fallback to product-level provider product if exact entry was not pre-built
+          const prodFound = providerMappingsList.find(
+            (m) => m.provider.id === prov.id && m.providerProduct?.productId === product.id,
+          );
+          pProd = prodFound?.providerProduct || undefined;
+        }
       } else {
         pProd = providerProduct?.providerId === prov.id ? providerProduct : undefined;
         pVar = providerVariant && pProd ? providerVariant : undefined;
@@ -325,6 +362,7 @@ export function evaluateProductReadiness(input: {
 
       return {
         provider: prov,
+        productVariantId: v.id,
         providerProduct: pProd,
         providerVariant: pVar,
       };

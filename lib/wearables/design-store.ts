@@ -477,17 +477,63 @@ export async function saveProviderMappingAdmin(
     return { ok: false, error: "Provider ID and external_product_id are required" };
   }
 
-  // Cross-product mapping check: verify variants belong to the target product
-  if (providerProduct.productId) {
-    const allProducts = await getAllProductsAdmin();
-    const targetProduct = allProducts.find((p) => p.id === providerProduct.productId);
-    if (targetProduct) {
-      const validVariantIds = new Set((targetProduct.variants || []).map((v) => v.id));
-      for (const pv of providerVariants) {
-        if (pv.productVariantId && !validVariantIds.has(pv.productVariantId)) {
-          return { ok: false, error: "mapping_product_mismatch: variant does not belong to the target product" };
-        }
+  // Require Ascend productId binding (Req #9)
+  if (!providerProduct.productId || providerProduct.productId.trim() === "") {
+    return { ok: false, error: "providerProduct.productId is required and must reference a valid Ascend product" };
+  }
+
+  const allProducts = await getAllProductsAdmin();
+  const targetProduct = allProducts.find((p) => p.id === providerProduct.productId);
+  if (!targetProduct) {
+    return { ok: false, error: "providerProduct.productId is required and must reference a valid Ascend product" };
+  }
+
+  // Require verified provider product to have print methods (Req #6)
+  if (providerProduct.mappingStatus === "verified") {
+    if (!providerProduct.printMethodsJson || providerProduct.printMethodsJson.length === 0) {
+      return { ok: false, error: "Verified provider product requires at least one supported print method" };
+    }
+  }
+
+  // Validate printMethodsJson
+  const validMethods = new Set(["dtf", "dtg", "screen_print", "embroidery", "sublimation", "other"]);
+  if (providerProduct.printMethodsJson && providerProduct.printMethodsJson.length > 0) {
+    for (const m of providerProduct.printMethodsJson) {
+      if (!validMethods.has(m)) {
+        return { ok: false, error: "malformed_printable_area_print_method" };
       }
+    }
+  }
+
+  // Validate printableAreasJson (Req #7)
+  const validLocations = new Set(["front", "back", "left_chest", "right_chest", "left_sleeve", "right_sleeve", "neck", "custom"]);
+  if (providerProduct.printableAreasJson && providerProduct.printableAreasJson.length > 0) {
+    for (const area of providerProduct.printableAreasJson) {
+      const loc = area.location || (area as unknown as { placementLocation?: string }).placementLocation;
+      const pm = area.printMethod || "dtf";
+      const w = area.maxWidthMm ?? 0;
+      const h = area.maxHeightMm ?? 0;
+
+      if (!loc || !validLocations.has(loc)) {
+        return { ok: false, error: "malformed_printable_area_location" };
+      }
+      if (!pm || !validMethods.has(pm)) {
+        return { ok: false, error: "malformed_printable_area_print_method" };
+      }
+      if (w <= 0 || h <= 0) {
+        return { ok: false, error: "invalid_printable_area_dimensions" };
+      }
+    }
+  }
+
+  // Validate variants binding (Req #9)
+  const validVariantIds = new Set((targetProduct.variants || []).map((v) => v.id));
+  for (const pv of providerVariants) {
+    if (!pv.productVariantId) {
+      return { ok: false, error: "providerVariant.productVariantId is required and must reference a valid Ascend variant" };
+    }
+    if (!validVariantIds.has(pv.productVariantId)) {
+      return { ok: false, error: "mapping_product_mismatch: variant does not belong to the target product" };
     }
   }
 
@@ -524,14 +570,10 @@ export async function saveProviderMappingAdmin(
   seedPhase5MemoryStoreIfNeeded();
   const provProdId = providerProduct.id || `pprod-${providerId}-${extProdId}`;
 
-  // Provider product rebound check
-  const existingPP = memoryProviderProducts.get(provProdId);
-  if (existingPP) {
-    if (existingPP.providerId !== providerId) {
-      return { ok: false, error: "provider_product_rebound" };
-    }
-    if (existingPP.productId && providerProduct.productId && existingPP.productId !== providerProduct.productId) {
-      return { ok: false, error: "provider_product_rebound" };
+  // Enforce unique (provider_id, product_id) in memory (Req #8)
+  for (const [, pp] of memoryProviderProducts.entries()) {
+    if (pp.id !== provProdId && pp.providerId === providerId && pp.productId === providerProduct.productId) {
+      return { ok: false, error: "duplicate provider_product mapping for same provider and Ascend product" };
     }
   }
 
@@ -755,6 +797,7 @@ export async function getProductReadinessReportsAdmin(): Promise<ProductReadines
   return products.map((p) => {
     const providerMappingsList: Array<{
       provider: PODProvider;
+      productVariantId: string;
       providerProduct?: ProviderProduct | null;
       providerVariant?: ProviderVariant | null;
     }> = [];
@@ -770,6 +813,7 @@ export async function getProductReadinessReportsAdmin(): Promise<ProductReadines
         );
         providerMappingsList.push({
           provider: prov,
+          productVariantId: v.id,
           providerProduct: pProd,
           providerVariant: pVar,
         });
