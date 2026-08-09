@@ -5,11 +5,18 @@ import { usePathname, useRouter } from "next/navigation";
 import type { Product, Collection, WearablesOverviewStats, ProductVariant, ProductStatus } from "@/lib/wearables/types";
 import { calculateGrossMarginPaise, calculateMarginPercentage } from "@/lib/wearables/validation";
 
+import { DesignStudioView } from "./DesignStudioView";
+import { PODMappingView } from "./PODMappingView";
+
 export function WearablesAdminContainer() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const activeTab = pathname.includes("/collections")
+  const activeTab = pathname.includes("/design-studio")
+    ? "design-studio"
+    : pathname.includes("/pod-mapping")
+    ? "pod-mapping"
+    : pathname.includes("/collections")
     ? "collections"
     : pathname.includes("/products")
     ? "products"
@@ -201,28 +208,44 @@ export function WearablesAdminContainer() {
       </div>
 
       {/* HQ Navigation Sub-Tabs */}
-      <div className="flex border-b border-white/10 gap-8 text-sm">
+      <div className="flex border-b border-white/10 gap-8 text-sm overflow-x-auto">
         <button
           onClick={() => router.push("/admin/wearables")}
-          className={`pb-3 font-mono text-xs uppercase tracking-wider transition border-b-2 ${activeTab === "overview" ? "border-white text-white font-medium" : "border-transparent text-white/40 hover:text-white/70"}`}
+          className={`pb-3 font-mono text-xs uppercase tracking-wider transition border-b-2 whitespace-nowrap ${activeTab === "overview" ? "border-white text-white font-medium" : "border-transparent text-white/40 hover:text-white/70"}`}
         >
           Catalogue Overview
         </button>
         <button
           onClick={() => router.push("/admin/wearables/products")}
-          className={`pb-3 font-mono text-xs uppercase tracking-wider transition border-b-2 ${activeTab === "products" ? "border-white text-white font-medium" : "border-transparent text-white/40 hover:text-white/70"}`}
+          className={`pb-3 font-mono text-xs uppercase tracking-wider transition border-b-2 whitespace-nowrap ${activeTab === "products" ? "border-white text-white font-medium" : "border-transparent text-white/40 hover:text-white/70"}`}
         >
           Master Products ({products.length})
         </button>
         <button
           onClick={() => router.push("/admin/wearables/collections")}
-          className={`pb-3 font-mono text-xs uppercase tracking-wider transition border-b-2 ${activeTab === "collections" ? "border-white text-white font-medium" : "border-transparent text-white/40 hover:text-white/70"}`}
+          className={`pb-3 font-mono text-xs uppercase tracking-wider transition border-b-2 whitespace-nowrap ${activeTab === "collections" ? "border-white text-white font-medium" : "border-transparent text-white/40 hover:text-white/70"}`}
         >
           Collections & Drops ({collections.length})
         </button>
+        <button
+          onClick={() => router.push("/admin/wearables/design-studio")}
+          className={`pb-3 font-mono text-xs uppercase tracking-wider transition border-b-2 whitespace-nowrap ${activeTab === "design-studio" ? "border-white text-white font-medium" : "border-transparent text-white/40 hover:text-white/70"}`}
+        >
+          Design Studio 🎨
+        </button>
+        <button
+          onClick={() => router.push("/admin/wearables/pod-mapping")}
+          className={`pb-3 font-mono text-xs uppercase tracking-wider transition border-b-2 whitespace-nowrap ${activeTab === "pod-mapping" ? "border-white text-white font-medium" : "border-transparent text-white/40 hover:text-white/70"}`}
+        >
+          POD Mapping 🔗
+        </button>
       </div>
 
-      {loading ? (
+      {activeTab === "design-studio" ? (
+        <DesignStudioView products={products} />
+      ) : activeTab === "pod-mapping" ? (
+        <PODMappingView products={products} />
+      ) : loading ? (
         <div className="p-12 text-center text-sm font-mono text-white/40 border border-white/10 rounded">
           Loading Ascend Wearables Catalogue...
         </div>
