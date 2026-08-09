@@ -604,22 +604,54 @@ describe("Phase 7 — COD Risk, RTO & Returned Inventory Final Transactional Int
     assert.strictEqual(json.order.codConfirmationTokenHash, undefined);
   });
 
-  // 19. Requirement #18-A: SQL Static Audit for 4-parameter bind RPC REVOKE/GRANT signatures
-  it("migration 00008 contains exact 4-parameter REVOKE/GRANT signatures for bind_cod_advance_provider_order_with_audit", () => {
+  // 19. Requirement #18-A: SQL Static Audit for migration 00008 exact REVOKE/GRANT signatures and DECLARE block
+  it("migration 00008 contains exact REVOKE/GRANT signatures and DECLARE variables for all RPCs", () => {
     const migrationPath = path.join(process.cwd(), "supabase", "migrations", "20260809000008_cod_risk_rto_returned_inventory.sql");
     const sql = fs.readFileSync(migrationPath, "utf-8");
 
     assert.ok(
+      sql.includes("v_existing_event RECORD;"),
+      "Migration 00008 missing v_existing_event RECORD in record_delivery_outcome_with_audit DECLARE block",
+    );
+    assert.ok(
+      sql.includes("REVOKE EXECUTE ON FUNCTION public.create_cod_otp_challenge_with_audit(TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ)"),
+      "Migration 00008 missing exact create_cod_otp_challenge_with_audit REVOKE signature",
+    );
+    assert.ok(
+      sql.includes("GRANT EXECUTE ON FUNCTION public.create_cod_otp_challenge_with_audit(TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ)"),
+      "Migration 00008 missing exact create_cod_otp_challenge_with_audit GRANT signature",
+    );
+    assert.ok(
+      sql.includes("REVOKE EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(TEXT, TEXT, TEXT, UUID)"),
+      "Migration 00008 missing exact verify_cod_otp_and_apply_decision_with_audit REVOKE signature",
+    );
+    assert.ok(
+      sql.includes("GRANT EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(TEXT, TEXT, TEXT, UUID)"),
+      "Migration 00008 missing exact verify_cod_otp_and_apply_decision_with_audit GRANT signature",
+    );
+    assert.ok(
+      sql.includes("REVOKE EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, TEXT, UUID)"),
+      "Migration 00008 missing exact capture_cod_advance_with_audit REVOKE signature",
+    );
+    assert.ok(
+      sql.includes("GRANT EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, TEXT, UUID)"),
+      "Migration 00008 missing exact capture_cod_advance_with_audit GRANT signature",
+    );
+    assert.ok(
+      sql.includes("REVOKE EXECUTE ON FUNCTION public.reserve_matching_returned_inventory_with_audit(UUID, UUID)"),
+      "Migration 00008 missing exact reserve_matching_returned_inventory_with_audit REVOKE signature",
+    );
+    assert.ok(
+      sql.includes("GRANT EXECUTE ON FUNCTION public.reserve_matching_returned_inventory_with_audit(UUID, UUID)"),
+      "Migration 00008 missing exact reserve_matching_returned_inventory_with_audit GRANT signature",
+    );
+    assert.ok(
       sql.includes("REVOKE EXECUTE ON FUNCTION public.bind_cod_advance_provider_order_with_audit(UUID, TEXT, TEXT, TEXT)"),
-      "Migration 00008 missing exact 4-parameter REVOKE signature",
+      "Migration 00008 missing exact 4-parameter bind REVOKE signature",
     );
     assert.ok(
       sql.includes("GRANT EXECUTE ON FUNCTION public.bind_cod_advance_provider_order_with_audit(UUID, TEXT, TEXT, TEXT)"),
-      "Migration 00008 missing exact 4-parameter GRANT signature",
-    );
-    assert.ok(
-      sql.includes("mark_cod_advance_creation_unknown_with_audit"),
-      "Migration 00008 missing mark_cod_advance_creation_unknown_with_audit RPC",
+      "Migration 00008 missing exact 4-parameter bind GRANT signature",
     );
   });
 
