@@ -13,5 +13,16 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Order not found." }, { status: 404 });
   }
 
-  return NextResponse.json({ order });
+  const { codConfirmationTokenHash: _h, ...sanitizedOrder } = order;
+  const sanitizedItems = (sanitizedOrder.items || []).map((item) => {
+    const { manufacturingSnapshotJson: _s, ...sanitizedItem } = item;
+    return sanitizedItem;
+  });
+
+  return NextResponse.json({
+    order: {
+      ...sanitizedOrder,
+      items: sanitizedItems,
+    },
+  });
 }

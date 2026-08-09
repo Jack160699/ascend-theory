@@ -4,6 +4,8 @@ import { getAllOrdersAdmin, getOrderAdmin } from "@/lib/orders/store";
 import { getDailyCodExposureAdmin } from "@/lib/cod/exposure";
 import { getAllReturnedInventoryAdmin } from "@/lib/inventory/returned-store";
 import { applyCodDecisionAdmin, overrideCodStatusAdmin } from "@/lib/cod/decision-engine";
+import { getRiskProfileByPhoneAdmin } from "@/lib/cod/outcomes";
+import { normalizePhone } from "@/lib/cod/otp";
 import type { Order } from "@/lib/orders/types";
 
 export async function GET(_req: NextRequest) {
@@ -22,12 +24,35 @@ export async function GET(_req: NextRequest) {
 
   try {
     const allOrders = await getAllOrdersAdmin();
-    const codOrders = allOrders
-      .filter((o: Order) => o.paymentMethod === "cod" || o.isCod || Boolean(o.codStatus))
-      .map((o) => {
-        const { codConfirmationTokenHash: _h, ...sanitized } = o;
-        return sanitized;
-      });
+    const codOrders = await Promise.all(
+      allOrders
+        .filter((o: Order) => o.paymentMethod === "cod" || o.isCod || Boolean(o.codStatus))
+        .map(async (o) => {
+          const { codConfirmationTokenHash: _h, ...sanitized } = o;
+          const phone = o.customer?.phone ? normalizePhone(o.customer.phone) : "";
+          const profile = phone ? await getRiskProfileByPhoneAdmin(phone) : null;
+
+          return {
+            ...sanitized,
+            riskBand: profile?.riskBand || "NEW_CUSTOMER",
+            riskScore: profile?.riskScore || 30,
+            rtoCount: profile?.rtoCount || 0,
+            refusedCount: profile?.refusedCount || 0,
+            successfulCodDeliveries: profile?.successfulCodDeliveries || 0,
+            otpStatus: o.codStatus === "COD_OTP_PENDING" ? "pending" : "none",
+            advanceStatus: o.advanceStatus || "none",
+            advanceAmountPaise: o.advanceAmountPaise || 0,
+            recommendedAction:
+              o.codStatus === "COD_APPROVED"
+                ? "Fulfill order"
+                : o.codStatus === "COD_ADVANCE_REQUIRED"
+                ? "Collect ₹200 advance"
+                : o.codStatus === "COD_PREPAID_ONLY"
+                ? "Switch to prepaid"
+                : "Review status",
+          };
+        }),
+    );
 
     const dailyExposurePaise = await getDailyCodExposureAdmin();
     const returnedInventory = await getAllReturnedInventoryAdmin();

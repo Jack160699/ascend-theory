@@ -493,6 +493,35 @@ export async function handleRazorpayWebhook(
       return { ok: true, message: "Missing required order/payment IDs in webhook entity" };
     }
 
+    // Requirement #10: Check if provider_order_id belongs to a COD advance payment
+    if (hasSupabaseConfig()) {
+      const supabase = createSupabaseServiceClient();
+      if (supabase) {
+        const { data: advRow } = await supabase
+          .from("cod_advance_payments")
+          .select("order_id, expected_amount_paise, currency")
+          .eq("provider", "razorpay")
+          .eq("provider_order_id", razorpayOrderId)
+          .maybeSingle();
+
+        if (advRow?.order_id) {
+          const { error: rpcErr, data: rpcRes } = await supabase.rpc("capture_cod_advance_with_audit", {
+            p_order_id: advRow.order_id,
+            p_provider_order_id: razorpayOrderId,
+            p_provider_payment_id: razorpayPaymentId,
+            p_captured_amount_paise: amountPaise,
+            p_provider_event_id: providerEventId || null,
+            p_currency: currency || "INR",
+          });
+
+          if (rpcErr || (rpcRes && !rpcRes.ok)) {
+            return { ok: false, error: rpcRes?.error || rpcErr?.message || "advance_capture_failed", status: 400 };
+          }
+          return { ok: true, message: "COD advance payment captured via webhook", alreadyCaptured: Boolean(rpcRes?.already_captured || rpcRes?.already_processed) };
+        }
+      }
+    }
+
     // Atomic RPC executes and persists payment_captured event with provider_event_id AT TRANSACTION SUCCESS
     const captureResult = await capturePaymentAuthoritatively({
       ascendOrderId,

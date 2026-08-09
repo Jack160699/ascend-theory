@@ -167,6 +167,8 @@ export async function getAllOrdersAdmin(): Promise<Order[]> {
         priceDisplay: snap.priceDisplay || `₹${Number(itemRow.unit_price_paise || 0) / 100}`,
         quantity: itemRow.quantity,
         lineTotal: Number(itemRow.total_price_paise || 0) / 100,
+        manufacturingIdentityHash: itemRow.manufacturing_identity_hash || snap.manufacturingIdentityHash || undefined,
+        manufacturingSnapshotJson: itemRow.manufacturing_snapshot_json || snap.manufacturingSnapshotJson || undefined,
       };
       const list = itemsByOrder.get(itemRow.order_id) || [];
       list.push(item);

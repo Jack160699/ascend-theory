@@ -644,6 +644,11 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'order_not_found');
   END IF;
 
+  -- Stale OTP Protection (Requirement #5): Require order state = COD_OTP_PENDING
+  IF v_order.cod_status <> 'COD_OTP_PENDING' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'cod_state_changed');
+  END IF;
+
   IF v_order.cod_confirmation_token_hash IS NULL OR v_order.cod_confirmation_token_hash <> p_token_hash THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_confirmation_token');
   END IF;
@@ -706,6 +711,10 @@ BEGIN
     v_target_status := 'COD_APPROVED';
   END IF;
 
+  IF NOT public.is_valid_cod_status_transition(v_order.cod_status, v_target_status) THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'cod_state_changed');
+  END IF;
+
   -- Consume OTP challenge
   UPDATE public.cod_otp_challenges
   SET consumed_at = now(), verified_at = now()
@@ -761,7 +770,7 @@ BEGIN
 END;
 $$;
 
--- 19. Atomic SECURITY DEFINER RPC: capture_cod_advance_with_audit (Requirements #11 & #12)
+-- 19. Atomic SECURITY DEFINER RPC: capture_cod_advance_with_audit (Requirements #6 & #10: Reordered Idempotency Before State Gate)
 CREATE OR REPLACE FUNCTION public.capture_cod_advance_with_audit(
   p_order_id TEXT,
   p_provider_order_id TEXT,
@@ -779,26 +788,8 @@ AS $$
 DECLARE
   v_order RECORD;
   v_advance_row RECORD;
-  v_existing_event RECORD;
 BEGIN
-  SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'order_not_found');
-  END IF;
-
-  IF v_order.payment_method <> 'cod' OR NOT v_order.advance_required THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'advance_not_required_for_order');
-  END IF;
-
-  IF v_order.cod_status NOT IN ('COD_ADVANCE_REQUIRED', 'COD_ADVANCE_PENDING') THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'order_not_in_advance_pending_state');
-  END IF;
-
-  IF v_order.advance_amount_paise <> p_captured_amount_paise THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'captured_amount_mismatch');
-  END IF;
-
-  -- Lock PRE-CREATED advance payment row (Requirement #11: NO ELSE INSERT)
+  -- Lock PRE-CREATED advance payment row FIRST (Requirement #6)
   SELECT * INTO v_advance_row
   FROM public.cod_advance_payments
   WHERE order_id = p_order_id AND provider_order_id = p_provider_order_id AND provider = 'razorpay'
@@ -816,7 +807,8 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'currency_mismatch');
   END IF;
 
-  IF p_provider_event_id IS NOT NULL THEN
+  -- Reorder Check: Check captured payment / event replay BEFORE order state gate so duplicate callbacks succeed when order is already COD_APPROVED
+  IF p_provider_event_id IS NOT NULL AND trim(p_provider_event_id) <> '' THEN
     IF v_advance_row.provider_event_id = p_provider_event_id THEN
       RETURN jsonb_build_object('ok', true, 'already_processed', true, 'already_captured', (v_advance_row.status = 'captured'), 'order_id', p_order_id);
     ELSIF v_advance_row.provider_event_id IS NOT NULL AND v_advance_row.provider_event_id <> p_provider_event_id THEN
@@ -830,6 +822,24 @@ BEGIN
     ELSE
       RETURN jsonb_build_object('ok', false, 'error', 'provider_payment_rebound');
     END IF;
+  END IF;
+
+  -- ONLY for a FIRST capture require order state IN ('COD_ADVANCE_REQUIRED', 'COD_ADVANCE_PENDING')
+  SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'order_not_found');
+  END IF;
+
+  IF v_order.payment_method <> 'cod' OR NOT v_order.advance_required THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'advance_not_required_for_order');
+  END IF;
+
+  IF v_order.cod_status NOT IN ('COD_ADVANCE_REQUIRED', 'COD_ADVANCE_PENDING') THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'order_not_in_advance_pending_state');
+  END IF;
+
+  IF v_order.advance_amount_paise <> p_captured_amount_paise THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'captured_amount_mismatch');
   END IF;
 
   UPDATE public.cod_advance_payments
@@ -866,7 +876,107 @@ BEGIN
 END;
 $$;
 
--- 20. Atomic SECURITY DEFINER RPC: save_returned_inventory_with_audit (Requirement #17: Identity Rebound Protection)
+-- 19b. Atomic SECURITY DEFINER RPC: claim_cod_advance_checkout_with_audit (Requirement #7: Exactly-Once Advance Checkout Creation)
+CREATE OR REPLACE FUNCTION public.claim_cod_advance_checkout_with_audit(
+  p_order_id TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+  v_order RECORD;
+  v_existing RECORD;
+  v_payment_id UUID;
+BEGIN
+  SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'order_not_found');
+  END IF;
+
+  IF v_order.payment_method <> 'cod' OR NOT v_order.advance_required THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'advance_not_required_for_order');
+  END IF;
+
+  IF v_order.cod_status NOT IN ('COD_ADVANCE_REQUIRED', 'COD_ADVANCE_PENDING') THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'order_not_in_advance_required_state');
+  END IF;
+
+  -- Lock existing advance payment row if present
+  SELECT * INTO v_existing
+  FROM public.cod_advance_payments
+  WHERE order_id = p_order_id AND provider = 'razorpay' AND status IN ('created', 'authorized', 'captured')
+  ORDER BY created_at DESC
+  LIMIT 1
+  FOR UPDATE;
+
+  IF FOUND AND v_existing.provider_order_id NOT LIKE 'pending_claim_%' THEN
+    RETURN jsonb_build_object(
+      'ok', true,
+      'already_exists', true,
+      'payment_id', v_existing.id,
+      'razorpay_order_id', v_existing.provider_order_id,
+      'amount_paise', v_existing.expected_amount_paise,
+      'currency', v_existing.currency
+    );
+  END IF;
+
+  IF FOUND AND v_existing.provider_order_id LIKE 'pending_claim_%' THEN
+    RETURN jsonb_build_object(
+      'ok', true,
+      'already_exists', false,
+      'payment_id', v_existing.id,
+      'amount_paise', v_existing.expected_amount_paise,
+      'currency', v_existing.currency
+    );
+  END IF;
+
+  INSERT INTO public.cod_advance_payments (
+    order_id, provider, provider_order_id, expected_amount_paise, currency, status, created_at, updated_at
+  ) VALUES (
+    p_order_id, 'razorpay', 'pending_claim_' || gen_random_uuid()::text, COALESCE(v_order.advance_amount_paise, 20000), COALESCE(v_order.currency, 'INR'), 'created', now(), now()
+  )
+  RETURNING id INTO v_payment_id;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'already_exists', false,
+    'payment_id', v_payment_id,
+    'amount_paise', COALESCE(v_order.advance_amount_paise, 20000),
+    'currency', COALESCE(v_order.currency, 'INR')
+  );
+END;
+$$;
+
+-- 19c. Atomic SECURITY DEFINER RPC: bind_cod_advance_provider_order_with_audit (Requirement #7: Atomic Binding of Razorpay Order ID)
+CREATE OR REPLACE FUNCTION public.bind_cod_advance_provider_order_with_audit(
+  p_payment_id UUID,
+  p_order_id TEXT,
+  p_provider_order_id TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+BEGIN
+  UPDATE public.cod_advance_payments
+  SET provider_order_id = p_provider_order_id,
+      updated_at = now()
+  WHERE id = p_payment_id AND order_id = p_order_id;
+
+  UPDATE public.orders
+  SET cod_status = 'COD_ADVANCE_PENDING',
+      advance_status = 'pending',
+      updated_at = now()
+  WHERE id = p_order_id;
+
+  RETURN jsonb_build_object('ok', true, 'payment_id', p_payment_id, 'provider_order_id', p_provider_order_id);
+END;
+$$;
+
+-- 20. Atomic SECURITY DEFINER RPC: save_returned_inventory_with_audit (Requirements #12, #13, #14: DB-Authoritative Source Identity & Rebound Protection)
 CREATE OR REPLACE FUNCTION public.save_returned_inventory_with_audit(
   p_id UUID,
   p_source_order_id TEXT,
@@ -895,14 +1005,60 @@ SET search_path = pg_catalog, public
 AS $$
 DECLARE
   v_existing RECORD;
+  v_src_item RECORD;
+  v_effective_src_order_id TEXT := p_source_order_id;
+  v_effective_product_id UUID := p_product_id;
+  v_effective_variant_id UUID := p_variant_id;
+  v_effective_sku TEXT := p_sku;
+  v_effective_hash TEXT := p_manufacturing_identity_hash;
+  v_effective_snap JSONB := p_manufacturing_snapshot_json;
+  v_effective_status TEXT := COALESCE(p_reuse_status, 'REUSABLE');
+  v_effective_eligible BOOLEAN := COALESCE(p_reuse_eligible, true);
 BEGIN
+  -- Requirement #12: If source_order_item_id is supplied, load order_items in SQL directly
+  IF p_source_order_item_id IS NOT NULL THEN
+    SELECT * INTO v_src_item FROM public.order_items WHERE id = p_source_order_item_id FOR UPDATE;
+    IF NOT FOUND THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'source_order_item_not_found');
+    END IF;
+
+    -- Derive authoritative identity from DB
+    v_effective_src_order_id := v_src_item.order_id;
+    v_effective_product_id := v_src_item.product_id;
+    v_effective_variant_id := v_src_item.variant_id;
+    v_effective_sku := v_src_item.sku;
+    v_effective_hash := v_src_item.manufacturing_identity_hash;
+    v_effective_snap := v_src_item.manufacturing_snapshot_json;
+
+    -- Reject conflicting caller parameters
+    IF (p_product_id IS NOT NULL AND p_product_id <> v_src_item.product_id) OR
+       (p_variant_id IS NOT NULL AND p_variant_id <> v_src_item.variant_id) OR
+       (p_sku IS NOT NULL AND p_sku <> v_src_item.sku) THEN
+      RAISE EXCEPTION 'source_order_item_identity_mismatch';
+    END IF;
+
+    -- If exact source item has no manufacturing identity, it cannot become REUSABLE
+    IF v_effective_hash IS NULL OR trim(v_effective_hash) = '' THEN
+      v_effective_status := 'INSPECTION_REQUIRED';
+      v_effective_eligible := false;
+    END IF;
+  ELSE
+    -- Requirement #13: Inspection-only manual returns when no source item is provided
+    v_effective_status := 'INSPECTION_REQUIRED';
+    v_effective_eligible := false;
+  END IF;
+
   SELECT * INTO v_existing FROM public.returned_inventory WHERE id = p_id FOR UPDATE;
 
   IF FOUND THEN
-    -- Identity rebound protection: reject changing physical identity if already set
-    IF (v_existing.manufacturing_identity_hash IS NOT NULL AND v_existing.manufacturing_identity_hash <> p_manufacturing_identity_hash) OR
-       (v_existing.product_id IS NOT NULL AND v_existing.product_id <> p_product_id) OR
-       (v_existing.variant_id IS NOT NULL AND v_existing.variant_id <> p_variant_id) THEN
+    -- Requirement #14: Returned Inventory Rebound Protection on existing IDs using IS DISTINCT FROM
+    IF (v_existing.source_order_item_id IS DISTINCT FROM p_source_order_item_id) OR
+       (v_existing.source_order_id IS DISTINCT FROM v_effective_src_order_id) OR
+       (v_existing.product_id IS DISTINCT FROM v_effective_product_id) OR
+       (v_existing.variant_id IS DISTINCT FROM v_effective_variant_id) OR
+       (v_existing.sku IS DISTINCT FROM v_effective_sku) OR
+       (v_existing.manufacturing_identity_hash IS DISTINCT FROM v_effective_hash) OR
+       (v_existing.manufacturing_snapshot_json IS DISTINCT FROM v_effective_snap) THEN
       RAISE EXCEPTION 'Cannot modify immutable manufacturing identity of existing returned inventory item %', p_id;
     END IF;
 
@@ -919,9 +1075,9 @@ BEGIN
       sku, size, color, condition, manufacturing_identity_hash, manufacturing_snapshot_json, received_at,
       reuse_status, reuse_eligible, notes, updated_at
     ) VALUES (
-      p_id, p_source_order_id, p_source_order_item_id, p_fulfillment_id, p_product_id, p_variant_id, p_design_id, p_design_version,
-      p_sku, p_size, p_color, p_condition, p_manufacturing_identity_hash, p_manufacturing_snapshot_json, COALESCE(p_received_at, now()),
-      COALESCE(p_reuse_status, 'REUSABLE'), COALESCE(p_reuse_eligible, true), p_notes, now()
+      p_id, v_effective_src_order_id, p_source_order_item_id, p_fulfillment_id, v_effective_product_id, v_effective_variant_id, p_design_id, p_design_version,
+      v_effective_sku, p_size, p_color, p_condition, v_effective_hash, v_effective_snap, COALESCE(p_received_at, now()),
+      v_effective_status, v_effective_eligible, p_notes, now()
     );
   END IF;
 
@@ -931,7 +1087,7 @@ BEGIN
     'SAVE_RETURNED_INVENTORY',
     'RETURNED_INVENTORY',
     p_id::text,
-    jsonb_build_object('sku', p_sku, 'reuse_status', p_reuse_status, 'mfg_hash', p_manufacturing_identity_hash),
+    jsonb_build_object('sku', v_effective_sku, 'reuse_status', v_effective_status, 'mfg_hash', v_effective_hash),
     now()
   );
 
@@ -984,6 +1140,21 @@ BEGIN
   SELECT * INTO v_order FROM public.orders WHERE id = v_ful.order_id FOR UPDATE;
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'error', 'order_not_found');
+  END IF;
+
+  -- Requirement #19: Deterministic Provider-Event Rebound Check BEFORE counter updates
+  IF p_provider_event_id IS NOT NULL AND trim(p_provider_event_id) <> '' THEN
+    SELECT * INTO v_existing_event
+    FROM public.delivery_outcome_events
+    WHERE provider_event_id = p_provider_event_id;
+
+    IF FOUND THEN
+      IF v_existing_event.fulfillment_id = p_fulfillment_id AND v_existing_event.outcome_type = p_outcome_type THEN
+        RETURN jsonb_build_object('ok', true, 'alreadyProcessed', true, 'fulfillment_id', p_fulfillment_id);
+      ELSE
+        RETURN jsonb_build_object('ok', false, 'error', 'provider_event_rebound');
+      END IF;
+    END IF;
   END IF;
 
   -- Race-Safe Idempotent Outcome Insertion (Requirement #21)
@@ -1113,7 +1284,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'replacement_order_not_found');
   END IF;
 
-  -- Verify replacement order payment gate
+  -- Verify replacement order payment gate (Requirement #18: Authoritative Payment Proof for Prepaid Replacement)
   IF v_order.payment_method = 'cod' THEN
     IF COALESCE(v_order.cod_status, 'NOT_COD') <> 'COD_APPROVED' THEN
       RETURN jsonb_build_object('ok', false, 'error', 'replacement_cod_order_not_approved');
@@ -1121,6 +1292,17 @@ BEGIN
   ELSE
     IF COALESCE(v_order.payment_status, 'unpaid') <> 'captured' THEN
       RETURN jsonb_build_object('ok', false, 'error', 'replacement_prepaid_order_unpaid');
+    END IF;
+
+    IF NOT EXISTS (
+      SELECT 1 FROM public.payments
+      WHERE order_id = v_order.id
+        AND status = 'captured'
+        AND amount_paise = v_order.total_paise
+        AND currency = COALESCE(v_order.currency, 'INR')
+        AND (v_order.payment_provider IS NULL OR provider = v_order.payment_provider)
+    ) THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'replacement_prepaid_payment_proof_missing');
     END IF;
   END IF;
 
@@ -1172,6 +1354,8 @@ REVOKE EXECUTE ON FUNCTION public.mark_cod_otp_challenge_sent(UUID) FROM PUBLIC,
 REVOKE EXECUTE ON FUNCTION public.mark_cod_otp_challenge_failed(UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(TEXT, TEXT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, TEXT, UUID) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.claim_cod_advance_checkout_with_audit(TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.bind_cod_advance_provider_order_with_audit(UUID, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.save_returned_inventory_with_audit(UUID, TEXT, UUID, UUID, UUID, UUID, UUID, INT, TEXT, TEXT, TEXT, TEXT, TEXT, JSONB, TIMESTAMPTZ, TEXT, BOOLEAN, TEXT, UUID) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.record_delivery_outcome_with_audit(UUID, TEXT, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.reserve_matching_returned_inventory_with_audit(UUID, UUID) FROM PUBLIC, anon, authenticated;
@@ -1185,6 +1369,8 @@ GRANT EXECUTE ON FUNCTION public.mark_cod_otp_challenge_sent(UUID) TO service_ro
 GRANT EXECUTE ON FUNCTION public.mark_cod_otp_challenge_failed(UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.verify_cod_otp_and_apply_decision_with_audit(TEXT, TEXT, TEXT, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.capture_cod_advance_with_audit(TEXT, TEXT, TEXT, BIGINT, TEXT, TEXT, UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION public.claim_cod_advance_checkout_with_audit(TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.bind_cod_advance_provider_order_with_audit(UUID, TEXT, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.save_returned_inventory_with_audit(UUID, TEXT, UUID, UUID, UUID, UUID, UUID, INT, TEXT, TEXT, TEXT, TEXT, TEXT, JSONB, TIMESTAMPTZ, TEXT, BOOLEAN, TEXT, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.record_delivery_outcome_with_audit(UUID, TEXT, TEXT, JSONB) TO service_role;
 GRANT EXECUTE ON FUNCTION public.reserve_matching_returned_inventory_with_audit(UUID, UUID) TO service_role;

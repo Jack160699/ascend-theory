@@ -48,6 +48,7 @@ export async function buildOrderFromInputAsync(input: CreateOrderInput): Promise
     const itemLineTotal = Math.round(authoritativePrice * quantity * 100) / 100;
 
     const { buildAuthoritativeManufacturingIdentity } = await import("@/lib/inventory/reuse-engine");
+    const { hasSupabaseConfig } = await import("@/lib/supabase/env");
     let mfgHash: string | undefined;
     let mfgSnapshot: Record<string, unknown> | undefined;
     try {
@@ -56,6 +57,9 @@ export async function buildOrderFromInputAsync(input: CreateOrderInput): Promise
       mfgSnapshot = mfgRes.snapshot as unknown as Record<string, unknown>;
     } catch (err) {
       console.warn("[BuildOrder] Could not build manufacturing identity:", err);
+      if (hasSupabaseConfig()) {
+        return { ok: false, error: `Failed to compute authoritative manufacturing identity for product '${product.title}' (${variant.sku}).` };
+      }
     }
 
     items.push({

@@ -5,12 +5,14 @@ import {
   clearOrderSnapshot,
   fetchOrder,
   readOrderSnapshot,
+  readCodConfirmationToken,
 } from "@/lib/checkout/client";
 import { formatMoney } from "@/lib/cart/format";
 import type { Order } from "@/lib/orders/types";
+import { CodConfirmationState } from "@/components/orders/CodConfirmationState";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export function OrderConfirmation() {
   const searchParams = useSearchParams();
@@ -21,6 +23,14 @@ export function OrderConfirmation() {
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const refetchOrder = useCallback(async () => {
+    if (!orderId) return;
+    const fetched = await fetchOrder(orderId);
+    if (fetched) {
+      setOrder(fetched);
+    }
+  }, [orderId]);
 
   useEffect(() => {
     if (!orderId) {
@@ -85,7 +95,8 @@ export function OrderConfirmation() {
   }
 
   const isPaid = order.status === "paid";
-  const isCod = order.paymentMethod === "cod";
+  const isCod = order.paymentMethod === "cod" || Boolean(order.isCod);
+  const confirmationToken = isCod ? (readCodConfirmationToken(order.id) ?? undefined) : undefined;
 
   return (
     <div className="drop-shell order-confirmation py-28 sm:py-32 max-w-xl">
@@ -102,6 +113,17 @@ export function OrderConfirmation() {
       </p>
 
       <p className="order-confirmation__id mt-8">Order {order.id}</p>
+
+      {/* Render COD confirmation state workflow for Cash on Delivery orders */}
+      {isCod && (
+        <div className="mt-8">
+          <CodConfirmationState
+            order={order}
+            confirmationToken={confirmationToken}
+            onStatusUpdated={refetchOrder}
+          />
+        </div>
+      )}
 
       <ul className="order-confirmation__items mt-8">
         {order.items.map((item) => (

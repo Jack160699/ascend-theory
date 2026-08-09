@@ -26,6 +26,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       order: result.data.order,
+      confirmationToken: result.data.confirmationToken ?? undefined,
       paymentUrl: result.data.paymentUrl ?? null,
     });
   } catch (err) {

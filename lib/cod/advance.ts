@@ -44,22 +44,28 @@ export type AdvancePaymentVerificationInput = {
   providerEventId?: string;
 };
 
+import { verifyRazorpayCheckoutSignature as verifyCheckoutSig } from "@/lib/payments/crypto";
+
 export function verifyRazorpayCheckoutSignature(
   razorpayOrderId: string,
   razorpayPaymentId: string,
   signature: string,
   secret: string,
 ): boolean {
-  if (!razorpayOrderId || !razorpayPaymentId || !signature || !secret) {
-    return false;
-  }
-  const payload = `${razorpayOrderId}|${razorpayPaymentId}`;
-  const expectedSig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig));
+  return verifyCheckoutSig(
+    {
+      razorpay_order_id: razorpayOrderId,
+      razorpay_payment_id: razorpayPaymentId,
+      razorpay_signature: signature,
+    },
+    secret,
+  );
 }
 
 /**
- * Creates a server-side Razorpay advance checkout order (Requirement #9).
+ * Creates a server-side Razorpay advance checkout order (Requirements #7, #9).
+ * Uses claim_cod_advance_checkout_with_audit and bind_cod_advance_provider_order_with_audit
+ * to guarantee exactly-once Razorpay order creation.
  */
 export async function createCodAdvanceCheckoutOrderAdmin(
   input: { orderId: string; confirmationToken: string },
@@ -85,13 +91,78 @@ export async function createCodAdvanceCheckoutOrderAdmin(
   }
 
   const advanceAmountPaise = order.advanceAmountPaise || 20000;
-  let razorpayOrderId: string;
+  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "rzp_test_key_id";
 
+  if (hasSupabaseConfig()) {
+    const supabase = createSupabaseServiceClient();
+    if (!supabase) {
+      return { ok: false, error: "Supabase service client unconfigured" };
+    }
+
+    const { data: claimRes, error: claimErr } = await supabase.rpc("claim_cod_advance_checkout_with_audit", {
+      p_order_id: order.id,
+    });
+
+    if (claimErr || !claimRes?.ok) {
+      return { ok: false, error: claimRes?.error || claimErr?.message || "claim_failed" };
+    }
+
+    if (claimRes.already_exists) {
+      return {
+        ok: true,
+        razorpayOrderId: claimRes.razorpay_order_id,
+        amountPaise: Number(claimRes.amount_paise || advanceAmountPaise),
+        currency: claimRes.currency || "INR",
+        keyId,
+      };
+    }
+
+    let razorpayOrderId: string;
+    if (mockOrderCreator) {
+      const res = await mockOrderCreator(advanceAmountPaise, order.id);
+      razorpayOrderId = res.razorpayOrderId;
+    } else {
+      const { createRazorpayOrder } = await import("@/lib/payments/razorpay");
+      const rzpOrder = await createRazorpayOrder({
+        amountPaise: advanceAmountPaise,
+        currency: "INR",
+        receipt: order.id,
+      });
+      if (!rzpOrder) {
+        return { ok: false, error: "razorpay_order_creation_failed" };
+      }
+      razorpayOrderId = rzpOrder.id;
+    }
+
+    const { error: bindErr } = await supabase.rpc("bind_cod_advance_provider_order_with_audit", {
+      p_payment_id: claimRes.payment_id,
+      p_order_id: order.id,
+      p_provider_order_id: razorpayOrderId,
+    });
+
+    if (bindErr) {
+      return { ok: false, error: `bind_failed: ${bindErr.message}` };
+    }
+
+    order.codStatus = "COD_ADVANCE_PENDING";
+    order.advanceStatus = "pending";
+    await saveOrder(order);
+
+    return {
+      ok: true,
+      razorpayOrderId,
+      amountPaise: advanceAmountPaise,
+      currency: "INR",
+      keyId,
+    };
+  }
+
+  // Dev/Test memory mode
+  let razorpayOrderId: string;
   if (mockOrderCreator) {
     const res = await mockOrderCreator(advanceAmountPaise, order.id);
     razorpayOrderId = res.razorpayOrderId;
   } else {
-    // Real Razorpay server order creation
     const { createRazorpayOrder } = await import("@/lib/payments/razorpay");
     const rzpOrder = await createRazorpayOrder({
       amountPaise: advanceAmountPaise,
@@ -102,38 +173,6 @@ export async function createCodAdvanceCheckoutOrderAdmin(
       return { ok: false, error: "razorpay_order_creation_failed" };
     }
     razorpayOrderId = rzpOrder.id;
-  }
-
-  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "rzp_test_key_id";
-
-  if (hasSupabaseConfig()) {
-    const supabase = createSupabaseServiceClient();
-    if (!supabase) {
-      return { ok: false, error: "Supabase service client unconfigured" };
-    }
-
-    const { error: dbErr } = await supabase.from("cod_advance_payments").upsert(
-      {
-        order_id: order.id,
-        provider: "razorpay",
-        provider_order_id: razorpayOrderId,
-        expected_amount_paise: advanceAmountPaise,
-        currency: "INR",
-        status: "created",
-      },
-      { onConflict: "provider,provider_order_id" },
-    );
-
-    if (dbErr) {
-      console.error("[CodAdvance] Failed to persist advance payment row:", dbErr);
-      return { ok: false, error: `db_error: ${dbErr.message}` };
-    }
-
-    await supabase.from("orders").update({
-      cod_status: "COD_ADVANCE_PENDING",
-      advance_status: "pending",
-      updated_at: new Date().toISOString(),
-    }).eq("id", order.id);
   }
 
   order.codStatus = "COD_ADVANCE_PENDING";

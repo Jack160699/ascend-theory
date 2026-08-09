@@ -496,4 +496,61 @@ describe("Phase 7 — COD Risk, RTO & Returned Inventory Final Transactional Int
       if (!resRebound.ok) assert.strictEqual(resRebound.error, "provider_event_rebound");
     }
   });
+
+  // 15. Requirement #15: Placement Position (x/y) changes manufacturing identity hash
+  it("computeManufacturingIdentityHash changes when xNormalized or yNormalized changes", () => {
+    const baseInput = {
+      productId: "prod-ph7-1",
+      variantId: "var-ph7-m",
+      sku: "PH7-TEE-BLK-M",
+      placements: [
+        {
+          placementId: "pl-ph7-front",
+          location: "front",
+          printMethod: "dtf",
+          xNormalized: 0.5,
+          yNormalized: 0.5,
+        },
+      ],
+    };
+
+    const hashBase = computeManufacturingIdentityHash(baseInput);
+
+    const inputMovedX = {
+      ...baseInput,
+      placements: [
+        {
+          placementId: "pl-ph7-front",
+          location: "front",
+          printMethod: "dtf",
+          xNormalized: 0.7,
+          yNormalized: 0.5,
+        },
+      ],
+    };
+    const hashMovedX = computeManufacturingIdentityHash(inputMovedX);
+    assert.notStrictEqual(hashBase, hashMovedX);
+
+    const inputMovedY = {
+      ...baseInput,
+      placements: [
+        {
+          placementId: "pl-ph7-front",
+          location: "front",
+          printMethod: "dtf",
+          xNormalized: 0.5,
+          yNormalized: 0.8,
+        },
+      ],
+    };
+    const hashMovedY = computeManufacturingIdentityHash(inputMovedY);
+    assert.notStrictEqual(hashBase, hashMovedY);
+  });
+
+  // 16. Requirement #11: verifyRazorpayCheckoutSignature handles malformed inputs safely
+  it("verifyRazorpayCheckoutSignature returns false cleanly for malformed/length-mismatched signatures without throwing", async () => {
+    const { verifyRazorpayCheckoutSignature: verifySig } = await import("../advance");
+    const res = verifySig("rzp_order_123", "pay_123", "short_bad_sig", "test_secret");
+    assert.strictEqual(res, false);
+  });
 });

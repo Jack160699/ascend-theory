@@ -18,6 +18,8 @@ export type ManufacturingIdentityInput = {
     placementId: string;
     location: string;
     printMethod: string;
+    xNormalized?: number;
+    yNormalized?: number;
     widthMm?: number;
     heightMm?: number;
     scale?: number;
@@ -46,6 +48,8 @@ export function computeManufacturingIdentityHash(input: ManufacturingIdentityInp
       pId: String(p.placementId || "").trim(),
       loc: String(p.location || "").trim(),
       pm: String(p.printMethod || "").trim(),
+      x: Number(p.xNormalized ?? 0.5),
+      y: Number(p.yNormalized ?? 0.5),
       w: Number(p.widthMm || 0),
       h: Number(p.heightMm || 0),
       s: Number(p.scale ?? 1),
