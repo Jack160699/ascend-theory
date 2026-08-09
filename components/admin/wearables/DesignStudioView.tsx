@@ -130,13 +130,13 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
     setDesignPlacements(activePlacements);
 
     if (activePlacements.length > 0) {
-      loadPlacementIntoForm(activePlacements[0], 0);
+      loadPlacementIntoForm(activePlacements[0]);
     } else {
       resetPlacementForm();
     }
   };
 
-  const loadPlacementIntoForm = (pl: Partial<DesignPlacement>, _idx: number) => {
+  const loadPlacementIntoForm = (pl: Partial<DesignPlacement>) => {
     if (pl.productId) {
       setSelectedProductId(pl.productId);
     }
@@ -902,7 +902,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                     <div className="flex items-center space-x-2">
                       <button
                         type="button"
-                        onClick={() => loadPlacementIntoForm(pl, idx)}
+                        onClick={() => loadPlacementIntoForm(pl)}
                         className="px-2 py-1 text-[10px] bg-white/10 hover:bg-white/20 text-white rounded"
                       >
                         Edit
