@@ -22,6 +22,7 @@ import type {
   ProductReadinessReport,
 } from "./design-types";
 import { validateDesignPlacement } from "./placement-validator";
+import { validateArtworkUpload } from "./design-storage";
 import { getAllProductsAdmin } from "./store";
 import { evaluateProductReadiness } from "./readiness-engine";
 
@@ -104,35 +105,52 @@ export async function getAllDesignsAdmin(): Promise<DesignAsset[]> {
       placementsMap.set(String(p.design_id), list);
     });
 
-    return (dData || []).map((d: Record<string, unknown>) => ({
-      id: String(d.id),
-      title: String(d.title),
-      slug: String(d.slug),
-      description: d.description ? String(d.description) : undefined,
-      status: (d.status || "draft") as DesignAsset["status"],
-      assetUrl: String(d.asset_url || ""),
-      storagePath: d.storage_path ? String(d.storage_path) : undefined,
-      mimeType: d.mime_type ? String(d.mime_type) : undefined,
-      originalFilename: d.original_filename ? String(d.original_filename) : undefined,
-      fileSizeBytes: Number(d.file_size_bytes ?? 0),
-      checksum: d.checksum ? String(d.checksum) : undefined,
-      widthPx: Number(d.width_px ?? 0),
-      heightPx: Number(d.height_px ?? 0),
-      isTransparent: Boolean(d.is_transparent),
-      designer: d.designer ? String(d.designer) : undefined,
-      tags: (d.tags as string[]) || [],
-      notes: d.notes ? String(d.notes) : undefined,
-      version: Number(d.version ?? 1),
-      createdAt: String(d.created_at),
-      updatedAt: String(d.updated_at || d.created_at),
-      placements: placementsMap.get(String(d.id)) || [],
-    }));
+    const designList: DesignAsset[] = await Promise.all(
+      (dData || []).map(async (d: Record<string, unknown>) => {
+        const storagePath = d.storage_path ? String(d.storage_path) : undefined;
+        let previewUrl: string | undefined = undefined;
+
+        if (storagePath) {
+          const { data: signedData } = await serviceClient.storage
+            .from("design-artwork")
+            .createSignedUrl(storagePath, 3600);
+          previewUrl = signedData?.signedUrl;
+        }
+
+        return {
+          id: String(d.id),
+          title: String(d.title),
+          slug: String(d.slug),
+          description: d.description ? String(d.description) : undefined,
+          status: (d.status || "draft") as DesignAsset["status"],
+          assetUrl: String(d.asset_url || ""),
+          storagePath,
+          previewUrl,
+          mimeType: d.mime_type ? String(d.mime_type) : undefined,
+          originalFilename: d.original_filename ? String(d.original_filename) : undefined,
+          fileSizeBytes: Number(d.file_size_bytes ?? 0),
+          checksum: d.checksum ? String(d.checksum) : undefined,
+          widthPx: Number(d.width_px ?? 0),
+          heightPx: Number(d.height_px ?? 0),
+          isTransparent: Boolean(d.is_transparent),
+          designer: d.designer ? String(d.designer) : undefined,
+          tags: (d.tags as string[]) || [],
+          notes: d.notes ? String(d.notes) : undefined,
+          version: Number(d.version ?? 1),
+          createdAt: String(d.created_at),
+          updatedAt: String(d.updated_at || d.created_at),
+          placements: placementsMap.get(String(d.id)) || [],
+        };
+      }),
+    );
+    return designList;
   }
 
   seedPhase5MemoryStoreIfNeeded();
   const list = Array.from(memoryDesigns.values());
   return list.map((d) => ({
     ...d,
+    previewUrl: d.storagePath ? `https://storage.ascendtheory.local/${d.storagePath}` : undefined,
     placements: Array.from(memoryPlacements.values()).filter((p) => p.designId === d.id && p.isActive),
   }));
 }
@@ -155,8 +173,19 @@ export async function saveDesignAdmin(
   if (!title || !slug) {
     return { ok: false, error: "Design title and slug are required" };
   }
-  if (status === "active" && (!design.storagePath || design.storagePath.trim() === "") && (!design.assetUrl || design.assetUrl.trim() === "")) {
-    return { ok: false, error: "Active design requires valid artwork asset URL or storage path" };
+
+  // Validate active design artwork parameters
+  if (status === "active") {
+    if (!design.storagePath || design.storagePath.trim() === "") {
+      return { ok: false, error: "Active design requires valid storage_path" };
+    }
+    const valRes = validateArtworkUpload({
+      mimeType: design.mimeType || "image/png",
+      fileSizeBytes: design.fileSizeBytes ?? 1024,
+    });
+    if (!valRes.isValid) {
+      return { ok: false, error: `Active design artwork validation failed: ${valRes.error}` };
+    }
   }
 
   // Validate tags array format if provided
@@ -179,8 +208,25 @@ export async function saveDesignAdmin(
       return { ok: false, error: "Server configuration error: Supabase service client unavailable" };
     }
 
+    // Active design storage object existence check
+    if (status === "active" && design.storagePath) {
+      const { data: fileData, error: fileErr } = await serviceClient.storage
+        .from("design-artwork")
+        .download(design.storagePath);
+      if (fileErr || !fileData) {
+        return { ok: false, error: "Active design storage artwork object does not exist in design-artwork bucket" };
+      }
+    }
+
+    // Ensure signed previewUrl is NEVER written to DB asset_url
+    const sanitizedDesign = {
+      ...design,
+      assetUrl: design.storagePath ? "" : design.assetUrl || "",
+    };
+    delete (sanitizedDesign as Partial<DesignAsset>).previewUrl;
+
     const { data: rpcData, error: rpcErr } = await serviceClient.rpc("save_design_with_placements", {
-      p_design: design,
+      p_design: sanitizedDesign,
       p_placements: placements,
       p_admin_id: adminId,
     });
@@ -238,8 +284,9 @@ export async function saveDesignAdmin(
     slug,
     description: design.description,
     status,
-    assetUrl: design.assetUrl || "",
+    assetUrl: design.storagePath ? "" : design.assetUrl || "",
     storagePath: design.storagePath,
+    previewUrl: design.storagePath ? `https://storage.ascendtheory.local/${design.storagePath}` : undefined,
     mimeType: design.mimeType,
     originalFilename: design.originalFilename,
     fileSizeBytes: design.fileSizeBytes ?? 0,
@@ -512,6 +559,7 @@ export async function saveProviderMappingAdmin(
     const pv = providerVariants[idx];
     const extVarId = pv.externalVariantId?.trim() || `ext-var-${idx}`;
     const pVarId = pv.id || `pvar-${provProdId}-${extVarId}`;
+    const vStatus = pv.mappingStatus || providerProduct.mappingStatus || "mapped";
 
     const existingPV = memoryProviderVariants.get(pVarId);
     if (existingPV) {
@@ -532,10 +580,10 @@ export async function saveProviderMappingAdmin(
       sku: pv.sku || pv.externalSku || extVarId,
       providerColor: pv.providerColor,
       providerSize: pv.providerSize,
-      mappingStatus: pv.mappingStatus || providerProduct.mappingStatus || "mapped",
+      mappingStatus: vStatus,
       notes: pv.notes,
-      verifiedAt: providerProduct.mappingStatus === "verified" ? new Date().toISOString() : undefined,
-      verifiedBy: providerProduct.mappingStatus === "verified" ? adminId : undefined,
+      verifiedAt: vStatus === "verified" ? new Date().toISOString() : undefined,
+      verifiedBy: vStatus === "verified" ? adminId : undefined,
       createdAt: pv.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -584,6 +632,19 @@ export async function saveMockupAdmin(
   const { productId, imageUrl } = input;
   if (!productId || !imageUrl || imageUrl.trim() === "") {
     return { ok: false, error: "Product ID and image URL are required for mockup" };
+  }
+
+  // Memory rebound & compatibility checks (PASS 1)
+  if (!hasSupabaseConfig() && input.id) {
+    const existing = memoryMockups.get(input.id);
+    if (existing) {
+      if (existing.productId !== productId) {
+        return { ok: false, error: "mockup_rebound" };
+      }
+      if (existing.variantId && input.variantId && existing.variantId !== input.variantId) {
+        return { ok: false, error: "mockup_rebound" };
+      }
+    }
   }
 
   const allProducts = await getAllProductsAdmin();
@@ -688,25 +749,37 @@ export async function getProductReadinessReportsAdmin(): Promise<ProductReadines
     });
   });
 
-  const providerProductsMap = new Map<string, ProviderProduct>();
-  mappings.providerProducts.forEach((pp) => {
-    if (pp.productId) providerProductsMap.set(pp.productId, pp);
-  });
+  return products.map((p) => {
+    const providerMappingsList: Array<{
+      provider: PODProvider;
+      providerProduct?: ProviderProduct | null;
+      providerVariant?: ProviderVariant | null;
+    }> = [];
 
-  const providerVariantsMap = new Map<string, ProviderVariant>();
-  mappings.providerVariants.forEach((pv) => {
-    if (pv.productVariantId) providerVariantsMap.set(pv.productVariantId, pv);
-  });
+    providers.forEach((prov) => {
+      const pProd = mappings.providerProducts.find(
+        (pp) => pp.productId === p.id && pp.providerId === prov.id,
+      );
 
-  return products.map((p) =>
-    evaluateProductReadiness({
+      (p.variants || []).forEach((v) => {
+        const pVar = mappings.providerVariants.find(
+          (pv) => pv.productVariantId === v.id && pv.providerProductId === pProd?.id,
+        );
+        providerMappingsList.push({
+          provider: prov,
+          providerProduct: pProd,
+          providerVariant: pVar,
+        });
+      });
+    });
+
+    return evaluateProductReadiness({
       product: p,
       providers,
       designsMap,
       placementsMap,
-      providerProductsMap,
-      providerVariantsMap,
+      providerMappingsList,
       mockups,
-    }),
-  );
+    });
+  });
 }

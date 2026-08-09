@@ -40,6 +40,7 @@ export type DesignAsset = {
   status: DesignStatus;
   assetUrl: string;
   storagePath?: string;
+  previewUrl?: string;
   mimeType?: string;
   originalFilename?: string;
   fileSizeBytes?: number;

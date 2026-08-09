@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function PUT(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
   try {
     const profile = await requireRole("admin");
     const body = await req.json();

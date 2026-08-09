@@ -268,6 +268,14 @@ export function evaluateProductReadiness(input: {
     const providerVariant = providerVariantsMap.get(v.id);
     const productMockups = mockups.filter((m) => m.productId === product.id);
 
+    const vProviderMappings = providerMappingsList
+      ? providerMappingsList.filter(
+          (m) =>
+            (!m.providerProduct || m.providerProduct.productId === product.id) &&
+            (!m.providerVariant || m.providerVariant.productVariantId === v.id),
+        )
+      : undefined;
+
     return evaluateVariantReadiness({
       product,
       variant: v,
@@ -276,7 +284,7 @@ export function evaluateProductReadiness(input: {
       providers,
       providerProduct,
       providerVariant,
-      providerMappings: providerMappingsList,
+      providerMappings: vProviderMappings,
       mockups: productMockups,
     });
   });

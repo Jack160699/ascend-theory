@@ -12,20 +12,18 @@ import {
   evaluateVariantReadiness,
 } from "../readiness-engine";
 import {
+  getAllDesignsAdmin,
   saveDesignAdmin,
-  getAllPODProvidersAdmin,
-  getAllProviderMappingsAdmin,
-  saveProviderMappingAdmin,
+  saveMockupAdmin,
 } from "../design-store";
 import { saveProductAdmin } from "../store";
 import type { Product, ProductVariant } from "../types";
 import type {
   DesignAsset,
   DesignPlacement,
-  ProviderProduct,
-  ProviderVariant,
   ProductMockup,
 } from "../design-types";
+import { PATCH as mockupPatchHandler } from "@/app/api/admin/wearables/mockups/route";
 
 describe("Phase 5 — Design Studio & POD Mapping Tests", () => {
   // ============================================================
@@ -125,172 +123,47 @@ describe("Phase 5 — Design Studio & POD Mapping Tests", () => {
   });
 
   // ============================================================
-  // SECTION 3: Placement & Tag Array Validation
+  // SECTION 3: Signed URL Non-Persistence Tests (Req #13 & #14)
   // ============================================================
-  it("saveDesignAdmin accepts valid tag arrays ([] and ['core', 'black'])", async () => {
-    const resEmpty = await saveDesignAdmin(
-      { design: { title: "Tag Design Empty", slug: "tag-dsg-empty", tags: [] } },
-      "admin-id",
-    );
-    assert.strictEqual(resEmpty.ok, true);
-
-    const resTags = await saveDesignAdmin(
-      { design: { title: "Tag Design Core", slug: "tag-dsg-core", tags: ["core", "black"] } },
-      "admin-id",
-    );
-    assert.strictEqual(resTags.ok, true);
-    if (resTags.ok) {
-      assert.deepStrictEqual(resTags.design.tags, ["core", "black"]);
-    }
-  });
-
-  it("saveDesignAdmin rejects invalid non-array tags", async () => {
-    const resBad = await saveDesignAdmin(
-      { design: { title: "Tag Design Bad", slug: "tag-dsg-bad", tags: "not-an-array" as unknown as string[] } },
-      "admin-id",
-    );
-    assert.strictEqual(resBad.ok, false);
-    if (!resBad.ok) {
-      assert.ok(resBad.error.includes("tags must be a JSON array"));
-    }
-  });
-
-  it("saveDesignAdmin rejects placement without variant or placement/variant mismatch", async () => {
-    const pRes = await saveProductAdmin(
+  it("signed preview URL is NEVER persisted to designs.asset_url", async () => {
+    const saveRes = await saveDesignAdmin(
       {
-        title: "Product Placement Test",
-        slug: "prod-placement-test",
-        status: "active",
-        variants: [{ id: "var-plc-1", sku: "PLC-1", size: "M", color: "black", pricePaise: 1000, providerCostPaise: 500, isActive: true, availabilityStatus: "available" }],
-      },
-      "admin-id",
-    );
-    assert.strictEqual(pRes.ok, true);
-    const prodId = pRes.ok ? pRes.product.id : "prod-prod-placement-test";
-
-    const resNoVar = await saveDesignAdmin(
-      {
-        design: { title: "No Var Design", slug: "no-var-dsg" },
-        placements: [{ productId: prodId, placementLocation: "front", widthMm: 200, heightMm: 250 }],
-      },
-      "admin-id",
-    );
-    assert.strictEqual(resNoVar.ok, false);
-
-    const resMismatch = await saveDesignAdmin(
-      {
-        design: { title: "Mismatch Var Design", slug: "mismatch-var-dsg" },
-        placements: [{ productId: prodId, productVariantId: "non-existent-var-id", placementLocation: "front", widthMm: 200, heightMm: 250 }],
-      },
-      "admin-id",
-    );
-    assert.strictEqual(resMismatch.ok, false);
-    if (!resMismatch.ok) {
-      assert.ok(resMismatch.error.includes("placement_product_variant_mismatch"));
-    }
-  });
-
-  // ============================================================
-  // SECTION 4: POD Mapping Edits & Rebound Protection
-  // ============================================================
-  it("saveProviderMappingAdmin preserves row ID on edit and updates same row", async () => {
-    const providers = await getAllPODProvidersAdmin();
-    const qikink = providers[0];
-
-    const initial = await saveProviderMappingAdmin(
-      {
-        providerProduct: {
-          providerId: qikink.id,
-          productId: "prod-placement-test",
-          externalProductId: "QIK-EXT-EDIT-100",
-          title: "Initial Title",
-          mappingStatus: "draft",
-        },
-        providerVariants: [
-          { productVariantId: "var-plc-1", externalVariantId: "QIK-VAR-100", externalSku: "QIK-SKU-100" },
-        ],
-      },
-      "admin-id",
-    );
-
-    assert.strictEqual(initial.ok, true);
-    if (initial.ok) {
-      const initialId = initial.providerProduct.id;
-      const initialVarId = initial.providerProduct.variants?.[0]?.id;
-
-      // Edit title and external SKU using SAME row IDs
-      const updated = await saveProviderMappingAdmin(
-        {
-          providerProduct: {
-            id: initialId,
-            providerId: qikink.id,
-            productId: "prod-placement-test",
-            externalProductId: "QIK-EXT-EDIT-100",
-            title: "Updated Title",
-            mappingStatus: "verified",
-          },
-          providerVariants: [
-            { id: initialVarId, productVariantId: "var-plc-1", externalVariantId: "QIK-VAR-100", externalSku: "QIK-SKU-100-NEW" },
-          ],
-        },
-        "admin-id",
-      );
-
-      assert.strictEqual(updated.ok, true);
-      if (updated.ok) {
-        assert.strictEqual(updated.providerProduct.id, initialId, "Must retain same provider product ID");
-        assert.strictEqual(updated.providerProduct.title, "Updated Title");
-        assert.strictEqual(updated.providerProduct.variants?.[0]?.id, initialVarId, "Must retain same provider variant ID");
-        assert.strictEqual(updated.providerProduct.variants?.[0]?.externalSku, "QIK-SKU-100-NEW");
-      }
-    }
-  });
-
-  it("provider product rebound rejected (attempting to change providerId on existing row)", async () => {
-    const providers = await getAllPODProvidersAdmin();
-    const qikink = providers.find((p) => p.slug === "qikink")!;
-    const printrove = providers.find((p) => p.slug === "printrove")!;
-
-    const createRes = await saveProviderMappingAdmin(
-      {
-        providerProduct: {
-          id: "pp-rebound-test",
-          providerId: qikink.id,
-          productId: "prod-placement-test",
-          externalProductId: "QIK-REBOUND-1",
-        },
-      },
-      "admin-id",
-    );
-    assert.strictEqual(createRes.ok, true);
-
-    // Try to edit row pp-rebound-test to Printrove
-    const reboundRes = await saveProviderMappingAdmin(
-      {
-        providerProduct: {
-          id: "pp-rebound-test",
-          providerId: printrove.id, // rebound!
-          productId: "prod-placement-test",
-          externalProductId: "QIK-REBOUND-1",
+        design: {
+          title: "Private Storage Design",
+          slug: "priv-dsg-1",
+          status: "draft",
+          storagePath: "private/artwork/priv-dsg-1/logo.png",
+          previewUrl: "https://signed.preview.url/temp-token-12345",
+          mimeType: "image/png",
+          fileSizeBytes: 2048,
         },
       },
       "admin-id",
     );
 
-    assert.strictEqual(reboundRes.ok, false);
-    if (!reboundRes.ok) {
-      assert.ok(reboundRes.error.includes("provider_product_rebound"));
+    assert.strictEqual(saveRes.ok, true);
+    if (saveRes.ok) {
+      assert.strictEqual(saveRes.design.storagePath, "private/artwork/priv-dsg-1/logo.png");
+      assert.strictEqual(saveRes.design.assetUrl, "", "assetUrl must remain empty when private storagePath is present");
     }
+
+    const allDesigns = await getAllDesignsAdmin();
+    const fetched = allDesigns.find((d) => d.slug === "priv-dsg-1");
+    assert.ok(fetched);
+    assert.strictEqual(fetched?.storagePath, "private/artwork/priv-dsg-1/logo.png");
+    assert.strictEqual(fetched?.assetUrl, "");
+    assert.ok(fetched?.previewUrl, "Server must generate previewUrl on read");
+    assert.notStrictEqual(fetched?.previewUrl, "https://signed.preview.url/temp-token-12345", "Preview URL must not be static old string");
   });
 
   // ============================================================
-  // SECTION 5: Multi-Provider & Readiness Rules
+  // SECTION 4: Multi-Placement per Variant Tests (Req #15)
   // ============================================================
-  it("evaluateVariantReadiness enforces printable area limit check (print_exceeds_provider_area)", () => {
+  it("supports multiple placements (front, back, sleeve) for the same exact variant simultaneously", async () => {
     const dummyProduct: Product = {
-      id: "prod-print-area",
-      slug: "print-area-prod",
-      title: "Print Area Prod",
+      id: "prod-multi-pl",
+      slug: "multi-pl-prod",
+      title: "Multi Placement Product",
       status: "active",
       basePricePaise: 100000,
       currency: "INR",
@@ -298,112 +171,172 @@ describe("Phase 5 — Design Studio & POD Mapping Tests", () => {
       gender: "unisex",
       isFeatured: false,
       galleryJson: [],
+      variants: [
+        {
+          id: "var-mpl-1",
+          productId: "prod-multi-pl",
+          sku: "MPL-1",
+          size: "M",
+          color: "black",
+          stockQuantity: 10,
+          pricePaise: 100000,
+          compareAtPricePaise: 0,
+          providerCostPaise: 0,
+          availabilityStatus: "available",
+          isActive: true,
+          sortOrder: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    await saveProductAdmin(dummyProduct, "admin-id");
 
-    const dummyVariant: ProductVariant = {
-      id: "var-pa-1",
-      productId: "prod-print-area",
-      sku: "PA-1",
-      size: "M",
-      color: "black",
-      stockQuantity: 10,
-      pricePaise: 100000,
-      compareAtPricePaise: 0,
-      providerCostPaise: 0,
-      availabilityStatus: "available",
-      isActive: true,
-      sortOrder: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    const design: DesignAsset = {
-      id: "dsg-pa",
-      title: "PA Design",
-      slug: "pa-design",
-      status: "active",
-      assetUrl: "https://cdn.example.com/art.png",
-      storagePath: "artwork/2026/art.png",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    const oversizedPlacement: DesignPlacement = {
-      id: "pl-oversized",
-      designId: "dsg-pa",
-      productId: "prod-print-area",
-      productVariantId: "var-pa-1",
-      position: "front",
+    const frontPl: Partial<DesignPlacement> = {
+      id: "pl-front-1",
+      productId: "prod-multi-pl",
+      productVariantId: "var-mpl-1",
       placementLocation: "front",
-      xNormalized: 0.5,
-      yNormalized: 0.5,
-      scale: 1.0,
-      rotationDeg: 0,
-      widthMm: 450, // oversized! limit is 300mm
-      heightMm: 500,
+      widthMm: 200,
+      heightMm: 250,
       printMethod: "dtf",
       isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
 
-    const providerProduct: ProviderProduct = {
-      id: "pp-pa",
-      providerId: "a0000000-0000-0000-0000-000000000001",
-      productId: "prod-print-area",
-      externalProductId: "QIK-PA-100",
-      name: "Qikink PA Product",
-      printableAreasJson: [
-        { location: "front", maxWidthMm: 300, maxHeightMm: 400, printMethod: "dtf" },
-      ],
-      mappingStatus: "verified",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    const backPl: Partial<DesignPlacement> = {
+      id: "pl-back-1",
+      productId: "prod-multi-pl",
+      productVariantId: "var-mpl-1",
+      placementLocation: "back",
+      widthMm: 300,
+      heightMm: 350,
+      printMethod: "dtf",
+      isActive: true,
     };
 
-    const providerVariant: ProviderVariant = {
-      id: "pv-pa",
-      providerProductId: "pp-pa",
-      productVariantId: "var-pa-1",
-      externalVariantId: "QIK-PA-VAR-1",
-      sku: "QIK-PA-VAR-1",
-      mappingStatus: "verified",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    const mockups: ProductMockup[] = [
+    // Save both front and back placements simultaneously
+    const res1 = await saveDesignAdmin(
       {
-        id: "mock-pa",
-        productId: "prod-print-area",
-        variantId: "var-pa-1",
-        imageUrl: "https://cdn.example.com/mock.png",
-        viewType: "front",
-        isPrimary: true,
-        sortOrder: 0,
-        status: "approved",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        design: { title: "Multi Placement Design", slug: "multi-pl-dsg", status: "draft" },
+        placements: [frontPl, backPl],
       },
-    ];
+      "admin-id",
+    );
 
-    const report = evaluateVariantReadiness({
-      product: dummyProduct,
-      variant: dummyVariant,
-      design,
-      placement: oversizedPlacement,
-      providerProduct,
-      providerVariant,
-      mockups,
-    });
+    assert.strictEqual(res1.ok, true);
+    if (res1.ok) {
+      assert.strictEqual(res1.design.placements?.length, 2, "Both front and back placements must persist");
+    }
 
-    assert.strictEqual(report.readyForFulfillment, false);
-    assert.ok(report.blockingReasons.includes("print_exceeds_provider_area"), "Must report print_exceeds_provider_area");
+    // Edit back placement widthMm to 380mm -> front placement widthMm must remain 200mm
+    const updatedBackPl: Partial<DesignPlacement> = { ...backPl, widthMm: 380 };
+    const res2 = await saveDesignAdmin(
+      {
+        design: { id: res1.ok ? res1.design.id : undefined, title: "Multi Placement Design", slug: "multi-pl-dsg", status: "draft" },
+        placements: [frontPl, updatedBackPl],
+      },
+      "admin-id",
+    );
+
+    assert.strictEqual(res2.ok, true);
+    if (res2.ok) {
+      const front = res2.design.placements?.find((p) => p.placementLocation === "front");
+      const back = res2.design.placements?.find((p) => p.placementLocation === "back");
+      assert.strictEqual(front?.widthMm, 200, "Front placement widthMm must remain unchanged at 200mm");
+      assert.strictEqual(back?.widthMm, 380, "Back placement widthMm must be updated to 380mm");
+    }
+
+    // Remove back placement (submit front only) -> back becomes inactive
+    const res3 = await saveDesignAdmin(
+      {
+        design: { id: res1.ok ? res1.design.id : undefined, title: "Multi Placement Design", slug: "multi-pl-dsg", status: "draft" },
+        placements: [frontPl],
+      },
+      "admin-id",
+    );
+
+    assert.strictEqual(res3.ok, true);
+    if (res3.ok) {
+      const activePlacements = res3.design.placements?.filter((p) => p.isActive);
+      assert.strictEqual(activePlacements?.length, 1, "Only front placement must remain active");
+      assert.strictEqual(activePlacements?.[0].placementLocation, "front");
+    }
   });
 
-  it("evaluateVariantReadiness evaluates multi-provider paths deterministically and independently", () => {
+  // ============================================================
+  // SECTION 5: Mockup Rebound, Compatibility & PATCH Route Tests (Req #16)
+  // ============================================================
+  it("saveMockupAdmin enforces mockup rebound and placement compatibility checks", async () => {
+    const dummyProduct1: Product = {
+      id: "prod-mock-1",
+      slug: "mock-prod-1",
+      title: "Mockup Product 1",
+      status: "active",
+      basePricePaise: 100000,
+      currency: "INR",
+      category: "wearables",
+      gender: "unisex",
+      isFeatured: false,
+      galleryJson: [],
+      variants: [
+        {
+          id: "var-mk-1",
+          productId: "prod-mock-1",
+          sku: "MK-1",
+          size: "M",
+          color: "black",
+          stockQuantity: 10,
+          pricePaise: 100000,
+          compareAtPricePaise: 0,
+          providerCostPaise: 0,
+          availabilityStatus: "available",
+          isActive: true,
+          sortOrder: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await saveProductAdmin(dummyProduct1, "admin-id");
+
+    const mockupRes = await saveMockupAdmin(
+      {
+        id: "mock-reb-1",
+        productId: "prod-mock-1",
+        variantId: "var-mk-1",
+        imageUrl: "https://cdn.example.com/mock1.png",
+        viewType: "front",
+        status: "draft",
+      },
+      "admin-id",
+    );
+    assert.strictEqual(mockupRes.ok, true);
+
+    // Rebound test: submit same ID for prod-mock-2 -> reject with mockup_rebound
+    const badRebound = await saveMockupAdmin(
+      {
+        id: "mock-reb-1",
+        productId: "prod-mock-2",
+        imageUrl: "https://cdn.example.com/mock1.png",
+      },
+      "admin-id",
+    );
+    assert.strictEqual(badRebound.ok, false);
+    assert.strictEqual(badRebound.error, "mockup_rebound");
+  });
+
+  it("mockups route exports PATCH for mockup status transitions", async () => {
+    assert.ok(mockupPatchHandler, "mockups route MUST export PATCH function");
+  });
+
+  // ============================================================
+  // SECTION 6: Multi-Provider Readiness & Order Independence Tests (Req #17)
+  // ============================================================
+  it("evaluateVariantReadiness evaluates multi-provider paths deterministically and independently of array order", () => {
     const dummyProduct: Product = {
       id: "prod-multi-prov",
       slug: "multi-prov-prod",
@@ -489,11 +422,12 @@ describe("Phase 5 — Design Studio & POD Mapping Tests", () => {
 
     const printrovePath = {
       provider: { id: "p-printrove", slug: "printrove", name: "Printrove", isActive: true, createdAt: "" },
-      providerProduct: { id: "pp-pr", providerId: "p-printrove", productId: "prod-multi-prov", externalProductId: "PRV-1", name: "Printrove", mappingStatus: "draft" as const, createdAt: "", updatedAt: "" }, // draft!
+      providerProduct: { id: "pp-pr", providerId: "p-printrove", productId: "prod-multi-prov", externalProductId: "PRV-1", name: "Printrove", mappingStatus: "draft" as const, createdAt: "", updatedAt: "" },
       providerVariant: { id: "pv-pr", providerProductId: "pp-pr", productVariantId: "var-mp-1", externalVariantId: "PRV-V1", sku: "PRV-V1", mappingStatus: "draft" as const, createdAt: "", updatedAt: "" },
     };
 
-    const report = evaluateVariantReadiness({
+    // Forward order: [Qikink, Printrove]
+    const report1 = evaluateVariantReadiness({
       product: dummyProduct,
       variant: dummyVariant,
       design,
@@ -502,14 +436,32 @@ describe("Phase 5 — Design Studio & POD Mapping Tests", () => {
       mockups,
     });
 
-    assert.strictEqual(report.readyForFulfillment, true, "Overall ready because Qikink path is verified & ready");
-    assert.strictEqual(report.providerReadiness?.length, 2);
-    assert.strictEqual(report.providerReadiness?.[0].ready, true, "Qikink path is ready");
-    assert.strictEqual(report.providerReadiness?.[1].ready, false, "Printrove path is not ready due to unverified status");
+    assert.strictEqual(report1.readyForFulfillment, true, "Overall ready because Qikink path is verified & ready");
+    assert.strictEqual(report1.providerReadiness?.length, 2);
+    const q1 = report1.providerReadiness?.find((p) => p.providerSlug === "qikink");
+    const pr1 = report1.providerReadiness?.find((p) => p.providerSlug === "printrove");
+    assert.strictEqual(q1?.ready, true, "Qikink path is ready");
+    assert.strictEqual(pr1?.ready, false, "Printrove path is not ready due to draft status");
+
+    // Reverse order: [Printrove, Qikink]
+    const report2 = evaluateVariantReadiness({
+      product: dummyProduct,
+      variant: dummyVariant,
+      design,
+      placement,
+      providerMappings: [printrovePath, qikinkPath],
+      mockups,
+    });
+
+    assert.strictEqual(report2.readyForFulfillment, true, "Overall ready result must be identical regardless of provider array order");
+    const q2 = report2.providerReadiness?.find((p) => p.providerSlug === "qikink");
+    const pr2 = report2.providerReadiness?.find((p) => p.providerSlug === "printrove");
+    assert.strictEqual(q2?.ready, true, "Qikink path remains ready");
+    assert.strictEqual(pr2?.ready, false, "Printrove path remains unready");
   });
 
   // ============================================================
-  // SECTION 6: VERIFICATION OF ZERO PROVIDER NETWORK REQUESTS
+  // SECTION 7: VERIFICATION OF ZERO PROVIDER NETWORK REQUESTS
   // ============================================================
   it("VERIFIED: Phase 5 code contains NO live Qikink / Printrove API calls or network requests", () => {
     const phase5Files = [

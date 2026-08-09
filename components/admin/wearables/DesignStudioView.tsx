@@ -25,7 +25,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
   // Active sub-tab
   const [subTab, setSubTab] = useState<"assets" | "visualizer" | "mockups">("assets");
 
-  // Selected design & placement state for editor/visualizer
+  // Selected design & editing asset state
   const [selectedDesignId, setSelectedDesignId] = useState<string>("");
   const [editingDesign, setEditingDesign] = useState<Partial<DesignAsset>>({
     title: "",
@@ -34,11 +34,15 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
     status: "draft",
     assetUrl: "",
     storagePath: "",
+    previewUrl: "",
     designer: "",
     tags: [],
   });
 
-  // Placement visualizer state
+  // Placements collection state for editing design
+  const [designPlacements, setDesignPlacements] = useState<Partial<DesignPlacement>[]>([]);
+
+  // Active placement control state
   const [selectedProductId, setSelectedProductId] = useState<string>(products[0]?.id || "");
   const [selectedVariantIds, setSelectedVariantIds] = useState<string[]>([]);
   const [placementLocation, setPlacementLocation] = useState<PlacementLocation>("front");
@@ -72,33 +76,6 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
     () => designs.find((d) => d.id === selectedDesignId),
     [designs, selectedDesignId],
   );
-
-  const handleProductSelect = (prodId: string) => {
-    setSelectedProductId(prodId);
-    const prod = products.find((p) => p.id === prodId);
-    if (prod && prod.variants) {
-      setSelectedVariantIds(prod.variants.map((v) => v.id));
-    } else {
-      setSelectedVariantIds([]);
-    }
-  };
-
-  const handleSelectDesign = (d: DesignAsset) => {
-    setSelectedDesignId(d.id);
-    setEditingDesign(d);
-    if (d.placements && d.placements.length > 0) {
-      const pl = d.placements[0];
-      if (pl.productId) handleProductSelect(pl.productId);
-      setPlacementLocation(pl.placementLocation || "front");
-      setXNorm(pl.xNormalized ?? 0.5);
-      setYNorm(pl.yNormalized ?? 0.5);
-      setScale(pl.scale ?? 1.0);
-      setRotation(pl.rotationDeg ?? 0);
-      setWidthMm(pl.widthMm ?? 200);
-      setHeightMm(pl.heightMm ?? 250);
-      setPrintMethod(pl.printMethod || "dtf");
-    }
-  };
 
   const fetchStudioData = useCallback(async () => {
     try {
@@ -136,6 +113,60 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
     };
   }, []);
 
+  const handleProductSelect = (prodId: string) => {
+    setSelectedProductId(prodId);
+    const prod = products.find((p) => p.id === prodId);
+    if (prod && prod.variants) {
+      setSelectedVariantIds(prod.variants.map((v) => v.id));
+    } else {
+      setSelectedVariantIds([]);
+    }
+  };
+
+  const handleSelectDesign = (d: DesignAsset) => {
+    setSelectedDesignId(d.id);
+    setEditingDesign(d);
+    const activePlacements = (d.placements || []).filter((p) => p.isActive);
+    setDesignPlacements(activePlacements);
+
+    if (activePlacements.length > 0) {
+      loadPlacementIntoForm(activePlacements[0], 0);
+    } else {
+      resetPlacementForm();
+    }
+  };
+
+  const loadPlacementIntoForm = (pl: Partial<DesignPlacement>, _idx: number) => {
+    if (pl.productId) {
+      setSelectedProductId(pl.productId);
+    }
+    if (pl.productVariantId) {
+      setSelectedVariantIds([pl.productVariantId]);
+    }
+    setPlacementLocation(pl.placementLocation || "front");
+    setXNorm(pl.xNormalized ?? 0.5);
+    setYNorm(pl.yNormalized ?? 0.5);
+    setScale(pl.scale ?? 1.0);
+    setRotation(pl.rotationDeg ?? 0);
+    setWidthMm(pl.widthMm ?? 200);
+    setHeightMm(pl.heightMm ?? 250);
+    setPrintMethod(pl.printMethod || "dtf");
+  };
+
+  const resetPlacementForm = () => {
+    setPlacementLocation("front");
+    setXNorm(0.5);
+    setYNorm(0.5);
+    setScale(1.0);
+    setRotation(0);
+    setWidthMm(200);
+    setHeightMm(250);
+    setPrintMethod("dtf");
+    if (selectedProduct && selectedProduct.variants) {
+      setSelectedVariantIds(selectedProduct.variants.map((v) => v.id));
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -160,7 +191,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
       setEditingDesign((prev) => ({
         ...prev,
         storagePath: data.storagePath,
-        assetUrl: data.previewUrl || prev.assetUrl,
+        previewUrl: data.previewUrl,
         mimeType: data.mimeType,
         originalFilename: data.originalFilename,
         fileSizeBytes: data.fileSizeBytes,
@@ -171,6 +202,73 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
     } finally {
       setUploadingFile(false);
     }
+  };
+
+  const handleAddOrUpdatePlacement = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaveError(null);
+
+    if (selectedVariantIds.length === 0) {
+      setSaveError("At least one exact product variant must be selected for placement configuration");
+      return;
+    }
+
+    const newPlacements: Partial<DesignPlacement>[] = selectedVariantIds.map((varId) => {
+      const existingPl = designPlacements.find(
+        (p) =>
+          p.productId === selectedProductId &&
+          p.productVariantId === varId &&
+          p.placementLocation === placementLocation,
+      );
+
+      return {
+        id: existingPl?.id,
+        productId: selectedProductId,
+        productVariantId: varId,
+        placementLocation,
+        position: placementLocation,
+        xNormalized: xNorm,
+        yNormalized: yNorm,
+        scale,
+        rotationDeg: rotation,
+        widthMm,
+        heightMm,
+        printMethod,
+        isActive: true,
+      };
+    });
+
+    for (const pl of newPlacements) {
+      const valRes = validateDesignPlacement(pl);
+      if (!valRes.isValid) {
+        setSaveError(`Placement validation failed: ${valRes.error}`);
+        return;
+      }
+    }
+
+    // Merge newPlacements into designPlacements by matching (productVariantId, placementLocation)
+    setDesignPlacements((prev) => {
+      const updated = [...prev];
+      newPlacements.forEach((np) => {
+        const idx = updated.findIndex(
+          (p) =>
+            p.productVariantId === np.productVariantId &&
+            p.placementLocation === np.placementLocation,
+        );
+        if (idx >= 0) {
+          updated[idx] = { ...updated[idx], ...np };
+        } else {
+          updated.push(np);
+        }
+      });
+      return updated;
+    });
+
+    setSaveSuccess(`Updated placement configuration for location '${placementLocation.toUpperCase()}' across ${newPlacements.length} variants.`);
+  };
+
+  const handleRemovePlacement = (index: number) => {
+    setDesignPlacements((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveDesign = async (e: React.FormEvent) => {
@@ -184,51 +282,20 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
         throw new Error("Title and slug are required");
       }
 
-      if (selectedVariantIds.length === 0) {
-        throw new Error("At least one exact product variant must be selected for placement configuration");
-      }
-
-      // Build placement payloads preserving existing placement IDs
-      const existingPlacements = selectedDesign?.placements || [];
-      const placementsToSave: Partial<DesignPlacement>[] = selectedVariantIds.map((varId) => {
-        const existingPl = existingPlacements.find(
-          (p) => p.productId === selectedProductId && p.productVariantId === varId,
-        );
-
-        return {
-          id: existingPl?.id,
-          productId: selectedProductId,
-          productVariantId: varId,
-          placementLocation,
-          position: placementLocation,
-          xNormalized: xNorm,
-          yNormalized: yNorm,
-          scale,
-          rotationDeg: rotation,
-          widthMm,
-          heightMm,
-          printMethod,
-          isActive: true,
-        };
-      });
-
-      // Validate all placements before sending
-      for (const pl of placementsToSave) {
-        const valRes = validateDesignPlacement(pl);
-        if (!valRes.isValid) {
-          throw new Error(`Placement validation failed: ${valRes.error}`);
-        }
-      }
+      // Ensure signed previewUrl is NEVER sent in assetUrl
+      const designPayload: Partial<DesignAsset> = {
+        ...editingDesign,
+        id: selectedDesignId || undefined,
+        assetUrl: editingDesign.storagePath ? "" : editingDesign.assetUrl || "",
+      };
+      delete designPayload.previewUrl;
 
       const res = await fetch("/api/admin/wearables/designs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          design: {
-            ...editingDesign,
-            id: selectedDesignId || undefined,
-          },
-          placements: placementsToSave,
+          design: designPayload,
+          placements: designPlacements,
         }),
       });
 
@@ -237,7 +304,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
         throw new Error(data.error || "Failed to save design asset");
       }
 
-      setSaveSuccess(`Design asset '${editingDesign.title}' saved successfully with ${placementsToSave.length} variant placements.`);
+      setSaveSuccess(`Design asset '${editingDesign.title}' saved successfully with ${designPlacements.length} active placements.`);
       await fetchStudioData();
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Failed to save design asset");
@@ -316,6 +383,8 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
     return <div className="p-8 text-center text-xs font-mono text-white/50 animate-pulse">Loading Design Studio...</div>;
   }
 
+  const activeArtworkSrc = editingDesign.previewUrl || editingDesign.assetUrl || selectedDesign?.previewUrl || selectedDesign?.assetUrl;
+
   return (
     <div className="space-y-6">
       {/* HEADER & SUB-NAVIGATION */}
@@ -325,7 +394,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
             Ascend HQ — Design Studio
           </h2>
           <p className="text-xs font-mono text-white/60">
-            Manage artwork assets, physical placement overlays, and product mockup references.
+            Manage artwork assets, multi-location physical placement overlays, and product mockup references.
           </p>
         </div>
 
@@ -346,7 +415,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
               subTab === "visualizer" ? "bg-white text-black font-semibold" : "text-white/60 hover:text-white"
             }`}
           >
-            Placement Visualizer
+            Placement Visualizer ({designPlacements.length})
           </button>
           <button
             type="button"
@@ -382,7 +451,8 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                 type="button"
                 onClick={() => {
                   setSelectedDesignId("");
-                  setEditingDesign({ title: "", slug: "", status: "draft", assetUrl: "", storagePath: "" });
+                  setEditingDesign({ title: "", slug: "", status: "draft", assetUrl: "", storagePath: "", previewUrl: "" });
+                  setDesignPlacements([]);
                 }}
                 className="px-2 py-1 text-[11px] font-mono bg-white/10 hover:bg-white/20 text-white rounded"
               >
@@ -417,6 +487,11 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                     </span>
                   </div>
                   <span className="text-[10px] font-mono text-white/40 block mt-1">slug: {d.slug}</span>
+                  {d.storagePath && (
+                    <span className="text-[9px] font-mono text-emerald-400/70 block truncate">
+                      [Private Storage]: {d.storagePath}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -466,23 +541,18 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                 />
                 {uploadingFile && <span className="text-[11px] font-mono text-amber-300 block">Uploading & validating artwork file...</span>}
                 {editingDesign.storagePath && (
-                  <span className="text-[11px] font-mono text-emerald-400 block truncate">
-                    Storage Path: {editingDesign.storagePath}
-                  </span>
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[11px] font-mono text-emerald-400 block truncate">
+                      Authoritative Storage Path: {editingDesign.storagePath}
+                    </span>
+                    <span className="text-[10px] font-mono text-white/40 block">
+                      (Private bucket: design-artwork — signed preview URL generated dynamically on read)
+                    </span>
+                  </div>
                 )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-mono text-white/60 block mb-1">Preview / Asset URL</label>
-                  <input
-                    type="text"
-                    value={editingDesign.assetUrl || ""}
-                    onChange={(e) => setEditingDesign({ ...editingDesign, assetUrl: e.target.value })}
-                    className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                    placeholder="https://storage.example.com/artwork/emblem.png"
-                  />
-                </div>
                 <div>
                   <label className="text-xs font-mono text-white/60 block mb-1">Status</label>
                   <select
@@ -491,9 +561,19 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                     className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
                   >
                     <option value="draft">Draft</option>
-                    <option value="active">Active (Production Ready)</option>
+                    <option value="active">Active (Production Ready — Requires Private Storage Object)</option>
                     <option value="archived">Archived</option>
                   </select>
+                </div>
+                <div>
+                  <label className="text-xs font-mono text-white/60 block mb-1">Designer</label>
+                  <input
+                    type="text"
+                    value={editingDesign.designer || ""}
+                    onChange={(e) => setEditingDesign({ ...editingDesign, designer: e.target.value })}
+                    className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
+                    placeholder="e.g. Ascend Design Lab"
+                  />
                 </div>
               </div>
 
@@ -514,7 +594,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                   disabled={saveLoading || uploadingFile}
                   className="px-4 py-2 bg-white text-black font-mono font-bold text-xs rounded hover:bg-white/90 transition"
                 >
-                  {saveLoading ? "Saving..." : "Save Design Asset"}
+                  {saveLoading ? "Saving..." : "Save Design Asset & Placements"}
                 </button>
               </div>
             </form>
@@ -524,255 +604,321 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
 
       {/* TAB 2: PLACEMENT VISUALIZER */}
       {subTab === "visualizer" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Garment Visualizer Preview Panel */}
-          <div className="bg-zinc-900/40 border border-white/10 rounded-lg p-6 flex flex-col items-center justify-center min-h-[420px]">
-            <span className="text-xs font-mono uppercase text-white/50 mb-4">
-              Placement Overlay Preview ({selectedProduct?.title || "No Garment Selected"})
-            </span>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Garment Visualizer Preview Panel */}
+            <div className="bg-zinc-900/40 border border-white/10 rounded-lg p-6 flex flex-col items-center justify-center min-h-[420px]">
+              <span className="text-xs font-mono uppercase text-white/50 mb-4">
+                Placement Overlay Preview ({selectedProduct?.title || "No Garment Selected"})
+              </span>
 
-            {/* Base Garment Mock Canvas */}
-            <div className="relative w-72 h-80 bg-zinc-950 border border-white/20 rounded-lg overflow-hidden flex items-center justify-center shadow-2xl">
-              {selectedProduct?.primaryImageUrl ? (
-                /* eslint-disable-next-html-element-suppression */
-                <img
-                  src={selectedProduct.primaryImageUrl}
-                  alt={selectedProduct.title}
-                  className="w-full h-full object-contain opacity-70"
-                />
-              ) : (
-                <div className="text-center font-mono text-xs text-white/30">
-                  👕 [Garment Silhouette Preview]
-                </div>
-              )}
-
-              {/* Artwork Overlay Box */}
-              {selectedDesign?.assetUrl && (
-                <div
-                  className="absolute pointer-events-none border border-amber-400/80 bg-amber-500/10 transition-all flex items-center justify-center"
-                  style={{
-                    left: `${xNorm * 100}%`,
-                    top: `${yNorm * 100}%`,
-                    width: `${Math.min(70, Math.max(15, (widthMm / 400) * 100 * scale))}%`,
-                    height: `${Math.min(70, Math.max(15, (heightMm / 500) * 100 * scale))}%`,
-                    transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-                  }}
-                >
+              {/* Base Garment Mock Canvas */}
+              <div className="relative w-72 h-80 bg-zinc-950 border border-white/20 rounded-lg overflow-hidden flex items-center justify-center shadow-2xl">
+                {selectedProduct?.primaryImageUrl ? (
+                  /* eslint-disable-next-html-element-suppression */
                   <img
-                    src={selectedDesign.assetUrl}
-                    alt={selectedDesign.title}
-                    className="w-full h-full object-contain"
+                    src={selectedProduct.primaryImageUrl}
+                    alt={selectedProduct.title}
+                    className="w-full h-full object-contain opacity-70"
                   />
-                </div>
-              )}
+                ) : (
+                  <div className="text-center font-mono text-xs text-white/30">
+                    👕 [Garment Silhouette Preview]
+                  </div>
+                )}
+
+                {/* Artwork Overlay Box */}
+                {activeArtworkSrc && (
+                  <div
+                    className="absolute pointer-events-none border border-amber-400/80 bg-amber-500/10 transition-all flex items-center justify-center"
+                    style={{
+                      left: `${xNorm * 100}%`,
+                      top: `${yNorm * 100}%`,
+                      width: `${Math.min(70, Math.max(15, (widthMm / 400) * 100 * scale))}%`,
+                      height: `${Math.min(70, Math.max(15, (heightMm / 500) * 100 * scale))}%`,
+                      transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                    }}
+                  >
+                    <img
+                      src={activeArtworkSrc}
+                      alt={editingDesign.title || "Design"}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 font-mono text-[11px] text-white/60 space-x-4">
+                <span>Location: {placementLocation.toUpperCase()}</span>
+                <span>Physical: {widthMm}mm × {heightMm}mm</span>
+                <span>Method: {printMethod.toUpperCase()}</span>
+              </div>
             </div>
 
-            <div className="mt-4 font-mono text-[11px] text-white/60 space-x-4">
-              <span>Position: {placementLocation}</span>
-              <span>Physical: {widthMm}mm × {heightMm}mm</span>
-              <span>Method: {printMethod.toUpperCase()}</span>
+            {/* Placement Controls & Multi-Placement Form */}
+            <div className="bg-zinc-900/40 border border-white/10 rounded-lg p-6 space-y-4">
+              <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                <h3 className="text-sm font-bold font-mono text-white uppercase">
+                  Physical Placement & Print Specifications
+                </h3>
+                <button
+                  type="button"
+                  onClick={resetPlacementForm}
+                  className="px-2 py-1 text-[10px] font-mono bg-white/10 hover:bg-white/20 text-white rounded"
+                >
+                  + Add Placement Location
+                </button>
+              </div>
+
+              <form onSubmit={handleAddOrUpdatePlacement} className="space-y-4">
+                <div>
+                  <label className="text-xs font-mono text-white/60 block mb-1">Target Ascend Product *</label>
+                  <select
+                    value={selectedProductId}
+                    onChange={(e) => handleProductSelect(e.target.value)}
+                    className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
+                  >
+                    {products.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title} ({p.slug})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Exact Variant Selection Checkbox List */}
+                <div className="p-3 bg-black/40 border border-white/10 rounded-md space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-mono text-white/80 block">Applicable Product Variants *</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selectedVariantIds.length === (selectedProduct?.variants || []).length) {
+                          setSelectedVariantIds([]);
+                        } else {
+                          setSelectedVariantIds((selectedProduct?.variants || []).map((v) => v.id));
+                        }
+                      }}
+                      className="text-[10px] font-mono text-amber-300 hover:underline"
+                    >
+                      {selectedVariantIds.length === (selectedProduct?.variants || []).length ? "Deselect All" : "Select All"}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 max-h-28 overflow-y-auto">
+                    {(selectedProduct?.variants || []).map((v) => (
+                      <label key={v.id} className="flex items-center space-x-2 text-xs font-mono text-white/80 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedVariantIds.includes(v.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedVariantIds((prev) => [...prev, v.id]);
+                            } else {
+                              setSelectedVariantIds((prev) => prev.filter((id) => id !== v.id));
+                            }
+                          }}
+                          className="rounded bg-black border-white/20"
+                        />
+                        <span>{v.size} / {v.color} ({v.sku})</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-mono text-white/60 block mb-1">Placement Location</label>
+                    <select
+                      value={placementLocation}
+                      onChange={(e) => setPlacementLocation(e.target.value as PlacementLocation)}
+                      className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
+                    >
+                      <option value="front">Front Center</option>
+                      <option value="back">Back Center</option>
+                      <option value="left_chest">Left Chest</option>
+                      <option value="right_chest">Right Chest</option>
+                      <option value="left_sleeve">Left Sleeve</option>
+                      <option value="right_sleeve">Right Sleeve</option>
+                      <option value="neck">Inner Neck Label</option>
+                      <option value="custom">Custom Position</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono text-white/60 block mb-1">Print Technique</label>
+                    <select
+                      value={printMethod}
+                      onChange={(e) => setPrintMethod(e.target.value as PrintMethod)}
+                      className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
+                    >
+                      <option value="dtf">DTF (Direct to Film)</option>
+                      <option value="dtg">DTG (Direct to Garment)</option>
+                      <option value="screen_print">Screen Print</option>
+                      <option value="embroidery">Embroidery</option>
+                      <option value="sublimation">Sublimation</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Physical Dimension Inputs in mm */}
+                <div className="grid grid-cols-2 gap-4 p-3 bg-black/30 border border-white/10 rounded-md">
+                  <div>
+                    <label className="text-xs font-mono text-white/80 block mb-1">Physical Width (mm) *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={600}
+                      value={widthMm}
+                      onChange={(e) => setWidthMm(parseInt(e.target.value) || 0)}
+                      className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono text-white/80 block mb-1">Physical Height (mm) *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={800}
+                      value={heightMm}
+                      onChange={(e) => setHeightMm(parseInt(e.target.value) || 0)}
+                      className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Sliders for Position, Scale, Rotation */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-xs font-mono text-white/60 mb-1">
+                      <span>X Position (Horizontal)</span>
+                      <span>{(xNorm * 100).toFixed(0)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={xNorm}
+                      onChange={(e) => setXNorm(parseFloat(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs font-mono text-white/60 mb-1">
+                      <span>Y Position (Vertical)</span>
+                      <span>{(yNorm * 100).toFixed(0)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={yNorm}
+                      onChange={(e) => setYNorm(parseFloat(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex justify-between text-xs font-mono text-white/60 mb-1">
+                        <span>Scale Ratio</span>
+                        <span>{scale.toFixed(2)}x</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0.2}
+                        max={3.0}
+                        step={0.05}
+                        value={scale}
+                        onChange={(e) => setScale(parseFloat(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs font-mono text-white/60 mb-1">
+                        <span>Rotation (deg)</span>
+                        <span>{rotation}°</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={-180}
+                        max={180}
+                        step={1}
+                        value={rotation}
+                        onChange={(e) => setRotation(parseInt(e.target.value) || 0)}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-white/20 text-white font-mono font-bold text-xs rounded hover:bg-white/30 transition"
+                  >
+                    Set Placement ({placementLocation.toUpperCase()})
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
 
-          {/* Placement Controls & Variant Selection Form */}
+          {/* Current Placements Collection List */}
           <div className="bg-zinc-900/40 border border-white/10 rounded-lg p-6 space-y-4">
-            <h3 className="text-sm font-bold font-mono text-white uppercase border-b border-white/10 pb-2">
-              Physical Placement & Exact Variant Selection
-            </h3>
+            <div className="flex justify-between items-center border-b border-white/10 pb-2">
+              <h3 className="text-sm font-bold font-mono text-white uppercase">
+                Active Placements Set ({designPlacements.length})
+              </h3>
+              <button
+                type="button"
+                onClick={handleSaveDesign}
+                disabled={saveLoading || !selectedDesignId}
+                className="px-4 py-1.5 bg-white text-black font-mono font-bold text-xs rounded hover:bg-white/90 transition"
+              >
+                {saveLoading ? "Saving..." : "Save All Placements"}
+              </button>
+            </div>
 
-            <form onSubmit={handleSaveDesign} className="space-y-4">
-              <div>
-                <label className="text-xs font-mono text-white/60 block mb-1">Target Ascend Product *</label>
-                <select
-                  value={selectedProductId}
-                  onChange={(e) => handleProductSelect(e.target.value)}
-                  className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                >
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.title} ({p.slug})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Exact Variant Selection Checkbox List */}
-              <div className="p-3 bg-black/40 border border-white/10 rounded-md space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-mono text-white/80 block">Applicable Product Variants *</label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (selectedVariantIds.length === (selectedProduct?.variants || []).length) {
-                        setSelectedVariantIds([]);
-                      } else {
-                        setSelectedVariantIds((selectedProduct?.variants || []).map((v) => v.id));
-                      }
-                    }}
-                    className="text-[10px] font-mono text-amber-300 hover:underline"
-                  >
-                    {selectedVariantIds.length === (selectedProduct?.variants || []).length ? "Deselect All" : "Select All"}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto">
-                  {(selectedProduct?.variants || []).map((v) => (
-                    <label key={v.id} className="flex items-center space-x-2 text-xs font-mono text-white/80 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedVariantIds.includes(v.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedVariantIds((prev) => [...prev, v.id]);
-                          } else {
-                            setSelectedVariantIds((prev) => prev.filter((id) => id !== v.id));
-                          }
-                        }}
-                        className="rounded bg-black border-white/20"
-                      />
-                      <span>{v.size} / {v.color} ({v.sku})</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-mono text-white/60 block mb-1">Placement Location</label>
-                  <select
-                    value={placementLocation}
-                    onChange={(e) => setPlacementLocation(e.target.value as PlacementLocation)}
-                    className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                  >
-                    <option value="front">Front Center</option>
-                    <option value="back">Back Center</option>
-                    <option value="left_chest">Left Chest</option>
-                    <option value="right_chest">Right Chest</option>
-                    <option value="left_sleeve">Left Sleeve</option>
-                    <option value="right_sleeve">Right Sleeve</option>
-                    <option value="neck">Inner Neck Label</option>
-                    <option value="custom">Custom Position</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-mono text-white/60 block mb-1">Print Technique</label>
-                  <select
-                    value={printMethod}
-                    onChange={(e) => setPrintMethod(e.target.value as PrintMethod)}
-                    className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                  >
-                    <option value="dtf">DTF (Direct to Film)</option>
-                    <option value="dtg">DTG (Direct to Garment)</option>
-                    <option value="screen_print">Screen Print</option>
-                    <option value="embroidery">Embroidery</option>
-                    <option value="sublimation">Sublimation</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Physical Dimension Inputs in mm */}
-              <div className="grid grid-cols-2 gap-4 p-3 bg-black/30 border border-white/10 rounded-md">
-                <div>
-                  <label className="text-xs font-mono text-white/80 block mb-1">Physical Width (mm) *</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={600}
-                    value={widthMm}
-                    onChange={(e) => setWidthMm(parseInt(e.target.value) || 0)}
-                    className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-mono text-white/80 block mb-1">Physical Height (mm) *</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={800}
-                    value={heightMm}
-                    onChange={(e) => setHeightMm(parseInt(e.target.value) || 0)}
-                    className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Sliders for Normalized Positioning, Scale, Rotation */}
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-xs font-mono text-white/60 mb-1">
-                    <span>X Position (Horizontal)</span>
-                    <span>{(xNorm * 100).toFixed(0)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={xNorm}
-                    onChange={(e) => setXNorm(parseFloat(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <div className="flex justify-between text-xs font-mono text-white/60 mb-1">
-                    <span>Y Position (Vertical)</span>
-                    <span>{(yNorm * 100).toFixed(0)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={yNorm}
-                    onChange={(e) => setYNorm(parseFloat(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex justify-between text-xs font-mono text-white/60 mb-1">
-                      <span>Scale Ratio</span>
-                      <span>{scale.toFixed(2)}x</span>
+            {designPlacements.length === 0 ? (
+              <p className="text-xs font-mono text-white/40 italic p-4 text-center">
+                No active placement locations configured for this design yet. Use controls above to add front, back, or sleeve placements.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto">
+                {designPlacements.map((pl, idx) => (
+                  <div key={pl.id || idx} className="p-3 bg-black/40 border border-white/10 rounded-md flex justify-between items-center font-mono text-xs">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-amber-300 uppercase">{pl.placementLocation}</span>
+                        <span className="text-[10px] text-white/50 bg-white/10 px-1 rounded">{pl.printMethod?.toUpperCase()}</span>
+                      </div>
+                      <span className="text-[11px] text-white/70 block">
+                        Dimensions: {pl.widthMm}mm × {pl.heightMm}mm
+                      </span>
                     </div>
-                    <input
-                      type="range"
-                      min={0.2}
-                      max={3.0}
-                      step={0.05}
-                      value={scale}
-                      onChange={(e) => setScale(parseFloat(e.target.value))}
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs font-mono text-white/60 mb-1">
-                      <span>Rotation (deg)</span>
-                      <span>{rotation}°</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={-180}
-                      max={180}
-                      step={1}
-                      value={rotation}
-                      onChange={(e) => setRotation(parseInt(e.target.value) || 0)}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex justify-end pt-2">
-                <button
-                  type="submit"
-                  disabled={saveLoading || !selectedDesignId}
-                  className="px-4 py-2 bg-white text-black font-mono font-bold text-xs rounded hover:bg-white/90 transition"
-                >
-                  {saveLoading ? "Saving..." : "Update Variant Placements"}
-                </button>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => loadPlacementIntoForm(pl, idx)}
+                        className="px-2 py-1 text-[10px] bg-white/10 hover:bg-white/20 text-white rounded"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePlacement(idx)}
+                        className="px-2 py-1 text-[10px] bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded"
+                      >
+                        Disable
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </form>
+            )}
           </div>
         </div>
       )}
@@ -791,7 +937,7 @@ export function DesignStudioView({ products }: DesignStudioViewProps) {
                 <label className="text-xs font-mono text-white/60 block mb-1">Product *</label>
                 <select
                   value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
+                  onChange={(e) => handleProductSelect(e.target.value)}
                   className="w-full bg-black/60 border border-white/20 rounded p-2 text-xs font-mono text-white"
                 >
                   {products.map((p) => (
