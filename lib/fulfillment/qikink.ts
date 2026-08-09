@@ -52,13 +52,15 @@ export function redactSecrets<T>(data: T): T {
 
 export class QikinkFulfillmentAdapter implements PODFulfillmentProvider {
   readonly providerSlug = "qikink" as const;
+
+  // Requirement #19: Honest capability reporting for unverified Qikink API contract
   readonly capabilities: ProviderCapabilityModel = {
     submitOrder: true,
-    orderLookup: true,
+    orderLookup: false,
     cancellation: false,
-    walletBalance: true,
+    walletBalance: false,
     webhookStatus: false,
-    pollingStatus: true,
+    pollingStatus: false,
   };
 
   private mockTransport?: QikinkMockTransport;
@@ -88,7 +90,7 @@ export class QikinkFulfillmentAdapter implements PODFulfillmentProvider {
       return this.mockTransport.submitOrder(snapshot);
     }
 
-    // 2. Validate configuration safety guard (Req #41)
+    // 2. Validate configuration safety guard
     const configCheck = this.validateConfiguration();
     if (!configCheck.isValid) {
       return {
@@ -99,27 +101,35 @@ export class QikinkFulfillmentAdapter implements PODFulfillmentProvider {
       };
     }
 
-    // 3. Generate transient time-limited signed URL for private artwork (Req #16)
-    const activePlacements = await Promise.all(
-      snapshot.placements.map(async (pl) => {
-        let signedUrl: string | undefined = undefined;
-        if (pl.storagePath && hasSupabaseConfig()) {
-          const serviceClient = createSupabaseServiceClient();
-          if (serviceClient) {
-            const { data } = await serviceClient.storage
-              .from("design-artwork")
-              .createSignedUrl(pl.storagePath, 3600);
-            signedUrl = data?.signedUrl || undefined;
-          }
-        }
+    // 3. Generate transient time-limited signed URL for private artwork for each placement in snapshot items
+    const allItems = await Promise.all(
+      (snapshot.items || []).map(async (item) => {
+        const activePlacements = await Promise.all(
+          (item.placements || []).map(async (pl) => {
+            let signedUrl: string | undefined = undefined;
+            if (pl.storagePath && hasSupabaseConfig()) {
+              const serviceClient = createSupabaseServiceClient();
+              if (serviceClient) {
+                const { data } = await serviceClient.storage
+                  .from("design-artwork")
+                  .createSignedUrl(pl.storagePath, 3600);
+                signedUrl = data?.signedUrl || undefined;
+              }
+            }
+            return {
+              ...pl,
+              transientSignedUrl: signedUrl,
+            };
+          }),
+        );
         return {
-          ...pl,
-          transientSignedUrl: signedUrl,
+          ...item,
+          placements: activePlacements,
         };
       }),
     );
 
-    // Unverified API Contract Safety Lock: Return QIKINK_API_CONTRACT_UNVERIFIED response
+    // Unverified API Contract Safety Lock: Return QIKINK_API_CONTRACT_UNVERIFIED response (Req #36)
     return {
       success: false,
       normalizedStatus: "FAILED",
@@ -128,9 +138,7 @@ export class QikinkFulfillmentAdapter implements PODFulfillmentProvider {
       rawResponse: redactSecrets({
         snapshot_summary: {
           orderId: snapshot.orderId,
-          ascendSku: snapshot.ascendSku,
-          providerExternalSku: snapshot.providerExternalSku,
-          placementsCount: activePlacements.length,
+          itemsCount: allItems.length,
         },
       }),
     };
@@ -152,13 +160,13 @@ export class QikinkFulfillmentAdapter implements PODFulfillmentProvider {
       return this.mockTransport.getBalance();
     }
     return {
-      supported: true,
+      supported: false,
       message: "Qikink wallet balance inquiry requires verified merchant API credentials.",
     };
   }
 
   normalizeStatus(rawStatus: string): FulfillmentStatus {
-    if (!rawStatus) return "PROCESSING";
+    if (!rawStatus) return "UNKNOWN_PROVIDER_STATE";
     const s = rawStatus.toUpperCase().trim();
     switch (s) {
       case "LIVE":
@@ -198,7 +206,8 @@ export class QikinkFulfillmentAdapter implements PODFulfillmentProvider {
       case "REJECTED":
         return "FAILED";
       default:
-        return "PROCESSING";
+        // Requirement #20: Unknown status maps to UNKNOWN_PROVIDER_STATE
+        return "UNKNOWN_PROVIDER_STATE";
     }
   }
 

@@ -1,4 +1,3 @@
-import { submitOrderForFulfillment } from "@/lib/fulfillment";
 import { createPaymentSession, getAvailablePaymentProviders } from "@/lib/payments";
 import { buildOrderFromInputAsync } from "./build-order";
 import { saveOrder } from "./store";
@@ -41,17 +40,9 @@ export async function createOrder(
 
   await saveOrder(order);
 
+  // Requirement #5: COD checkout persists order and returns normally.
+  // DOES NOT claim/create/submit fulfillment until Phase 7 explicit approval.
   if (order.paymentMethod === "cod") {
-    const fulfillment = await submitOrderForFulfillment(order);
-    order = {
-      ...order,
-      fulfillment: {
-        provider: fulfillment.provider as "qikink" | "shopify" | "manual" | undefined,
-        externalId: fulfillment.externalId,
-      },
-    };
-    await saveOrder(order);
-
     return {
       ok: true,
       data: { order },

@@ -3,11 +3,11 @@
  */
 
 import type { Order } from "@/lib/orders/types";
-import { evaluateOrderFulfillmentEligibility } from "./eligibility";
 import { createOrClaimFulfillmentAdmin, submitFulfillmentToProviderAdmin } from "./fulfillment-store";
 import type { FulfillmentStatus } from "./types";
 
 export * from "./types";
+export * from "./provider-registry";
 export * from "./qikink";
 export * from "./qikink-mock";
 export * from "./eligibility";
@@ -31,7 +31,7 @@ export async function submitOrderForFulfillment(order: Order): Promise<{
     throw new Error(`Cannot submit unpaid order ${order.id} for fulfillment.`);
   }
 
-  const claimRes = await createOrClaimFulfillmentAdmin(order.id, "system");
+  const claimRes = await createOrClaimFulfillmentAdmin(order.id, null);
   if (!claimRes.ok) {
     return {
       success: false,
@@ -39,7 +39,7 @@ export async function submitOrderForFulfillment(order: Order): Promise<{
     };
   }
 
-  const submitRes = await submitFulfillmentToProviderAdmin(claimRes.fulfillment.id, "system");
+  const submitRes = await submitFulfillmentToProviderAdmin(claimRes.fulfillment.id, null);
   if (!submitRes.ok) {
     return {
       success: false,

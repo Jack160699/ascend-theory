@@ -45,12 +45,17 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
   const dbFulfillmentStatus =
     order.status === "pending_fulfillment" ? "processing" : "unfulfilled";
 
-  // Upsert master order record
+  const paymentMethod: PaymentMethod = order.paymentMethod || (order.isCod ? "cod" : "online");
+  const paymentProvider: PaymentProvider = order.paymentProvider || "razorpay";
+
+  // Upsert master order record with durable payment_method and payment_provider
   const { error: orderError } = await supabase.from("orders").upsert({
     id: order.id,
     status: dbStatus,
     payment_status: dbPaymentStatus,
     fulfillment_status: dbFulfillmentStatus,
+    payment_method: paymentMethod,
+    payment_provider: paymentProvider,
     subtotal_paise: subtotalPaise,
     total_paise: totalPaise,
     currency: order.currency || "INR",
@@ -96,7 +101,7 @@ export async function saveSupabaseOrder(order: Order): Promise<void> {
     const { error: paymentError } = await supabase.from("payments").upsert(
       {
         order_id: order.id,
-        provider: order.paymentProvider || "razorpay",
+        provider: paymentProvider,
         provider_order_id: order.paymentReference,
         amount_paise: totalPaise,
         currency: order.currency || "INR",
@@ -146,7 +151,7 @@ export async function getAuthoritativeOrderDetails(
 
   const { data: orderRow, error: orderError } = await supabase
     .from("orders")
-    .select("id, status, payment_status, total_paise, subtotal_paise, currency")
+    .select("id, status, payment_status, total_paise, subtotal_paise, currency, payment_method, payment_provider")
     .eq("id", orderId)
     .single();
 
@@ -186,13 +191,14 @@ export async function getAuthoritativeOrderDetails(
       totalPaise,
       currency: orderRow.currency || "INR",
       paymentReference: paymentRow?.provider_order_id || undefined,
-      paymentProvider: paymentRow?.provider || undefined,
+      paymentProvider: orderRow.payment_provider || paymentRow?.provider || undefined,
     },
   };
 }
 
 /**
  * Retrieves an order from Supabase database.
+ * Restores real order_items.id into OrderItem.orderItemId.
  */
 export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
   const supabase = createSupabaseServiceClient();
@@ -232,10 +238,17 @@ export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
   const items: OrderItem[] = (itemRows || []).map((row) => {
     const snap = (row.snapshot_json || {}) as Partial<OrderItem>;
     return {
-      slug: row.sku || snap.slug || "",
+      orderItemId: row.id,
+      productId: row.product_id || snap.productId || undefined,
+      variantId: row.variant_id || snap.variantId || undefined,
+      slug: snap.slug || row.sku || "",
+      sku: row.sku || snap.sku || undefined,
+      size: row.size || snap.size || undefined,
+      color: row.color || snap.color || undefined,
       name: row.title || snap.name || "",
       dropName: snap.dropName || "Ascend Drop",
       price: Number(row.unit_price_paise || 0) / 100,
+      pricePaise: Number(row.unit_price_paise || 0),
       priceDisplay: snap.priceDisplay || `₹${Number(row.unit_price_paise || 0) / 100}`,
       quantity: row.quantity,
       lineTotal: Number(row.total_price_paise || 0) / 100,
@@ -258,9 +271,18 @@ export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
   }
 
   const paymentMethod: PaymentMethod =
-    paymentRow?.provider === "cod" ? "cod" : "online";
+    orderRow.payment_method === "cod"
+      ? "cod"
+      : orderRow.payment_method === "online"
+      ? "online"
+      : paymentRow?.provider === "cod"
+      ? "cod"
+      : "online";
+
   const paymentProvider: PaymentProvider =
-    (paymentRow?.provider as PaymentProvider) || "razorpay";
+    (orderRow.payment_provider as PaymentProvider) ||
+    (paymentRow?.provider as PaymentProvider) ||
+    "razorpay";
 
   return {
     id: orderRow.id,
@@ -268,10 +290,13 @@ export async function getSupabaseOrder(orderId: string): Promise<Order | null> {
     status: domainStatus,
     paymentMethod,
     paymentProvider,
+    paymentStatus: orderRow.payment_status || (domainStatus === "paid" ? "captured" : "unpaid"),
+    isCod: paymentMethod === "cod",
     currency: orderRow.currency || "INR",
     subtotal: Number(orderRow.subtotal_paise || orderRow.total_paise || 0) / 100,
     items,
     customer: customerObj,
+    shippingAddress: customerObj,
     paymentReference: paymentRow?.provider_order_id || undefined,
   };
 }

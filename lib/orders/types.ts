@@ -24,6 +24,7 @@ export type OrderCustomer = {
 };
 
 export type OrderItem = {
+  orderItemId?: string;
   productId?: string;
   variantId?: string;
   slug: string;

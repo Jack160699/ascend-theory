@@ -36,7 +36,8 @@ export type FulfillmentStatus =
   | "RETURNED"
   | "CANCELLED"
   | "FAILED"
-  | "RECONCILIATION_REQUIRED";
+  | "RECONCILIATION_REQUIRED"
+  | "UNKNOWN_PROVIDER_STATE";
 
 export type ProviderCapabilityModel = {
   submitOrder: boolean;
@@ -66,18 +67,13 @@ export type ActivePlacementSnapshot = {
   transientSignedUrl?: string;
 };
 
-export type FulfillmentSnapshot = {
-  fulfillmentId: string;
-  orderId: string;
-  orderNumber?: string;
-  orderItemIds: string[];
+export type FulfillmentItemSnapshot = {
+  orderItemId: string;
   productId: string;
   variantId: string;
   ascendSku: string;
   quantity: number;
 
-  providerId: string;
-  providerSlug: string;
   providerProductMappingId: string;
   providerExternalProductId: string;
   providerVariantMappingId: string;
@@ -85,6 +81,16 @@ export type FulfillmentSnapshot = {
   providerExternalSku: string;
 
   placements: ActivePlacementSnapshot[];
+};
+
+export type FulfillmentSnapshot = {
+  fulfillmentId: string;
+  orderId: string;
+  orderNumber?: string;
+  items: FulfillmentItemSnapshot[];
+
+  providerId: string;
+  providerSlug: string;
 
   customerShipping: {
     fullName: string;
@@ -99,7 +105,9 @@ export type FulfillmentSnapshot = {
   };
 
   isCod: boolean;
+  paymentMode: "online" | "cod";
   currency: string;
+  requestHash?: string;
   createdAt: string;
 };
 

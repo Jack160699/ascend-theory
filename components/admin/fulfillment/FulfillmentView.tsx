@@ -5,6 +5,10 @@ import type { FulfillmentRecord } from "@/lib/fulfillment/fulfillment-store";
 
 export function FulfillmentView() {
   const [fulfillments, setFulfillments] = useState<FulfillmentRecord[]>([]);
+  const [safetyStatus, setSafetyStatus] = useState<{ transportLocked: boolean; apiContractUnverified: boolean }>({
+    transportLocked: true,
+    apiContractUnverified: true,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -14,7 +18,6 @@ export function FulfillmentView() {
   // Manual order submission form state
   const [inputOrderId, setInputOrderId] = useState("");
 
-  // Stable ref to allow event handlers to trigger a refresh
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -24,8 +27,14 @@ export function FulfillmentView() {
       try {
         const res = await fetch("/api/admin/wearables/fulfillment");
         if (res.ok) {
-          const data = (await res.json()) as { fulfillments?: FulfillmentRecord[] };
-          if (isMounted.current) setFulfillments(data.fulfillments ?? []);
+          const data = (await res.json()) as {
+            fulfillments?: FulfillmentRecord[];
+            safetyStatus?: { transportLocked: boolean; apiContractUnverified: boolean };
+          };
+          if (isMounted.current) {
+            setFulfillments(data.fulfillments ?? []);
+            if (data.safetyStatus) setSafetyStatus(data.safetyStatus);
+          }
         } else {
           if (isMounted.current) setError("Failed to load fulfillment queue");
         }
@@ -99,6 +108,31 @@ export function FulfillmentView() {
     }
   };
 
+  const handleReconcile = async (fulfillmentId: string) => {
+    setActionLoading(fulfillmentId);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch("/api/admin/wearables/fulfillment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reconcile_submission", fulfillmentId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setError(data.error || "Reconciliation failed");
+      } else {
+        setSuccess(`Fulfillment ${fulfillmentId} reconciled successfully.`);
+        await fetchFulfillments();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (loading) {
     return <div className="p-8 text-center text-sm font-mono text-white/50">Loading Ascend Fulfillment Subsystem...</div>;
   }
@@ -119,10 +153,18 @@ export function FulfillmentView() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <span className="px-2.5 py-1 text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded">
-            QIKINK_FULFILLMENT_ENABLED: FALSE (Safety Guard Active)
-          </span>
+        {/* Server-Driven Safety Status Badges (Requirement #29) */}
+        <div className="flex flex-wrap items-center gap-2">
+          {safetyStatus.transportLocked && (
+            <span className="px-2.5 py-1 text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded font-bold uppercase">
+              EXTERNAL TRANSPORT LOCKED
+            </span>
+          )}
+          {safetyStatus.apiContractUnverified && (
+            <span className="px-2.5 py-1 text-[10px] bg-red-500/20 text-red-300 border border-red-500/30 rounded font-bold uppercase">
+              API CONTRACT UNVERIFIED
+            </span>
+          )}
         </div>
       </div>
 
@@ -174,6 +216,10 @@ export function FulfillmentView() {
           <div className="space-y-3 max-h-[500px] overflow-y-auto">
             {fulfillments.map((f) => {
               const snap = f.snapshotJson;
+              const hasProviderOrderId = Boolean(f.providerOrderId);
+              const isReconciliation = f.status === "RECONCILIATION_REQUIRED";
+              const isRetryable = (f.status === "QUEUED" || f.status === "FAILED") && f.retryable !== false && !hasProviderOrderId;
+
               return (
                 <div key={f.id} className="p-4 bg-black/40 border border-white/10 rounded-md space-y-3">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-white/5 pb-2">
@@ -186,13 +232,13 @@ export function FulfillmentView() {
                       <span className={`px-2 py-0.5 text-[10px] rounded uppercase font-bold ${
                         f.status === "DELIVERED" ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" :
                         f.status === "FAILED" || f.status === "CANCELLED" ? "bg-red-500/20 text-red-300 border border-red-500/30" :
-                        f.status === "ACTION_REQUIRED" || f.status === "OUT_OF_STOCK" || f.status === "RECONCILIATION_REQUIRED" ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" :
+                        f.status === "ACTION_REQUIRED" || f.status === "OUT_OF_STOCK" || f.status === "RECONCILIATION_REQUIRED" || f.status === "UNKNOWN_PROVIDER_STATE" ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" :
                         "bg-blue-500/20 text-blue-300 border border-blue-500/30"
                       }`}>
                         {f.status}
                       </span>
                       {f.providerOrderId && (
-                        <span className="px-2 py-0.5 text-[10px] bg-white/10 text-white rounded">
+                        <span className="px-2 py-0.5 text-[10px] bg-white/10 text-white rounded font-mono">
                           Provider Order: {f.providerOrderId}
                         </span>
                       )}
@@ -200,25 +246,32 @@ export function FulfillmentView() {
                   </div>
 
                   {snap && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px] text-white/70 bg-black/30 p-2.5 rounded">
-                      <div>
-                        <span className="text-white/40 block">Item & Garment</span>
-                        <span className="font-bold text-white">{snap.ascendSku}</span> ({snap.quantity}x)
-                        <span className="block text-[10px] text-white/50">Provider SKU: {snap.providerExternalSku}</span>
+                    <div className="space-y-2 bg-black/30 p-2.5 rounded text-[11px]">
+                      <div className="flex justify-between text-white/50 text-[10px] border-b border-white/5 pb-1">
+                        <span>Items ({snap.items?.length || 0})</span>
+                        <span>Mode: {snap.paymentMode?.toUpperCase() || (snap.isCod ? "COD" : "ONLINE")}</span>
                       </div>
-                      <div>
-                        <span className="text-white/40 block">Placements ({snap.placements?.length || 0})</span>
-                        {(snap.placements || []).map((pl, idx) => (
-                          <span key={idx} className="block text-[10px] text-amber-300">
-                            {pl.placementLocation.toUpperCase()} ({pl.printMethod.toUpperCase()}): {pl.widthMm}x{pl.heightMm}mm
-                          </span>
-                        ))}
-                      </div>
-                      <div>
-                        <span className="text-white/40 block">Customer Destination</span>
-                        <span className="text-white">{snap.customerShipping?.fullName}</span>
-                        <span className="block text-[10px] text-white/50">{snap.customerShipping?.city}, {snap.customerShipping?.state}</span>
-                      </div>
+                      {(snap.items || []).map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 text-white/70">
+                          <div>
+                            <span className="font-bold text-white">{item.ascendSku}</span> ({item.quantity}x)
+                            <span className="block text-[10px] text-white/50">Provider SKU: {item.providerExternalSku}</span>
+                          </div>
+                          <div>
+                            <span className="text-white/40 block">Placements ({item.placements?.length || 0})</span>
+                            {(item.placements || []).map((pl, pIdx) => (
+                              <span key={pIdx} className="block text-[10px] text-amber-300">
+                                {pl.placementLocation.toUpperCase()} ({pl.printMethod.toUpperCase()}): {pl.widthMm}x{pl.heightMm}mm
+                              </span>
+                            ))}
+                          </div>
+                          <div>
+                            <span className="text-white/40 block">Customer Destination</span>
+                            <span className="text-white">{snap.customerShipping?.fullName}</span>
+                            <span className="block text-[10px] text-white/50">{snap.customerShipping?.city}, {snap.customerShipping?.state}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
 
@@ -230,16 +283,29 @@ export function FulfillmentView() {
 
                   <div className="flex justify-between items-center text-[10px] text-white/40 pt-1">
                     <span>Attempts: {f.attemptCount} | Provider Reference: {f.providerReference || "N/A"}</span>
-                    {(f.status === "QUEUED" || f.status === "FAILED" || f.status === "RECONCILIATION_REQUIRED") && (
-                      <button
-                        type="button"
-                        disabled={actionLoading === f.id}
-                        onClick={() => handleRetry(f.id)}
-                        className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white font-bold rounded transition"
-                      >
-                        {actionLoading === f.id ? "Retrying..." : "Retry Safe Submission"}
-                      </button>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {/* Requirement #29: Button controls */}
+                      {isReconciliation && (
+                        <button
+                          type="button"
+                          disabled={actionLoading === f.id}
+                          onClick={() => handleReconcile(f.id)}
+                          className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-bold border border-amber-500/40 rounded transition"
+                        >
+                          {actionLoading === f.id ? "Reconciling..." : "Reconcile Submission"}
+                        </button>
+                      )}
+                      {isRetryable && (
+                        <button
+                          type="button"
+                          disabled={actionLoading === f.id}
+                          onClick={() => handleRetry(f.id)}
+                          className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white font-bold rounded transition"
+                        >
+                          {actionLoading === f.id ? "Retrying..." : "Retry Safe Submission"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

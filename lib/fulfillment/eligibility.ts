@@ -1,10 +1,13 @@
 /**
  * Phase 6 — Server-Side Fulfilment Eligibility Evaluator
  * Evaluates whether an Ascend customer order is eligible for POD manufacturing fulfillment.
+ * Enforces authoritative payment evidence, COD Phase 7 gate, and strict Qikink provider mapping.
  */
 
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getOrderAdmin } from "@/lib/orders/store";
-import { getProductReadinessReportsAdmin, getAllProviderMappingsAdmin, getAllPODProvidersAdmin, getAllMockupsAdmin, getAllDesignsAdmin } from "@/lib/wearables/design-store";
+import { getAllProviderMappingsAdmin, getAllPODProvidersAdmin, getAllMockupsAdmin, getAllDesignsAdmin } from "@/lib/wearables/design-store";
 import { getProductAdmin } from "@/lib/wearables/store";
 import { evaluateVariantReadiness } from "@/lib/wearables/readiness-engine";
 import type { FulfillmentEligibilityResult } from "./types";
@@ -21,15 +24,58 @@ export async function evaluateOrderFulfillmentEligibility(
     return { eligible: false, blockingReasons: ["order_not_found"] };
   }
 
-  // 1. COD Gate Check (Req #8: Phase 7 owns COD risk approval)
-  if (order.paymentMethod === "cod" || order.isCod) {
+  // 1. COD Gate Check (Req #5, #8: Phase 7 owns COD risk approval)
+  const isCod = order.paymentMethod === "cod" || Boolean(order.isCod);
+  if (isCod) {
     blockingReasons.push("cod_requires_phase7_approval");
-  }
+  } else {
+    // 2. Authoritative Prepaid Payment Gate (Req #4)
+    if (hasSupabaseConfig()) {
+      const supabase = createSupabaseServiceClient();
+      if (!supabase) {
+        return { eligible: false, blockingReasons: ["supabase_service_client_unconfigured"] };
+      }
 
-  // 2. Authoritative Payment Check (Req #7: PREPAID require captured/paid status)
-  const isPaid = order.paymentStatus === "paid" || order.status === "paid" || order.status === "processing";
-  if (!isPaid) {
-    blockingReasons.push("unpaid_prepaid_order");
+      // Query DB for authoritative payment status & matching captured payment row
+      const { data: orderRow, error: orderErr } = await supabase
+        .from("orders")
+        .select("id, status, payment_status, total_paise, subtotal_paise, currency, payment_provider")
+        .eq("id", orderId)
+        .single();
+
+      if (orderErr || !orderRow) {
+        console.error("[Eligibility] DB error fetching order:", orderErr);
+        blockingReasons.push("db_error_verifying_payment");
+      } else if (orderRow.payment_status !== "captured" && orderRow.status !== "paid") {
+        blockingReasons.push("unpaid_prepaid_order");
+      } else {
+        const orderTotalPaise = Number(orderRow.total_paise || orderRow.subtotal_paise || 0);
+
+        const { data: paymentRow, error: paymentErr } = await supabase
+          .from("payments")
+          .select("id, status, amount_paise, currency, provider")
+          .eq("order_id", orderId)
+          .eq("status", "captured")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (paymentErr) {
+          console.error("[Eligibility] DB error fetching payment row:", paymentErr);
+          blockingReasons.push("db_error_verifying_payment");
+        } else if (!paymentRow) {
+          blockingReasons.push("unpaid_prepaid_order");
+        } else if (Number(paymentRow.amount_paise) !== orderTotalPaise || paymentRow.currency !== (orderRow.currency || "INR")) {
+          blockingReasons.push("payment_amount_currency_mismatch");
+        }
+      }
+    } else {
+      // Memory fallback for dev/testing when Supabase is not configured
+      const isPaid = order.paymentStatus === "captured" || order.status === "paid";
+      if (!isPaid) {
+        blockingReasons.push("unpaid_prepaid_order");
+      }
+    }
   }
 
   // 3. Shipping Address Completeness Check
@@ -49,13 +95,20 @@ export async function evaluateOrderFulfillmentEligibility(
     blockingReasons.push("existing_active_fulfillment_conflict");
   }
 
-  // 5. Order Item Product / Variant / Phase 5 Readiness Checks
+  // 5. Order Items & Provider Mappings (Req #8: Qikink-explicit selection per item)
   const items = order.items || [];
   if (items.length === 0) {
     blockingReasons.push("empty_order_items");
   }
 
-  let selectedProvider = undefined;
+  const providers = await getAllPODProvidersAdmin();
+  const qikinkProvider = providers.find((p) => p.slug.toLowerCase() === "qikink" && p.isActive);
+
+  if (!qikinkProvider) {
+    blockingReasons.push("qikink_provider_not_configured");
+  }
+
+  const selectedProvider = qikinkProvider;
   let selectedProviderProduct = undefined;
   let selectedProviderVariant = undefined;
 
@@ -81,19 +134,28 @@ export async function evaluateOrderFulfillmentEligibility(
     }
 
     const mappings = await getAllProviderMappingsAdmin();
-    const providers = await getAllPODProvidersAdmin();
     const designs = await getAllDesignsAdmin();
     const mockups = await getAllMockupsAdmin();
 
     const designsMap = new Map(designs.map((d) => [d.id, d]));
     const placementsList = designs.flatMap((d) => d.placements || []);
 
+    // Explicitly require Qikink mapping (Req #8 & #9)
     const pProd = mappings.providerProducts.find(
-      (pp) => pp.productId === product.id && pp.mappingStatus === "verified",
+      (pp) => pp.productId === product.id && pp.mappingStatus === "verified" && pp.providerId === qikinkProvider?.id,
     );
 
     if (!pProd) {
-      blockingReasons.push("unverified_provider_product_mapping");
+      // Check if another provider has mapping for error specificity
+      const printroveProd = mappings.providerProducts.find(
+        (pp) => pp.productId === product.id && pp.mappingStatus === "verified",
+      );
+      if (printroveProd) {
+        blockingReasons.push("qikink_mapping_missing_for_order_item");
+        blockingReasons.push("no_common_supported_provider_for_order");
+      } else {
+        blockingReasons.push("unverified_provider_product_mapping");
+      }
       continue;
     }
 
@@ -106,13 +168,6 @@ export async function evaluateOrderFulfillmentEligibility(
       continue;
     }
 
-    const prov = providers.find((p) => p.id === pProd.providerId);
-    if (!prov || !prov.isActive) {
-      blockingReasons.push("disabled_provider_mapping");
-      continue;
-    }
-
-    selectedProvider = prov;
     selectedProviderProduct = pProd;
     selectedProviderVariant = pVar;
 
@@ -123,10 +178,10 @@ export async function evaluateOrderFulfillmentEligibility(
       variant,
       placements: vPlacements,
       designsMap,
-      providers: [prov],
+      providers: qikinkProvider ? [qikinkProvider] : [],
       providerProduct: pProd,
       providerVariant: pVar,
-      providerMappings: [{ provider: prov, productVariantId: variant.id, providerProduct: pProd, providerVariant: pVar }],
+      providerMappings: qikinkProvider ? [{ provider: qikinkProvider, productVariantId: variant.id, providerProduct: pProd, providerVariant: pVar }] : [],
       mockups: mockups.filter((m) => m.productId === product.id),
     });
 

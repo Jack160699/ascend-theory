@@ -8,7 +8,6 @@ import type {
   ProviderOrderSubmissionResult,
   ProviderOrderLookupResult,
   ProviderBalanceResult,
-  FulfillmentStatus,
 } from "./types";
 
 export type MockScenario =
@@ -238,7 +237,7 @@ export class QikinkMockTransport {
         found: true,
         providerOrderId: key,
         providerStatus: "SOME_CUSTOM_VENDOR_STATE",
-        normalizedStatus: "PROCESSING",
+        normalizedStatus: "UNKNOWN_PROVIDER_STATE",
       };
     }
 
