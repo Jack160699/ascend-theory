@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import type { FulfillmentRecord } from "@/lib/fulfillment/fulfillment-store";
 
 export function FulfillmentView() {
@@ -9,30 +9,41 @@ export function FulfillmentView() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   // Manual order submission form state
   const [inputOrderId, setInputOrderId] = useState("");
 
-  const fetchFulfillments = useCallback(async () => {
-    setError(null);
-    try {
-      const res = await fetch("/api/admin/wearables/fulfillment");
-      if (res.ok) {
-        const data = await res.json();
-        setFulfillments(data.fulfillments || []);
-      } else {
-        setError("Failed to load fulfillment queue");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Network error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Stable ref to allow event handlers to trigger a refresh
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    fetchFulfillments();
-  }, [fetchFulfillments]);
+    isMounted.current = true;
+    async function loadFulfillments() {
+      setError(null);
+      try {
+        const res = await fetch("/api/admin/wearables/fulfillment");
+        if (res.ok) {
+          const data = (await res.json()) as { fulfillments?: FulfillmentRecord[] };
+          if (isMounted.current) setFulfillments(data.fulfillments ?? []);
+        } else {
+          if (isMounted.current) setError("Failed to load fulfillment queue");
+        }
+      } catch (err) {
+        if (isMounted.current) setError(err instanceof Error ? err.message : "Network error");
+      } finally {
+        if (isMounted.current) setLoading(false);
+      }
+    }
+    void loadFulfillments();
+    return () => {
+      isMounted.current = false;
+    };
+  }, [refreshTick]);
+
+  const fetchFulfillments = useCallback(async () => {
+    setRefreshTick((t) => t + 1);
+  }, []);
 
   const handleClaimAndSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
