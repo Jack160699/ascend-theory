@@ -1,186 +1,79 @@
 /**
- * Phase 7 — Authoritative Cryptographic OTP Challenge Manager (Requirements #14, #15, #16, #17)
- * Uses HMAC-SHA256 with server-side pepper, 10-min expiry, 3 max attempts,
- * durable resend throttling (60s cooldown, 3 max sends), token binding, and atomic RPC verification.
+ * Phase 7 — Authoritative COD OTP Verification & Pepper Manager (Requirements #8, #9, #10, #11, #12, #13, #14)
+ * Hardens OTP security with HMAC-SHA256 pepper, durable resend throttling (60s limit),
+ * transport error handling, and single-transaction verification & COD status application.
  */
 
 import crypto from "node:crypto";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { getOTPTransportProvider } from "./otp-transport";
 import type { CodOtpChallenge } from "./types";
 
-const memoryOtpChallenges = new Map<string, CodOtpChallenge>();
-const memoryResendTracker = new Map<string, { lastSentAt: number; count: number }>();
+const memoryOtpChallenges = new Map<string, CodOtpChallenge & { phoneNormalized: string }>();
 
 /**
- * Normalizes phone number to canonical E.164 / Indian format (e.g. +919999999999)
+ * Deterministic Phone Normalization matching SQL public.normalize_phone() exactly (Requirement #8).
  */
-export function normalizePhone(rawPhone: string): string {
-  const digits = rawPhone.replace(/\D/g, "");
+export function normalizePhone(phone: string): string {
+  if (!phone || !phone.trim()) return "";
+  const digits = phone.replace(/\D/g, "");
   if (digits.length === 10) {
     return `+91${digits}`;
   }
   if (digits.length === 12 && digits.startsWith("91")) {
     return `+${digits}`;
   }
-  return digits ? `+${digits}` : "";
+  return "";
 }
 
 /**
- * Computes HMAC-SHA256 hash of raw OTP text using a server-side pepper. Raw OTP is NEVER saved in DB or logs.
+ * Obtains active pepper with fail-closed production gate (Requirement #9).
  */
-export function hashOtp(otpText: string, customPepper?: string): string {
-  const pepper = customPepper || process.env.COD_OTP_PEPPER || "ascend_cod_otp_default_pepper_2026";
-  return crypto.createHmac("sha256", pepper).update(otpText.trim()).digest("hex");
+export function getOtpPepper(): { pepper?: string; error?: string } {
+  const envPepper = process.env.COD_OTP_PEPPER;
+  if (envPepper && envPepper.trim()) {
+    return { pepper: envPepper.trim() };
+  }
+  if (process.env.NODE_ENV === "test") {
+    return { pepper: "test_only_otp_pepper_secret_2026" };
+  }
+  return { error: "otp_pepper_unconfigured" };
 }
 
-/**
- * Generates 6-digit OTP using cryptographically secure random number generator.
- */
-export function generateSecureOtpText(): string {
-  return crypto.randomInt(100000, 999999).toString();
+export function hashOtp(otpText: string, pepper: string): string {
+  return crypto.createHmac("sha256", pepper).update(otpText).digest("hex");
 }
 
-/**
- * Creates durable OTP challenge for an order with resend throttling.
- */
+export function generateRandomNumericOtp(length: number = 6): string {
+  const bytes = crypto.randomBytes(length);
+  let otp = "";
+  for (let i = 0; i < length; i++) {
+    otp += (bytes[i]! % 10).toString();
+  }
+  return otp;
+}
+
 export async function createOtpChallengeAdmin(
   orderId: string,
   rawPhone: string,
-  customPepper?: string,
-): Promise<{ ok: true; challenge: CodOtpChallenge; otpText: string } | { ok: false; error: string }> {
-  const phoneNormalized = normalizePhone(rawPhone);
-  if (!phoneNormalized || phoneNormalized.length < 10) {
+  tokenHash?: string,
+): Promise<{ ok: true; otpText: string; challengeId: string } | { ok: false; error: string }> {
+  const phoneNorm = normalizePhone(rawPhone);
+  if (!phoneNorm) {
     return { ok: false, error: "invalid_phone_number" };
   }
 
-  const nowMs = Date.now();
-  const now = new Date(nowMs);
-
-  // Check resend throttling (Requirement #15)
-  if (hasSupabaseConfig()) {
-    const supabase = createSupabaseServiceClient();
-    if (!supabase) return { ok: false, error: "Supabase service client unconfigured" };
-
-    const { data: recentChallenges, error: recentErr } = await supabase
-      .from("cod_otp_challenges")
-      .select("created_at, resend_count")
-      .eq("order_id", orderId)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    if (!recentErr && recentChallenges && recentChallenges.length > 0) {
-      const latest = recentChallenges[0]!;
-      const elapsedMs = nowMs - new Date(latest.created_at).getTime();
-
-      if (elapsedMs < 60 * 1000) {
-        return { ok: false, error: "otp_resend_cooldown_active" };
-      }
-
-      if (latest.resend_count >= 3) {
-        return { ok: false, error: "max_otp_resend_limit_exceeded" };
-      }
-    }
-  } else {
-    const tracker = memoryResendTracker.get(orderId);
-    if (tracker) {
-      if (nowMs - tracker.lastSentAt < 60 * 1000) {
-        return { ok: false, error: "otp_resend_cooldown_active" };
-      }
-      if (tracker.count >= 3) {
-        return { ok: false, error: "max_otp_resend_limit_exceeded" };
-      }
-    }
+  const pepperRes = getOtpPepper();
+  if (pepperRes.error || !pepperRes.pepper) {
+    return { ok: false, error: pepperRes.error || "otp_pepper_unconfigured" };
   }
 
-  const otpText = generateSecureOtpText();
-  const otpHash = hashOtp(otpText, customPepper);
-  const expiresAt = new Date(nowMs + 10 * 60 * 1000).toISOString(); // 10 minutes expiry
-  const challengeId = crypto.randomUUID();
+  const otpText = generateRandomNumericOtp(6);
+  const otpHash = hashOtp(otpText, pepperRes.pepper);
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-  if (hasSupabaseConfig()) {
-    const supabase = createSupabaseServiceClient();
-    if (!supabase) return { ok: false, error: "Supabase service client unconfigured" };
-
-    // Invalidate previous unverified challenges for this order
-    await supabase
-      .from("cod_otp_challenges")
-      .update({ consumed_at: now.toISOString() })
-      .eq("order_id", orderId)
-      .is("consumed_at", null);
-
-    const { data: recent } = await supabase
-      .from("cod_otp_challenges")
-      .select("resend_count")
-      .eq("order_id", orderId)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    const nextResendCount = recent && recent.length > 0 ? recent[0]!.resend_count + 1 : 1;
-
-    const { error } = await supabase.from("cod_otp_challenges").insert({
-      id: challengeId,
-      order_id: orderId,
-      phone_normalized: phoneNormalized,
-      otp_hash: otpHash,
-      expires_at: expiresAt,
-      attempts: 0,
-      max_attempts: 3,
-      resend_count: nextResendCount,
-      sent_at: now.toISOString(),
-      created_at: now.toISOString(),
-    });
-
-    if (error) {
-      return { ok: false, error: `Database error creating OTP challenge: ${error.message}` };
-    }
-  } else {
-    const tracker = memoryResendTracker.get(orderId);
-    const nextCount = tracker ? tracker.count + 1 : 1;
-    memoryResendTracker.set(orderId, { lastSentAt: nowMs, count: nextCount });
-
-    const challengeRecord: CodOtpChallenge = {
-      id: challengeId,
-      orderId,
-      phoneNormalized,
-      otpHash,
-      expiresAt,
-      attemptCount: 0,
-      maxAttempts: 3,
-      createdAt: now.toISOString(),
-    };
-    memoryOtpChallenges.set(orderId, challengeRecord);
-  }
-
-  const challengeRecord: CodOtpChallenge = {
-    id: challengeId,
-    orderId,
-    phoneNormalized,
-    otpHash,
-    expiresAt,
-    attemptCount: 0,
-    maxAttempts: 3,
-    createdAt: now.toISOString(),
-  };
-
-  return { ok: true, challenge: challengeRecord, otpText };
-}
-
-/**
- * Verifies submitted OTP for an order single-use and rate-limited via atomic RPC.
- */
-export async function verifyOtpChallengeAdmin(
-  orderId: string,
-  submittedOtp: string,
-  confirmationToken?: string,
-  customPepper?: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  const submittedHash = hashOtp(submittedOtp, customPepper);
-
-  let tokenHash: string | undefined = undefined;
-  if (confirmationToken) {
-    tokenHash = crypto.createHash("sha256").update(confirmationToken).digest("hex");
-  }
+  let challengeId = `chal-${Date.now()}`;
 
   if (hasSupabaseConfig()) {
     const supabase = createSupabaseServiceClient();
@@ -188,36 +81,115 @@ export async function verifyOtpChallengeAdmin(
       return { ok: false, error: "Supabase service client unconfigured" };
     }
 
-    const { data, error } = await supabase.rpc("verify_cod_otp_challenge_with_audit", {
+    const { data: rpcRes, error: rpcErr } = await supabase.rpc("create_cod_otp_challenge_with_audit", {
       p_order_id: orderId,
-      p_submitted_otp_hash: submittedHash,
-      p_token_hash: tokenHash || null,
+      p_token_hash: tokenHash || "",
+      p_phone_normalized: phoneNorm,
+      p_otp_hash: otpHash,
+      p_expires_at: expiresAt,
     });
 
-    if (error) {
-      console.error("[OTP] RPC error verifying OTP challenge:", error);
-      return { ok: false, error: error.message };
+    if (rpcErr || !rpcRes || !(rpcRes as { ok?: boolean }).ok) {
+      const errStr = (rpcRes as { error?: string })?.error || rpcErr?.message || "Failed to create OTP challenge";
+      return { ok: false, error: errStr };
     }
 
-    if (!data.ok) {
-      return { ok: false, error: data.error };
+    challengeId = (rpcRes as { challenge_id: string }).challenge_id;
+
+    // Send via transport
+    const transportProvider = getOTPTransportProvider();
+    const transportRes = await transportProvider.sendOtp(phoneNorm, otpText);
+    if (!transportRes.success) {
+      // Mark challenge failed atomically
+      await supabase.rpc("mark_cod_otp_challenge_failed", { p_challenge_id: challengeId });
+      return { ok: false, error: `otp_transport_delivery_failed: ${transportRes.error || "Delivery failed"}` };
+    }
+  } else {
+    // Memory fallback with 60s cooldown & resend throttling
+    const existing = memoryOtpChallenges.get(orderId);
+    if (existing && !existing.consumedAt) {
+      const sentMs = new Date(existing.createdAt).getTime();
+      if (Date.now() - sentMs < 60 * 1000) {
+        return { ok: false, error: "otp_resend_cooldown_active" };
+      }
+      if ((existing.resendCount ?? 0) >= 3) {
+        return { ok: false, error: "otp_max_resends_exceeded" };
+      }
     }
 
-    return { ok: true };
+    const resendCount = (existing?.resendCount || 0) + 1;
+    const challenge: CodOtpChallenge = {
+      id: challengeId,
+      orderId,
+      phoneNormalized: phoneNorm,
+      otpHash,
+      expiresAt,
+      attemptCount: 0,
+      maxAttempts: 3,
+      resendCount,
+      createdAt: new Date().toISOString(),
+    };
+    memoryOtpChallenges.set(orderId, challenge);
+  }
+
+  return { ok: true, otpText, challengeId };
+}
+
+/**
+ * Single-Transaction OTP Verification & Authoritative Decision Application (Requirement #13 & #14)
+ */
+export async function verifyOtpChallengeAndApplyDecisionAdmin(
+  orderId: string,
+  tokenHash: string,
+  submittedOtpText: string,
+  adminId?: string | null,
+): Promise<{ ok: true; targetStatus: string; advanceRequired?: boolean } | { ok: false; error: string; remainingAttempts?: number }> {
+  if (!tokenHash || !tokenHash.trim()) {
+    return { ok: false, error: "missing_confirmation_token_hash" };
+  }
+
+  const pepperRes = getOtpPepper();
+  if (pepperRes.error || !pepperRes.pepper) {
+    return { ok: false, error: pepperRes.error || "otp_pepper_unconfigured" };
+  }
+
+  const submittedOtpHash = hashOtp(submittedOtpText, pepperRes.pepper);
+
+  if (hasSupabaseConfig()) {
+    const supabase = createSupabaseServiceClient();
+    if (!supabase) {
+      return { ok: false, error: "Supabase service client unconfigured" };
+    }
+
+    const { data: rpcRes, error: rpcErr } = await supabase.rpc("verify_cod_otp_and_apply_decision_with_audit", {
+      p_order_id: orderId,
+      p_token_hash: tokenHash,
+      p_submitted_otp_hash: submittedOtpHash,
+      p_admin_id: adminId || null,
+    });
+
+    if (rpcErr || !rpcRes || !(rpcRes as { ok?: boolean }).ok) {
+      const errStr = (rpcRes as { error?: string })?.error || rpcErr?.message || "Verification failed";
+      const remainingAttempts = (rpcRes as { remaining_attempts?: number })?.remaining_attempts;
+      return { ok: false, error: errStr, remainingAttempts };
+    }
+
+    const targetStatus = (rpcRes as { cod_status: string }).cod_status;
+    const advanceRequired = (rpcRes as { advance_required?: boolean }).advance_required;
+    return { ok: true, targetStatus, advanceRequired };
   }
 
   // Memory fallback for dev/testing
-  const challenge = memoryOtpChallenges.get(orderId) || null;
+  const challenge = memoryOtpChallenges.get(orderId);
   if (!challenge) {
-    return { ok: false, error: "otp_challenge_not_found" };
+    return { ok: false, error: "no_active_otp_challenge" };
   }
 
-  if (challenge.consumedAt || challenge.verifiedAt) {
+  if (challenge.consumedAt) {
     return { ok: false, error: "otp_already_consumed" };
   }
 
-  const nowIso = new Date().toISOString();
-  if (challenge.expiresAt < nowIso) {
+  if (new Date(challenge.expiresAt).getTime() < Date.now()) {
     return { ok: false, error: "otp_expired" };
   }
 
@@ -225,19 +197,15 @@ export async function verifyOtpChallengeAdmin(
     return { ok: false, error: "otp_max_attempts_exceeded" };
   }
 
-  if (challenge.otpHash !== submittedHash) {
+  if (challenge.otpHash !== submittedOtpHash) {
     challenge.attemptCount += 1;
     memoryOtpChallenges.set(orderId, challenge);
-
-    if (challenge.attemptCount >= challenge.maxAttempts) {
-      return { ok: false, error: "otp_max_attempts_exceeded" };
-    }
-    return { ok: false, error: "invalid_otp" };
+    return { ok: false, error: "invalid_otp", remainingAttempts: challenge.maxAttempts - challenge.attemptCount };
   }
 
-  challenge.verifiedAt = nowIso;
-  challenge.consumedAt = nowIso;
+  challenge.consumedAt = new Date().toISOString();
+  challenge.verifiedAt = new Date().toISOString();
   memoryOtpChallenges.set(orderId, challenge);
 
-  return { ok: true };
+  return { ok: true, targetStatus: "COD_APPROVED", advanceRequired: false };
 }

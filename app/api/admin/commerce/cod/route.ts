@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Unauthorized operational access" }, { status: 401 });
   }
 
-  // Requirement #12 & #28: GET RBAC lockdown (owner, admin, support ONLY - block editor with 403)
+  // GET RBAC lockdown: owner, admin, support allowed (Editor 403)
   if (!["owner", "admin", "support"].includes(session.role)) {
     return NextResponse.json(
       { ok: false, error: "Forbidden: Operational role permissions insufficient for COD management access" },
@@ -26,19 +26,27 @@ export async function GET(_req: NextRequest) {
     const codOrders = allOrders
       .filter((o: Order) => o.paymentMethod === "cod" || o.isCod || Boolean(o.codStatus))
       .map((o) => {
-        // Sanitize any internal secrets before sending to client
-        const { codConfirmationTokenHash, ...sanitized } = o;
+        const { codConfirmationTokenHash: _h, ...sanitized } = o;
         return sanitized;
       });
 
     const dailyExposurePaise = await getDailyCodExposureAdmin();
     const returnedInventory = await getAllReturnedInventoryAdmin();
 
+    // Support role sees sanitized returned inventory without full snapshot (Requirement #29)
+    const sanitizedInventory = returnedInventory.map((item) => {
+      if (session.role === "support") {
+        const { manufacturingSnapshotJson: _s, ...supportItem } = item;
+        return supportItem;
+      }
+      return item;
+    });
+
     return NextResponse.json({
       ok: true,
       codOrders,
       dailyExposurePaise,
-      returnedInventory,
+      returnedInventory: sanitizedInventory,
       userRole: session.role,
     });
   } catch (err) {
@@ -55,7 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Unauthorized operational access" }, { status: 401 });
   }
 
-  // Requirement #12 & #28: Manual COD decision override restricted to owner & admin ONLY (support & editor return 403)
+  // RBAC lockdown: manual decision overrides restricted to owner & admin ONLY (support & editor return 403)
   if (!["owner", "admin"].includes(session.role)) {
     return NextResponse.json(
       { ok: false, error: "Forbidden: Manual COD decision override requires owner or admin permissions" },
@@ -63,7 +71,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const adminId = session.id || "00000000-0000-0000-0000-000000000000";
+  // Real Admin UUID Enforcement (Requirement #22: NEVER fabricate admin UUID)
+  const adminId = session.id;
+  if (!adminId || !adminId.trim()) {
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized: Admin session missing valid staff UUID" },
+      { status: 401 },
+    );
+  }
 
   try {
     const body = await req.json();
@@ -90,13 +105,8 @@ export async function POST(req: NextRequest) {
       const advanceAmt = body.advanceAmountPaise || 20000;
       decisionRes = await applyCodDecisionAdmin(orderId, "COD_ADVANCE_REQUIRED", reason || "Admin require advance", true, advanceAmt, adminId);
     } else if (action === "set_prepaid_only") {
+      // Atomic set_prepaid_only inside decision RPC (Requirement #24)
       decisionRes = await applyCodDecisionAdmin(orderId, "COD_PREPAID_ONLY", reason || "Admin set prepaid only", false, 0, adminId);
-      const profile = await getRiskProfileByPhoneAdmin(order.customer.phone);
-      if (profile) {
-        profile.prepaidOnly = true;
-        profile.riskBand = "PREPAID_ONLY";
-        await saveRiskProfileAdmin(profile);
-      }
     } else if (action === "override_status") {
       if (!reason || !reason.trim()) {
         return NextResponse.json({ ok: false, error: "Mandatory override reason is required" }, { status: 400 });

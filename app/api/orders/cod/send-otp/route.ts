@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getOrderAdmin } from "@/lib/orders/store";
 import { createOtpChallengeAdmin } from "@/lib/cod/otp";
-import { getOTPTransportProvider } from "@/lib/cod/otp-transport";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,56 +20,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Order not found" }, { status: 404 });
     }
 
-    if (order.paymentMethod !== "cod" && !order.isCod) {
-      return NextResponse.json({ ok: false, error: "Not a COD order" }, { status: 400 });
-    }
-
-    // Validate confirmation token hash (Requirement #13)
-    if (order.codConfirmationTokenHash) {
-      const submittedHash = crypto.createHash("sha256").update(confirmationToken).digest("hex");
-      try {
-        const matches = crypto.timingSafeEqual(
-          Buffer.from(submittedHash, "hex"),
-          Buffer.from(order.codConfirmationTokenHash, "hex"),
-        );
-        if (!matches) {
-          return NextResponse.json({ ok: false, error: "Invalid confirmation token" }, { status: 403 });
-        }
-      } catch {
-        return NextResponse.json({ ok: false, error: "Invalid confirmation token" }, { status: 403 });
-      }
-    }
-
-    const challengeRes = await createOtpChallengeAdmin(order.id, order.customer.phone);
-    if (!challengeRes.ok) {
-      return NextResponse.json({ ok: false, error: challengeRes.error }, { status: 400 });
-    }
-
-    // Deliver via abstract OTP transport
-    const transport = getOTPTransportProvider();
-    const deliveryRes = await transport.sendOtp(
-      challengeRes.challenge.phoneNormalized,
-      challengeRes.otpText,
-    );
-
-    // Requirement #16: Return failure when transport fails
-    if (!deliveryRes.success) {
+    // Fail-closed confirmation token binding check (Requirement #10)
+    if (!order.codConfirmationTokenHash) {
       return NextResponse.json(
-        {
-          ok: false,
-          error: "otp_transport_delivery_failed",
-          details: deliveryRes.error,
-        },
-        { status: 502 },
+        { ok: false, error: "Order missing confirmation token hash" },
+        { status: 400 },
+      );
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(confirmationToken).digest("hex");
+    if (
+      !crypto.timingSafeEqual(
+        Buffer.from(tokenHash),
+        Buffer.from(order.codConfirmationTokenHash),
+      )
+    ) {
+      return NextResponse.json({ ok: false, error: "Invalid confirmation token" }, { status: 403 });
+    }
+
+    const rawPhone = order.customer?.phone || "";
+    const result = await createOtpChallengeAdmin(orderId, rawPhone, tokenHash);
+
+    if (!result.ok) {
+      const isDeliveryFail = result.error.includes("otp_transport_delivery_failed");
+      return NextResponse.json(
+        { ok: false, error: result.error, details: "Transport failed to deliver OTP" },
+        { status: isDeliveryFail ? 502 : 400 },
       );
     }
 
     return NextResponse.json({
       ok: true,
+      challengeId: result.challengeId,
       message: "OTP sent successfully",
-      expiresAt: challengeRes.challenge.expiresAt,
-      transportName: transport.providerName,
-      deliverySuccess: true,
     });
   } catch (err) {
     return NextResponse.json(

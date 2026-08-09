@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getOrderAdmin } from "@/lib/orders/store";
-import { verifyOtpChallengeAdmin } from "@/lib/cod/otp";
-import { evaluateCodOrderDecision, applyCodDecisionAdmin } from "@/lib/cod/decision-engine";
-import { getRiskProfileByPhoneAdmin } from "@/lib/cod/outcomes";
-import { getDailyCodExposureAdmin } from "@/lib/cod/exposure";
+import { verifyOtpChallengeAndApplyDecisionAdmin } from "@/lib/cod/otp";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,57 +20,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Order not found" }, { status: 404 });
     }
 
-    // Validate confirmation token hash (Requirement #13)
-    if (order.codConfirmationTokenHash) {
-      const submittedHash = crypto.createHash("sha256").update(confirmationToken).digest("hex");
-      try {
-        const matches = crypto.timingSafeEqual(
-          Buffer.from(submittedHash, "hex"),
-          Buffer.from(order.codConfirmationTokenHash, "hex"),
-        );
-        if (!matches) {
-          return NextResponse.json({ ok: false, error: "Invalid confirmation token" }, { status: 403 });
-        }
-      } catch {
-        return NextResponse.json({ ok: false, error: "Invalid confirmation token" }, { status: 403 });
-      }
+    if (!order.codConfirmationTokenHash) {
+      return NextResponse.json(
+        { ok: false, error: "Order missing confirmation token hash" },
+        { status: 400 },
+      );
     }
 
-    const verifyRes = await verifyOtpChallengeAdmin(orderId, otp, confirmationToken);
+    const tokenHash = crypto.createHash("sha256").update(confirmationToken).digest("hex");
+    if (
+      !crypto.timingSafeEqual(
+        Buffer.from(tokenHash),
+        Buffer.from(order.codConfirmationTokenHash),
+      )
+    ) {
+      return NextResponse.json({ ok: false, error: "Invalid confirmation token" }, { status: 403 });
+    }
+
+    const verifyRes = await verifyOtpChallengeAndApplyDecisionAdmin(orderId, tokenHash, otp);
+
     if (!verifyRes.ok) {
-      return NextResponse.json({ ok: false, error: verifyRes.error }, { status: 400 });
+      return NextResponse.json(
+        {
+          ok: false,
+          error: verifyRes.error,
+          remainingAttempts: verifyRes.remainingAttempts,
+        },
+        { status: 400 },
+      );
     }
 
-    // Requirement #18: Re-evaluate decision engine after successful OTP verification
-    const riskProfile = await getRiskProfileByPhoneAdmin(order.customer.phone);
-    const currentExposure = await getDailyCodExposureAdmin();
-
-    const decisionResult = evaluateCodOrderDecision(order, riskProfile, currentExposure);
-
-    // Determine target COD status post-OTP
-    let targetCodStatus = decisionResult.codStatus;
-    if (decisionResult.decision === "OTP_REQUIRED" || targetCodStatus === "COD_OTP_PENDING") {
-      targetCodStatus = "COD_APPROVED"; // Normal order after OTP verified promotes to COD_APPROVED
+    const updatedOrder = await getOrderAdmin(orderId);
+    if (!updatedOrder) {
+      return NextResponse.json({ ok: false, error: "Order not found after verification" }, { status: 500 });
     }
 
-    const applyRes = await applyCodDecisionAdmin(
-      order.id,
-      targetCodStatus,
-      `OTP Verified: ${decisionResult.reasons.join(", ")}`,
-      decisionResult.decision === "ADVANCE_REQUIRED",
-      decisionResult.advanceAmountPaise || 0,
-      null,
-    );
-
-    if (!applyRes.ok) {
-      return NextResponse.json({ ok: false, error: applyRes.error }, { status: 500 });
-    }
+    // Sanitize customer response DTO (Requirement #27: NEVER expose token hash)
+    const { codConfirmationTokenHash, ...sanitizedOrder } = updatedOrder;
 
     return NextResponse.json({
       ok: true,
-      codStatus: targetCodStatus,
-      advanceRequired: decisionResult.decision === "ADVANCE_REQUIRED",
-      advanceAmountPaise: decisionResult.advanceAmountPaise || 0,
+      order: sanitizedOrder,
+      targetStatus: verifyRes.targetStatus,
+      advanceRequired: verifyRes.advanceRequired,
     });
   } catch (err) {
     return NextResponse.json(

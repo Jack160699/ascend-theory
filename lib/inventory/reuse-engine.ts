@@ -1,8 +1,7 @@
 /**
- * Phase 7 — Authoritative Reuse Matching Engine (Requirements #23, #24, #25, #26)
- * Matches order items against available returned inventory by exact manufactured identity hash
- * (product, variant, SKU, designs, versions, placements, print methods, artwork checksums).
- * Guarantees returned inventory CANNOT be reserved before COD order approval or Prepaid payment capture.
+ * Phase 7 — Authoritative Reuse Matching Engine (Requirements #2, #3, #5)
+ * Matches order items against available returned inventory by exact manufactured identity hash.
+ * Includes product, variant, SKU, design IDs/versions, artwork checksums, placements, print methods, dimensions, and transform scales/rotations.
  */
 
 import crypto from "node:crypto";
@@ -15,23 +14,54 @@ export type ManufacturingIdentityInput = {
   variantId: string;
   sku: string;
   designs?: { designId: string; version: number; checksum?: string }[];
-  placements?: { placementId: string; location: string; printMethod: string; widthMm?: number; heightMm?: number }[];
+  placements?: {
+    placementId: string;
+    location: string;
+    printMethod: string;
+    widthMm?: number;
+    heightMm?: number;
+    scale?: number;
+    rotationDeg?: number;
+  }[];
 };
 
 /**
- * Computes deterministic SHA-256 hash of exact manufacturing intent (Requirement #23)
+ * Computes deterministic SHA-256 hash of exact manufacturing intent using recursive canonicalization.
  */
 export function computeManufacturingIdentityHash(input: ManufacturingIdentityInput): string {
-  const sortedDesigns = (input.designs || []).sort((a, b) => a.designId.localeCompare(b.designId));
-  const sortedPlacements = (input.placements || []).sort((a, b) => a.placementId.localeCompare(b.placementId));
-  const payload = JSON.stringify({
-    p: input.productId,
-    v: input.variantId,
-    s: input.sku,
+  if (!input.productId || !input.variantId || !input.sku) {
+    throw new Error("[ManufacturingHash] Missing required product, variant, or SKU");
+  }
+
+  const sortedDesigns = (input.designs || [])
+    .map((d) => ({
+      dId: String(d.designId || "").trim(),
+      ver: Number(d.version || 1),
+      chk: String(d.checksum || "").trim(),
+    }))
+    .sort((a, b) => a.dId.localeCompare(b.dId) || a.ver - b.ver || a.chk.localeCompare(b.chk));
+
+  const sortedPlacements = (input.placements || [])
+    .map((p) => ({
+      pId: String(p.placementId || "").trim(),
+      loc: String(p.location || "").trim(),
+      pm: String(p.printMethod || "").trim(),
+      w: Number(p.widthMm || 0),
+      h: Number(p.heightMm || 0),
+      s: Number(p.scale ?? 1),
+      r: Number(p.rotationDeg ?? 0),
+    }))
+    .sort((a, b) => a.pId.localeCompare(b.pId) || a.loc.localeCompare(b.loc) || a.pm.localeCompare(b.pm));
+
+  const canonicalPayload = JSON.stringify({
+    p: String(input.productId).trim(),
+    v: String(input.variantId).trim(),
+    s: String(input.sku).trim(),
     d: sortedDesigns,
     pl: sortedPlacements,
   });
-  return crypto.createHash("sha256").update(payload).digest("hex");
+
+  return crypto.createHash("sha256").update(canonicalPayload).digest("hex");
 }
 
 export async function findMatchingReturnedInventory(
@@ -39,21 +69,23 @@ export async function findMatchingReturnedInventory(
   manufacturingInput: ManufacturingIdentityInput,
 ): Promise<ReturnedInventoryItem[]> {
   const targetHash = computeManufacturingIdentityHash(manufacturingInput);
+  if (!targetHash) return [];
+
   const allInventory = await getAllReturnedInventoryAdmin();
 
   return allInventory.filter((item) => {
-    // 1. Must be REUSABLE and reuse_eligible
+    // 1. Must be REUSABLE and reuseEligible
     if (item.reuseStatus !== "REUSABLE" || !item.reuseEligible) {
       return false;
     }
 
-    // 2. Exact Product & Variant Match
-    if (item.productId !== orderItem.productId || item.variantId !== orderItem.variantId) {
+    // 2. Require non-empty manufacturing identity hash
+    if (!item.manufacturingIdentityHash || !item.manufacturingIdentityHash.trim()) {
       return false;
     }
 
-    // 3. Exact Manufactured Identity Hash Match (Requirement #23)
-    if (item.manufacturingIdentityHash && item.manufacturingIdentityHash !== targetHash) {
+    // 3. Strict match: item.manufacturingIdentityHash MUST equal targetHash
+    if (item.manufacturingIdentityHash !== targetHash) {
       return false;
     }
 
@@ -62,7 +94,7 @@ export async function findMatchingReturnedInventory(
 }
 
 /**
- * Gate Check: Ensures COD orders MUST be COD_APPROVED and Prepaid orders MUST be captured before inventory reservation (Requirement #25).
+ * Gate Check: Ensures COD orders MUST be COD_APPROVED and Prepaid orders MUST be captured before inventory reservation.
  */
 export function canReserveReturnedInventoryForOrder(order: Order): { allowed: boolean; reason?: string } {
   const isCod = order.paymentMethod === "cod" || Boolean(order.isCod);

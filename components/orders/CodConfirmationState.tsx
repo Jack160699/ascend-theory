@@ -156,7 +156,7 @@ export function CodConfirmationState({ order, confirmationToken, onStatusUpdated
       {codStatus === "COD_APPROVED" && (
         <div className="p-4 bg-emerald-950/40 border border-emerald-800 rounded text-sm text-emerald-200 space-y-1">
           <p className="font-semibold text-white text-base">Cash on Delivery Approved</p>
-          <p>Your COD order has been approved and scheduled for production dispatch.</p>
+          <p>Your Cash on Delivery order is approved. Fulfilment will proceed through our order-processing workflow.</p>
         </div>
       )}
     </div>

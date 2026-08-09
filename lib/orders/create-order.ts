@@ -1,7 +1,14 @@
-import { createPaymentSession, getAvailablePaymentProviders } from "@/lib/payments";
+/**
+ * Phase 7 Authoritative Order Creation Orchestrator
+ * Ensures COD checkout initializes in COD_PENDING_CONFIRMATION with 0 fulfillments,
+ * generates a 32-byte confirmationToken, stores its hash server-side, and excludes the token hash from customer DTOs.
+ */
+
+import crypto from "node:crypto";
+import type { Order, CreateOrderResult, CreateOrderInput } from "./types";
+import { saveOrder, getOrderAdmin } from "./store";
 import { buildOrderFromInputAsync } from "./build-order";
-import { saveOrder } from "./store";
-import type { CreateOrderInput, CreateOrderResult } from "./types";
+import { createPaymentSession, getAvailablePaymentProviders } from "@/lib/payments";
 
 export async function createOrder(
   input: CreateOrderInput,
@@ -17,38 +24,15 @@ export async function createOrder(
 
   let order = built.order;
 
-  if (order.paymentMethod === "online") {
-    const providers = getAvailablePaymentProviders();
-    if (providers.length === 0) {
-      return {
-        ok: false,
-        error:
-          "Online payment is not configured. Choose Cash on Delivery or contact support.",
-        status: 503,
-      };
-    }
-    if (
-      order.paymentProvider !== "none" &&
-      !providers.includes(order.paymentProvider as "stripe" | "razorpay")
-    ) {
-      order = {
-        ...order,
-        paymentProvider: providers[0]!,
-      };
-    }
-  }
+  let confirmationToken: string | undefined;
 
-  await saveOrder(order);
-
-  // Requirement #9 & #13: COD checkout MUST start in COD_PENDING_CONFIRMATION state and generate a confirmation token.
-  // DOES NOT claim/create/submit fulfillment or auto-approve until explicit server risk decision workflow.
   if (order.paymentMethod === "cod") {
-    const { randomBytes, createHash } = await import("node:crypto");
-    const confirmationToken = randomBytes(32).toString("hex");
-    const codConfirmationTokenHash = createHash("sha256").update(confirmationToken).digest("hex");
+    confirmationToken = crypto.randomBytes(32).toString("hex");
+    const codConfirmationTokenHash = crypto.createHash("sha256").update(confirmationToken).digest("hex");
 
     order = {
       ...order,
+      isCod: true,
       codStatus: "COD_PENDING_CONFIRMATION",
       codConfirmationTokenHash,
       advanceRequired: false,
@@ -58,14 +42,37 @@ export async function createOrder(
 
     await saveOrder(order);
 
+    // Sanitize customer DTO: NEVER expose codConfirmationTokenHash (Requirement #27)
+    const { codConfirmationTokenHash: _hash, ...sanitizedOrder } = order;
+
     return {
       ok: true,
       data: {
-        order,
+        order: sanitizedOrder,
         confirmationToken,
       },
     };
   }
+
+  const providers = getAvailablePaymentProviders();
+  if (providers.length === 0) {
+    return {
+      ok: false,
+      error: "Online payment is not configured. Choose Cash on Delivery or contact support.",
+      status: 503,
+    };
+  }
+  if (
+    order.paymentProvider !== "none" &&
+    !providers.includes(order.paymentProvider as "stripe" | "razorpay")
+  ) {
+    order = {
+      ...order,
+      paymentProvider: providers[0]!,
+    };
+  }
+
+  await saveOrder(order);
 
   const payment = await createPaymentSession(order, origin);
   if (!payment) {
@@ -96,8 +103,7 @@ export async function createOrder(
  * Use verifyRazorpayCheckoutCallback or handleRazorpayWebhook for payment verification.
  */
 export async function confirmOrderPaid(orderId: string): Promise<void> {
-  const { getOrder } = await import("./store");
-  const order = await getOrder(orderId);
+  const order = await getOrderAdmin(orderId);
   if (!order) return;
 
   // Unauthenticated browser navigation cannot mark order paid

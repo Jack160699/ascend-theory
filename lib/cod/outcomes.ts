@@ -1,7 +1,7 @@
 /**
- * Phase 7 — Authoritative Delivery Outcome & RTO Idempotency Manager (Requirements #20, #21, #22)
+ * Phase 7 — Authoritative Delivery Outcome & RTO Idempotency Manager (Requirements #8, #18, #19, #20, #21)
  * Idempotently records delivery/RTO outcomes and updates risk profiles without double-counting on status replays.
- * Derives order payment_method and phone from fulfillment -> order DB relation.
+ * Uses race-safe SQL ON CONFLICT DO NOTHING RETURNING id.
  * Prepaid deliveries increment successfulPrepaidDeliveries, NOT successfulCodDeliveries.
  */
 
@@ -25,6 +25,18 @@ export async function recordDeliveryOutcomeAdmin(
     return { ok: false, error: "fulfillment_not_found" };
   }
 
+  // Outcome status validation against fulfillment status (Requirement #20)
+  const fulStatusLower = (fulfillment.status || "").toLowerCase();
+  if (outcomeType === "DELIVERED" && !["in_transit", "delivered"].includes(fulStatusLower)) {
+    return { ok: false, error: "fulfillment_status_incompatible_with_delivery" };
+  }
+  if (["RTO", "RETURNED"].includes(outcomeType) && !["in_transit", "rto_initiated", "returned"].includes(fulStatusLower)) {
+    return { ok: false, error: "fulfillment_status_incompatible_with_rto" };
+  }
+  if (outcomeType === "REFUSED" && !["in_transit", "rto_initiated", "failed"].includes(fulStatusLower)) {
+    return { ok: false, error: "fulfillment_status_incompatible_with_refusal" };
+  }
+
   const order = await getOrderAdmin(fulfillment.orderId);
   if (!order) {
     return { ok: false, error: "order_not_found" };
@@ -43,7 +55,7 @@ export async function recordDeliveryOutcomeAdmin(
     const { data: rpcRes, error: rpcErr } = await supabase.rpc("record_delivery_outcome_with_audit", {
       p_fulfillment_id: fulfillmentId,
       p_outcome_type: outcomeType,
-      p_details_json: { provider_status: fulfillment.providerStatus },
+      p_details_json: { provider_status: fulfillment.providerStatus, status: outcomeStatus },
     });
 
     if (rpcErr) {
@@ -54,7 +66,7 @@ export async function recordDeliveryOutcomeAdmin(
     return { ok: true, alreadyProcessed: isAlready };
   }
 
-  // Memory fallback for dev/testing (Requirement #20 & #21 parity)
+  // Memory fallback for dev/testing
   if (memoryOutcomeEvents.has(eventKey)) {
     return { ok: true, alreadyProcessed: true };
   }
@@ -86,7 +98,6 @@ export async function recordDeliveryOutcomeAdmin(
       if (isCodOrder) {
         profile.successfulCodDeliveries += 1;
       } else {
-        // Prepaid delivery increments prepaid counter ONLY (Requirement #20)
         profile.successfulPrepaidDeliveries += 1;
       }
       profile.lastSuccessfulDeliveryAt = new Date().toISOString();
@@ -121,9 +132,6 @@ export async function recordDeliveryOutcomeAdmin(
   return { ok: true, alreadyProcessed: false };
 }
 
-/**
- * Direct lookup helper for risk profile by phone.
- */
 export async function getRiskProfileByPhoneAdmin(rawPhone: string): Promise<CodRiskProfile | null> {
   const phoneNormalized = normalizePhone(rawPhone);
   if (!phoneNormalized) return null;
@@ -171,9 +179,6 @@ export async function getRiskProfileByPhoneAdmin(rawPhone: string): Promise<CodR
   return memoryRiskProfiles.get(phoneNormalized) || null;
 }
 
-/**
- * Updates/saves risk profile manually (for HQ admin override).
- */
 export async function saveRiskProfileAdmin(profile: CodRiskProfile): Promise<void> {
   const phoneNormalized = normalizePhone(profile.phoneNormalized);
   const updatedProfile = { ...profile, phoneNormalized, updatedAt: new Date().toISOString() };
