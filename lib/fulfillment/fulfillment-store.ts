@@ -15,6 +15,7 @@ import type {
   PODFulfillmentProvider,
   ActivePlacementSnapshot,
   ProviderOrderSubmissionResult,
+  FulfillmentSupportDTO,
 } from "./types";
 import { evaluateOrderFulfillmentEligibility } from "./eligibility";
 import { redactSecrets } from "./qikink";
@@ -23,6 +24,24 @@ import { getAllDesignsAdmin, getAllProviderMappingsAdmin } from "@/lib/wearables
 import { computeManufacturingIntentHash } from "./hash";
 import { validateFulfillmentSnapshotBeforeFirstSubmission } from "./snapshot-validator";
 import { isValidStatusTransition } from "./status-graph";
+
+/**
+ * Converts a full FulfillmentRecord to a Support-Safe DTO (Requirement #6).
+ * Strips snapshots, request hashes, artwork paths, and payment internals.
+ */
+export function toSupportDTO(rec: FulfillmentRecord): FulfillmentSupportDTO {
+  return {
+    id: rec.id,
+    orderId: rec.orderId,
+    status: rec.status,
+    providerStatus: rec.providerStatus,
+    trackingNumber: rec.trackingNumber,
+    courierName: rec.courierName,
+    failureMessage: rec.failureMessage,
+    createdAt: rec.createdAt,
+    updatedAt: rec.updatedAt,
+  };
+}
 
 export type FulfillmentRecord = {
   id: string;
@@ -190,7 +209,8 @@ export async function createOrClaimFulfillmentAdmin(
   adminId?: string | null,
 ): Promise<{ ok: true; fulfillment: FulfillmentRecord } | { ok: false; error: string; fulfillmentId?: string }> {
   // 1. Evaluate server-side fulfillment eligibility
-  const eligibility = await evaluateOrderFulfillmentEligibility(orderId);
+  const existingActive = await getFulfillmentByOrderIdAdmin(orderId);
+  const eligibility = await evaluateOrderFulfillmentEligibility(orderId, existingActive?.id);
   if (!eligibility.eligible) {
     return {
       ok: false,
@@ -342,12 +362,15 @@ export async function createOrClaimFulfillmentAdmin(
     return { ok: true, fulfillment: fulfillment || (memoryFulfillments.get(claimedId)!) };
   }
 
-  // LOCAL MEMORY FALLBACK WITH EXACTLY-ONCE & REQUEST HASH GUARD (Requirement #3)
+  // LOCAL MEMORY FALLBACK WITH EXACTLY-ONCE & REQUEST HASH GUARD (Requirement #3, #4)
   const existing = Array.from(memoryFulfillments.values()).find(
-    (f) => f.idempotencyKey === idempotencyKey || (f.orderId === orderId && f.providerId === provider.id && !["FAILED", "CANCELLED"].includes(f.status)),
+    (f) => f.idempotencyKey === idempotencyKey || (f.orderId === orderId && f.providerId === provider.id && !["CANCELLED"].includes(f.status)),
   );
 
   if (existing) {
+    if (existing.status === "FAILED" && !existing.providerOrderId) {
+      return { ok: false, error: "failed_fulfillment_requires_manual_review", fulfillmentId: existing.id };
+    }
     if (existing.requestHash && existing.requestHash !== requestHash) {
       return { ok: false, error: "idempotency_payload_mismatch", fulfillmentId: existing.id };
     }
@@ -791,6 +814,16 @@ export async function updateFulfillmentStatusAdmin(
     }
 
     return { ok: true };
+  }
+
+  // Waybill rebound protection (Requirement #2 & #25)
+  if (trackingNumber) {
+    const existingWaybill = Array.from(memoryFulfillments.values()).find(
+      (f) => f.id !== fulfillmentId && f.trackingNumber === trackingNumber,
+    );
+    if (existingWaybill) {
+      return { ok: false, error: "shipment_waybill_rebound" };
+    }
   }
 
   if (existing) {

@@ -166,3 +166,20 @@ export interface PODFulfillmentProvider {
   normalizeStatus(rawStatus: string): FulfillmentStatus;
   healthCheck?(): Promise<{ ok: boolean; message?: string }>;
 }
+
+/**
+ * Support-Safe Fulfillment DTO (Requirement #6)
+ * Sanitized view for HQ support staff that excludes snapshots, request hashes,
+ * artwork storage paths, and payment internals.
+ */
+export type FulfillmentSupportDTO = {
+  id: string;
+  orderId: string;
+  status: FulfillmentStatus;
+  providerStatus?: string;
+  trackingNumber?: string;
+  courierName?: string;
+  failureMessage?: string;
+  createdAt: string;
+  updatedAt: string;
+};

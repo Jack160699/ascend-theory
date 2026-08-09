@@ -1,7 +1,7 @@
 /**
  * Phase 6 — Authoritative Snapshot Staleness Validator
  * Verifies that all exact frozen prerequisites (provider mapping, variants, placements,
- * design version, checksum, and storage artwork existence) remain 100% active and unmutated
+ * design version, exact checksum, and storage artwork existence) remain 100% active and unmutated
  * prior to first provider submission.
  */
 
@@ -82,26 +82,33 @@ export async function validateFulfillmentSnapshotBeforeFirstSubmission(
         design.id !== snapPl.designId ||
         (design.version ?? 1) !== snapPl.designVersion ||
         design.storagePath !== snapPl.storagePath ||
-        (design.checksum && snapPl.checksum && design.checksum !== snapPl.checksum)
+        (design.checksum ?? null) !== (snapPl.checksum ?? null) // Requirement #8: Exact normalized checksum equality
       ) {
         return { valid: false, reason: "snapshot_design_stale" };
       }
 
-      // Check storage object existence if Supabase is configured
+      // Requirement #9: Exact storage object existence check (fail closed if service client unavailable)
       if (hasSupabaseConfig() && snapPl.storagePath) {
         const supabase = createSupabaseServiceClient();
-        if (supabase) {
-          const pathParts = snapPl.storagePath.split("/");
-          const fileName = pathParts.pop();
-          const folderPath = pathParts.join("/");
+        if (!supabase) {
+          return { valid: false, reason: "snapshot_artwork_missing" };
+        }
 
-          const { data: listData, error: listErr } = await supabase.storage
-            .from("design-artwork")
-            .list(folderPath, { search: fileName });
+        const pathParts = snapPl.storagePath.split("/");
+        const fileName = pathParts.pop();
+        const folderPath = pathParts.join("/");
 
-          if (listErr || !listData || listData.length === 0) {
-            return { valid: false, reason: "snapshot_artwork_missing" };
-          }
+        const { data: listData, error: listErr } = await supabase.storage
+          .from("design-artwork")
+          .list(folderPath, { search: fileName });
+
+        if (listErr || !listData || listData.length === 0) {
+          return { valid: false, reason: "snapshot_artwork_missing" };
+        }
+
+        const exactMatch = listData.some((entry) => entry.name === fileName);
+        if (!exactMatch) {
+          return { valid: false, reason: "snapshot_artwork_missing" };
         }
       }
     }

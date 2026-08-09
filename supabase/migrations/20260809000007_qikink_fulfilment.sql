@@ -4,7 +4,7 @@
 -- Description: Extends orders, fulfillments, fulfillment_events, and shipments tables.
 --              Adds canonical status constraint, payment_method column, multi-item snapshot fields,
 --              idempotency tracking, request hash verification, atomic retry claim RPC,
---              atomic submission failure RPC, and strict status transition enforcement.
+--              atomic submission failure RPC, status transition graph parity, and race-safe waybill binding.
 -- =============================================================================
 
 -- 1. Extend orders table to durably persist payment_method & payment_provider
@@ -118,11 +118,11 @@ ALTER TABLE public.fulfillments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fulfillment_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shipments ENABLE ROW LEVEL SECURITY;
 
--- Admin RLS Policies for authenticated staff
+-- Admin RLS Policies for authenticated staff (Requirement #5: owner, admin, support ONLY - remove editor)
 DROP POLICY IF EXISTS "Admin read fulfillments" ON public.fulfillments;
 CREATE POLICY "Admin read fulfillments" ON public.fulfillments
   FOR SELECT TO authenticated
-  USING (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin', 'editor', 'support']));
+  USING (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin', 'support']));
 
 DROP POLICY IF EXISTS "Admin write fulfillments" ON public.fulfillments;
 CREATE POLICY "Admin write fulfillments" ON public.fulfillments
@@ -133,7 +133,7 @@ CREATE POLICY "Admin write fulfillments" ON public.fulfillments
 DROP POLICY IF EXISTS "Admin read fulfillment_events" ON public.fulfillment_events;
 CREATE POLICY "Admin read fulfillment_events" ON public.fulfillment_events
   FOR SELECT TO authenticated
-  USING (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin', 'editor', 'support']));
+  USING (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin', 'support']));
 
 DROP POLICY IF EXISTS "Admin write fulfillment_events" ON public.fulfillment_events;
 CREATE POLICY "Admin write fulfillment_events" ON public.fulfillment_events
@@ -144,7 +144,7 @@ CREATE POLICY "Admin write fulfillment_events" ON public.fulfillment_events
 DROP POLICY IF EXISTS "Admin read shipments" ON public.shipments;
 CREATE POLICY "Admin read shipments" ON public.shipments
   FOR SELECT TO authenticated
-  USING (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin', 'editor', 'support']));
+  USING (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin', 'support']));
 
 DROP POLICY IF EXISTS "Admin write shipments" ON public.shipments;
 CREATE POLICY "Admin write shipments" ON public.shipments
@@ -152,7 +152,7 @@ CREATE POLICY "Admin write shipments" ON public.shipments
   USING (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin']))
   WITH CHECK (public.is_caller_active_admin_with_roles(ARRAY['owner', 'admin']));
 
--- 7. STATUS TRANSITION GRAPH VALIDATION HELPER
+-- 7. STATUS TRANSITION GRAPH VALIDATION HELPER (Requirement #1: Exact 1-to-1 TS Graph Parity)
 CREATE OR REPLACE FUNCTION public.is_valid_fulfillment_status_transition(
   p_current_status TEXT,
   p_next_status TEXT
@@ -196,6 +196,12 @@ BEGIN
       RETURN p_next_status IN ('PROCESSING', 'FAILED', 'CANCELLED');
     WHEN 'UNKNOWN_PROVIDER_STATE' THEN
       RETURN p_next_status IN ('PROCESSING', 'ACTION_REQUIRED', 'OUT_OF_STOCK', 'MANIFESTED', 'IN_TRANSIT', 'DELIVERED', 'FAILED', 'CANCELLED');
+    WHEN 'RECONCILIATION_REQUIRED' THEN
+      RETURN p_next_status IN ('PROCESSING', 'SUBMITTED', 'ACTION_REQUIRED', 'OUT_OF_STOCK', 'FAILED', 'CANCELLED', 'UNKNOWN_PROVIDER_STATE');
+    WHEN 'EXCEPTION' THEN
+      RETURN p_next_status IN ('IN_TRANSIT', 'DELIVERED', 'RTO_INITIATED', 'RETURNED', 'CANCELLED', 'FAILED');
+    WHEN 'FAILED' THEN
+      RETURN false;
     ELSE
       RETURN false;
   END CASE;
@@ -204,7 +210,7 @@ $$;
 
 -- 8. SECURITY DEFINER TRANSACTIONAL RPCs
 
--- 8a. Atomic Race-Safe Initial Claim RPC (Requirements #10, #11, #12, #27)
+-- 8a. Atomic Race-Safe Initial Claim RPC (Requirements #3, #4)
 CREATE OR REPLACE FUNCTION public.create_or_claim_fulfillment_with_audit(
   p_fulfillment_id UUID,
   p_order_id TEXT,
@@ -234,6 +240,11 @@ BEGIN
    LIMIT 1;
 
   IF v_existing_id IS NOT NULL THEN
+    -- Requirement #4: Controlled manual review result for FAILED fulfillment
+    IF v_existing_status IN ('FAILED') AND v_existing_prov_order_id IS NULL THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'failed_fulfillment_requires_manual_review', 'fulfillment_id', v_existing_id);
+    END IF;
+
     IF v_existing_hash IS NOT NULL AND p_request_hash IS NOT NULL AND v_existing_hash != p_request_hash THEN
       RETURN jsonb_build_object('ok', false, 'error', 'idempotency_payload_mismatch', 'fulfillment_id', v_existing_id);
     END IF;
@@ -253,6 +264,10 @@ BEGIN
    LIMIT 1;
 
   IF v_existing_id IS NOT NULL THEN
+    IF v_existing_status IN ('FAILED') AND v_existing_prov_order_id IS NULL THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'failed_fulfillment_requires_manual_review', 'fulfillment_id', v_existing_id);
+    END IF;
+
     IF v_existing_hash IS NOT NULL AND p_request_hash IS NOT NULL AND v_existing_hash != p_request_hash THEN
       RETURN jsonb_build_object('ok', false, 'error', 'idempotency_payload_mismatch', 'fulfillment_id', v_existing_id);
     ELSIF v_existing_status IN ('SUBMITTING') THEN
@@ -305,14 +320,16 @@ BEGIN
 
   RETURN jsonb_build_object('ok', true, 'fulfillment_id', p_fulfillment_id);
 EXCEPTION WHEN unique_violation THEN
-  -- Concurrency race condition protection (Requirement #3)
+  -- Concurrency race condition protection
   SELECT id, status, provider_order_id, request_hash
     INTO v_existing_id, v_existing_status, v_existing_prov_order_id, v_existing_hash
     FROM public.fulfillments
    WHERE idempotency_key = p_idempotency_key OR (order_id = p_order_id AND provider_id = p_provider_id AND status NOT IN ('FAILED', 'CANCELLED'))
    LIMIT 1;
 
-  IF v_existing_hash IS NOT NULL AND p_request_hash IS NOT NULL AND v_existing_hash != p_request_hash THEN
+  IF v_existing_status IN ('FAILED') AND v_existing_prov_order_id IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'failed_fulfillment_requires_manual_review', 'fulfillment_id', v_existing_id);
+  ELSIF v_existing_hash IS NOT NULL AND p_request_hash IS NOT NULL AND v_existing_hash != p_request_hash THEN
     RETURN jsonb_build_object('ok', false, 'error', 'idempotency_payload_mismatch', 'fulfillment_id', v_existing_id);
   ELSIF v_existing_status IN ('SUBMITTING') THEN
     RETURN jsonb_build_object('ok', false, 'error', 'already_claimed', 'fulfillment_id', v_existing_id);
@@ -489,7 +506,7 @@ $$;
 REVOKE ALL ON FUNCTION public.record_fulfillment_submission_failure_with_audit(UUID, TEXT, TEXT, TEXT, TEXT, BOOLEAN, TIMESTAMPTZ, UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.record_fulfillment_submission_failure_with_audit(UUID, TEXT, TEXT, TEXT, TEXT, BOOLEAN, TIMESTAMPTZ, UUID) TO service_role;
 
--- 8d. Atomic Provider Order Binding RPC (Requirements #15, #25, #26)
+-- 8d. Atomic Provider Order Binding RPC
 CREATE OR REPLACE FUNCTION public.bind_provider_order_with_audit(
   p_fulfillment_id UUID,
   p_provider_order_id TEXT,
@@ -573,7 +590,7 @@ $$;
 REVOKE ALL ON FUNCTION public.bind_provider_order_with_audit(UUID, TEXT, TEXT, TEXT, JSONB, UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.bind_provider_order_with_audit(UUID, TEXT, TEXT, TEXT, JSONB, UUID) TO service_role;
 
--- 8e. Atomic Fulfillment Event & Controlled Status Update RPC (Requirements #21, #25)
+-- 8e. Atomic Fulfillment Event & Controlled Status Update RPC (Requirement #2: Race-Safe Waybill Binding)
 CREATE OR REPLACE FUNCTION public.update_fulfillment_status_with_audit(
   p_fulfillment_id UUID,
   p_status TEXT,
@@ -600,17 +617,21 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'Fulfillment not found');
   END IF;
 
-  -- Controlled status transition enforcement (Requirement #21 / #8)
+  -- Controlled status transition enforcement (Requirement #1 / #8)
   IF NOT public.is_valid_fulfillment_status_transition(v_current_status, p_status) THEN
     RETURN jsonb_build_object('ok', false, 'error', format('invalid_status_transition: cannot move from %s to %s', v_current_status, p_status));
   END IF;
 
-  -- Waybill rebound protection (Requirement #25)
+  -- Waybill rebound protection & race safety (Requirement #2)
   IF p_tracking_number IS NOT NULL AND p_tracking_number != '' THEN
+    INSERT INTO public.shipments (fulfillment_id, waybill_number, dispatched_at, created_at)
+    VALUES (p_fulfillment_id, p_tracking_number, now(), now())
+    ON CONFLICT (waybill_number) DO NOTHING;
+
     SELECT fulfillment_id INTO v_existing_shipment_ful_id
       FROM public.shipments
      WHERE waybill_number = p_tracking_number
-     LIMIT 1;
+     FOR UPDATE;
 
     IF v_existing_shipment_ful_id IS NOT NULL AND v_existing_shipment_ful_id != p_fulfillment_id THEN
       RETURN jsonb_build_object('ok', false, 'error', 'shipment_waybill_rebound');
@@ -636,15 +657,6 @@ BEGIN
     format('Fulfillment status set to %s', p_status),
     jsonb_build_object('provider_status', p_provider_status, 'failure_code', p_failure_code, 'tracking_number', p_tracking_number)
   );
-
-  -- Upsert shipment entry if tracking_number (waybill) is provided
-  IF p_tracking_number IS NOT NULL AND p_tracking_number != '' THEN
-    INSERT INTO public.shipments (fulfillment_id, waybill_number, dispatched_at, created_at)
-    VALUES (p_fulfillment_id, p_tracking_number, now(), now())
-    ON CONFLICT (waybill_number) DO UPDATE SET
-      fulfillment_id = EXCLUDED.fulfillment_id,
-      dispatched_at = COALESCE(public.shipments.dispatched_at, EXCLUDED.dispatched_at);
-  END IF;
 
   RETURN jsonb_build_object('ok', true);
 EXCEPTION WHEN OTHERS THEN
